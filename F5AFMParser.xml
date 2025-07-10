@@ -1,0 +1,56 @@
+<eventParser name="F5AFMParser">
+  <deviceType>
+    <Vendor>F5</Vendor>
+    <Model>Big-IPOS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[\stmm\s+<:gPatInt>\s+<:gPatInt>\s+\[]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<134>1 2013-09-06T12:38:23-05:00 example.com tmm 8705 23003137 [F5@12276 acl_policy_name="/Common/cos_afm_policy_web_servers_http" acl_policy_type="Enforced" acl_rule_name="cos_afm_rule_allow_80" action="Accept" hostname="example.com" bigip_mgmt_ip="10.11.99.21" context_name="/Common/example.com" context_type="Virtual Server" date_time="Sep 06 2013 12:38:23" dest_ip="1.1.1.1" dest_port="80" device_product="Advanced Firewall Module" device_vendor="F5" device_version="11.4.0.2419.0" drop_reason="" errdefs_msgno="23003137" errdefs_msg_name="Network Event" ip_protocol="TCP" severity="8" partition_name="Common" route_domain="0" sa_translation_pool="" sa_translation_type="" source_ip="1.1.1.2" source_port="65328" translated_dest_ip="10.11.201.25" translated_dest_port="80" translated_ip_protocol="TCP" translated_route_domain="0" translated_source_ip="1.1.1.3" translated_source_port="65328" translated_vlan="/Common/internal" vlan="/Common/external"] Accept]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><:gPatInt>\s+<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime><:gPatStr>\s+<:gPatStr>\s+tmm\s+<:gPatInt>\s+<:gPatInt>\s+\[<:gPatStr>\s+<_body:gPatMesgBody>\]\s+<fwAction:gPatStr>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+
+    <collectAndSetAttrByKeyValuePair sep=" " src="$_body">
+      <attrKeyMap attr="policyName" key="acl_policy_name="/>
+      <attrKeyMap attr="fwRule" key="acl_rule_name="/>
+      <attrKeyMap attr="fwAction" key="action="/>
+      <attrKeyMap attr="hostName" key="hostname="/>
+      <attrKeyMap attr="reptDevName" key="hostname="/>
+      <attrKeyMap attr="preNATDestIpAddr" key="dest_ip="/>
+      <attrKeyMap attr="preNATDestIpPort" key="dest_port="/>
+      <attrKeyMap attr="osVersion" key="device_version="/>
+      <attrKeyMap attr="_proto" key="ip_protocol="/>
+      <attrKeyMap attr="eventSeverity" key="severity="/>
+      <attrKeyMap attr="srcIpAddr" key="source_ip="/>
+      <attrKeyMap attr="srcIpPort" key="source_port="/>
+      <attrKeyMap attr="destIpAddr" key="translated_dest_ip="/>
+      <attrKeyMap attr="destIpPort" key="translated_dest_port="/>
+      <attrKeyMap attr="postNATSrcIpAddr" key="translated_source_ip="/>
+      <attrKeyMap attr="postNATSrcIpPort" key="translated_source_port="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <choose>
+      <when test="$fwAction IN 'Accept, Established'">
+        <setEventAttribute attr="eventType">F5-AFM-Permit</setEventAttribute>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </when>
+
+      <when test="$fwAction IN 'Closed, Drop'">
+        <setEventAttribute attr="eventType">F5-AFM-Deny</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>

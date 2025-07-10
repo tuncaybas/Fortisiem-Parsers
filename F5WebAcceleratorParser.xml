@@ -1,0 +1,116 @@
+<eventParser name="F5WebAcceleratorParser">
+
+  <deviceType>
+    <Vendor>F5</Vendor>
+    <Model>Big-IPOS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[< 182 >Feb 17 12:00:40 10.1.1.1 Kiwi_Syslog_Server Feb 17 12:00:40 slot2/nidc240001a-ecw info logger: [ssl_acc] 127.0.0.1 - - [17/Feb/2017:12:00:40 -0500] "/iControl/iControlPortal.cgi" 200 1443]]></testEvent>
+    <testEvent><![CDATA[< 182 >Feb 17 09:44:25 10.1.1.1 Kiwi_Syslog_Server Feb 17 09:44:25 slot2/nidc240001a-ecw info logger: [ssl_req][17/Feb/2017:09:44:25 -0500] 127.0.0.1 TLSv1 AES256-SHA "/iControl/iControlPortal.cgi" 1443]]></testEvent>
+    <testEvent><![CDATA[<182>Oct 20 13:52:56 local/BadReligion1 info logger: [ssl_acc] 1.1.1.2 - admin [20/Oct/2011: 13:52:56 -0400] "POST /iControl/iControlPortal.cgi HTTP/1.1" 200 654]]></testEvent>
+    <testEvent><![CDATA[<131>Jun 30 14:31:55 dc2-virtl-lbl03 err logger: EAV exceeded runtime needed to kill 10.10.10.10:443]]></testEvent>
+    <testEvent><![CDATA[<182>Jun 30 14:29:56 dc2-virtl-example info logger: [ssl_req][30/Jun/2020:14:29:56 -0400] 10.10.10.10 TLSv1.2 ECDHE-RSA-AES128-GCM-SHA256 "/mgmt/tm/ltm/monitor/https/~Common~BeyondTrust-PAM-Alias-Address/stats" 1802]]></testEvent>
+    <testEvent><![CDATA[<182>May 17 13:50:15 slot2/vip_shaham info logger: [acc] 127.1.1.5 - - [17/May/2018:13:50:15 +0300] "GET /renderer/apm_css.php3?cgc=198&logon=/SSL-CloudFW/Cloud-SSL-New_act_logon_page_ag&uilang=he&uimode=7&ctype=Standalone&cversion=2.0&cjs=1&cactivex=1&cplugin=0&cplatform=Win7&cpu=x86&logout=/SSL-CloudFW/Cloud-SSL-New_logout&general_ui=/SSL-CloudFW/Cloud-SSL-New_general_ui&eps=/SSL-CloudFW/Cloud-SSL-New_eps&installation=/SSL-CloudFW/Cloud-SSL-New_frameworkinstallation&errormap=/SSL-CloudFW/Cloud-SSL-New_errormap&defaultlang=he HTTP/1.0" 200 23585 "-" "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0) EdgeClient/7133.2017.0602.1823"]]></testEvent>
+  </testEvents>
+
+
+  <eventFormatRecognizer><![CDATA[<:patSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatStr>\s+(?:local/|slot\d+/)?<:gPatHostName>\s+logger:\s|<:gPatStr>\s+<:gPatStr>\s+<:gPatStrEndColon>:\s+(?:\[ssl_acc\]|\[ssl_req\]|\[acc\]|\[req\])]]></eventFormatRecognizer>
+
+  <patternDefinitions>
+    <pattern name="patSyslogPRI"><![CDATA[<\s*\d+\s*>]]></pattern>
+  </patternDefinitions>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:patSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<reptDevIpAddr:gPatStr>\s+<reptDevName:gPatStr>\s+<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatStr>/<:gPatStr>\s+<_severity:gPatStr>\s+<_process:gPatStrEndColon>:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:patSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatStr>/<reptDevName:gPatStr>\s+<_severity:gPatStr>\s+<_process:gPatStrEndColon>:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:patSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<reptDevName:gPatStr>\s+<_severity:gPatStr>\s+<_process:gPatStrEndColon>:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+
+    <setEventAttribute attr="eventType">F5-WebAcc-Generic</setEventAttribute>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[\[<:gPatStr>\]\s+<srcIpAddr:gPatIpAddr>\s+<:gPatStr>\s+<user:gPatStr>\s+\[<_day:gPatDay>/<_mon:gPatMon>/<_year:gPatYear>:\s*<_time:gPatTime>\s<:gPatMesgBody>\]\s+"(?:<httpMethod:gPatStr>\s+)?<uriStem:gPatStr>(?:\s+<httpVersion:gPatStr>)?"\s+<httpStatusCode:gPatInt><:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[\[<:gPatStr>\]\s*\[<_day:gPatDay>/<_mon:gPatMon>/<_year:gPatYear>:\s*<_time:gPatTime>\s<:gPatMesgBody>\]\s+<srcIpAddr:gPatIpV4Dot>\s+<:gPatStr>\s+<:gPatStr>\s+"(?:<httpMethod:gPatStr>\s+)?<uriStem:gPatStr>(?:\s+<httpVersion:gPatStr>)?"\s+<httpStatusCode:gPatInt><:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[EAV exceeded runtime needed to kill\s+<clientIpAddr:gPatIpV4Dot>:<ipPort:gPatInt>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">F5-WebAcc-EAV-Exceeded-Runtime</setEventAttribute>
+      </case>
+
+      <default/>
+    </switch>
+
+    <choose>
+      <when test="not_exist httpStatusCode">
+         </when>
+
+      <when test="matches($httpStatusCode, '^401')">
+        <setEventAttribute attr="eventType">F5-WebAcc-Client-Access-Denied</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="matches($httpStatusCode, '^403')">
+        <setEventAttribute attr="eventType">F5-WebAcc-Forbidden-Access-Denied</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="matches($httpStatusCode, '^400')">
+        <setEventAttribute attr="eventType">F5-WebAcc-Bad-Request</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="matches($httpStatusCode, '^411')">
+        <setEventAttribute attr="eventType">F5-WebAcc-Length-Reqd-Access-Denied</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="matches($httpStatusCode, '^2')">
+        <!--<when test="$httpStatus in "2xx")'>-->
+        <setEventAttribute attr="eventType">F5-WebAcc-Request-Success</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="matches($httpStatusCode, '^3')">
+        <setEventAttribute attr="eventType">F5-WebAcc-Request-Redirect</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="matches($httpStatusCode, '^4')">
+        <setEventAttribute attr="eventType">F5-WebAcc-Client-Error</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="matches($httpStatusCode, '^5')">
+        <setEventAttribute attr="eventType">F5-WebAcc-Server-Error</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+      </when>
+    </choose>
+
+  </parsingInstructions>
+</eventParser>

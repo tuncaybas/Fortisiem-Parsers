@@ -1,0 +1,207 @@
+<eventParser name="FortiEDRParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiEDR</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<133>1 2019-09-18T06:42:18.000Z 1.1.1.1 enSilo - - - Organization: Demo;Organization ID: 156646;Event ID: 458478;Raw Data ID: 1270886879;Device Name: WIN10-VICTIM;Operating System: Windows 10 Pro N;Process Name: svchost.exe;Process Path: \Device\HarddiskVolume4\Windows\System32\svchost.exe;Process Type: 64bit;Severity: Critical;Classification: Suspicious;Destination: File Creation;First Seen: 18-Sep-2019, 02:42:18;Last Seen: 18-Sep-2019, 02:42:18;Action: Blocked;Count: 1;Certificate: yes;Rules List: File Encryptor - Suspicious file modification;Users: WIN10-VICTIM\U;MAC Address: 00-0C-29-D4-75-EC;Script: N/A;Script Path: N/A;Autonomous System: N/A;Country: N/A]]></testEvent>
+    <testEvent><![CDATA[<133>1 2020-03-10T17:01:37.524Z 1.1.1.1 FortinetEDR - - - Message Type: Audit;Organization: org1;Date and Time: 10-Mar-2020, 13:01:37;Sub-system: System;User Name: user1;Description: System login]]></testEvent>
+    <testEvent><![CDATA[<133>1 2020-03-10T17:01:37.524Z host1 FortinetEDR - - - Message Type: Audit;Organization: org1;Date and Time: 10-Mar-2020, 13:01:37;Sub-system: System;User Name: user1;Description: System login]]></testEvent>
+    <testEvent><![CDATA[<133>1 2020-03-04T17:37:32.000Z enSilo - - - Organization: enSilo]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patName"><![CDATA[enSilo|FortiEDR|FortinetEDR]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>\d+\s+<:gPatYear>-<:gPatMonNum>-<:gPatDay>T<:gPatTime>\.\d{3}<:gPatTimeZone>(?:\s+<:gPatHostName>)?\s+<:patName>\s]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>\d+\s+<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d{3}<_tz:gPatTimeZone>(?:\s+<reptDevIpAddr:gPatIpAddr>|\s+<reptDevName:gPatHostName>)?\s+<:patName>(?:\s+\S+){3}<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">FortiEDR-Security-Generic</setEventAttribute>
+
+    <collectFieldsByKeyValuePair kvsep=": " sep=";" src="$_body">
+      <attrKeyMap attr="fwAction" key="Action"/>
+      <attrKeyMap attr="imageSigned" key="Certificate"/>
+      <attrKeyMap attr="certInfo" key="Certificate"/>
+      <attrKeyMap attr="classifier" key="Classification"/>
+      <attrKeyMap attr="count" key="Count"/>
+      <attrKeyMap attr="hostGeoCountry" key="Country"/>
+      <attrKeyMap attr="msg" key="Description"/>
+      <attrKeyMap attr="_dest" key="Destination"/>
+      <attrKeyMap attr="script" key="Script"/>
+      <attrKeyMap attr="hostName" key="Device Name"/>
+      <attrKeyMap attr="extEventId" key="Event ID"/>
+      <attrKeyMap attr="_hostMACAddr" key="MAC Address"/>
+      <attrKeyMap attr="osType" key="Operating System"/>
+      <attrKeyMap attr="tenantId" key="Organization ID"/>
+      <attrKeyMap attr="tenantName" key="Organization"/>
+      <attrKeyMap attr="procName" key="Process Name"/>
+      <attrKeyMap attr="procPath" key="Process Path"/>
+      <attrKeyMap attr="extRawEvntId" key="Raw Data ID"/>
+      <attrKeyMap attr="ruleName" key="Rules List"/>
+      <attrKeyMap attr="categoryType" key="Sub-system"/>
+      <attrKeyMap attr="user" key="Users"/>
+      <attrKeyMap attr="user" key="User Name"/>
+      <attrKeyMap attr="status" key="Device State"/>
+      <attrKeyMap attr="_firstSeen" key="First Seen"/>
+      <attrKeyMap attr="_lastSeen" key="Last Seen"/>
+      <attrKeyMap attr="hashCode" key="Process Hash"/>
+      <attrKeyMap attr="extEventId" key="Raw Data ID"/>
+      <!-- The protected device IP -->
+      <attrKeyMap attr="hostIpAddr" key="Source IP"/>
+      <attrKeyMap attr="filePath" key="Script Path"/>
+      <!-- Severity field is legacy field, not used -->
+      <attrKeyMap attr="virusName" key="Threat Name"/>
+      <attrKeyMap attr="virusFamily" key="Threat Family"/>
+      <attrKeyMap attr="virusType" key="Threat Type"/>
+      <attrKeyMap attr="_remoteConnection" key="Remote Connection"/>
+      <attrKeyMap attr="_destASNum" key="Autonomous System"/>
+      <attrKeyMap attr="command" key="Command line"/>
+    </collectFieldsByKeyValuePair>
+
+    <!-- Syslog and API have some inconsistent action names eg block vs blocked or log vs logging -->
+    <choose>
+      <when test="not_exist fwAction"/>
+      <when test="$fwAction = 'Log'">
+        <setEventAttribute attr="fwAction">Logging</setEventAttribute>
+      </when>
+      <when test="$fwAction = 'Block'">
+        <setEventAttribute attr="fwAction">Blocked</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _firstSeen">
+      <collectFieldsByRegex src="$_firstSeen">
+        <regex><![CDATA[\s*<_day:gPatDay>-<_mon:gPatMon>-<_year:gPatYear>,\s+<_time:gPatTime>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="startTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+    <when test="exist _lastSeen">
+      <collectFieldsByRegex src="$_lastSeen">
+        <regex><![CDATA[\s*<_day:gPatDay>-<_mon:gPatMon>-<_year:gPatYear>,\s+<_time:gPatTime>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="endTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+
+    <when test="exist procName">
+      <!-- Some rules reference fileName instead of procName -->
+      <when test="not_exist fileName">
+        <setEventAttribute attr="fileName">$procName</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist classifier">
+      <choose>
+        <when test="$classifier IN 'Malicious'">
+          <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+        </when>
+        <when test="$classifier = 'Suspicious'">
+          <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+        </when>
+        <when test="$classifier = 'Pup'">
+          <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+        </when>
+        <when test="$classifier = 'Inconclusive'">
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </when>
+        <when test="$classifier = 'Likely Safe'">
+          <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+        </when>
+        <when test="$classifier = 'Safe'">
+          <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        </when>
+      </choose>
+
+      <choose>
+        <when test="exist fwAction">
+          <setEventAttribute attr="_action">replaceStringByRegex($fwAction, "\s+\(.*?\)", "")</setEventAttribute>
+          <setEventAttribute attr="_eventType">combineMsgId("FortiEDR-Security-", $classifier, "-", $_action)</setEventAttribute>
+          <setEventAttribute attr="eventType">replaceStringByRegex($_eventType, "\s+", "-")</setEventAttribute>
+        </when>
+        <otherwise>
+          <setEventAttribute attr="_eventType">combineMsgId("FortiEDR-Security-", $classifier)</setEventAttribute>
+          <setEventAttribute attr="eventType">replaceStringByRegex($_eventType, "\s+", "-")</setEventAttribute>
+        </otherwise>
+      </choose>
+    </when>
+
+    <choose>
+      <when test="not_exist msg"/>
+
+      <when test="$msg = 'System login'">
+        <setEventAttribute attr="eventType">FortiEDR-System-Login-Success</setEventAttribute>
+      </when>
+
+      <when test="$msg = 'System login (Saml)'">
+        <setEventAttribute attr="eventType">FortiEDR-System-Login-Success</setEventAttribute>
+      </when>
+
+      <when test="$msg = 'System login failed'">
+        <setEventAttribute attr="eventType">FortiEDR-System-Login-Failure</setEventAttribute>
+      </when>
+
+      <when test="matches($msg, 'failed due to an incorrect user name or password')">
+        <setEventAttribute attr="eventType">FortiEDR-System-Login-Failure</setEventAttribute>
+      </when>
+
+      <when test="$msg = 'System logout'">
+        <setEventAttribute attr="eventType">FortiEDR-System-Logout</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _hostMACAddr">
+      <setEventAttribute attr="hostMACAddr">normalizeMAC($_hostMACAddr)</setEventAttribute>
+    </when>
+
+    <when test="exist user">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$user">
+            <regex><![CDATA[<domain:gPatStr>[\\]<user:gPatStr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _dest">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_dest">
+            <regex><![CDATA[^<destIpAddr:gPatIpAddr>$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_dest">
+            <regex><![CDATA[^<destName:gPatHostName>$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="targetOsObjName">$_dest</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+    <when test="exist _remoteConnection">
+      <switch>
+        <case>
+          <!-- Source of exploit on triggering device -->
+          <collectFieldsByRegex src="$_remoteConnection">
+            <regex><![CDATA[^<srcIpAddr:gPatIpAddr>$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <when test="exist _destASNum">
+      <when test="$_destASNum != 'N/A'">
+        <setEventAttribute attr="targetOsObjName">$_destASNum</setEventAttribute>
+      </when>
+    </when>
+  </parsingInstructions>
+</eventParser>

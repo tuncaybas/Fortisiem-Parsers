@@ -1,0 +1,129 @@
+<eventParser name="FortiSoarCefParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiSOAR</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[CEF:0|Fortinet Inc|FortiSOAR|6.4.3|Login Success|10|msg="DB Login Success for user [csadmin]" src="10.132.123.16" suid="11111111-1111-1111-1111-111111111111" suser="CS Admin" end=1604602303303 playbookName="" playbookId="" eventTimeStr="05 Nov 2020 18:51:43.303"]]></testEvent>
+    <testEvent><![CDATA[<86>2021-11-10T21:24:16.115237+00:00 fsr-testvm-7 sudo:CEF:0|Fortinet Inc|FortiSOAR|7.0.2|sudo|sudo|6|devid="FSRVMPTM21234686" type="System Log" vd="enterprise" level="info" msg=" pam_unix(sudo:session): session opened for user root by (uid=0)"]]></testEvent>
+    <testEvent><![CDATA[<180>2021-11-10T21:24:18.863658+00:00 fortisoar-test-vm fortisoar-api-service: CEF:0|Fortinet Inc|FortiSOAR|7.0.2|fortisoar-api-service|fortisoar-api-service|4|devid="FSRVMPTM21234686" type="System Log" vd="enterprise" level="warning" msg="127.0.0.1 - - [10/Nov/2021:21:24:18 +0000] \"POST /api/wf/api/workflows/log_list/?format=json&modified_after=2021-11-10+20:24:18&modified_before=2021-11-10+21:24:18&ordering=-modified&parent__isnull=True HTTP/1.1\" 200 366 \"-\" \"python-requests/2.26.0\""]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patVbar"><![CDATA[[^|]*]]></pattern>
+    <pattern name="patExceptBracket"><![CDATA[[^\[\]]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[CEF:\d+\|Fortinet Inc\|FortiSOAR\|\d]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[CEF:\d+\|Fortinet Inc\|FortiSOAR\|<version:patVbar>\|<_et:patVbar>\|(?:<:patVbar>\|)?<_sev:gPatInt>\|<_body:gPatMesgBody>"]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="_et">replaceStringByRegex($_et, "\s+", "-")</setEventAttribute>
+    <setEventAttribute attr="eventType">combineMsgId("FortiSOAR-", $_et)</setEventAttribute>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="_endTime" key="end"/>
+      <attrKeyMap attr="_eventTime" key="eventTimeStr"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="playbookId" key="playbookId"/>
+      <attrKeyMap attr="playbookName" key="playbookName"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="user" key="suser"/>
+      <attrKeyMap attr="userId" key="suid"/>
+      <attrKeyMap attr="type" key="type"/>
+      <attrKeyMap attr="deviceIdentification" key="devid"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist _eventTime">
+      <switch>
+        <case>
+          <!-- 05 Nov 2020 18:51:43.303 -->
+          <collectFieldsByRegex src="$_eventTime">
+            <regex><![CDATA[<_day:gPatDay>\s+<_mon:gPatMon>\s+<_year:gPatYear>\s+<_time:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _endTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_endTime">
+            <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="endTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$endTime">
+            <regex><![CDATA[^<endTime:gPatInt>\d{3}$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <when test="exist msg">
+      <choose>
+        <when test="$eventType = 'FortiSOAR-sudo'">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$msg">
+                <regex><![CDATA[^\s*pam_unix\(sudo:session\): session opened for user <user:gPatStr>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+        </when>
+        <when test="$eventType = 'FortiSOAR-fortisoar-api-service'">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$msg">
+                <regex><![CDATA[^<_source:gPatIpAddr>\s-\s-\s\[<:patExceptBracket>\]\s+"<httpMethod:gPatWord>\s+<uriStem:gPatStr>\s+<httpVersion:gPatStrDQ>"\s+<httpStatusCode:gPatInt>\s+<_size:gPatWord>\s+"<:gPatStrDQ>"\s+"<httpUserAgent:gPatStrDQ>"]]></regex>
+              </collectFieldsByRegex>
+              <choose>
+                <!-- uses apache which can have a dash meaning zero or integer for size %b value -->
+                <when test="not_exist _size"/>
+                <when test="$_size = '-'">
+                  <setEventAttribute attr="totBytes64">0</setEventAttribute>
+                </when>
+                <otherwise>
+                  <setEventAttribute attr="totBytes64">$_size</setEventAttribute>
+                </otherwise>
+              </choose>
+              <choose>
+                <when test="$_source = '127.0.0.1'"/>
+                <otherwise>
+                  <!-- Loopback implies FortiSOAR made the api call itself, don't set source. FortiSIEM may confuse loopback as referring to itself -->
+                  <setEventAttribute attr="srcIpAddr">$_source</setEventAttribute>
+                </otherwise>
+              </choose>
+              <!-- Use error code to determine if traffic was allowed for not -->
+              <choose>
+                <when test="not_exist httpStatusCode"/>
+                <!-- ok,created,accepted,no content -->
+                <when test="$httpStatusCode IN '200,201,202,204'">
+                  <setEventAttribute attr="eventType">combineMsgId($eventType,"-request-allow")</setEventAttribute>
+                  <setEventAttribute attr="eventAction">0</setEventAttribute>
+                </when>
+                <!-- bad request, not authorized, forbidden, internal error -->
+                <when test="$httpStatusCode IN '400,401,403,500'">
+                  <setEventAttribute attr="eventType">combineMsgId($eventType,"-request-deny")</setEventAttribute>
+                  <setEventAttribute attr="eventAction">1</setEventAttribute>
+                </when>
+                <otherwise/>
+              </choose>
+            </case>
+            <default/>
+          </switch>
+        </when>
+        <otherwise/>
+      </choose>
+    </when>
+  </parsingInstructions>
+</eventParser>

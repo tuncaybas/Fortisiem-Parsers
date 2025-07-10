@@ -1,0 +1,152 @@
+<eventParser name="FortiAuthenticatorDebugLogParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiAuthenticator</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<15>2024-08-15T13:14:30.670232+00:00 VA-Authenticator fsso_dbg_log: 08/15/2024 13:14:27 [AD1A36C0] FortiClient connection failed, wrong password.]]></testEvent>
+    <testEvent><![CDATA[<15>2024-08-15T13:12:30.558128+00:00 VA-Authenticator web_server_dbg_log: [Thu Aug 15 13:12:25.846547 2024] [wsgi:info] [pid 19308] mod_wsgi (pid=19308): Python has shutdown.]]></testEvent>
+    <testEvent><![CDATA[<14>2024-08-15T13:10:01.424650+00:00 VA-Authenticator radiusd[21699]: Warning: failed to search remote LDAP server for remote user 'testuser', error: invalid user]]></testEvent>
+    <testEvent><![CDATA[<15>2024-08-15T13:09:40.410198+00:00 VA-Authenticator ldap_user_sync_dbg_log: Received notification for table ldap_ldapusersync from Postgres -]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patKeyWord"><![CDATA[fsso|web_server|radius|radiusd|ldap_user_sync|gui|rest_api|wad_\d+-\d]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatYear>-<:gPatMonNum>-<:gPatDay>T<:gPatTime>\.\d+<:gPatTimeZone>\s+(?:FortiAuthenticator|VA-Authenticator)\s+<:patKeyWord>(?:_dbg_log)?(?:\[\d+\])?:]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>\s+(?:FortiAuthenticator|VA-Authenticator)\s+<type:patKeyWord>(?:_dbg_log)?(?:\[<procId:gPatInt>\])?:\s*<msg:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>?<msg:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <setEventAttribute attr="eventType">FortiAuthenticator-DebugLog-Generic</setEventAttribute>
+
+    <choose>
+      <when test="not_exist type"/>
+      <!-- FSSO Logs -->
+      <when test="$type = 'fsso'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[Validator: try to validate <count:gPatInt> workstations in vdom '<vdom:gPatStr>']]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiAuthenticator-DebugLog-FSSO-Validator-Report</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[<:gPatStr> server accepting one connection from <hostIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiAuthenticator-DebugLog-FSSO-Connection-Accepted</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[<appName:gPatStr> connection failed,\s*<errReason:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiAuthenticator-DebugLog-FSSO-Connection-Failed</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">FortiAuthenticator-DebugLog-FSSO</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+
+      <when test="$type = 'web_server'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[\[<:gPatMesgBodyMin>\]\s+\[wsgi:<categoryType:gPatStr>\]\s+\[pid\s+<procId:gPatInt>\]<:gPatMesgBodyMin>:<reason:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiAuthenticator-DebugLog-WebServer</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$type = 'radiusd'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[Warning: failed to search remote <serverName:gPatStr> server for remote user '<user:gPatStr>',\s*error: invalid user]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiAuthenticator-DebugLog-Radiusd-Invalid-User</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">FortiAuthenticator-DebugLog-Radiusd</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+
+      <when test="$type = 'radius'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[FortiAuthenticator\s+<:gPatStr>\s+\[<procId:gPatInt>\]\s+\[<categoryType:gPatStr>\]:\s+<reason:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiAuthenticator-DebugLog-Radius</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$type = 'ldap_user_sync'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[<errReason:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiAuthenticator-DebugLog-LdapUserSync</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$type = 'gui'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[<:gPatMesgBodyMin>\s+gui[procId:gPatInt]\s+<type:gPatStr>\s+<:gPatStr>\s+<:gPatInt>\s+<reason:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiAuthenticator-DebugLog-Gui</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$type = 'rest_api'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[HTTP <httpMethod:gPatStr> request succeeded for \"<uriStem:gPatStr>\" \(<responseBody:gPatMesgBody>\)]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiAuthenticator-DebugLog-RestApi-Request-Succeeded</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[Receiving HTTP <httpMethod:gPatStr> request at \"<uriStem:gPatStr>\" from \"<srcIpAddr:gPatIpAddr>\" \(<user:gPatStr>\)]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiAuthenticator-DebugLog-RestApi-Response</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">FortiAuthenticator-DebugLog-RestApi</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+
+      <otherwise/>
+    </choose>
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,303 @@
+<eventParser name="FortiSandboxParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiSandbox</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<15>2017-01-05T06:04:42 devhost=FSA-VM0000000000 devid=FSA-VM0000002013 tzone=-28800 tz=PST  date=2017-01-05 time=06:04:42 logid=0106000001 type=event subtype=system level=debug user=RPC ui=RPC action=log status=success reason=none letype=9 msg="malware package checksum, URLs, Botnet or STIX package were retrieved successfully.nantestie"]]></testEvent>
+    <testEvent><![CDATA[Oct 12 14:35:12 172.16.69.142 devname=turnoff-2016-10-11-18-46-05-172.16.69.142 device_id=FSA3KE3A13000011 logid=0106000001 type=event subtype=system pri=debug user=system ui=system action= status=success  reason=none letype=9 msg="Malware package: urlrel version 2.88897 successfully released, total 1000"]]></testEvent>
+    <testEvent><![CDATA[<14>2016-08-19T06:48:51 devhost=turnoff-2016-08-15-19-24-55-172.16.69.55 devid=FSA35D0000000006 tzone=-25200 tz=PDT  date=2016-08-19 time=06:48:51 logid=0106000001 type=event subtype=system level=information user=admin ui=GUI action=update status=success  reason=none letype=9 msg="Remote log server was successfully added"]]></testEvent>
+    <testEvent><![CDATA[<25>Mar 15 15:38:38 devname=FSA1 device_id=FSA3KD3R16000154  logid=1015000205 type=malware level=alert jobid=3257604065244014675 scanstart=1489617514 scanend=1489617518 srcip=172.16.11.71 srcport=62186 dstip=172.217.5.99 dstport=80 md5=26c9ec01cc0cfb0b7062b430dd108e31 sha1=0fa1f246b66e7b9709d402d55db61875d315a8e1 sha256=95b0c4f07e79793bb65a58b73697f321f0ab85c00bd2ad39d00f7e21973a0366 risk="Clean" mname="N/A" fname="crl-set-delta-3610-12492693973155763449.crx.data" proto=HTTP suser="FG100D3G15806217" stype="Device" clientdev="FG100D3G15806217" clientname="JOEGATE100D:root" clientvd="root" url="http://www.gstatic.com/chrome/crlset/3611/crl-set-delta-3610-12492693973155763449.crx.data"]]></testEvent>
+    <testEvent><![CDATA[<191>date=2017-08-22 time=08:41:39 devhost="FSAVM0I000008883" devid="FSAVM0I000008883" devname="FSAVM0I000008883" tzone=7200 tz="CEST" date="2017-08-22" time="08:41:39" logid="0100000000" type="event" subtype="system" level="debug" user="system" ui="system" action="oftpd_file" status="success" reason="none" letype=1 fname="ZUJheUlTQVBJ" sha256="388244a1f57d46db89997d991a6056da0f5a8bde5b6cb2690e9b77d4f358ffee" sha1="6eec52ec44cc32841ff3e58d1e54e6c350d410cd" msg="FGT51E3U16001698 (root) submitted file. fname=\"eBayISAPI.dll\" sha256=388244a1f57d46db89997d991a6056da0f5a8bde5b6cb2690e9b77d4f358ffee sha1=6eec52ec44cc32841ff3e58d1e54e6c350d410cd"]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patId"><![CDATA[\d{2}]]></pattern>
+    <pattern name="patSlash"><![CDATA[[^/]+]]></pattern>
+  </patternDefinitions>
+
+  <!--
+    FSA1KD3A15000057
+    FSAVM0E000008774
+    FSA-VM00
+    FSA-VM-Win8-1
+    FSA-VME0000002013
+  -->
+  <eventFormatRecognizer><![CDATA[\s+(?:devid|device_id)="?(?:FSA\d\w*|FSA-?VM\d\w*|FSA-VM-\S+|FSA-VME\d+)"?\s]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>?<:gPatYear>-<:gPatMonNum>-<:gPatDay>T<:gPatTime>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>?<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>(?:\s+<:gPatHostName>)?\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>?<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <setEventAttribute attr="eventType">FortiSandbox-Generic</setEventAttribute>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="type" key="type"/>
+      <attrKeyMap attr="subtype" key="subtype"/>
+      <attrKeyMap attr="categoryType" key="category"/>
+      <attrKeyMap attr="virusName" key="botnetname"/>
+      <attrKeyMap attr="_clientname" key="clientname"/>
+      <attrKeyMap attr="_date" key="date"/>
+      <attrKeyMap attr="_dstipport" key="dstipport"/>
+      <attrKeyMap attr="_ip" key="ip"/>
+      <attrKeyMap attr="_logId" key="logid"/>
+      <attrKeyMap attr="_proto" key="service"/>
+      <attrKeyMap attr="_severity" key="level"/>
+      <attrKeyMap attr="_srcipport" key="srcipport"/>
+      <attrKeyMap attr="_time" key="time"/>
+      <attrKeyMap attr="_tz" key="tzone"/>
+      <attrKeyMap attr="attackName" key="attackname"/>
+      <attrKeyMap attr="attackName" key="mname"/>
+      <attrKeyMap attr="cpuUtil" key="cpu"/>
+      <attrKeyMap attr="destIpAddr" key="dstip"/>
+      <attrKeyMap attr="destIpAddr" key="sip"/>
+      <attrKeyMap attr="destIpPort" key="dstport"/>
+      <attrKeyMap attr="diskUtil" key="disk"/>
+      <attrKeyMap attr="errReason" key="reason"/>
+      <attrKeyMap attr="fileName" key="filename"/>
+      <attrKeyMap attr="fileName" key="fname"/>
+      <attrKeyMap attr="fileType" key="ftype"/>
+      <attrKeyMap attr="hashMD5" key="md5"/>
+      <attrKeyMap attr="hashSHA256" key="sha256"/>
+      <attrKeyMap attr="hashSHA1" key="sha1"/>
+      <attrKeyMap attr="infoURL" key="url"/>
+      <attrKeyMap attr="mailSubject" key="subject"/>
+      <attrKeyMap attr="memUtil" key="mem"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="osType" key="vmos"/>
+      <attrKeyMap attr="receiverMailAddr" key="emailrcvr"/>
+      <attrKeyMap attr="reptDevName" key="devhost"/>
+      <attrKeyMap attr="resourceName" key="rsrc"/>
+      <!-- Seen in some neturl alerts risklevel is present -->
+      <attrKeyMap attr="riskName" key="risklevel"/>
+      <attrKeyMap attr="riskName" key="rating"/>
+      <attrKeyMap attr="riskName" key="risk"/>
+      <attrKeyMap attr="senderMailAddr" key="emailsndr"/>
+      <attrKeyMap attr="serialNumber" key="clientdev"/>
+      <attrKeyMap attr="srcIpAddr" key="cip"/>
+      <attrKeyMap attr="srcIpAddr" key="srcip"/>
+      <attrKeyMap attr="srcIpPort" key="srcport"/>
+      <attrKeyMap attr="srcName" key="host"/>
+      <attrKeyMap attr="srcUser" key="susr"/>
+      <attrKeyMap attr="status" key="status"/>
+      <attrKeyMap attr="srcType" key="stype"/>
+      <attrKeyMap attr="srcUser" key="suser"/>
+      <attrKeyMap attr="user" key="user"/>
+      <attrKeyMap attr="vdom" key="clientvd"/>
+      <attrKeyMap attr="vdom" key="vd"/>
+      <attrKeyMap attr="virusId" key="virusid"/>
+      <attrKeyMap attr="ipsSignatureId" key="attackid"/>
+      <attrKeyMap attr="virusName" key="mname"/>
+      <attrKeyMap attr="jobId" key="jobid"/>
+      <attrKeyMap attr="jobStatus" key="jstatus"/>
+    </collectFieldsByKeyValuePair>
+    <when test="exist _date">
+      <collectFieldsByRegex src="$_date">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>]]></regex>
+      </collectFieldsByRegex>
+      <choose>
+        <when test="not_exist _tz">
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </when>
+        <otherwise>
+          <when test="matches($_tz, '^\d')">
+            <setEventAttribute attr="_tz">combineMsgId("+", $_tz)</setEventAttribute>
+          </when>
+          <setEventAttribute attr="_tz">combineMsgId($_tz, "sec")</setEventAttribute>
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </otherwise>
+      </choose>
+    </when>
+
+    <!-- Some msg fields also have kv pairs -->
+    <when test="exist msg">
+      <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$msg">
+        <attrKeyMap attr="fileName" key="filename"/>
+        <attrKeyMap attr="hashMD5" key="md5"/>
+        <attrKeyMap attr="hashSHA1" key="sha1"/>
+        <attrKeyMap attr="hashSHA256" key="sha256"/>
+        <attrKeyMap attr="jobId" key="jobid"/>
+      </collectFieldsByKeyValuePair>
+    </when>
+    <!--
+         categoryId:
+         01 = LOG_C0_EVENT
+         10 = LOG_C0_MALWARE
+         11 = LOG_C0_NETALERT
+         12 = LOG_C0_SLOGALERTS
+    -->
+    <collectFieldsByRegex src="$_logId">
+      <regex><![CDATA[<_categoryId:patId><_subCategoryId:patId>\d+]]></regex>
+    </collectFieldsByRegex>
+    <choose>
+      <when test="not_exist _categoryId"/>
+      <when test="$_categoryId = '01'">
+        <setEventAttribute attr="eventType">FortiSandbox-Event-Generic</setEventAttribute>
+        <choose>
+          <!-- 0106 are system events -->
+          <when test="$_subCategoryId = '06'">
+            <setEventAttribute attr="eventType">FortiSandbox-System</setEventAttribute>
+            <choose>
+              <when test="not_exist msg"/>
+              <when test="matches($msg, 'Start processing file:')">
+                <setEventAttribute attr="eventType">FortiSandbox-System-Start-Processing-File</setEventAttribute>
+              </when>
+              <when test="matches($msg, 'Fetching file for new job\.')">
+                <setEventAttribute attr="eventType">FortiSandbox-System-Fetching-File</setEventAttribute>
+              </when>
+              <when test="matches($msg, '^System status: ')">
+                <setEventAttribute attr="eventType">FortiSandbox-System-Status</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+        </choose>
+      </when>
+      <when test="$_categoryId = '10'">
+        <!-- Malware -->
+        <setEventAttribute attr="eventType">FortiSandbox-Malware-Generic</setEventAttribute>
+        <when test="$_subCategoryId = '20'">
+          <setEventAttribute attr="eventType">FortiSandbox-Malware-Clean</setEventAttribute>
+        </when>
+
+        <choose>
+          <when test="not_exist riskName"/>
+          <when test="$riskName = 'Clean'">
+            <setEventAttribute attr="eventType">FortiSandbox-Malware-Clean</setEventAttribute>
+          </when>
+          <when test="$riskName IN 'Malicious, High Risk, Medium Risk, Low Risk'">
+            <setEventAttribute attr="eventType">FortiSandbox-Malware-Detected</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+      <when test="$_categoryId = '11'">
+        <setEventAttribute attr="eventType">FortiSandbox-NetAlert-Generic</setEventAttribute>
+        <choose>
+          <when test="$_subCategoryId = '17'">
+            <setEventAttribute attr="eventType">FortiSandbox-NetAlert-Attack</setEventAttribute>
+          </when>
+          <when test="$_subCategoryId = '18'">
+            <setEventAttribute attr="eventType">FortiSandbox-NetAlert-Botnet</setEventAttribute>
+          </when>
+          <when test="$_subCategoryId = '19'">
+            <setEventAttribute attr="eventType">FortiSandbox-NetAlert-URL</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+      <when test="exist type">
+        <!-- If log id not matching, set event type based on type-subtype -->
+        <when test="exist subtype">
+          <setEventAttribute attr="eventType">combineMsgId("FortiSandbox-", $type, "-", $subtype)</setEventAttribute>
+        </when>
+      </when>
+    </choose>
+
+    <!-- General attribute parsing -->
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+    <when test="exist _ip">
+      <setEventAttribute attr="hostIpAddr">replaceStringByRegex($_ip, "/.*", "")</setEventAttribute>
+    </when>
+    <when test="exist _srcipport">
+      <collectFieldsByRegex src="$_srcipport">
+        <regex><![CDATA[<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatIpPort>]]></regex>
+      </collectFieldsByRegex>
+    </when>
+    <when test="exist _dstipport">
+      <collectFieldsByRegex src="$_dstipport">
+        <regex><![CDATA[<destIpAddr:gPatIpAddr>:<destIpPort:gPatIpPort>]]></regex>
+      </collectFieldsByRegex>
+    </when>
+    <choose>
+      <when test="not_exist _severity"/>
+      <when test="$_severity = 'critical'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_severity = 'alert'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_severity = 'error'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_severity = 'warning'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist infoURL">
+      <setEventAttribute attr="destName">extractHostFromURL($infoURL)</setEventAttribute>
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$infoURL">
+            <regex><![CDATA[/$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$infoURL">
+            <regex><![CDATA[<_fileName:patSlash>$]]></regex>
+          </collectFieldsByRegex>
+          <when test="not_exist fileName">
+            <setEventAttribute attr="fileName">$_fileName</setEventAttribute>
+          </when>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <when test="exist attackName">
+      <!-- Try to parse virus name after the colon "applications3: W32/Encoder!tr" -->
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$attackName">
+            <regex><![CDATA[:\s+<virusName:gPatMesgBody>$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <when test="exist _clientname">
+      <collectFieldsByRegex src="$_clientname">
+        <regex><![CDATA[<hostName:gPatHostName>:<vdom:gPatStr>]]></regex>
+      </collectFieldsByRegex>
+    </when>
+    <when test="not_exist user">
+      <when test="exist srcUser">
+        <setEventAttribute attr="user">$srcUser</setEventAttribute>
+      </when>
+    </when>
+    <!-- Normalize hash to hashCode and set hashAlgo -->
+    <choose>
+      <when test="exist hashSHA256">
+        <setEventAttribute attr="hashAlgo">sha256</setEventAttribute>
+        <setEventAttribute attr="hashCode">$hashSHA256</setEventAttribute>
+      </when>
+      <when test="exist hashSHA1">
+        <setEventAttribute attr="hashAlgo">sha1</setEventAttribute>
+        <setEventAttribute attr="hashCode">$hashSHA1</setEventAttribute>
+      </when>
+      <when test="exist hashMD5">
+        <setEventAttribute attr="hashAlgo">md5</setEventAttribute>
+        <setEventAttribute attr="hashCode">$hashMD5</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

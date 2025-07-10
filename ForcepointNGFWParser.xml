@@ -1,0 +1,118 @@
+<eventParser name="ForcepointNGFWParser">
+  <deviceType>
+    <Vendor>Forcepoint</Vendor>
+    <Model>NG Firewall</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<6>CEF:0|McAfee|IPS|5.4.3|70018|Connection_Allowed|0|spt=123 deviceExternalId=PAC-NY-GCS01 node 1 dmac=84:B2:61:DC:E1:31 dst=1.1.1.1 cat=System Situations app=NTP (UDP) rt=Apr 08 2016 00:26:13 deviceFacility=Inspection act=Allow deviceOutboundInterface=Interface #5 deviceInboundInterface=Interface #4 proto=17 dpt=123 src=10.64.9.3 dvc=172.17.2.17 dvchost=172.17.2.17 smac=78:DA:6E:0D:FF:C0 cs1Label=RuleId cs1=2097152.6]]></testEvent>
+    <testEvent><![CDATA[<6>CEF:0|FORCEPOINT|Alert|6.0.1|71257|TCP_Segment-SYN-No-Options|0|spt=2890 deviceExternalId=PCI-V2 node 1 dmac=00:50:56:86:5E:16 dst=192.168.91.67 app=TCP/30152 rt=Sep 22 2016 23:38:00 deviceFacility=Packet filter act=Terminate deviceInboundInterface=2 proto=6 dpt=30152 src=192.168.155.35 dvc=192.168.94.51 dvchost=192.168.94.51 smac=00:10:DB:FF:10:01 cs1Label=RuleId cs1=97.0]]></testEvent>
+    <testEvent><![CDATA[<6>CEF:0|FORCEPOINT|Firewall|6.7.2|70021|Connection_Closed|0|in=184 out=183 app=DNS (UDP) rt=Dec 21 2020 13:46:19 deviceFacility=Packet Filtering deviceInboundInterface=128 proto=17 dpt=53 spt=43131 dst=172.16.109.201 src=172.16.105.205 dvchost=172.21.9.122 dvc=172.21.9.122 deviceExternalId=CBKFP02 cs1Label=RuleID cs1=732.4]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patMod"><![CDATA[McAfee|FORCEPOINT]]></pattern>
+    <pattern name="patMod2"><![CDATA[Alert|Firewall|IPS]]></pattern>
+    <pattern name="patVBar"><![CDATA[[^|]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>CEF:\d+\|<:patMod>\|<:patMod2>\|[\d.]+\|\d+\|<:patVBar>\|\d+\|]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>CEF:\d+\|<:patMod>\|<:patMod2>\|[\d.]+\|\d+\|<_eventType:patVBar>\|<eventSeverity:gPatInt>\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">combineMsgId("Forcepoint-NGFW-", $_eventType)</setEventAttribute>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_body">
+      <attrKeyMap attr="fwAction" key="act"/>
+      <attrKeyMap attr="appTransportProto" key="app"/>
+      <attrKeyMap attr="devEventTypeGrp" key="cat"/>
+      <attrKeyMap attr="_cs1" key="cs1"/>
+      <attrKeyMap attr="_cs1Label" key="cs1Label"/>
+      <attrKeyMap attr="destServiceName" key="destinationServiceName"/>
+      <attrKeyMap attr="domain" key="deviceExternalId"/>
+      <attrKeyMap attr="facilityName" key="deviceFacility"/>
+      <attrKeyMap attr="srcIntfName" key="deviceInboundInterface"/>
+      <attrKeyMap attr="destIntfName" key="deviceOutboundInterface"/>
+      <attrKeyMap attr="destMACAddr" key="dmac"/>
+      <attrKeyMap attr="destIpPort" key="dpt"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="reptIpAddr" key="dvc"/>
+      <attrKeyMap attr="_reptDevName" key="dvchost"/>
+      <attrKeyMap attr="recvBytes64" key="in"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="sentBytes64" key="out"/>
+      <attrKeyMap attr="ipProto" key="proto"/>
+      <attrKeyMap attr="httpMethod" key="requestMethod"/>
+      <attrKeyMap attr="infoURL" key="requestURL"/>
+      <attrKeyMap attr="_rt" key="rt"/>
+      <attrKeyMap attr="srcMACAddr" key="smac"/>
+      <attrKeyMap attr="srcIpPort" key="spt"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist appTransportProto">
+      <collectFieldsByRegex src="$_body">
+        <regex><![CDATA[(?: |^\s*)app=<appTransportProto:gPatMesgBodyMin>(?: \S+=|\s*$)]]></regex>
+      </collectFieldsByRegex>
+    </when>
+
+    <when test="exist devEventTypeGrp">
+      <collectFieldsByRegex src="$_body">
+        <regex><![CDATA[(?: |^\s*)cat=<devEventTypeGrp:gPatMesgBodyMin>(?: \S+=|\s*$)]]></regex>
+      </collectFieldsByRegex>
+    </when>
+
+    <when test="exist domain">
+      <collectFieldsByRegex src="$_body">
+        <regex><![CDATA[(?: |^\s*)deviceExternalId=<domain:gPatMesgBodyMin>(?: \S+=|\s*$)]]></regex>
+      </collectFieldsByRegex>
+    </when>
+
+    <when test="exist msg">
+      <collectFieldsByRegex src="$_body">
+        <regex><![CDATA[(?: |^\s*)msg=<msg:gPatMesgBodyMin>(?: \S+=|\s*$)]]></regex>
+      </collectFieldsByRegex>
+    </when>
+
+    <when test="$eventSeverity = '0'">
+      <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist _cs1Label"/>
+      <when test="not_exist _cs1"/>
+      <when test="$_cs1Label = 'RuleID'">
+        <setEventAttribute attr="ruleIdStr">$_cs1</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _rt">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_rt">
+            <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _reptDevName">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_reptDevName">
+            <regex><![CDATA[<:gPatIpAddr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="reptDevName">$_reptDevName</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+  </parsingInstructions>
+</eventParser>

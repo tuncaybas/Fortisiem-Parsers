@@ -1,0 +1,1848 @@
+
+<eventParser name="FortiSwitchParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiSwitch</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<186>date=2019-07-15 time=13:33:03 devname=LabBox01 device_id=S248EFTF18007011 log_id=0103030201 type=event subtype=system pri=critical vd=root user="admin" ui=ssh(192.168.1.25) action=reboot msg="User admin rebooted the device from ssh(192.168.1.25)."]]></testEvent>
+    <testEvent><![CDATA[<190>date=2019-12-31 time=18:01:56 devname=LabBox01 device_id=S248EFTF18007011 log_id=0100001400 type=event subtype=link pri=information vd=root unit="primary" switch.physical-port="port25" status="up" msg="primary switch port port25 has come up"]]></testEvent>
+    <testEvent><![CDATA[<190>date=2019-07-15 time=13:44:32 devname=LabBox01 device_id=S248EFTF18007011 log_id=0103030531 type=event subtype=system pri=information vd="root" user="FortiLink" ui="httpsd" action=edit cfg_tid=59834451 cfg_path="system.admin" cfg_obj="admin" cfg_attr="password[ENC AK1gpbp7SdbtvA+h3LMxem0zHGaPlNkNFrJDcWl0cJPBek=->ENC AK1XbCbPcHZ7fFCa3dqsrxSwVdZ3GXuaAcIvd1Bp5by8Gk=]" msg="Edit system.admin admin"]]></testEvent>
+    <testEvent><![CDATA[<189>date=2021-05-17 time=11:53:03 devname=LabSwitch04 device_id=S108DV3A17000028 log_id=0103032001 type=event subtype=system pri=notice vd=root sn=1621277583 user="admin" ui=https(192.168.10.12) method=https srcip=192.168.10.12 dstip=10.0.0.1 action=login status=success reason=none profile="super_admin" msg="Administrator admin logged in successfully from https(192.168.10.12)"]]></testEvent>
+    <testEvent><![CDATA[<190>date=2021-05-17 time=11:08:25 devname=LabSwitch04 device_id=S108DV3A17000028 log_id=0103030530 type=event subtype=system pri=information vd="root" user="admin" ui="ssh(192.168.10.12)" action=edit cfg_tid=179175427 cfg_path="log.syslogd2.setting" cfg_attr="status[disable->enable]server[->172.30.58.54]" msg="Edit log.syslogd2.setting "]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patId"><![CDATA[\d{5}]]></pattern>
+    <pattern name="patFloat"><![CDATA[\d+(?:\.\d+)?]]></pattern>
+    <pattern name="patSN"><![CDATA[(?:FS|FSW|S|SR)-?\d\w*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\s(?:device_id|devid)="?(?:<:patSN>)"?\s+]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+
+    <!-- parsing common fields -->
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<_reptDevName:gPatHostName>)\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>?<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+
+    <setEventAttribute attr="eventType">"FortiSwitch-Generic"</setEventAttribute>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_body">
+      <attrKeyMap attr="action" key="action"/>
+      <attrKeyMap attr="configValue" key="cfg_attr"/>
+      <attrKeyMap attr="osObjName" key="cfg_obj"/>
+      <attrKeyMap attr="objectPath" key="cfg_path"/>
+      <attrKeyMap attr="_date" key="date"/>
+      <attrKeyMap attr="deviceIdentification" key="device_id"/>
+      <attrKeyMap attr="_reptDevName" key="devname"/>
+      <attrKeyMap attr="destIpAddr" key="dstip"/>
+      <attrKeyMap attr="_duration" key="duration"/>
+      <attrKeyMap attr="logID" key="log_id"/>
+      <attrKeyMap attr="authenMethod" key="method"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="role" key="newrole"/>
+      <attrKeyMap attr="configValue" key="newstate"/>
+      <attrKeyMap attr="oldSettingsValue" key="oldrole"/>
+      <attrKeyMap attr="oldSettingsValue" key="oldstate"/>
+      <attrKeyMap attr="destIpPort" key="port"/>
+      <attrKeyMap attr="profileDetails" key="profile"/>
+      <attrKeyMap attr="reason" key="reason"/>
+      <attrKeyMap attr="serialNumber" key="sn"/>
+      <attrKeyMap attr="srcIpAddr" key="srcip"/>
+      <attrKeyMap attr="operationalState" key="state"/>
+      <attrKeyMap attr="status" key="status"/>
+      <attrKeyMap attr="subtype" key="subtype"/>
+      <attrKeyMap attr="devPort" key="switch.physical-port"/>
+      <attrKeyMap attr="_time" key="time"/>
+      <attrKeyMap attr="type" key="type"/>
+      <attrKeyMap attr="user" key="user"/>
+      <attrKeyMap attr="unitId" key="unit"/>
+      <attrKeyMap attr="_ui" key="ui"/>
+      <attrKeyMap attr="vdom" key="vd"/>
+      <attrKeyMap attr="_severity" key="pri"/>
+      <!-- automation stitch events -->
+      <attrKeyMap attr="ruleName" key="stitch"/>
+      <attrKeyMap attr="trigger" key="trigger"/>
+      <attrKeyMap attr="action" key="stitchaction"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist _reptDevName">
+      <setEventAttribute attr="reptDevName">$_reptDevName</setEventAttribute>
+      <setEventAttribute attr="reptDevIpAddr">resolveDNSName($reptDevName)</setEventAttribute>
+    </when>
+
+
+    <collectFieldsByRegex src="$logID">
+      <!-- Matches last 5 digits of log id. 0103032001 becomes 32001 -->
+      <regex><![CDATA[<_id:patId>\D*$]]></regex>
+    </collectFieldsByRegex>
+
+    <when test="exist _ui">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_ui">
+            <regex><![CDATA[<authenMethod:gPatStrLeftParen>\(<srcIpAddr:gPatIpAddr>\)]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="authenMethod">$_ui</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+    <choose>
+      <when test="exist _timestamp">
+        <setEventAttribute attr="deviceTime">$_timestamp</setEventAttribute>
+      </when>
+      <when test="exist _date">
+        <collectFieldsByRegex src="$_date">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>]]></regex>
+        </collectFieldsByRegex>
+        <choose>
+          <when test="exist _tz">
+            <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+      <when test="exist _dtime">
+        <setEventAttribute attr="deviceTime">$_dtime</setEventAttribute>
+      </when>
+    </choose>
+
+
+    <choose>
+      <!-- EventType format is FortiSwitch-<subtype>-<event> -->
+      <!-- Link Messages -->
+      <when test="$_id IN '01000'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-Physical-port-changed</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[<intfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '01001'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-Physical-port-active-trunk-member</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[Physical port \(<intfName:gPatStr>\) became active member of trunk \(<:gPatStr>\)]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '01002'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-Physical-port-inactive-trunk-member</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[Physical port \(<intfName:gPatStr>\) became non-active member of trunk \(<:gPatStr>\)]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '01003'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-Trunk-failed-to-add-physical-port</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[failed to add <intfName:gPatStr> to trunk <:gPatStr> error=\s*<errReason:gPatStr> rollback=\s*<:gPatWord>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[failed to set member <intfName:gPatStr> ipmac-binding-status\(status\) error=\s*<errReason:gPatStr> rollback=\s*<:gPatWord>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '01004'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-Trunk-failed-to-remove-physical-port</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[failed to remove <intfName:gPatStr> from trunk <:gPatStr> error=\s*<errReason:gPatStr> rollback=\s*<:gPatWord>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[failed to set member <intfName:gPatStr> ipmac-binding-status\(<status:gPatStr>\) error=<errReason:gPatStr> rollback=<:gPatWord>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[Failed to set member <intfName:gPatStr> source-guard status error=<errReason:gPatStr> rollback=<:gPatWord>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[failed to fetch VLANs for trunk member <intfName:gPatStr> error=<errReason:gPatStr> rollback=<:gPatWord>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[unable to remove member <intfName:gPatStr> error=<errReason:gPatMesgBody> ]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[Failed to get native vlan of trunk member <intfName:gPatStr> error=<errReason:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '01050,1051,1052,1053,1054,1055,1056,1057'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-DMI-port-changed</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[<intfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '01200'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-Trunk-status</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[<intfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '01250'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-Loopback-error</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[An illegal loopback occurred on adapter \(<intfName:gPatStr>\)\s*Check the configuration to verify that all adapters are connected to 802.3ad compliant switch ports.]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '01300'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-ICL-ACL-change</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[MCLAG: ICL ACL change ingress-port-bitmap=<srcIntfName:gPatStr> , egress-block-port-bitmap=<destIntfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '01301'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-An-MCLAG-peer-lost</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[MCLAG: lost peer info for trunk\(<intfName:gPatStr>\) peer-timeout\(<:gPatInt>\) sb\(<:gPatStr>\)]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '01302'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-Model-mismatch-of-MCLAG-peers</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[MCLAG: \*\*Unsupported config, peer model mismatch local-model\(<hostModel:gPatStr>\) peer-model\(<:gPatStr>\)]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '01303'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-Model-mismatch-of-MCLAG-peers-fixed</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[MCLAG: Cleared \*\*Unsupported config, peer model mismatch local-model\(<hostModel:gPatStr>\) peer-model\(<:gPatStr>\)]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '01304'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-Software-mismatch-of-MCLAG-peers</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[MCLAG: \*\*peer software mismatch local-software\(<version:gPatStr>\) peer-software\(<:gPatStr>\)]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '01305'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-Software-mismatch-of-MCLAG-peers-fixed</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[MCLAG: Cleared \*\*peer software mismatch local-software\(<version:gPatStr>\) peer-software\(<:gPatStr>\)]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '01306'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-One-MCLAG-peer-link-up</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[MCLAG: <intfName:gPatStr> at least one peer link up]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '01307'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-All-MCLAG-peer-links-down</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[MCLAG: <intfName:gPatStr> all peer link down]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '01308'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-MCLAG-peer-misconfig</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[MCLAG: <intfName:gPatStr> peer misconfigured]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '01309'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-MCLAG-peer-misconfig-fixed</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[MCLAG: <intfName:gPatStr> peer misconfiguration cleared]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '01310'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-MCLAG-misconfig</setEventAttribute>
+        <!-- no parsable attribs in msg body -->
+      </when>
+      <when test="$_id IN '01311'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-MAC-addrs-unsynchronized-in-MCLAG-peers</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[MCLAG: <:gPatStr> ports=<intfName:gPatStr> MAC mismatch]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '01312'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-ACL-failure</setEventAttribute>
+        <!-- no parsable attribs in msg body -->
+      </when>
+      <when test="$_id IN '01313'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-MCLAG-peer-joined</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[MCLAG peer <intfName:gPatStr> joined.]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '01314'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-Split-brain-state-detected</setEventAttribute>
+        <!-- no parsable attribs in msg body -->
+      </when>
+      <when test="$_id IN '01315'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-VLAN-config-failure</setEventAttribute>
+        <!-- no parsable attribs in msg body -->
+      </when>
+      <when test="$_id IN '01400'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-port-up</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[<serialNumber:gPatStr> switch port <intfName:gPatStr> has come up]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '01401'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-port-down</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[<serialNumber:gPatStr> switch port <intfName:gPatStr> has gone down]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '01450'">
+        <setEventAttribute attr="eventType">FortiSwitch-Link-interface-status-changed</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[interface <intfName:gPatStr> link status is <status:gPatWord>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <!-- PoE Messages -->
+      <when test="$_id IN '02000'">
+        <setEventAttribute attr="eventType">FortiSwitch-PoE-controller-resynchronizing</setEventAttribute>
+        <!-- No parsable attribs in msg -->
+      </when>
+      <when test="$_id IN '02001'">
+        <setEventAttribute attr="eventType">FortiSwitch-PoE-controller-resynchronized</setEventAttribute>
+        <!-- No parsable attribs in msg -->
+      </when>
+      <when test="$_id IN '02002'">
+        <setEventAttribute attr="eventType">FortiSwitch-PoE-system-mask-set</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[system mask <netmask:gPatStr> has been set]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '02003'">
+        <setEventAttribute attr="eventType">FortiSwitch-PoE-port-settings-restored</setEventAttribute>
+        <!-- No parsable attribs in msg -->
+      </when>
+      <when test="$_id IN '02004'">
+        <setEventAttribute attr="eventType">FortiSwitch-PoE-disabled-on-overloaded-port</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[Port <intfName:gPatStr> Overload state. POE disabled]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '02005'">
+        <setEventAttribute attr="eventType">FortiSwitch-PoE-guard-band-and-power-budget-set</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[guard band <minEnvPower:gPatInt> and power budget <maxSpecEnvPower:gPatInt> been set]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '02006'">
+        <setEventAttribute attr="eventType">FortiSwitch-PoE-settings-saved</setEventAttribute>
+        <!-- No parsable attribs in msg -->
+      </when>
+      <when test="$_id IN '02007'">
+        <setEventAttribute attr="eventType">FortiSwitch-PoE-factory-reset</setEventAttribute>
+        <!-- No parsable attribs in msg -->
+      </when>
+      <when test="$_id IN '02008'">
+        <setEventAttribute attr="eventType">FortiSwitch-PoE-unit-test</setEventAttribute>
+        <!-- No parsable attribs in msg -->
+      </when>
+      <when test="$_id IN '02010'">
+        <setEventAttribute attr="eventType">FortiSwitch-PoE-negotiate-in-LLDP-MED-config</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[lldp poe info received from <intfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '02011'">
+        <setEventAttribute attr="eventType">FortiSwitch-PoE-port-temp-exceeded-threshold</setEventAttribute>
+        <!-- Need further sample events to parse message -->
+      </when>
+      <when test="$_id IN '02013'">
+        <setEventAttribute attr="eventType">FortiSwitch-PoE-LLDP-disabled</setEventAttribute>
+        <!-- No parsable attribs in msg -->
+      </when>
+      <when test="$_id IN '02014'">
+        <setEventAttribute attr="eventType">FortiSwitch-PoE-port-temperature</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[port="<intfName:gPatStr>"  Temperature = "<envTempDegC:gPatInt>"]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <!-- Router log messages -->
+      <when test="$_id IN '03000'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-Layer3-hardware-route-table-full</setEventAttribute>
+        <!-- No parsable attribs in msg -->
+      </when>
+      <when test="$_id IN '03001'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-Layer3-egress-host-route-table-full</setEventAttribute>
+        <!-- No parsable attribs in msg -->
+      </when>
+      <when test="$_id IN '03002'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-Policy-based-routing-failed</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[PBR ACL add failed. UniqIdx: <:gPatStr> IfIndex: <:gPatStr> Error: <errReason:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03050'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-Gateway-group-state-change-or-routing-information-changed</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[The status of <intfName:gPatStr> for gateway group <srcIpAddr:gPatIpAddr> is state <status:gPatWord>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03100'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-Router-out-of-memory</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[finds a pointer pointing to a wrong addressInterface <intfName:gPatStr> Out of memory in <srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03101'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-Interface-cannot-be-found</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[cannot find the corresponding interface by nameInterface <intfName:gPatStr> not found in <srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03102'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-Intf-uses-Mobile-IPv6-extensions</setEventAttribute>
+        <!-- No parsable attribs in msg -->
+      </when>
+      <when test="$_id IN '03103'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-RtrAdvInterval-out-of-range</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[MinRtrAdvInterval using Mobile Ipv6 extension is out of rangeMinRtrAdvInterval for <intfName:gPatStr> must be between <:gPatWord> and <:gPatWord>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[MinRtrAdvInterval is out of rangeMinRtrAdvInterval must be between <:gPatWord> and <:gPatWord> for <intfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[MaxRtrAdvInterval using Mobile Ipv6 extension is out of rangeMaxRtrAdvInterval for <intfName:gPatStr> must be between <:gPatWord> and <:gPatWord>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[MaxRtrAdvInterval is out of rangeMaxRtrAdvInterval must be between <:gPatWord> and <:gPatWord> for <intfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03105'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-AdvLinkMTU-out-of-range-or-too-small</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[AdvLinkMTU is out of rangeAdvLinkMTU must be zero or between <:gPatWord> and <:gPatWord> for <intfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[AdvLinkMTU is too smallAdvLinkMTU must be zero or greater than <:gPatWord> for <intfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03106'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-AdvReachableTime-is-too-small</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[AdvReachableTimeis too smallAdvReachableTime must be less than <:gPatWord> for <intfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03107'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-AdvCurHopLimit-is-too-big</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[AdvCurHopLimit in Router Advertisement packet is too bigAdvCurHopLimit must not be greater than <newValue:gPatWord> for <intfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03108'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-AdvCurHopLimit-is-out-of-range</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[AdvCurHopLimit in Router Advertisement packet is out of rangeAdvDefaultLifetime for <intfName:gPatStr> must be zero or between <:gPatWord> and <:gPatWord>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03109'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-HomeAgentLifetime-out-of-range</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[HomeAgentLifetime in Router Advertisement packet is out of rangeHomeAgentLifetime must be between <:gPatWord> and <:gPatWord> for <intfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03110'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-AdvHomeAgentFlag-not-set</setEventAttribute>
+        <!-- No parsable attribs in msg -->
+      </when>
+      <when test="$_id IN '03111'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-Prefix-length-too-long</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[invalid prefix length for <intfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03112'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-AdvValidLifetime-less-than-AdvPreferredLifetime</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[must be greater than <:gPatWord> for <intfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03113'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-RA-daemon-failed-to-create-IPv6-socket</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[radvd failed to create an IPv6 socket <srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03114'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-RA-daemon-failed-to-set-IPv6-options</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[option:?\s+<srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03116'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-RA-daemon-failed-to-create-query</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[create query to interface at <srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03117'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-RA-daemon-internal-error</setEventAttribute>
+        <!-- No parsable attribs in msg -->
+      </when>
+      <when test="$_id IN '03118'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-RA-daemon-cant-find-a-virtual-intf</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[Radvd failed to find a virtual interface by interface indexInterface <intfName:gPatStr> not found in the list]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03119'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-RA-daemon-unloaded-or-reloaded-intf</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[Interface <intfName:gPatStr> unloaded]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[Interface <intfName:gPatStr> reloaded]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03120'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-RA-daemon-recv-packet-without-packet-info</setEventAttribute>
+        <!-- No parsable attribs in msg -->
+      </when>
+      <when test="$_id IN '03121'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-RA-daemon-recv-ICMPv6-packet-with-invalid-length</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[invalid length: <recvBytes64:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03122'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-RA-daemon-recv-unwanted-ICMPv6-packet</setEventAttribute>
+        <!-- No parsable attribs in msg -->
+      </when>
+      <when test="$_id IN '03123'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-RA-daemon-recv-ICMPv6-RA-packet-invalid-len</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[invalid length: <recvBytes64:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03124'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-RA-daemon-recv-ICMPv6-RA-packet-non-link-local-src-addr</setEventAttribute>
+        <!-- No parsable attribs in msg -->
+      </when>
+      <when test="$_id IN '03125'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-RA-daemon-recv-ICMPv6-RS-packet-invalid-length</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[invalid length: <recvBytes64:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03126'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-RA-daemon-recv-ICMPv6-RS-or-RA-packet-invalid-code</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[invalid code: <code:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03127'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-RA-daemon-recv-ICMPv6-packet-invalid-hop-limit</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[invalid hoplimit <hopNum:gPatInt> from <intfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03128'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-AdvCurHopLimit-does-not-agree-with-remote-site</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[AdvCurHopLimit on <hopNum:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03129'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-AdvManagedFlag-does-not-agree-with-remote-site</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[AdvManagedFlag on our interface does not agree with a remote siteour AdvManagedFlag on local_value doesn't agree with remote_value]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03130'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-AdvOtherConfigFlag-does-not-agree-with-remote-site</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[AdvOtherConfigFlag on <flag:gPatWord> doesn't agree with <:gPatWord>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03131'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-AdvReachableTime-does-not-agree-with-remote-site</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[AdvReachableTime on <flag:gPatWord> doesn't agree with <:gPatWord>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03132'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-Local-AdvRetransTimer-does-not-agree-with-remote-site</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[AdvRetransTimer on <cpFromTimer:gPatInt> doesn't agree with <:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03133'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-RA-daemon-found-extra-data-in-RA-packet</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[garbage in RA on <destIpAddr:gPatIpAddr> from <srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03134'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-RA-daemon-found-RA-packet-without-option-data</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[length option in RA on <destIpAddr:gPatIpAddr> from <srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03135'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-RA-packet-opt-len-greater-than-total-length</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[total length in RA on <destIpAddr:gPatIpAddr> from <srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03136'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-AdvLinkMTU-does-not-agree-with-remote-site</setEventAttribute>
+      </when>
+      <when test="$_id IN '03137'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-AdvValidLifetime-does-not-agree-with-remote-site</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[AdvValidLifetime on <hostIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03138'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-AdvPreferredLifetime-does-not-agree-with-remote-site</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[AdvPreferredLifetime on <hostIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03139'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-RA-daemon-invalid-opt-in-RA-packet-from-remote-site</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[invalid option <options:gPatStr> in RA on <intfName:gPatStr> from <:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03140'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-RA-daemon-starting-or-exiting</setEventAttribute>
+      </when>
+      <when test="$_id IN '03141'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-RA-daemon-receive-message-failed</setEventAttribute>
+      </when>
+      <when test="$_id IN '03142'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-RA-daemon-received-invalid-IPv6-hop-limit</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[len=<recvBytes64:gPatInt>\s+,\s+data=<hopNum:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03143'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-RA-daemon-received-invalid-IPv6-packet-info</setEventAttribute>
+      </when>
+      <when test="$_id IN '03144'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-RA-daemon-check-member-fail-all-rtrs-multicast-grp</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[membership on <hostIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '03145'">
+        <setEventAttribute attr="eventType">FortiSwitch-RTR-RA-daemon-send-message-failed</setEventAttribute>
+      </when>
+      <!-- STP Log messages -->
+      <when test="$_id IN '08000'">
+        <setEventAttribute attr="eventType">FortiSwitch-STP-Interface-shutdown-BPDUs-detected</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[Shutting down <intfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '08001'">
+        <setEventAttribute attr="eventType">FortiSwitch-STP-BPDU-guard-resetting-interface</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[BPDU Guard: Resetting <intfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '08100'">
+        <setEventAttribute attr="eventType">FortiSwitch-STP-loop-protection-detected-BPDU-loss-on-port</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[STP Loop Protection: BPDU loss detected on Port <intfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '08101'">
+        <setEventAttribute attr="eventType">FortiSwitch-STP-loop-protection-detected-BPDUs-resumed-on-port</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[STP Loop Protection: BPDUs resumed on <intfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '08102'">
+        <setEventAttribute attr="eventType">FortiSwitch-STP-root-guard-unblocked-port</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[STP Root Guard: Un-blocking <intfName:gPatStr> \(STP instance <instanceName:gPatStr>\)]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '08103'">
+        <setEventAttribute attr="eventType">FortiSwitch-STP-root-guard-blocked-role-transition</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[STP Root Guard: Blocking Role Transition on <intfName:gPatStr> \(STP instance <instanceName:gPatStr>\)]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '08150'">
+        <setEventAttribute attr="eventType">FortiSwitch-STP-root-guard-detected-superior-BPDUs-received</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[STP Root Guard: Superior BPDUs received on <intfName:gPatStr> \(STP instance <instanceName:gPatStr>\)]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '08151'">
+        <setEventAttribute attr="eventType">FortiSwitch-STP-root-guard-detected-superior-BPDUs-stopped</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[STP Root Guard: Superior BPDUs stopped on <intfName:gPatStr> \(STP instance <instanceName:gPatStr>\)]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '08250'">
+        <setEventAttribute attr="eventType">FortiSwitch-STP-enabled-on-interface</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[user <user:gPatStr> enabled STP on <serialNumber:gPatStr> interface <intfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '08251'">
+        <setEventAttribute attr="eventType">FortiSwitch-STP-disabled-on-interface</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[user <user:gPatStr> disabled STP on <serialNumber:gPatStr> interface <intfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '08252'">
+        <setEventAttribute attr="eventType">FortiSwitch-STP-edge-port-enabled-on-interface</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[user <user:gPatStr> enabled STP on <serialNumber:gPatStr> interface <intfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '08253'">
+        <setEventAttribute attr="eventType">FortiSwitch-STP-edge-port-disabled-on-interface</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[user <user:gPatStr> disabled STP on <serialNumber:gPatStr> interface <intfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '08254'">
+        <setEventAttribute attr="eventType">FortiSwitch-STP-instance-changed-state</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[<intfName:gPatStr> port <instanceName:gPatStr> instance <user:gPatStr> changed state from <oldObjValue:gPatStr> to <newObjValue:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '08255'">
+        <setEventAttribute attr="eventType">FortiSwitch-STP-instance-changed-role</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[<intfName:gPatStr> port <instanceName:gPatStr> instance <user:gPatStr> changed role from <oldObjValue:gPatStr> to <newObjValue:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_id IN '08256'">
+        <setEventAttribute attr="eventType">FortiSwitch-STP-Port-changed-state-in-RPVST-domain</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[STP RPVST: port id <intfName:gPatStr> state changed to <operationalState:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <!-- Switch log messages -->
+      <when test="$_id IN '10000'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-802.1x-auth-port-using-MAB-is-unauthorized</setEventAttribute>
+      </when>
+      <when test="$_id IN '10001'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-802.1x-auth-port-using-MAB-is-authorized</setEventAttribute>
+      </when>
+      <when test="$_id IN '10002'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-No-auth-on-port</setEventAttribute>
+      </when>
+      <when test="$_id IN '10003'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-802.1x-auth-port-reset-to-unauthorized-mode</setEventAttribute>
+      </when>
+      <when test="$_id IN '10004'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-802.1x-auth-port-not-authorized</setEventAttribute>
+      </when>
+      <when test="$_id IN '10005'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-RADIUS-CoA-disconnected-the-802.1x-auth-session</setEventAttribute>
+      </when>
+      <when test="$_id IN '10006'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-RADIUS-CoA-bounced-the-802.1x-auth-port</setEventAttribute>
+      </when>
+      <when test="$_id IN '10007'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-RADIUS-CoA-disabled-the-802.1x-auth-port</setEventAttribute>
+      </when>
+      <when test="$_id IN '10008'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-RADIUS-CoA-reauthorized-802.1x-auth-session</setEventAttribute>
+      </when>
+      <when test="$_id IN '10009'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-RADIUS-CoA-changed-802.1x-auth-session-timeout</setEventAttribute>
+      </when>
+      <when test="$_id IN '10010'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Max-num-MAC-sessions-for-system-exceeded</setEventAttribute>
+      </when>
+      <when test="$_id IN '10011'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-MAC-session-counter-is-not-synchronized</setEventAttribute>
+      </when>
+      <when test="$_id IN '10012'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Unsupported-egress-VLAN-config</setEventAttribute>
+      </when>
+      <when test="$_id IN '10015'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Batch-install-failed</setEventAttribute>
+      </when>
+      <when test="$_id IN '10016'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Batch-add-or-delete-succeeded</setEventAttribute>
+      </when>
+      <when test="$_id IN '10017'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Max-num-of-unauthorized-MAC-sessions-exceeded</setEventAttribute>
+      </when>
+      <when test="$_id IN '10018'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Too-many-source-ports-in-dynamic-ACL</setEventAttribute>
+      </when>
+      <when test="$_id IN '10019'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Too-many-destination-ports-in-dynamic-ACL</setEventAttribute>
+      </when>
+      <when test="$_id IN '10020'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Too-many-port-ranges-in-dynamic-ACL</setEventAttribute>
+      </when>
+      <when test="$_id IN '10021'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-VLAN-changed-for-RADIUS-CoA</setEventAttribute>
+      </when>
+      <when test="$_id IN '10100'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Dynamic-ARP-inspection-messages</setEventAttribute>
+      </when>
+      <when test="$_id IN '10200'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-DHCP-snooping-messages</setEventAttribute>
+      </when>
+      <when test="$_id IN '10201'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Rogue-IPv4-DHCP-server-detected</setEventAttribute>
+      </when>
+      <when test="$_id IN '10202'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Rogue-IPv6-DHCP-server-detected</setEventAttribute>
+      </when>
+      <when test="$_id IN '10300'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Flap-guard-resetting-port</setEventAttribute>
+      </when>
+      <when test="$_id IN '10301'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Flap-guard-shutting-down-port</setEventAttribute>
+      </when>
+      <when test="$_id IN '10400'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Loop-guard-shutting-down-interface</setEventAttribute>
+      </when>
+      <when test="$_id IN '10401'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Loop-guard-resetting-interface</setEventAttribute>
+      </when>
+      <when test="$_id IN '10500'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Network-monitoring-started</setEventAttribute>
+      </when>
+      <when test="$_id IN '10501'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Network-monitoring-stopped</setEventAttribute>
+      </when>
+      <when test="$_id IN '10600'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Sticky-MAC-entries-saved</setEventAttribute>
+      </when>
+      <when test="$_id IN '10601'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Sticky-MAC-entries-cannot-be-saved</setEventAttribute>
+      </when>
+      <when test="$_id IN '10602'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Too-many-sticky-MAC-entries-saved</setEventAttribute>
+      </when>
+      <when test="$_id IN '10603'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Unsaved-sticky-MAC-entries-deleted</setEventAttribute>
+      </when>
+      <when test="$_id IN '10604'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-MAC-address-learning-limit-exceeded</setEventAttribute>
+      </when>
+      <when test="$_id IN '10700'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Static-MAC-entries-exceed-the-learning-limit</setEventAttribute>
+      </when>
+      <when test="$_id IN '10750'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Deleting-or-adding-an-access-VLAN-failed</setEventAttribute>
+      </when>
+      <when test="$_id IN '10751'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Automatic-mirror-config-failed</setEventAttribute>
+      </when>
+      <when test="$_id IN '10752'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Automatic-mirror-config-completed</setEventAttribute>
+      </when>
+      <when test="$_id IN '10753'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Mirroring-might-be-interrupted</setEventAttribute>
+      </when>
+      <when test="$_id IN '10754'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Automatic-mirror-config-stopping</setEventAttribute>
+      </when>
+      <when test="$_id IN '10900'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-FortiGate-nonblocking-auth-daemon-crashed</setEventAttribute>
+      </when>
+      <when test="$_id IN '11100'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-New-MAC-address-learned</setEventAttribute>
+      </when>
+      <when test="$_id IN '11101'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-MAC-address-moved</setEventAttribute>
+      </when>
+      <when test="$_id IN '11102'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-MAC-address-deleted</setEventAttribute>
+      </when>
+      <when test="$_id IN '11111'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Bounced-switch-port-now-up</setEventAttribute>
+      </when>
+      <when test="$_id IN '11112'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Bounced-switch-port-now-down</setEventAttribute>
+      </when>
+      <when test="$_id IN '11120'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-IGMP-snooping-group-not-added</setEventAttribute>
+      </when>
+      <when test="$_id IN '11121'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-MLD-snooping-group-not-added</setEventAttribute>
+      </when>
+      <when test="$_id IN '11130'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-ACL-failed-to-update</setEventAttribute>
+      </when>
+      <when test="$_id IN '11250'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-VLAN-list-for-ring-port-no-longer-includes-MRP-VLAN</setEventAttribute>
+      </when>
+      <when test="$_id IN '11251'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-Ring-ports-1-and-2-dont-have-same-VLAN-list</setEventAttribute>
+      </when>
+      <when test="$_id IN '11252'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-MRP-ring-open</setEventAttribute>
+      </when>
+      <when test="$_id IN '11253'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-MRP-ring-closed</setEventAttribute>
+      </when>
+      <when test="$_id IN '11254'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-MRP-switch-changed-from-automanager-to-manager</setEventAttribute>
+      </when>
+      <when test="$_id IN '11255'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-MRP-switch-changed-from-automanager-to-client</setEventAttribute>
+      </when>
+      <when test="$_id IN '11256'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-MRP-restarted</setEventAttribute>
+      </when>
+      <when test="$_id IN '11257'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-MRP-status-changed</setEventAttribute>
+      </when>
+      <when test="$_id IN '11258'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-MRP-VLAN-not-included-in-ring-ports</setEventAttribute>
+      </when>
+      <when test="$_id IN '11259'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-MRP-ring-port-changed-state</setEventAttribute>
+      </when>
+      <when test="$_id IN '11300'">
+        <setEventAttribute attr="eventType">FortiSwitch-L2-VLAN-already-used-by-LAN-segment</setEventAttribute>
+      </when>
+      <!-- Switch Controller Messages -->
+      <when test="$_id IN '09000'">
+        <setEventAttribute attr="eventType">FortiSwitch-Controller-connected-with-FortiGate</setEventAttribute>
+      </when>
+      <when test="$_id IN '09001'">
+        <setEventAttribute attr="eventType">FortiSwitch-Controller-port-joined-FortiGate-trunk</setEventAttribute>
+      </when>
+      <when test="$_id IN '09002'">
+        <setEventAttribute attr="eventType">FortiSwitch-Controller-port-left-FortiGate-uplink</setEventAttribute>
+      </when>
+      <when test="$_id IN '09003'">
+        <setEventAttribute attr="eventType">FortiSwitch-Controller-port-in-FortiGate-uplink-ready</setEventAttribute>
+      </when>
+      <when test="$_id IN '09004'">
+        <setEventAttribute attr="eventType">FortiSwitch-Controller-TPID-value-changed</setEventAttribute>
+      </when>
+      <when test="$_id IN '09005'">
+        <setEventAttribute attr="eventType">FortiSwitch-Controller-Echo-failures</setEventAttribute>
+      </when>
+      <when test="$_id IN '09006'">
+        <setEventAttribute attr="eventType">FortiSwitch-Controller-disconnected-or-restarted</setEventAttribute>
+      </when>
+      <when test="$_id IN '09007'">
+        <setEventAttribute attr="eventType">FortiSwitch-Controller-User-deleted-ISL-trunk</setEventAttribute>
+      </when>
+      <when test="$_id IN '09008'">
+        <setEventAttribute attr="eventType">FortiSwitch-Controller-ISL-timing-out</setEventAttribute>
+      </when>
+      <when test="$_id IN '09009'">
+        <setEventAttribute attr="eventType">FortiSwitch-Controller-Port-joined-ISL</setEventAttribute>
+      </when>
+      <when test="$_id IN '09010'">
+        <setEventAttribute attr="eventType">FortiSwitch-Controller-Port-left-ISL</setEventAttribute>
+      </when>
+      <when test="$_id IN '09011'">
+        <setEventAttribute attr="eventType">FortiSwitch-Controller-FortiGate-uplink-trunk-not-created</setEventAttribute>
+      </when>
+      <when test="$_id IN '09012'">
+        <setEventAttribute attr="eventType">FortiSwitch-Controller-Port-not-added-to-FortiGate-uplink-trunk</setEventAttribute>
+      </when>
+      <when test="$_id IN '09013'">
+        <setEventAttribute attr="eventType">FortiSwitch-Controller-Port-not-deleted-from-FortiGate-uplink-trunk</setEventAttribute>
+      </when>
+      <when test="$_id IN '09015'">
+        <setEventAttribute attr="eventType">FortiSwitch-Controller-waiting-for-HTTP-HTTPS-daemon</setEventAttribute>
+      </when>
+      <when test="$_id IN '09016'">
+        <setEventAttribute attr="eventType">FortiSwitch-Controller-log-storage-75-pct-full</setEventAttribute>
+      </when>
+      <when test="$_id IN '09017'">
+        <setEventAttribute attr="eventType">FortiSwitch-Controller-Tunnel-mode-changed</setEventAttribute>
+      </when>
+      <when test="$_id IN '09018'">
+        <setEventAttribute attr="eventType">FortiSwitch-Controller-Port-disabled-in-FortiLink-mode</setEventAttribute>
+      </when>
+      <when test="$_id IN '09019'">
+        <setEventAttribute attr="eventType">FortiSwitch-Controller-Port-enabled-in-FortiLink-mode</setEventAttribute>
+      </when>
+      <when test="$_id IN '09020'">
+        <setEventAttribute attr="eventType">FortiSwitch-Controller-Port-removed-in-FortiLink-mode</setEventAttribute>
+      </when>
+      <when test="$_id IN '09021,9022'">
+        <setEventAttribute attr="eventType">FortiSwitch-Controller-AC-discovery-type-changed</setEventAttribute>
+      </when>
+      <!-- System log messages -->
+      <when test="$_id IN '30100'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Alarm-occurred</setEventAttribute>
+      </when>
+      <when test="$_id IN '30101'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Alarm-acknowledged</setEventAttribute>
+      </when>
+      <when test="$_id IN '30150'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Domain-name-in-alert-email-cannot-be-resolved</setEventAttribute>
+      </when>
+      <when test="$_id IN '30151'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Alert-email-failed</setEventAttribute>
+      </when>
+      <when test="$_id IN '30152'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Alert-email-resent</setEventAttribute>
+      </when>
+      <when test="$_id IN '30200'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-unit-started</setEventAttribute>
+      </when>
+      <when test="$_id IN '30201'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-unit-rebooted</setEventAttribute>
+      </when>
+      <when test="$_id IN '30202'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Daily-unit-restart</setEventAttribute>
+      </when>
+      <when test="$_id IN '30203'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-unit-shutdown</setEventAttribute>
+      </when>
+      <when test="$_id IN '30300'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-CA-cert-will-be-automatically-updated</setEventAttribute>
+      </when>
+      <when test="$_id IN '30301'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Local-cert-will-be-auto-regenerated</setEventAttribute>
+      </when>
+      <when test="$_id IN '30302'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Cert-failed-to-auto-update</setEventAttribute>
+      </when>
+      <when test="$_id IN '30303'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Cert-failed-to-auto-regenerate</setEventAttribute>
+      </when>
+      <when test="$_id IN '30304'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-PKCS12-cert-imported</setEventAttribute>
+      </when>
+      <when test="$_id IN '30306'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-CRL-update-requested</setEventAttribute>
+      </when>
+      <when test="$_id IN '30400'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Power-supply-restored</setEventAttribute>
+      </when>
+      <when test="$_id IN '30401'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Power-supply-failed</setEventAttribute>
+      </when>
+      <when test="$_id IN '30500'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-config-changed</setEventAttribute>
+      </when>
+      <when test="$_id IN '30501'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-config-changed-using-the-GUI</setEventAttribute>
+      </when>
+      <when test="$_id IN '30502'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-config-restored</setEventAttribute>
+      </when>
+      <when test="$_id IN '30503'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Restoring-the-config-failed</setEventAttribute>
+      </when>
+      <when test="$_id IN '30507'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-reset-to-factory-settings</setEventAttribute>
+      </when>
+      <when test="$_id IN '30514'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Global-setting-changed</setEventAttribute>
+      </when>
+      <when test="$_id IN '30515'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-config-backed-up</setEventAttribute>
+      </when>
+      <when test="$_id IN '30516'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-config-revision-uploaded</setEventAttribute>
+      </when>
+      <when test="$_id IN '30518'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-DB-revision-deleted</setEventAttribute>
+      </when>
+      <when test="$_id IN '30520'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Revision-item-deleted-from-flash-disk</setEventAttribute>
+      </when>
+      <when test="$_id IN '30522'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Command-failed</setEventAttribute>
+      </when>
+      <when test="$_id IN '30524'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Failed-to-back-up-system-config</setEventAttribute>
+      </when>
+      <when test="$_id IN '30530,30531'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-config-changed</setEventAttribute>
+      </when>
+      <when test="$_id IN '30532'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-L2-table-more-than-75-pct-full</setEventAttribute>
+      </when>
+      <when test="$_id IN '30533'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-L2-table-less-than-70-pct-full</setEventAttribute>
+      </when>
+      <when test="$_id IN '30700'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Daemon-started</setEventAttribute>
+      </when>
+      <when test="$_id IN '30701'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Daemon-shutdown</setEventAttribute>
+      </when>
+      <when test="$_id IN '30901'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-IP-address-too-small</setEventAttribute>
+      </when>
+      <when test="$_id IN '30902,30903,30904,30905,30906,30907,30908,30909'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Log-info-from-DHCP-client-module-daemon</setEventAttribute>
+      </when>
+      <when test="$_id IN '31004'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-DHCP-stats</setEventAttribute>
+      </when>
+      <when test="$_id IN '31005'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-DHCP-server-used-all-of-its-leases</setEventAttribute>
+      </when>
+      <when test="$_id IN '31006'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-DHCP-server-used-most-of-its-leases</setEventAttribute>
+      </when>
+      <when test="$_id IN '31007'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-DHCP-server-sends-DDNS-add-query</setEventAttribute>
+      </when>
+      <when test="$_id IN '31008'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-DHCP-server-sends-DDNS-delete-query</setEventAttribute>
+      </when>
+      <when test="$_id IN '31009'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-DHCP-server-blocked-DHCP-client</setEventAttribute>
+      </when>
+      <when test="$_id IN '31010'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-DHCP-server-sends-DHCP-ack</setEventAttribute>
+      </when>
+      <when test="$_id IN '31011'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-DHCP-server-receives-DHCP-release</setEventAttribute>
+      </when>
+      <when test="$_id IN '32001'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Admin-login-success</setEventAttribute>
+      </when>
+      <when test="$_id IN '32002'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Admin-login-failed</setEventAttribute>
+      </when>
+      <when test="$_id IN '32003'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Admin-logged-out</setEventAttribute>
+      </when>
+      <when test="$_id IN '32008'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Admin-login-disabled-many-login-failures</setEventAttribute>
+      </when>
+      <when test="$_id IN '32010'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Alarm-test</setEventAttribute>
+      </when>
+      <when test="$_id IN '33000'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Partitioning-or-formatting-error</setEventAttribute>
+      </when>
+      <when test="$_id IN '33001'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Log-disk-failure-imminent</setEventAttribute>
+      </when>
+      <when test="$_id IN '33002'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Lack-of-flash-space</setEventAttribute>
+      </when>
+      <when test="$_id IN '33003'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Disk-formatting-requested</setEventAttribute>
+      </when>
+      <when test="$_id IN '33004'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Disk-storage-set-up</setEventAttribute>
+      </when>
+      <when test="$_id IN '33005'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Disk-storage-entry-deleted</setEventAttribute>
+      </when>
+      <when test="$_id IN '33100'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Fan-failure-detected</setEventAttribute>
+      </when>
+      <when test="$_id IN '33101'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Fan-tray-not-detected</setEventAttribute>
+      </when>
+      <when test="$_id IN '33102'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Fan-tray-detected</setEventAttribute>
+      </when>
+      <when test="$_id IN '33103'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Fan-tray-detection-failed</setEventAttribute>
+      </when>
+      <when test="$_id IN '33104'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Fan-resumed-working</setEventAttribute>
+      </when>
+      <when test="$_id IN '33300'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Admin-runs-FIPS-self-test</setEventAttribute>
+      </when>
+      <when test="$_id IN '33301'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-FIPS-error-mode</setEventAttribute>
+      </when>
+      <when test="$_id IN '33302'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Encryption-failed</setEventAttribute>
+      </when>
+      <when test="$_id IN '33303'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Decryption-failed</setEventAttribute>
+      </when>
+      <when test="$_id IN '33304'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-New-entropy-seed-generated</setEventAttribute>
+      </when>
+      <when test="$_id IN '34000'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-FortiLAN-Cloud-started</setEventAttribute>
+      </when>
+      <when test="$_id IN '34001'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-FortiLAN-Cloud-stopped</setEventAttribute>
+      </when>
+      <when test="$_id IN '34002'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-SSL-conn-to-FortiLAN-Cloud-established</setEventAttribute>
+      </when>
+      <when test="$_id IN '34003'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-SSL-conn-to-FortiLAN-Cloud-down</setEventAttribute>
+      </when>
+      <when test="$_id IN '34004'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-SSL-conn-to-FortiLAN-Cloud-not-established</setEventAttribute>
+      </when>
+      <when test="$_id IN '34006'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Packet-capture-stopped-lack-of-storage</setEventAttribute>
+      </when>
+      <when test="$_id IN '34007'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-SSL-conn-being-restarted</setEventAttribute>
+      </when>
+      <when test="$_id IN '34200'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Corrupt-MAC-packet-detected</setEventAttribute>
+      </when>
+      <when test="$_id IN '34300'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Firmware-image-loaded</setEventAttribute>
+      </when>
+      <when test="$_id IN '34301'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Firmware-image-restored</setEventAttribute>
+      </when>
+      <when test="$_id IN '34306'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Firmware-image-failures</setEventAttribute>
+      </when>
+      <when test="$_id IN '34314'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Firmware-image-backed-up-to-flash-disk</setEventAttribute>
+      </when>
+      <when test="$_id IN '34315'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Backing-up-firmware-image-failed</setEventAttribute>
+      </when>
+      <when test="$_id IN '35000'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-IP-address-conflict</setEventAttribute>
+      </when>
+      <when test="$_id IN '35100'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Changes-link-monitor</setEventAttribute>
+      </when>
+      <when test="$_id IN '35101'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Changes-static-route</setEventAttribute>
+      </when>
+      <when test="$_id IN '35102'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Changes-link-monitor-state</setEventAttribute>
+      </when>
+      <when test="$_id IN '35200'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-RADIUS-IPC-error</setEventAttribute>
+      </when>
+      <when test="$_id IN '35213'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-User-viewed-memory-logs</setEventAttribute>
+      </when>
+      <when test="$_id IN '35214'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Log-full</setEventAttribute>
+      </when>
+      <when test="$_id IN '35215'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Disk-has-rolled-log-max-num-of-times</setEventAttribute>
+      </when>
+      <when test="$_id IN '35216'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-deleted-uploaded-logs</setEventAttribute>
+      </when>
+      <when test="$_id IN '35217'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Log-disk-full</setEventAttribute>
+      </when>
+      <when test="$_id IN '35218'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Log-rotation</setEventAttribute>
+      </when>
+      <when test="$_id IN '35219'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-entered-CC-error-mode</setEventAttribute>
+      </when>
+      <when test="$_id IN '35221'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-exited-CC-error-mode</setEventAttribute>
+      </when>
+      <when test="$_id IN '35222'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Logs-cleared</setEventAttribute>
+      </when>
+      <when test="$_id IN '35223'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Rolled-log-files-deleted</setEventAttribute>
+      </when>
+      <when test="$_id IN '35227'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-User-failed-to-view-logs</setEventAttribute>
+      </when>
+      <when test="$_id IN '35229'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Daily-logging-quota-full</setEventAttribute>
+      </when>
+      <when test="$_id IN '35230'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Logging-file-downloaded</setEventAttribute>
+      </when>
+      <when test="$_id IN '35231'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Log-backed-up</setEventAttribute>
+      </when>
+      <when test="$_id IN '35232'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Backing-up-all-logs-failed</setEventAttribute>
+      </when>
+      <when test="$_id IN '35233'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-All-logs-backed-up</setEventAttribute>
+      </when>
+      <when test="$_id IN '35236'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Log-backup-failed</setEventAttribute>
+      </when>
+      <when test="$_id IN '35242'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Warning-from-monitor-and-alert-daemon</setEventAttribute>
+      </when>
+      <when test="$_id IN '35243'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-USB-device-inserted-or-removed</setEventAttribute>
+      </when>
+      <when test="$_id IN '35245'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Log-nearly-full</setEventAttribute>
+      </when>
+      <when test="$_id IN '35246'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Oldest-logs-uploaded</setEventAttribute>
+      </when>
+      <when test="$_id IN '35248'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Log-full</setEventAttribute>
+      </when>
+      <when test="$_id IN '35249'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Memory-Log-nearly-full</setEventAttribute>
+      </when>
+      <when test="$_id IN '35250'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Logs-deleted-and-logs-uploaded</setEventAttribute>
+      </when>
+      <when test="$_id IN '36000'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Log-test</setEventAttribute>
+      </when>
+      <when test="$_id IN '36106'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-PSU-1-is-down</setEventAttribute>
+      </when>
+      <when test="$_id IN '36107'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-PSU-1-is-up</setEventAttribute>
+      </when>
+      <when test="$_id IN '36108'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-PSU-2-is-down</setEventAttribute>
+      </when>
+      <when test="$_id IN '36109'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-PSU-2-is-up</setEventAttribute>
+      </when>
+      <when test="$_id IN '36250'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Corrupt-MAC-packet-detected</setEventAttribute>
+      </when>
+      <when test="$_id IN '36251'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Unable-to-negotiate</setEventAttribute>
+      </when>
+      <when test="$_id IN '36252'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-SSH-server-needs-rekeying</setEventAttribute>
+      </when>
+      <when test="$_id IN '36253'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Negotiation-failed</setEventAttribute>
+      </when>
+      <when test="$_id IN '36300'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Fan-tray-status</setEventAttribute>
+      </when>
+      <when test="$_id IN '36350'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Alarm-testing</setEventAttribute>
+      </when>
+      <when test="$_id IN '42000'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Learning-limit-violations-reset</setEventAttribute>
+      </when>
+      <when test="$_id IN '42001'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Learning-limit-violations-deleted</setEventAttribute>
+      </when>
+      <when test="$_id IN '42002'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Learning-limit-violation-log-enabled</setEventAttribute>
+      </when>
+      <when test="$_id IN '42003'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Learning-limit-violation-log-disabled</setEventAttribute>
+      </when>
+      <when test="$_id IN '42004'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Learning-limit-exceeded</setEventAttribute>
+      </when>
+      <when test="$_id IN '42100'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-VM-license-file-added</setEventAttribute>
+      </when>
+      <when test="$_id IN '42101'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Failed-to-add-VM-license-file</setEventAttribute>
+      </when>
+      <when test="$_id IN '42200'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-No-more-IP-source-guard-entries-can-be-added</setEventAttribute>
+      </when>
+      <when test="$_id IN '42201'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-IP-source-guard-violations</setEventAttribute>
+      </when>
+      <when test="$_id IN '42300'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Cable-diagnostics-messages</setEventAttribute>
+      </when>
+      <when test="$_id IN '42451'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Global-time-setting-changed</setEventAttribute>
+      </when>
+      <when test="$_id IN '42471'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Local-user-added</setEventAttribute>
+      </when>
+      <when test="$_id IN '42472'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Local-users-setting-changed</setEventAttribute>
+      </when>
+      <when test="$_id IN '42492,42493,42494,42495,42496,42497,42498,42499'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Log-info-from-the-DHCPv6-client-module-daemon</setEventAttribute>
+      </when>
+      <when test="$_id IN '42520'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Start-running-a-script</setEventAttribute>
+      </when>
+      <when test="$_id IN '42521'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Stopped-running-a-script</setEventAttribute>
+      </when>
+      <when test="$_id IN '42523'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-User-deleted-script-results</setEventAttribute>
+      </when>
+      <when test="$_id IN '42524'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Backed-up-script-results</setEventAttribute>
+      </when>
+      <when test="$_id IN '42525'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Checked-script-status</setEventAttribute>
+      </when>
+      <when test="$_id IN '42526'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Script-stopped-because-of-output-limit</setEventAttribute>
+      </when>
+      <when test="$_id IN '42580'">
+        <setEventAttribute attr="eventType">FortiSwitch-Sys-Automation-stitch-triggered</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _duration">
+      <setEventAttribute attr="durationMSec">combineMsgId($_duration,"000")</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist _severity"/>
+      <!-- debug, info, information, unknown: 1 -->
+      <when test="$_severity = 'information'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_severity = 'notice'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$_severity = 'warning'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_severity IN 'error'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_severity = 'critical'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_severity = 'alert'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+      <when test="$_severity = 'emergency'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+    </choose>
+
+  </parsingInstructions>
+</eventParser>

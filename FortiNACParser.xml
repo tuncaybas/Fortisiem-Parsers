@@ -1,0 +1,242 @@
+<eventParser name="FortiNACParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiNAC</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<37>Jan 08 19:03:45 : CEF:0|Bradford Networks|FortiNAC-VM-Control and Application Server|8.3.0.79|426|Adapter Destroyed|1|rt=Jan 08 19:03:45 269 UTC cat=EndStation msg=Adapter 18:5E:0F:AA:56:31 Destroyed.]]></testEvent>
+    <testEvent><![CDATA[<165>Jan 30 11:38:42 : CEF:0|Fortinet|FortiNAC-CA|9.4.1.0726|1126061|REST API Failure|1|rt=Jan 30 11:38:42.120 EST cat=Network src=192.168.1.25 shost=FPX4HETA22111111 msg=REST API failure for device FPX4HETA22111111 with message Device 192.168.1.25 returned error with code 429]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patMac"><![CDATA[\w{2}:\w{2}:\w{2}:\w{2}:\w{2}:\w{2}]]></pattern>
+    <pattern name="patSwVer"><![CDATA[(\d+\.)+\d+]]></pattern>
+    <pattern name="patPipe"><![CDATA[[^|]*]]></pattern>
+    <pattern name="patGuestName"><![CDATA[\w+\,\s+\w+]]></pattern>
+    <pattern name="patFormat"><![CDATA[(?:Bradford Networks|Fortinet)]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[CEF:\d+\|<:patFormat>\|FortiNAC-]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s<_day:gPatDay>\s<_time:gPatTime>\s*:\s*CEF:\d+\|<:patFormat>\|FortiNAC-<:patPipe>\|<osVersion:patPipe>\|[+-]?\d+\|<_function:patPipe>\|<_sev:gPatInt>\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">FortiNAC-Generic</setEventAttribute>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="nepDevName" key="cs1"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="hostName" key="shost"/>
+      <attrKeyMap attr="hostMACAddr" key="smac"/>
+      <attrKeyMap attr="hostIpAddr" key="src"/>
+      <attrKeyMap attr="user" key="suid"/>
+    </collectFieldsByKeyValuePair>
+
+    <choose>
+      <when test="$_function = 'Adapter Destroyed'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[^Adapter <hostMACAddr:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$_function IN 'Authenticated User, De-authenticated'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[^Logged (?:on to|off of) <destName:gPatHostName>\s+<destMACAddr:gPatStr>\s+IP address\s+<destIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hostName">$destName</setEventAttribute>
+            <setEventAttribute attr="hostMACAddr">$destMACAddr</setEventAttribute>
+            <setEventAttribute attr="hostIpAddr">$destIpAddr</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$_function = 'Authentication Failure'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[^User Authentication Failure <user:gPatStr> failed to log on\s+IP address <destIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hostIpAddr">$destIpAddr</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$_function IN 'Guest Account Created, Guest Account Deleted'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[^Guest Account <targetUser:gPatStrComma>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$_function = 'Host Destroyed'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[^Host <hostName:gPatHostName>\s+<hostMACAddr:gPatStr>\s+Destroyed]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$_function = 'Host Registration Failure'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[^Authentication Failure <user:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$_function IN 'Memory Usage Critical, Memory Usage Warning'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[^Memory usage is <memUtil:gPatInt>% on <hostName:gPatHostName>\.]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$_function IN 'User Authenticated on Adapter, User De-authenticated on Adapter'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[^<user:gPatStr>\s+Logged ]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$_function = 'User Created'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[^User <targetUser:gPatStr> Created]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$_function = 'REST API Failure'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[returned error with code <httpStatusCode:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$_function = 'User Unlocked Session'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[User new unlocked session <sessionId:gPatInt> on host <hostName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$_function = 'User Connected to Host Console'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[User new connected session <sessionId:gPatInt> via <:gPatStr> on host <hostName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$_function = 'User Disconnected from Host Console'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[User new disconnected session <sessionId:gPatInt> from <:gPatStr> on host <hostName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$_function = 'User Locked Session'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[User new locked session <sessionId:gPatInt> on host <hostName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$_function = 'User Logged onto Host'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[User new logged onto session <sessionId:gPatInt> on host <hostName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$_function = 'User Remotely Connected to Host'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[User new remotely connected to session <sessionId:gPatInt> on host <hostName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$_function = 'User Remotely Disconnected from Host'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[User new remotely disconnected from session <sessionId:gPatInt> on host <hostName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+    </choose>
+
+    <setEventAttribute attr="_function">replaceStringByRegex($_function, " - .*", "")</setEventAttribute>
+    <setEventAttribute attr="_function">replaceStringByRegex($_function, "\s+", "-")</setEventAttribute>
+    <setEventAttribute attr="eventType">combineMsgId("FortiNAC-", $_function)</setEventAttribute>
+
+    <when test="exist nepDevName">
+      <setEventAttribute attr="nepDevName">replaceStringByRegex($nepDevName, "\{.*", "")</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>

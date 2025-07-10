@@ -1,0 +1,409 @@
+<eventParser name="ESETParser">
+
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>ESET</Vendor>
+    <Model>Nod32</Model>
+    <Version>ANY</Version>
+    <Name>ESET Nod32</Name>
+  </appType>
+
+  <testEvents>
+    <testEvent><![CDATA[<14>1 2019-12-06T23:15:13.507Z ESET01-Kor ERAServer 5840 - - {"event_type":"Audit_Event","ipv4":"10.0.0.4","hostname":"ESET01-Kor","source_uuid":"11111111-1111-1111-1111-111111111111","occured":"06-Dec-2019 23:15:13","severity":"Information","domain":"Native user","action":"Logout","target":"Administrator","detail":"Logging out native user 'Administrator'.","user":"Administrator","result":"Success"}]]></testEvent>
+    <testEvent><![CDATA[<14>1 2019-12-06T23:05:13.356Z ESET01-Kor ERAServer 5840 - - {"event_type":"Audit_Event","ipv4":"10.0.0.4","hostname":"ESET01-Kor","source_uuid":"11111111-1111-1111-1111-111111111111","occured":"06-Dec-2019 23:05:13","severity":"Information","domain":"Native user","action":"Login attempt","target":"Administrator","detail":"Authenticating native user 'Administrator'.","user":"","result":"Success"}]]></testEvent>
+    <testEvent><![CDATA[<14>1 2019-12-06T23:04:51.988Z ESET01-Kor ERAServer 5840 - - {"event_type":"Audit_Event","ipv4":"10.0.0.4","hostname":"ESET01-Kor","source_uuid":"11111111-1111-1111-1111-111111111111","occured":"06-Dec-2019 23:04:51","severity":"Information","domain":"Native user","action":"Logout","target":"Administrator","detail":"Logging out native user 'Administrator'.","user":"Administrator","result":"Success"}]]></testEvent>
+    <testEvent><![CDATA[<12>Mar 12 16:41:59 SPBAVS03 ERAServer[2108]: {"event_type":"FilteredWebsites_Event","ipv4":"10.0.0.1","hostname":"hostname.local","source_uuid":"11111111-1111-1111-1111-111111111111","occured":"12-Mar-2020 12:52:06","severity":"Warning","event":"An attempt to connect to URL","target_address":"10.1.1.1","target_address_type":"IPv4","scanner_id":"HTTP filter","action_taken":"blocked","object_uri":"https://example.com","hash":"655E856B73232CA376FF8704EE12C404878DA363","username":"dom1\\use1","processname":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","rule_id":"Blocked by PUA blacklist"}]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patCurly"><![CDATA[[^(A-Z|\{)]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>(?:\d+\s+<:gPatYear>-<:gPatMon>-<:gPatDay>T<:gPatTime>\.\d+<:gPatTimeZone>|<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>)\s+<:gPatStr>\s+ERAServer(?:\s+\d+\s+-\s+-|\[\d+\]:)]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>(?:\d+\s+<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>|<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>)\s+<reptDevName:gPatStr>\sERAServer(?:\s+\d+\s+<:patCurly>|\[\d+\]:)\s*<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <choose>
+      <when test="exist _tz">
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <setEventAttribute attr="eventType">ESET-Generic</setEventAttribute>
+
+    <choose>
+      <when test="matches($_body, '^\{.*event_type.*\}$')">
+        <!-- Included In All Events -->
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="_type" key="event_type"/>
+          <attrKeyMap attr="hostName" key="hostname"/>
+          <attrKeyMap attr="reptDevIpAddr" key="ipv4"/>
+          <attrKeyMap attr="_ipv6" key="ipv6"/>
+          <attrKeyMap attr="_source_uuid" key="source_uuid"/>
+          <attrKeyMap attr="_occured" key="occured"/>
+          <attrKeyMap attr="_sev" key="severity"/>
+          <attrKeyMap attr="procName" key="processname"/>
+          <attrKeyMap attr="user" key="username"/>
+          <attrKeyMap attr="ruleName" key="rulename"/>
+          <attrKeyMap attr="count" key="count"/>
+          <attrKeyMap attr="count" key="aggregate_count"/>
+          <attrKeyMap attr="osObjAction" key="action"/>
+          <attrKeyMap attr="targetName" key="target"/>
+          <attrKeyMap attr="virusName" key="threat_name"/>
+          <attrKeyMap attr="ruleName" key="rule_name"/>
+          <attrKeyMap attr="ruleId" key="rule_id"/>
+          <!-- Audit_Event -->
+          <attrKeyMap attr="details" key="detail"/>
+          <attrKeyMap attr="domain" key="domain"/>
+          <attrKeyMap attr="destName" key="target"/>
+          <attrKeyMap attr="testResult" key="result"/>
+          <attrKeyMap attr="user" key="user"/>
+          <!-- HipsAggregated_Event -->
+          <attrKeyMap attr="appName" key="application"/>
+          <attrKeyMap attr="opName" key="operation"/>
+          <!-- Threat_Event -->
+          <attrKeyMap attr="threatType" key="threat_type"/>
+          <attrKeyMap attr="_flags" key="threat_flags"/>
+          <attrKeyMap attr="_scanner_id" key="scanner_id"/>
+          <attrKeyMap attr="scanId" key="scan_id"/>
+          <attrKeyMap attr="scanEngine" key="engine_version"/>
+          <attrKeyMap attr="objType" key="object_type"/>
+          <attrKeyMap attr="uriQuery" key="object_uri"/>
+          <attrKeyMap attr="virusAction" key="action_taken"/>
+          <attrKeyMap attr="errorString" key="action_error"/>
+          <attrKeyMap attr="_threatHandled" key="threat_handled"/>
+          <attrKeyMap attr="_needRestart" key="need_restart"/>
+          <attrKeyMap attr="errReason" key="circumstances"/>
+          <attrKeyMap attr="hashCode" key="hash"/>
+          <attrKeyMap attr="_firstseen" key="firstseen"/>
+          <!-- FirewallAggregated_Event -->
+          <attrKeyMap attr="_event" key="event"/>
+          <attrKeyMap attr="srcIpAddr" key="source_address"/>
+          <attrKeyMap attr="_source_type" key="source_address_type"/>
+          <attrKeyMap attr="srcIpPort" key="source _port"/>
+          <attrKeyMap attr="destIpAddr" key="target_address"/>
+          <attrKeyMap attr="_target_type" key="target_address_type"/>
+          <attrKeyMap attr="destIpPort" key="target_port"/>
+          <attrKeyMap attr="_proto" key="protocol"/>
+          <attrKeyMap attr="user" key="account"/>
+          <attrKeyMap attr="procName" key="process_name"/>
+          <attrKeyMap attr="direction" key="inbound"/>
+        </collectAndSetAttrByJSON>
+
+        <when test="exist _occured">
+          <collectFieldsByRegex src="$_occured">
+            <regex><![CDATA[<_day:gPatDay>-<_mon:gPatMon>-<_year:gPatYear> <_time:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </when>
+
+        <choose>
+          <when test="$_sev = 'Fatal'">
+            <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+          </when>
+          <when test="$_sev = 'Critical'">
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+          </when>
+          <when test="$_sev = 'Error'">
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+          </when>
+          <when test="$_sev = 'Warning'">
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+          </when>
+          <when test="$_sev = 'Notice'">
+            <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+          </when>
+          <when test="$_sev = 'Information'">
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+          </when>
+        </choose>
+
+        <choose>
+          <when test="not_exist _type"/>
+          <when test="matches($_type, '^Audit_Event')">
+            <setEventAttribute attr="eventType">ESET-Audit-Event</setEventAttribute>
+          </when>
+          <when test="matches($_type, '^HipsAggregated_Event')">
+            <setEventAttribute attr="eventType">ESET-HIPS-Event</setEventAttribute>
+          </when>
+          <when test="matches($_type, '^Threat_Event')">
+            <setEventAttribute attr="eventType">ESET-Threat-Event</setEventAttribute>
+          </when>
+          <when test="matches($_type, '^FirewallAggregated_Event')">
+            <setEventAttribute attr="eventType">ESET-Firewall-Event</setEventAttribute>
+          </when>
+          <when test="matches($_type, '^Enterprise_Inspector_Alert_Event')">
+            <setEventAttribute attr="eventType">ESET-Ent-Inspector-Alert</setEventAttribute>
+          </when>
+          <when test="matches($_type, '^FilteredWebsites_Event')">
+            <setEventAttribute attr="eventType">ESET-FilteredWebsites-Event</setEventAttribute>
+          </when>
+        </choose>
+
+        <choose>
+          <when test="not_exist details"/>
+          <when test="matches($details, '^Authenticating native user')">
+            <collectFieldsByRegex src="$details">
+              <regex><![CDATA[Authenticating native user '<user:gPatStr>']]></regex>
+            </collectFieldsByRegex>
+
+            <choose>
+              <when test="not_exist testResult"/>
+              <when test="matches($testResult, '^Success')">
+                <setEventAttribute attr="eventType">ESET-User-Login-Success</setEventAttribute>
+              </when>
+              <when test="matches($testResult, '^Access denied')">
+                <setEventAttribute attr="eventType">ESET-User-Login-Failure</setEventAttribute>
+              </when>
+              <otherwise>
+                <setEventAttribute attr="eventType">ESET-User-Login-Failure</setEventAttribute>
+              </otherwise>
+            </choose>
+          </when>
+          <when test="matches($details, '^Logging out native user')">
+            <setEventAttribute attr="eventType">ESET-User-Logout</setEventAttribute>
+          </when>
+        </choose>
+
+        <when test="exist _firstseen">
+          <collectFieldsByRegex src="$_firstseen">
+            <regex><![CDATA[<_day:gPatDay>-<_mon:gPatMon>-<_year:gPatYear> <_time:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="startTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </when>
+      </when>
+
+      <otherwise>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Number of threat detection events in 10 minutes has reached defined threshold \(100 events\)]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ESET-Malware-Outbreak-Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Number of firewall events in 1 minute has reached defined value \(100 events\)]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ESET-Network-Attack-Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[5% out of all managed computers have reported functionality problems]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ESET-Computer-Problems-Reported-Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[5% out of all managed computers have reported outdated modules]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ESET-Outdated-Modules-Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[At least one of the CA certificates is due to expire in less than 30 days]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ESET-Expiring-CA-Cert-Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[At least one of the peer certificates is due to expire in less than 30 days]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ESET-Expiring-Peer-Cert-Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[At least one of the managed licenses is due to expire in less than 30 days]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ESET-Expiring-License-Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[At least one of the managed licenses is overused]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ESET-Overused-License-Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[At least one of the managed licenses is utilized more than 90%]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ESET-License-Limit-Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[At least one of the network peers is in state Limited or Overloaded]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ESET-Network-Peer-Overloaded-Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[At least 5% of all managed clients have not connected for more than 2 days]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ESET-Managed-Clients-Not-Connecting-Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Outdated ESET software detected on at least one of managed computers]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ESET-Outdated-Software-Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[During the last 2 days at least one of the server tasks failed more than once]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ESET-Failing-Server-Task-Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Malicious file <_body:gPatMesgBody> was detected on computer <_body:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ESET-Malicious-File-Detected-Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[At least one of the enabled notifications became invalid and will not be triggered due to incorrect configuration, inappropriate access rights or inaccessible referenced objects]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ESET-Invalid-Notification-Config-Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Newer version of ESET Security Management Center is available in the ESET Repository]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ESET-New-Management-Version-Available-Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Outdated installation of ESET Endpoint Antivirus has been detected and is present within your managed network]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ESET-Outdated-Endpoint-AV-Detected-Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[At least one computer has not connected to your management server for more than 14 days]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ESET-Computer-AWOL-Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Potentially unsafe application <appName:gPatMesgBody> was detected on computer <hostName:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ESET-Potential-Unsafe-App-Detected-Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Suspicious application <appName:gPatMesgBody> was detected on computer <hostName:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ESET-Suspicious-App-Detected-Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[At least one of the client tasks in your ESET management server has invalid configuration, and therefore will fail]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ESET-Invalid-Client-Task-Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Computer <hostName:gPatMesgBody> connected for the first time at <_time:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ESET-New-Computer-Connected-Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Computer <hostName:gPatMesgBody> was identified based on its hardware at <_time:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ESET-Computer-Identity-Recovered-Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[A potential hardware change or cloning of computer <hostName:gPatMesgBody> was detected]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ESET-Potential-Computer-Clone-Detected</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+          </case>
+
+          <!-- Needs sample to verify  
+          <case>    
+            <collectAndSetAttrByKeyValuePair sep="\n" src="$_body">           
+            <attrKeyMap attr="computer" key="Computer: "/>
+            <attrKeyMap attr="_time" key="Time of occurrence: "/>    
+            <attrKeyMap attr="appName" key="Source application: "/>
+            <attrKeyMap attr="opName" key="Executed operation: "/>  
+            <attrKeyMap attr="destName" key="Target: "/>
+            <attrKeyMap attr="virusAction" key="Action taken: "/>
+            </collectAndSetAttrByKeyValuePair>
+            <setEventAttribute attr="eventType">ESET-High-Severity-HIPS-Alert</setEventAttribute>
+          </case>  
+          -->
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Computer: <hostName:gPatMesgBody> Time of occurrence: <_time:gPatMesgBody> Source application: <appName:gPatMesgBody> Executed operation: <opName:gPatMesgBody> Target: <destName:gPatMesgBody> Action taken: <virusAction:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ESET-High-Severity-HIPS-Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">ESET-Unknown</setEventAttribute>
+          </default>
+        </switch>
+      </otherwise>
+    </choose>
+  </parsingInstructions>
+</eventParser>

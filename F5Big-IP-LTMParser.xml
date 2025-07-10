@@ -1,0 +1,371 @@
+<eventParser name="F5Big-IP-LTMParser">
+
+  <deviceType>
+    <Vendor>F5</Vendor>
+    <Model>Big-IPOS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patLogLevel"><![CDATA[crit|debug|emerg|err|info|notice|warning]]></pattern>
+    <pattern name="patF5LTMProc"><![CDATA[httpd|icrd|alertd|bigd|big3d|chmand|dcc|gtmd|httpd|iprepd|lacpd|lopd|mcpd|mysqlhad|overdog|perl|pfmand|promptstatusd|scriptd|sod|syscalld|tmm\d?|tmsh|zxfrd|apmd|CROND|icrd_child]]></pattern>
+    <pattern name="patHex"><![CDATA[[A-Fa-f0-9]+]]></pattern>
+    <pattern name="patSyslogPRI"><![CDATA[<\s*\d+\s*>]]></pattern>
+    <pattern name="patStrRightParen"><![CDATA[[^\)]*]]></pattern>
+    <pattern name="patStrLeftSB"><![CDATA[[^\[]*]]></pattern>
+    <pattern name="patSlash"><![CDATA[[^/]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatStr>\s+<:patLogLevel>\s+<:patF5LTMProc>(?:\(<:gPatStr>\))?(?:\[<:gPatInt>\])?:\s]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[< 85 >Feb 16 14:44:01 10.1.1.1 Kiwi_Syslog_Server Feb 16 14:44:01 slot1/ndc240003a notice httpd[19382]: 01070417:5: AUDIT - user admin - RAW: httpd(mod_auth_pam): user=admin(admin) partition=[All] level=Administrator tty=/sbin/nologin host=10.1.87.66 attempts=1 start="Thu Feb 16 14:44:01 2017".]]></testEvent>
+    <testEvent><![CDATA[< 133 >Feb 16 14:38:53 10.1.1.1 Kiwi_Syslog_Server Feb 16 14:38:53 slot4/ndc240003a notice icrd: 7799,18151, RestRequestSender, INFO,Connect timeout fd:17 127.0.0.1:8100 line:1417]]></testEvent>
+    <testEvent><![CDATA[<133>Oct 20 13:52:46 local/tmm notice tmm[5293]: 01200004:5: Packet rejected remote IP 172.16.128.26 port 137 local IP 172.16.128.255 port 137 proto UDP: Port closed.]]></testEvent>
+    <testEvent><![CDATA[<134>Jul 30 15:28:33 tmm1 info tmm1[7562]: 01070417: 134: ICSA: non-session UDP packet accepted, source: 2.2.2.2 port: 10144, destination: 3.3.3.3 port: 53]]></testEvent>
+    <testEvent><![CDATA[<131>Mar  7 13:18:53 QMA-F5-PRI err bigd[6562]: 01060111:3: Open SSL error - error:140770FC:SSL routines:SSL23_GET_SERVER_HELLO:unknown protocol.]]></testEvent>
+    <testEvent><![CDATA[<78>May 17 13:48:01 slot2/vip_shaham info CROND[6441]: (syscheck) CMD (/usr/bin/system_check -q)]]></testEvent>
+    <testEvent><![CDATA[<180>May 17 13:41:27 slot1/vip_shaham warning httpd[10918]: [warn] [client 192.168.10.11] AUTHCACHE Error processing cookie A7FC2039AC9886F9AB85C53236971B672F6A067D - Cookie user mismatch]]></testEvent>
+    <testEvent><![CDATA[<86>May  4 12:50:19 sslvpn.fortiddns.com info httpd(pam_audit)[22611]: User=fortisiemtest tty=(unknown) host=10.92.208.93 failed to login after 1 attempts (start="Tue May  4 12:50:17 2021" end="Tue May  4 12:50:19 2021").]]></testEvent>
+    <testEvent><![CDATA[<179>May  4 12:49:44 sslvpn.fortiddns.com err httpd[22611]: [auth_pam:error] [pid 22611] [client 10.92.208.93:23759] AUTHCACHE PAM: user 'fortisiemtest' (fallback: false) - not authenticated: User not known to the underlying authentication module, referer: https://sslvpn.fortiddns.com/tmui/login.jsp?msgcode=1&]]></testEvent>
+    <testEvent><![CDATA[<141>May  4 15:49:08 sslvpn.fortiddns.com notice apmd[15281]: 014902f7:5: /Common/SSLVPN_messagebox_20210413:Common:1bf38383:/Common/SSLVPN_messagebox_20210413-windows_antivirus_and_firewall_1_act_av_software_check_2_ag: endpoint software detected (sdk=4.3.1453.0,type=av,id=539,vendor_id=148,version=12.0.5698,state=1,name=Trend Micro OfficeScan Client,vendor_name=Trend Micro, Inc.,db_signature=544,db_version=16.695.00,db_time=1620057600,last_scan=0,engine_version=12.000.1008,missing_updates=).]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:patSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<hostIpAddr:gPatStr>\s+<hostName:gPatStr>\s+<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatStr>/<:gPatStr>\s+<_severity:patLogLevel>\s+<procName:patF5LTMProc>(?:\(<:gPatStr>\))?(?:\[<:gPatInt>\])?:\s*<:patHex>[:,]\s*<:patHex>[:,]\s*<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:patSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatStr>\s+<_severity:patLogLevel>\s+<procName:patF5LTMProc>(?:\(<:gPatStr>\))?\[<:gPatInt>\]:\s*<:patHex>:\s*<:patHex>:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:patSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatStr>\s+<_severity:patLogLevel>\s+<procName:patF5LTMProc>(?:\(<:gPatStr>\))?\[<:gPatInt>\]:\s*<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventType">F5-LTM-Generic</setEventAttribute>
+    <setEventAttribute attr="totFlows">1</setEventAttribute>
+
+    <choose>
+      <when test="$_severity IN 'crit, emerg, err'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_severity = 'warning'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_severity IN 'info, notice, debug'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="matches($procName, 'icrd')">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\s*<_pro:gPatStrComma>,\s*<:gPatStrComma>,\s*Connect\s+timeout\s+]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("F5-", $procName, "-", $_pro, "-Connect-timeout")</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="matches($procName, 'httpd')">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\s*<:gPatStrEndColon>:\s*httpd\(<_action:patStrRightParen>\):<_subBody:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("F5-", $procName, "-", $_action, "-", $_severity)</setEventAttribute>
+            <collectAndSetAttrByKeyValuePair sep=" " src="$_subBody">
+              <attrKeyMap attr="filePath" key="tty="/>
+              <attrKeyMap attr="_time" key="start="/>
+              <attrKeyMap attr="hostIpAddr" key="host="/>
+              <attrKeyMap attr="procName" key="process="/>
+              <attrKeyMap attr="permissionLevelName" key="level="/>
+              <attrKeyMap attr="user" key="user="/>
+            </collectAndSetAttrByKeyValuePair>
+            <when test="exist _time">
+              <collectFieldsByRegex src="$_time">
+                <regex><![CDATA[<:gPatWeekday>\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+            </when>
+          </case>
+          <case>
+            <!-- [client 192.168.10.11] AUTHCACHE Error processing cookie A7FC2039AC9886F9AB85C53236971B672F6A067D - Cookie user mismatch  -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[client\s+<srcIpAddr:gPatIpAddr>\] AUTHCACHE Error processing cookie <cookie:gPatWord> - Cookie user mismatch]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">F5-LTM-AUTHCACHE-ERROR</setEventAttribute>
+          </case>
+
+          <case>
+            <!--  <87>May 17 13:58:53 slot1/vip_shaham debug httpd[22260]: pam_unix(httpd:account): could not identify user (from getpwnam(alexa))  -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[pam_unix\(httpd:<:gPatWord>\): could not identify user \(from getpwnam\(<user:gPatStr>\)\)]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">F5-LTM-Admin-Auth-Failure</setEventAttribute>
+          </case>
+          <case>
+            <!--  <179>May  4 12:49:44 sslvpn.fortiddns.com err httpd[22611]: [auth_pam:error] [pid 22611] [client 10.92.208.93:23759] AUTHCACHE PAM: user 'fortisiemtest' (fallback: false) - not authenticated: User not known to the underlying authentication module, referer: https://sslvpn.fortiddns.com/tmui/login.jsp?msgcode=1& -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[AUTHCACHE\s+PAM\:\s+user\s+'<user:gPatWord>'.*not\s+authenticated]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">F5-LTM-Admin-Auth-Failure</setEventAttribute>
+          </case>
+          <case>
+            <!--  <85>May 17 13:58:59 slot1/vip_shaham notice httpd[21675]: 01070417:5: AUDIT - user alexa - RAW: httpd(mod_auth_pam): user=alexa(alexa) partition=[All] level=Administrator tty=/usr/bin/tmsh host=192.168.199.199 attempts=1 start="Thu May 17 13:58:53 2018" end="Thu May 17 13:58:59 2018".  -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RAW: httpd\(mod_auth_pam\): user=<user:gPatWord>.*level=<role:gPatWord>.*host=<srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">F5-LTM-Admin-Auth-Success</setEventAttribute>
+          </case>
+          <case>
+            <!--  <86>May  4 12:50:19 sslvpn.fortiddns.com info httpd(pam_audit)[22611]: User=fortisiemtest tty=(unknown) host=10.92.208.93 failed to login after 1 attempts (start=""Tue May  4 12:50:17 2021"" end=""Tue May  4 12:50:19 2021"")."  -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[User=<user:gPatWord>\s+<:gPatStr>\s+host=<srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">F5-LTM-Audit-User-Login-Failed</setEventAttribute>
+          </case>
+
+          <default>
+            <setEventAttribute attr="msg">$_body</setEventAttribute>
+            <setEventAttribute attr="eventType">F5-LTM-HTTP-Generic</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+      <when test="matches($procName, '^tmm\d?$')">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Packet rejected remote IP <srcIpAddr:gPatIpAddr> port <srcIpPort:gPatIpPort> local IP <destIpAddr:gPatIpAddr> port <destIpPort:gPatIpPort> proto <_proto:gPatStr>:]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">F5-LTM-Packet-Reject</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[ICSA: non-session <_proto:gPatStr> packet accepted, source: <srcIpAddr:gPatIpAddr> port: <srcIpPort:gPatIpPort>, destination: <destIpAddr:gPatIpAddr> port: <destIpPort:gPatIpPort>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">F5-LTM-Packet-Accept</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[ICSA: non-session <_proto:gPatStr> packet accepted, source: <srcIpAddr:gPatIpAddr>, destination: <destIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">F5-LTM-Packet-Accept</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[User <user:gPatStr>@<domain:gPatStr> from <srcName:gPatHostName> is authenticated]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">F5-LTM-Packet-Accept</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <!-- <141>May 17 13:49:27 slot1/vip_shaham notice tmm7[23778]: 01490549:5: /SSL-CloudFW/Cloud-SSL-New:SSL-CloudFW:d4ab0c19: Assigned PPP Dynamic IPv4: 192.168.249.193 Tunnel Type: VPN_TUNNELTYPE_TLS NA Resource: /SSL-CloudFW/meitar-grp-Split Client IP: 36.161.155.41 - Reconnect -->
+              <regex><![CDATA[.*Assigned PPP Dynamic IPv4: <postNATSrcIpAddr:gPatIpAddr>.*Client IP: <srcIpAddr:gPatIpAddr>.*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">F5-LTM-Traffic-Management-PPP-Connect</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <!-- <141>May 17 13:49:28 slot2/vip_shaham notice tmm4[20776]: 01490506:5: /SSL-CloudFW/Cloud-SSL-New:SSL-CloudFW:c21940ba: Received User-Agent header: MSIE%206.0. -->
+              <regex><![CDATA[.*Received User-Agent header: <httpUserAgent:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">F5-LTM-Traffic-Management-User-Agent</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <!-- <141>May 17 13:49:28 slot2/vip_shaham notice tmm8[20776]: 01490500:5: /SSL-CloudFW/Moe-Portal:SSL-CloudFW:0eac76f4: New session from client IP 82.80.224.180 (ST=HaMerkaz/CC=IL/C=AS) at VIP 172.26.129.100 Listener /SSL-CloudFW/Moe-Portal (Reputation=Unknown) -->
+              <regex><![CDATA[.*New session from client IP <srcIpAddr:gPatIpAddr> \(ST=<srcGeoState:patSlash>/CC=<srcGeoCountryCodeStr:patSlash>/C=<srcGeoCity:patStrRightParen>\) at VIP <destIpAddr:gPatIpAddr> ]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">F5-LTM-Traffic-Management-New-Session</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <!-- <141>May 17 13:49:47 slot1/vip_shaham notice tmm4[23778]: 01490502:5: /SSL-CloudFW/Moe-Portal:SSL-CloudFW:99a37bc2: Session deleted due to user inactivity. -->
+              <regex><![CDATA[Session deleted due to user inactivity.]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">F5-LTM-Traffic-Management-Deleted-Session</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <!-- <141>Jun 25 09:51:31 sslvpn.fortiddns notice tmm[21900]: 01490567:5: /Common/SSLVPN_messagebox_20210413:Common:1bf38383: Session deleted (user_initiated; code - 1). -->
+              <regex><![CDATA[:<userId:patHex>:\sSession deleted \(user_initiated; code -]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">F5-LTM-Traffic-Management-Deleted-Session</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <!-- <141>Jun 25 09:51:31 sslvpn.fortiddns notice tmm[21900]: 01490521:5: /Common/SSLVPN_messagebox_20210413:Common:1bf38383: Session statistics - bytes in: 60159, bytes out: 1323948 -->
+              <regex><![CDATA[:<userId:patHex>:\sSession statistics - bytes in:\s+<recvBytes:gPatInt>, bytes out:\s<sentBytes:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">F5-LTM-Traffic-Management-Session-Statistics</setEventAttribute>
+          </case>
+
+          <default>
+            <setEventAttribute attr="msg">$_body</setEventAttribute>
+            <setEventAttribute attr="eventType">F5-LTM-Traffic-Management-Generic</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+
+      <when test="$procName = 'gtmd'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^Connection complete to <destIpAddr:gPatIpAddr>\.]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">F5-LTM-GTMD-Connection-complete</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^Connection in progress to <destIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">F5-LTM-GTMD-Connection-in-progress</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\bSSL error:<msg:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">F5-LTM-GTMD-SSL-ERROR</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$procName = 'alertd'">
+        <when test="matches($_body, 'alertd is going down\.')">
+          <setEventAttribute attr="eventType">F5-LTM-ALERTD-DOWN</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$procName = 'bigd'">
+        <when test="matches($_body, 'Open SSL error')">
+          <setEventAttribute attr="eventType">F5-LTM-SSL-ERROR</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$procName = 'mcpd'">
+        <when test="matches($_body, 'Caught configuration exception')">
+          <setEventAttribute attr="eventType">F5-LTM-CONFIG-ERROR</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$procName = 'overdog'">
+        <when test="matches($_body, 'reboot_request_t')">
+          <setEventAttribute attr="eventType">F5-LTM-REBOOT</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$procName = 'pfmand'">
+        <when test="matches($_body, 'Shm segment not found')">
+          <setEventAttribute attr="eventType">F5-LTM-INTERNAL-ERROR</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$procName = 'apmd'">
+        <switch>
+          <case>
+            <!--  <141>May 17 13:50:17 slot2/vip_shaham notice apmd[15905]: 01490010:5: /SSL-CloudFW/Cloud-SSL-New:SSL-CloudFW:b90e1eb1: Username '056148224'  -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Username\s+'<user:gPatWord>']]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">F5-LTM-APM-User</setEventAttribute>
+          </case>
+          <case>
+            <!--  <139>May 17 13:50:17 slot2/vip_shaham err apmd[15905]: 01490236:3: /SSL-CloudFW/Cloud-SSL-New:SSL-CloudFW:b90e1eb1: LDAP Module: Failed to bind with 'CN=Ssouser2,CN=Users,DC=kishurim,DC=k12,DC=il'. Invalid credentials, 80090308: LdapErr: DSID-0C090400, comment: AcceptSecurityContext error, data 52e, v1db1 -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA['CN=<user:gPatStrComma>,CN=Users,.*\s+Invalid credentials,]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">F5-LTM-APM-LDAP-bind-failed</setEventAttribute>
+          </case>
+          <case>
+            <!-- <142>May 17 13:50:17 slot2/vip_shaham info apmd[15905]: 01490007:6: /SSL-CloudFW/Cloud-SSL-New:SSL-CloudFW:b90e1eb1: Session variable 'session.ldap./SSL-CloudFW/Cloud-SSL-New_act_ldap_query_ag.errmsg' set to 'Invalid credentials'  -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[.*Invalid credentials.*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">F5-LTM-APM-User-Invalid-Credentials</setEventAttribute>
+          </case>
+          <case>
+            <!--  <139>May  4 15:36:04 sslvpn.fortiddns.com err apmd[15281]: 01490108:3: /Common/SSLVPN_messagebox_20210413:Common:23016999: RADIUS module: authentication with 'XXXX' failed: Access-Reject packet from host 127.7.0.1:1812  (3)  -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RADIUS module: authentication with\s+'<user:gPatWord>']]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">F5-LTM-APM-User-Authentication-Failed</setEventAttribute>
+          </case>
+
+          <case>
+            <!--  <141>May  4 15:49:08 sslvpn.fortiddns.com notice apmd[15281]: 014902f7:5: /Common/SSLVPN_messagebox_20210413:Common:1bf38383:/Common/SSLVPN_messagebox_20210413-windows_antivirus_and_firewall_1_act_av_software_check_2_ag: endpoint software detected (sdk=4.3.1453.0,type=av,id=539,vendor_id=148,version=12.0.5698,state=1,name=Trend Micro OfficeScan Client,vendor_name=Trend Micro, Inc.,db_signature=544,db_version=16.695.00,db_time=1620057600,last_scan=0,engine_version=12.000.1008,missing_updates=).  -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[endpoint software detected \(<msg:gPatMesgBody>\)]]></regex>
+            </collectFieldsByRegex>
+            <collectAndSetAttrByKeyValuePair sep="," src="$msg">
+              <attrKeyMap attr="appVendor" key="vendor_name="/>
+              <attrKeyMap attr="type" key="type="/>
+              <attrKeyMap attr="appVersion" key="version="/>
+              <attrKeyMap attr="appName" key="name="/>
+              <attrKeyMap attr="srcIpAddr" key="Source Network Address: "/>
+              <attrKeyMap attr="srcIpPort" key="Source Port: "/>
+              <attrKeyMap attr="_computer" key="Workstation Name: "/>
+              <attrKeyMap attr="winLogonCallerUser" key="Caller User Name: "/>
+            </collectAndSetAttrByKeyValuePair>
+            <setEventAttribute attr="eventType">F5-LTM-APM-Endpoint-Software-Detected</setEventAttribute>
+          </case>
+          <case>
+            <!--  <141>May  4 15:39:56 sslvpn02.plb.hksarg notice apmd[15217]: 01490248:5: /Common/slvpn_policy_messagebox_0413:Common:0dec7302: Received client info - Hostname: ITO4-W10NB Type: IE Version: 11 Platform: Win10 CPU: WOW64 UI Mode: Full Javascript Support: 1 ActiveX Support: 1 Plugin Support: 0  -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[:<userId:patHex>:\s+Received client info - <msg:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <collectAndSetAttrByKeyValuePair sep=" " src="$msg">
+              <attrKeyMap attr="hostName" key="Hostname: "/>
+              <attrKeyMap attr="type" key="type: "/>
+              <attrKeyMap attr="appVersion" key="Version: "/>
+              <attrKeyMap attr="osName" key="Platform: "/>
+              <attrKeyMap attr="cpuName" key="CPU: "/>
+            </collectAndSetAttrByKeyValuePair>
+            <setEventAttribute attr="eventType">F5-LTM-APM-Client-Info</setEventAttribute>
+          </case>
+
+          <default>
+            <setEventAttribute attr="msg">$_body</setEventAttribute>
+            <setEventAttribute attr="eventType">F5-LTM-APM-User-Generic</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+    </choose>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[/Common/ext_deny_<errReason:gPatStr>\s+\(\d+\):\s+discard on /Common/external, len: <sentBytes64:gPatInt>\s+\[<_body1:gPatStrRightSB>\]]]></regex>
+        </collectFieldsByRegex>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body1">
+              <regex><![CDATA[IPv4\s+<:gPatInt>\s+<srcIpAddr:gPatIpAddr>\s+-\>\s+<destIpAddr:gPatIpAddr>\s+<_proto:gPatStr>\s+<srcIpPort:gPatIpPort>\s+-\>\s+<destIpPort:gPatIpPort>(?:\s+<_flag:gPatStr>)?]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+        <setEventAttribute attr="eventType">F5-LTM-Packet-Deny</setEventAttribute>
+      </case>
+      <default/>
+    </switch>
+
+    <!-- IPv4 40 2.2.2.2 -> 3.3.3.3 TCP 443 -> 4198 R -->
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>

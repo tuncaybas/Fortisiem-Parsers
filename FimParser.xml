@@ -1,0 +1,105 @@
+<eventParser name="FimParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[mesh(?:fim|mon)evt|AccelOps-FimLog]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<13>Jan 30 17:06:28 WIN-2k8-Hyper-V meshmonevt    object="C:\fim\New Microsoft Office Word Document.docx"         type="create" status="0x0"   user="WIN-2K8-HYPER-V\Administrator"       client="<unknown>"        process="<remote app>"         pid="0"    luid="0x0:0x3A4D960"    timestamp="Wed Jan 30 17:06:27 2013"       string="User WIN-2K8-HYPER-V\Administrator created file C:\fim\New Microsoft Office Word Document.docx from machine <unknown> on Wed Jan 30 17:06:27 2013"]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <setEventAttribute attr="eventType">PH_DEV_MON_CUST_FILE_GENERIC</setEventAttribute>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<hostName:gPatStr>\s+<:gPatWord>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatStr>\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>\s+<hostName:gPatStr>\s+<:gPatStr>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+    </switch>
+    <collectAndSetAttrByKeyValuePair sep=" " src="$_body">
+      <attrKeyMap attr="fileName" key="file="/>
+      <attrKeyMap attr="_eventTime" key="time="/>
+      <attrKeyMap attr="preHashCode" key="prehash="/>
+      <attrKeyMap attr="hashCode" key="hash="/>
+      <attrKeyMap attr="targetHashCode" key="targetfilehash="/>
+      <attrKeyMap attr="fileOwner" key="owner="/>
+      <attrKeyMap attr="eventAction" key="type="/>
+      <attrKeyMap attr="domain" key="domain="/>
+      <attrKeyMap attr="preUser" key="preuser="/>
+      <attrKeyMap attr="user" key="user="/>
+      <attrKeyMap attr="preUserGrp" key="pregroup="/>
+      <attrKeyMap attr="userGrp" key="group="/>
+      <attrKeyMap attr="preFileAccess" key="preaccess="/>
+      <attrKeyMap attr="fileAccess" key="access="/>
+      <attrKeyMap attr="fileSize" key="size="/>
+      <attrKeyMap attr="hostIpAddr" key="hostIp="/>
+      <attrKeyMap attr="procName" key="process="/>
+      <attrKeyMap attr="osObjName" key="object="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <when test="exist hostIpAddr">
+      <setEventAttribute attr="reptDevIpAddr">$hostIpAddr</setEventAttribute>
+    </when>
+    <when test="exist hostName">
+      <setEventAttribute attr="reptDevName">$hostName</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="$eventAction = 'create'">
+        <setEventAttribute attr="eventType">PH_DEV_MON_CUST_FILE_CREATE</setEventAttribute>
+      </when>
+
+      <when test="$eventAction = 'change'">
+        <setEventAttribute attr="eventType">PH_DEV_MON_CUST_FILE_CHANGE_ATTRIB</setEventAttribute>
+      </when>
+
+      <when test="$eventAction = 'modify'">
+        <setEventAttribute attr="eventType">PH_DEV_MON_CUST_FILE_CHANGE_CONTENT</setEventAttribute>
+        <when test="exist targetHashCode">
+          <setEventAttribute attr="eventType">PH_DEV_MON_CUST_TARGET_FILE_CHANGE</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$eventAction = 'delete'">
+        <setEventAttribute attr="eventType">PH_DEV_MON_CUST_FILE_DELETE</setEventAttribute>
+      </when>
+
+      <when test="$eventAction = 'scan'">
+        <setEventAttribute attr="eventType">PH_DEV_MON_CUST_FILE_SCAN</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _eventTime">
+      <when test="matches($_eventTime, '\d{14}')">
+        <collectFieldsByRegex src="$_eventTime">
+          <regex><![CDATA[<_year:gPatYear><_mon:gPatMonNum><_day:gPatDay><_hour:gPatDay><_min:gPatDay><_sec:gPatDay>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="_time">combineMsgId($_hour, ":", $_min, ":", $_sec)</setEventAttribute>
+        <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </when>
+    </when>
+    <when test="exist user">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$user">
+            <regex><![CDATA[<domain:gPatStr>\\]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

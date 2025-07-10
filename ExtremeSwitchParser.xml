@@ -1,0 +1,311 @@
+<eventParser name="ExtremeSwitchParser">
+
+  <deviceType>
+    <Vendor>Extreme</Vendor>
+    <Model>Extremeware</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patStrEndColon"><![CDATA[[^:]*]]></pattern>
+  </patternDefinitions>
+
+  <testEvents>
+    <testEvent><![CDATA[<134>Mar 29 15:59:01 172.16.20.22 USER: admin logged in through telnet (192.168.20.34)]]></testEvent>
+    <testEvent><![CDATA[<134> Dec 4 08:47:41 lanbox-1 vlan.msgs: Slot-1: Port 3:16 link UP at speed 10 Mbps and full-duplex]]></testEvent>
+    <testEvent><![CDATA[<134> Dec 4 08:47:40 lanbox-1 nl: Slot-1: Authentication failed for Network Login 802.1x user Mac 00:1B:82:00:0B:16 port 1:24]]></testEvent>
+    <testEvent><![CDATA[<134>Aug 23 09:14:42 Pottstown-3rdFl-access-sw vlan.msgs: Slot-1: Port 2:3 link down]]></testEvent>
+    <testEvent><![CDATA[<133>Aug 21 14:50:32 Pottstown-E-rack-access-sw FDB.MACLocking: MAC address 2C:EA:7F:4B:12:27 not learned on port 13 as MAC address learning limit has been exceeded.]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <!--
+      <134>USER: admin logged in through telnet (192.168.20.34)
+      <134>SYST: User admin logged out from telnet (192.168.20.34)
+      <134>USER: joeUser logged in through telnet (192.168.0.30)
+	     <134>SYST: User joeUser logged out from telnet (192.168.0.30)
+	       <132>USER: Login failed for user admin through telnet (192.168.20.34)
+	         <132>USER: Login failed for user joeUser through telnet (192.168.20.34)
+	           <134>SYST: 192.168.0.30 admin: create vlan test
+	             <134>SYST: 192.168.0.30 admin: delete vlan test
+	               <134>SYST: 192.168.0.30 admin: save
+	                 <134>SYST: Save to the PRIMARY configuration completed
+	                   -->
+
+    <setEventAttribute attr="eventAction">0</setEventAttribute>
+    <setEventAttribute attr="destIpAddr">$reptDevIpAddr</setEventAttribute>
+    <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+
+
+    <!-- header -->
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_NGHeader:gPatSyslogNGHeader> <_keyWord:patStrEndColon>: <_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <!--collectFieldsByRegex src="$_NGHeader">
+        <regex><![CDATA[<:gPatMon>\s+<:gPatDay>\s<:gPatTime>\s<reptDevIpAddr:gPatIpAddr>]]></regex>
+      </collectFieldsByRegex-->
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_keyWord:patStrEndColon>: <_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <!-- <134> Dec 4 08:47:41 lanbox-1 vlan.msgs: -->
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>\s*<_mon:gPatMon>\s<_day:gPatDay>\s<_time:gPatTime>\s<reptDevName:gPatHostName>\s+<_keyWord:patStrEndColon>:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <!-- body -->
+    <choose>
+      <when test="$_keyWord = 'SYST'">
+        <switch>
+          <case>
+            <!---
+              Logon Successful
+	      <134>SYST: User admin logged out from telnet (192.168.20.34)
+	        <134>SYST: User joeUser logged out from telnet (192.168.0.30)
+                  -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[User <user:gPatStr>\s+logged\s+<_mode:gPatStr>\s+<:gPatStr>\s+<:gPatStr>\s+\(<srcIpAddr:gPatIpAddr>\)]]></regex>
+            </collectFieldsByRegex>
+
+            <when test="$_mode = 'in'">
+              <setEventAttribute attr="eventType">Extremeware-Successful-Login</setEventAttribute>
+            </when>
+
+            <when test="$_mode = 'out'">
+              <setEventAttribute attr="eventType">Extremeware-Successful-Logout</setEventAttribute>
+            </when>
+          </case>
+
+          <case>
+            <!--
+              config change:
+              <134>SYST: 192.168.0.30 admin: create vlan test
+	        <134>SYST: 192.168.0.30 admin: delete vlan test
+	          <134>SYST: 192.168.0.30 admin: save
+                    -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr>\s+<user:patStrEndColon>:\s+<_cmd:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+
+            <switch>
+              <case>
+                <collectFieldsByRegex src="$_cmd">
+                  <regex><![CDATA[create\s+.*]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="command">$_cmd</setEventAttribute>
+                <setEventAttribute attr="eventType">Extremeware-Config-Change</setEventAttribute>
+              </case>
+              <case>
+                <collectFieldsByRegex src="$_cmd">
+                  <regex><![CDATA[delete\s+.*]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="command">$_cmd</setEventAttribute>
+                <setEventAttribute attr="eventType">Extremeware-Config-Change</setEventAttribute>
+              </case>
+
+              <case>
+                <collectFieldsByRegex src="$_cmd">
+                  <regex><![CDATA[save\s+.*]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="command">$_cmd</setEventAttribute>
+                <setEventAttribute attr="eventType">Extremeware-Config-Change</setEventAttribute>
+              </case>
+            </switch>
+          </case>
+
+          <case>
+            <!--
+              config change:
+              <134>SYST: Save to the PRIMARY configuration completed
+                -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Save\s+to\s+the\s+<:gPatStr>\s+configuration\s+completed]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Extremeware-Config-Change</setEventAttribute>
+          </case>
+
+          <case>
+            <!--
+              <12>SYST: Port 6 link down
+            -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Port\s+<devPort:gPatStr>\s+link\s+down]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Extremeware-Link-Down</setEventAttribute>
+          </case>
+
+          <case>
+            <!--
+              <12>SYST: Port 24 link active 100Mbs FULL duplex
+                -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Port\s+<devPort:gPatStr>\s+link\s+active<:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Extremeware-Link-Up</setEventAttribute>
+          </case>
+        </switch>
+      </when>
+
+      <when test="$_keyWord = 'USER'">
+        <switch>
+          <case>
+            <!---
+              Logon Successful
+              <134>USER: admin logged in through telnet (192.168.20.34)
+	        <134>USER: joeUser logged in through telnet (192.168.0.30)
+                  -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<user:gPatStr>\s+logged\s+<_mode:gPatStr>\s+<:gPatStr>\s+<:gPatStr>\s+\(<srcIpAddr:gPatIpAddr>\)]]></regex>
+            </collectFieldsByRegex>
+
+            <when test="$_mode = 'in'">
+              <setEventAttribute attr="eventType">Extremeware-Successful-Login</setEventAttribute>
+            </when>
+
+            <when test="$_mode = 'out'">
+              <setEventAttribute attr="eventType">Extremeware-Successful-Logout</setEventAttribute>
+            </when>
+          </case>
+
+          <case>
+            <!---
+              Logon Failed
+              <132>USER: Login failed for user admin through telnet (192.168.20.34)
+	        <132>USER: Login failed for user joeUser through telnet (192.168.20.34)
+                  -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Login\s+failed\s+for\s+user\s+<user:gPatStr>\s+through\s+<:gPatStr>\s+\(<srcIpAddr:gPatIpAddr>\)]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventAction">1</setEventAttribute>
+            <setEventAttribute attr="eventType">Extremeware-Failed-Login</setEventAttribute>
+          </case>
+        </switch>
+      </when>
+      <when test="$_keyWord = 'AAA'">
+        <setEventAttribute attr="eventType">Extremeware-aaa-generic</setEventAttribute>
+        <switch>
+          <case>
+            <!-- Slot-1: Login passed for user admin through ssh (192.168.1.25) -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Slot-<hwSlot:gPatInt>:\s+Login <action:gPatWord> for user <user:gPatStr> through <authenMethod:gPatWord>\s+\(<srcIpAddr:gPatIpAddr>\)]]></regex>
+            </collectFieldsByRegex>
+            <choose>
+              <when test="$action = 'passed'">
+                <setEventAttribute attr="eventType">Extremeware-Successful-Login</setEventAttribute>
+              </when>
+              <otherwise>
+                <setEventAttribute attr="eventType">Extremeware-Failed-Login</setEventAttribute>
+              </otherwise>
+            </choose>
+
+          </case>
+
+          <case>
+            <!-- Slot-1: Administrative account (admin) logout from ssh (192.168.1.25) -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Slot-<hwSlot:gPatInt>:\s+Administrative account \(<user:gPatStr>\) logout from <authenMethod:gPatWord> \(<srcIpAddr:gPatIpAddr>\)]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Extremeware-Successful-Logout</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_keyWord = 'vlan.msgs'">
+        <setEventAttribute attr="eventType">Extremeware-vlan-generic</setEventAttribute>
+        <setEventAttribute attr="msg">$_body</setEventAttribute>
+        <switch>
+          <case>
+            <!-- vlan.msgs: Slot-1: Port 3:16 link UP at speed 10 Mbps and full-duplex -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Slot-<hwSlot:gPatInt>: Port <devPort:gPatStr> link <_linkStatus:gPatWord>\s*(?:at speed <_speed:gPatInt> <_rateUnit:gPatWord> and <linkDuplexStatus:gPatStr>)?]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Extremeware-vlan-link-",$_linkStatus)</setEventAttribute>
+            <!-- intfSpeed64 in bps -->
+            <choose>
+              <when test="not_exist _rateUnit"/>
+              <when test="$_rateUnit = 'Mbps'">
+                <setEventAttribute attr="intfSpeed64">scale($_speed, 1000000)</setEventAttribute>
+              </when>
+              <when test="$_rateUnit = 'Gbps'">
+                <setEventAttribute attr="intfSpeed64">scale($_speed, 1000000000)</setEventAttribute>
+              </when>
+              <otherwise/>
+            </choose>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_keyWord = 'nl'">
+        <setEventAttribute attr="eventType">Extremeware-nl-generic</setEventAttribute>
+        <setEventAttribute attr="msg">$_body</setEventAttribute>
+        <switch>
+          <case>
+            <!-- Slot-1: Authentication failed for Network Login 802.1x user Mac 00:1B:82:00:0B:16 port 1:24 -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Slot-<hwSlot:gPatInt>: Authentication failed for Network Login 802\.1x user Mac <srcMACAddr:gPatStr> port <devPort:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Extremeware-Failed-Login</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_keyWord = 'HAL.Card'">
+        <setEventAttribute attr="eventType">Extremeware-hal-generic</setEventAttribute>
+        <switch>
+          <case>
+            <!-- Slot-3: tIpfixSD: Unable to map hardware port to slot:port, modid=0, port=0 -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Slot-<hwSlot:gPatInt>: <msg:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$_keyWord = 'exsshd'">
+        <setEventAttribute attr="eventType">Extremeware-ssh-generic</setEventAttribute>
+        <setEventAttribute attr="msg">$_body</setEventAttribute>
+        <switch>
+          <case>
+            <!-- Slot-1: SSH connection from source 10.1.1.55 has been denied by access-list SSH-access. Rejecting connection. -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Slot-<hwSlot:gPatInt>:\s*SSH connection from source <srcIpAddr:gPatIpAddr> has been denied by access-list SSH-access.<action:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Extremeware-ssh-connection-rejected</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$_keyWord = 'FDB.MACLocking'">
+        <setEventAttribute attr="eventType">Extremeware-MACLocking-generic</setEventAttribute>
+        <setEventAttribute attr="msg">$_body</setEventAttribute>
+        <switch>
+          <case>
+            <!-- MAC address 2C:EA:7F:4B:12:27 not learned on port 13 as MAC address learning limit has been exceeded. -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[MAC address <srcMACAddr:gPatStr> not learned on port <devPort:gPatStr> as <errReason:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Extremeware-MACLocking-Limit-Exceeded</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <otherwise>
+        <setEventAttribute attr="eventParsedOk">0</setEventAttribute>
+      </otherwise>
+
+    </choose>
+
+  </parsingInstructions>
+
+</eventParser>

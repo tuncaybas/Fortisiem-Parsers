@@ -1,0 +1,195 @@
+<eventParser name="EDirectoryCEFParser">
+  <deviceType>
+    <Vendor>NetIQ</Vendor>
+    <Model>eDirectory</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[Jan 28 03:31:00 ldap1.local eDirectory: CEF:0|eDirectory|eDirectory|9.1.1|CEF0B0230|DSA_READ|0|dvc=1.1.1.1 dvchost=ldap1.local rt=Jan 28 2019 03:31:00 dtz=IST sourceServiceName=CN\=edir,OU\=servers,O\=system sproc=eDirectory#DS src=1.1.1.1 spt=0 suser=CN\=edir,OU\=servers,O\=system duser=CN\=dirxml,OU\=sa,O\=system cs2Label=Class Name cs2=User cs3Label=Tree Name cs3=EXTERNAL-TREE cs4Label=Correlation ID cs4=eDirectory#0# flexString2Label=SubEvent flexString2=DSE_DSA_READ flexNumber2Label=Grouping flexNumber2=220520 cat=Objects reason=0 outcome=Success]]></testEvent>
+    <testEvent><![CDATA[Oct 31 17:00:22 NetIQ CEF:0|NetIQ|eDirectory|9.1|CEF0B035E|CONNECTION|0|dvc=192.0.0.1 dvchost=SLES12SP2-194 rt=Oct 31 2017 17:00:22 dtz=IST sourceServiceName=CN\=SLES12SP2-194,OU\=server,OU\=co,O\=in sproc=eDirectory#DS src=192.0.0.1 spt=23017 duser=CN\=SLES12SP2-194,OU\=server,OU\=co,O\=in cn1Label=Connection ID cn1=246358976 cn2Label=Created(1)/Terminated(0) cn2=1 cs1Label=Client Address cs1=192.0.0.1:23017 cs2Label=Module cs2=LDAP Server cs3Label=Tree Name cs3=TEST-CEF-AGN cs4Label=Correlation ID cs4=eDirectory#4294967295# flexString2Label=SubEvent flexString2=DSE_CONNECTION cat=Security reason=0 outcome=Success]]></testEvent>
+    <testEvent><![CDATA[Oct 23 23:57:19 NetIQ CEF:0|NetIQ|eDirectory|9.1|CEF0B0001|CREATE_OBJECT|0|dvc=192.0.0.1 dvchost=WIN-37D8M9SKD2U rt=Oct 23 2017 23:57:19 dtz=Pacific Daylight Time sourceServiceName=CN\=WIN-37D8M9SKD2U-NDS,O\=novell sproc=eDirectory#DS src=192.0.0.1 spt=52362 suser=CN\=Admin,O\=novell duser=CN\=user001,O\=novell cs2Label=Class Name cs2=User cs3Label=Tree Name cs3=TREE910W cs4Label=Correlation ID cs4=eDirectory#17#11111111-1111-1111-1111-111111111111 flexString2Label=SubEvent flexString2=DSE_CREATE_ENTRY flexNumber2Label=Grouping flexNumber2=677768 cat=Objects reason=0 outcome=Success]]></testEvent>
+    <testEvent><![CDATA[Oct 26 11:38:35 NetIQ CEF:0|NetIQ|eDirectory|9.1|CEF0B0323|READ_ATTRIBUTE|0|dvc=192.0.0.1 dvchost=WIN-37D8M9SKD2U rt=Oct 25 2017 23:08:35 dtz=India Standard Time sourceServiceName=CN\=WIN-37D8M9SKD2U-NDS,O\=novell sproc=eDirectory#DS src=192.0.0.1 spt=18369 suser=CN\=WIN-37D8M9SKD2U-NDS,O\=novell duser=CN\=WIN-37D8M9SKD2U-NDS,O\=novell cs2Label=Class Name cs2=NCP Server cs3Label=Tree Name cs3=TREE910W cs4Label=Correlation ID cs4=eDirectory#1# cs6Label=Attribute Name cs6=cefConfiguration flexString2Label=SubEvent flexString2=DSE_READ_ATTR cat=Attributes reason=0 outcome=Success]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patStrEndSep"><![CDATA[[^|]*]]></pattern>
+    <pattern name="patStrUsr"><![CDATA[[(?:CN=)]]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\s*CEF\s*:\d+\|(?:NetIQ|eDirectory)\|eDirectory\|(?:<:patStrEndSep>\|){4}\s*]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\s+CEF\s*:<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">NetIQ-eDirectory-Generic</setEventAttribute>
+
+    <when test="matches($_body, '\\\|')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "\|", "::TEMP::")</setEventAttribute>
+    </when>
+    <setEventAttribute attr="_body">replaceStrInStr($_body, "|", "::SEP::")</setEventAttribute>
+    <when test="matches($_body, '::TEMP::')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "::TEMP::", "|")</setEventAttribute>
+    </when>
+
+    <collectAndSetAttrByPos sep="::SEP::" src="$_body">
+      <attrPosMap attr="version" pos="1"/>
+      <attrPosMap attr="_devVendor" pos="2"/>
+      <attrPosMap attr="_devProduct" pos="3"/>
+      <attrPosMap attr="appVersion" pos="4"/>
+      <attrPosMap attr="_sigId" pos="5"/>
+      <attrPosMap attr="categoryType" pos="6"/>
+      <attrPosMap attr="_severity" pos="7"/>
+      <attrPosMap attr="_extension" pos="8"/>
+    </collectAndSetAttrByPos>
+    <when test="exist categoryType">
+      <setEventAttribute attr="eventType">combineMsgId("NetIQ-eDirectory-", $categoryType)</setEventAttribute>
+    </when>
+
+    <setEventAttribute attr="_extension">replaceStrInStr($_extension, "\=", "=")</setEventAttribute>
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_extension">
+      <attrKeyMap attr="hostIpAddr" key="dvc"/>
+      <attrKeyMap attr="hostName" key="dvchost"/>
+      <attrKeyMap attr="_rt" key="rt"/>
+      <attrKeyMap attr="dnsZone" key="dtz"/>
+      <attrKeyMap attr="serviceName" key="sourceServiceName"/>
+      <attrKeyMap attr="procName" key="sproc"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="srcIpPort" key="spt"/>
+      <!--
+      This case doesn't be support: suser=CN\=edir,OU\=servers cba,O\=system duser=CN\=dirxml abc,OU\=sa,O\=system cs2Label=Class Name cs2=User cs3Label=Tree Name
+      <attrKeyMap attr="srcUser" key="suser"/>
+      <attrKeyMap attr="destUser" key="duser"/>-->
+      <attrKeyMap attr="_cs1Label" key="cs1Label"/>
+      <attrKeyMap attr="_cs1" key="cs1"/>
+      <attrKeyMap attr="_cs2Label" key="cs2Label"/>
+      <attrKeyMap attr="_cs2" key="cs2"/>
+      <attrKeyMap attr="_cs3Label" key="cs3Label"/>
+      <attrKeyMap attr="_cs3" key="cs3"/>
+      <attrKeyMap attr="_cs4Label" key="cs4Label"/>
+      <attrKeyMap attr="_cs4" key="cs4"/>
+      <attrKeyMap attr="_cs6Label" key="cs6Label"/>
+      <attrKeyMap attr="_cs6" key="cs6"/>
+      <attrKeyMap attr="_cn1Label" key="cn1Label"/>
+      <attrKeyMap attr="_cn1" key="cn1"/>
+      <attrKeyMap attr="_cn2Label" key="cn2Label"/>
+      <attrKeyMap attr="_cn2" key="cn2"/>
+      <attrKeyMap attr="_flexString2Label" key="flexString2Label"/>
+      <attrKeyMap attr="_flexString2" key="flexString2"/>
+      <attrKeyMap attr="_flexNumber2Label" key="flexNumber2Label"/>
+      <attrKeyMap attr="_flexNumber2" key="flexNumber2"/>
+      <attrKeyMap attr="errReason" key="reason"/>
+      <attrKeyMap attr="_eventAction" key="outcome"/>
+      <attrKeyMap attr="devEventTypeGrp" key="cat"/>
+    </collectFieldsByKeyValuePair>
+
+    <collectFieldsByRegex src="$_extension">
+      <regex><![CDATA[(?:\s+suser=<srcUser:gPatMesgBodyMin>)?\s+duser=<destUser:gPatMesgBodyMin>\s+(?:cn|cs)\d+]]></regex>
+    </collectFieldsByRegex>
+
+    <choose>
+      <when test="not_exist _cs1Label"/>
+      <when test="not_exist _cs1"/>
+      <when test="$_cs1Label = 'Client Address'">
+        <collectFieldsByRegex src="$_cs1">
+          <regex><![CDATA[<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatIpPort>]]></regex>
+        </collectFieldsByRegex>
+      </when>
+      <when test="$_cs1Label = 'Attribute Value'">
+        <setEventAttribute attr="propValue">$_cs1</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _cs2Label"/>
+      <when test="not_exist _cs2"/>
+      <when test="$_cs2Label = 'Class Name'">
+        <setEventAttribute attr="classifier">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label = 'Module'">
+        <setEventAttribute attr="module">$_cs2</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _cs4Label"/>
+      <when test="not_exist _cs4"/>
+      <when test="$_cs4Label = 'Correlation ID'">
+        <collectFieldsByRegex src="$_cs4">
+          <regex><![CDATA[#<incidentId:gPatInt>#]]></regex>
+        </collectFieldsByRegex>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _cs6Label"/>
+      <when test="not_exist _cs6"/>
+      <when test="$_cs6Label = 'Attribute Name'">
+        <setEventAttribute attr="propName">$_cs6</setEventAttribute>
+      </when>
+      <when test="$_cs6Label = 'Server Name'">
+        <setEventAttribute attr="serviceName">$_cs6</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _cn1Label"/>
+      <when test="not_exist _cn1"/>
+      <when test="$_cn1Label = 'Connection ID'">
+        <setEventAttribute attr="ipConnId">$_cn1</setEventAttribute>
+      </when>
+      <when test="$_cn1Label = 'Request Number'">
+        <setEventAttribute attr="totRequests">$_cn1</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _cn2Label"/>
+      <when test="not_exist _cn2"/>
+      <when test="$_cn2Label = 'Created(1)/Terminated(0)'">
+        <setEventAttribute attr="incidentStatus">$_cn2</setEventAttribute>
+      </when>
+      <when test="$_cn2Label = 'Result Code'">
+        <setEventAttribute attr="incidentStatus">$_cn2</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _flexString2Label"/>
+      <when test="not_exist _flexString2"/>
+      <when test="$_flexString2Label = 'SubEvent'">
+        <setEventAttribute attr="phSubIncidentCategory">$_flexString2</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _flexNumber2Label"/>
+      <when test="not_exist _flexNumber2"/>
+      <when test="$_flexNumber2Label = 'Grouping'">
+        <setEventAttribute attr="groupName">$_flexNumber2</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _rt">
+      <collectFieldsByRegex src="$_rt">
+        <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist _eventAction"/>
+      <when test="$_eventAction = 'success'">
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <choose>
+      <when test="$_severity = '0'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventSeverity">$_severity</setEventAttribute>
+      </otherwise>
+    </choose>
+
+  </parsingInstructions>
+</eventParser>

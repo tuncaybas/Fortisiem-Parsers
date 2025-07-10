@@ -1,0 +1,254 @@
+<eventParser name="FalconDataRepParser">
+  <deviceType>
+    <Vendor>CrowdStrike</Vendor>
+    <Model>Falcon</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[2018-11-14 11:10:26 [Falcon-data-replicator] [1] [cn.bing.com]:{"AgentIdString":"","CustomerIdString":"89b2d0df98e64922aa5ed93c239212c6","EventType":"Event_ExternalApiEvent","ExternalApiType":"Event_AuthActivityAuditEvent","Nonce":1,"OperationName":"validateEntitlementsHmac","ServiceName":"CrowdStrike Authentication","Success":false,"UTCTimestamp":1542100966649,"UserId":"Customer","UserIp":"10.20.12.246","cid":"89b2d0df98e64922aa5ed93c239212c6","eid":118,"timestamp":"2018-11-13T09:22:46Z"}]]></testEvent>
+    <testEvent><![CDATA[2019-07-26 12:50:15 [Falcon-data-replicator] [1] [aws.amazon.com]:{"CommandLine":"/opt/Tanium/TaniumClient/TaniumClient config get Status.ClientAddress","ConfigBuild":"1007.8.0007803.1","ConfigStateHash":"239883993","Entitlements":"15","GID":"0","ImageFileName":"/opt/Tanium/TaniumClient/TaniumClient","MD5HashData":"e5899894f41124f872759f74831c435c","NDRoot":"285143246498976","ParentProcessId":"285147391642354","ProcessEndTime":"1564160410.379","ProcessGroupId":"285147391642354","ProcessStartTime":"1564160410.364","RGID":"0","RUID":"0","RawProcessId":"24566","SHA1HashData":"0000000000000000000000000000000000000000","SHA256HashData":"72701182d0ac0b61b3b6c8f56043e3d33e054c25d99e616a74df435f0490f1a3","SVGID":"0","SVUID":"0","SessionProcessId":"285039803609469","SourceProcessId":"285147391642354","SourceThreadId":"0","TargetProcessId":"285147392631125","UID":"0","UTCTimestamp":null,"aid":"0ddda21d8f03493b70b94869240d8499","aip":"1.2.3.4","cid":"689380aca09449af80e5058fcdc512d7","event_platform":"Lin","event_simpleName":"ProcessRollup2","id":"11111111-1111-1111-1111-111111111111","name":"ProcessRollup2LinV4","timestamp":"1564160410877"}]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patEpochSec"><![CDATA[\d{10}]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\[Falcon-data-replicator\]]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\[Falcon-data-replicator\]\s+\[<phCustId:gPatInt>\]\s+\[<relayDevName:gPatMesgBodyMin>\]:<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">Crowdstrike-Falcon-Generic</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">FALCON_DATA_REPLICATOR</setEventAttribute>
+    <setEventAttribute attr="reptDevName">$relayDevName</setEventAttribute>
+
+    <collectAndSetAttrByJSON src="$_body">
+      <attrKeyMap attr="_evtType" key="ExternalApiType"/>
+      <attrKeyMap attr="_creatTime" key="eventCreationTime"/>
+      <attrKeyMap attr="_timestampUTC" key="UTCTimestamp"/>
+      <attrKeyMap attr="_timestamp" key="timestamp"/>
+      <attrKeyMap attr="opName" key="OperationName"/>
+      <attrKeyMap attr="serviceName" key="ServiceName"/>
+      <attrKeyMap attr="isSuccess" key="Success"/>
+      <attrKeyMap attr="userId" key="UserId"/>
+      <attrKeyMap attr="user" key="UserName"/>
+      <attrKeyMap attr="fileName" key="FileName"/>
+      <attrKeyMap attr="filePath" key="FilePath"/>
+      <attrKeyMap attr="hostIpAddr" key="UserIp"/>
+      <attrKeyMap attr="command" key="CommandLine"/>
+      <attrKeyMap attr="hostName" key="ComputerName"/>
+      <attrKeyMap attr="customer" key="customerIDString"/>
+      <attrKeyMap attr="jobName" key="DetectName"/>
+      <attrKeyMap attr="jobId" key="DetectId"/>
+      <attrKeyMap attr="infoURL" key="FalconHostLink"/>
+      <attrKeyMap attr="hashMD5" key="MD5String"/>
+      <attrKeyMap attr="hashMD5" key="MD5HashData"/>
+      <attrKeyMap attr="domain" key="MachineDomain"/>
+      <attrKeyMap attr="parentProcId" key="ParentProcessId"/>
+      <attrKeyMap attr="endTime" key="ProcessEndTime"/>
+      <attrKeyMap attr="procId" key="RawProcessId"/>
+      <attrKeyMap attr="procId" key="ProcessId"/>
+      <attrKeyMap attr="_startTime" key="ProcessStartTime"/>
+      <attrKeyMap attr="hashSHA1" key="SHA1String"/>
+      <attrKeyMap attr="hashSHA256" key="SHA256String"/>
+      <attrKeyMap attr="envSensorId" key="SensorId"/>
+      <attrKeyMap attr="_severity" key="Severity"/>
+      <attrKeyMap attr="_severityName" key="SeverityName"/>
+      <attrKeyMap attr="attackTactic" key="Tactic"/>
+      <attrKeyMap attr="attackTechnique" key="Technique"/>
+      <attrKeyMap attr="iocType" key="IOCType"/>
+      <attrKeyMap attr="iocValue" key="IOCValue"/>
+      <attrKeyMap attr="hostIpAddr" key="LocalIP"/>
+      <attrKeyMap attr="hostMACAddr" key="MACAddress"/>
+      <attrKeyMap attr="msg" key="DetectDescription"/>
+      <attrKeyMap attr="_patternDispositionFlags" key="PatternDispositionFlags"/>
+      <attrKeyMap attr="imageFile" key="ImageFileName"/>
+      <attrKeyMap attr="procName" key="ImageFileName"/>
+      <attrKeyMap attr="hashSHA1" key="SHA1HashData"/>
+      <attrKeyMap attr="hashSHA256" key="SHA256HashData"/>
+      <attrKeyMap attr="hashMD5" key="MD5HashData"/>
+      <attrKeyMap attr="targetProcId" key="TargetProcessId"/>
+      <attrKeyMap attr="hostModel" key="event_platform"/>
+      <attrKeyMap attr="hostIpAddr" key="CurrentLocalIP"/>
+      <attrKeyMap attr="_aip" key="aip"/>
+      <attrKeyMap attr="destName" key="DomainName"/>
+      <attrKeyMap attr="_simpleName" key="event_simpleName"/>
+      <attrKeyMap attr="_direction" key="ConnectionDirection"/>
+      <attrKeyMap attr="_localIp" key="LocalAddressIP4"/>
+      <attrKeyMap attr="_localPort" key="LocalPort"/>
+      <attrKeyMap attr="_remoteIp" key="RemoteAddressIP4"/>
+      <attrKeyMap attr="_remotePort" key="RemotePort"/>
+      <attrKeyMap attr="ipProto" key="Protocol"/>
+    </collectAndSetAttrByJSON>
+
+    <!-- Many events dont have UTCTimestamp populated, and timestamp can be either epoch or dateTime for timestamp column -->
+    <choose>
+      <when test="exist _timestampUTC">
+        <switch>
+          <case>
+            <!-- timestamp already in epoch seconds or millis -->
+            <collectFieldsByRegex src="$_timestampUTC">
+              <regex><![CDATA[^<deviceTime:patEpochSec>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="exist _timestamp">
+        <!-- Newer formats can contain epoch millis or date string -->
+        <switch>
+          <case>
+            <!-- timestamp already in millis convert to sec -->
+            <collectFieldsByRegex src="$_timestamp">
+              <regex><![CDATA[^<deviceTime:patEpochSec>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_timestamp">
+              <regex><![CDATA[^<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>(?:<_tz:gPatTimeZone>)?]]></regex>
+            </collectFieldsByRegex>
+            <choose>
+              <when test="not_exist _tz">
+                <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+              </when>
+              <otherwise>
+                <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+              </otherwise>
+            </choose>
+          </case>
+          <default/>
+        </switch>
+      </when>
+    </choose>
+
+    <when test="exist _startTime">
+      <switch>
+        <case>
+          <!-- timestamp in epoch millis convert to seconds -->
+          <collectFieldsByRegex src="$_startTime">
+            <regex><![CDATA[^<startTime:patEpochSec>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _simpleName">
+      <setEventAttribute attr="eventType">combineMsgId("Crowdstrike-Falcon-", $_simpleName)</setEventAttribute>
+
+      <when test="$_simpleName = 'NetworkConnectIP4'">
+        <when test="exist _direction">
+          <when test="$_direction = '1'">
+            <swap>$_localIp, $_remoteIp</swap>
+            <swap>$_localPort, $_remotePort</swap>
+          </when>
+        </when>
+
+        <when test="exist _localIp">
+          <setEventAttribute attr="srcIpAddr">$_localIp</setEventAttribute>
+        </when>
+
+        <when test="exist _localPort">
+          <setEventAttribute attr="srcIpPort">$_localPort</setEventAttribute>
+        </when>
+
+        <when test="exist _remoteIp">
+          <setEventAttribute attr="destIpAddr">$_remoteIp</setEventAttribute>
+        </when>
+
+        <when test="exist _remotePort">
+          <setEventAttribute attr="destIpPort">$_remotePort</setEventAttribute>
+        </when>
+      </when>
+    </when>
+
+    <choose>
+      <when test="exist hashSHA256">
+        <setEventAttribute attr="hashAlgo">SHA256</setEventAttribute>
+        <setEventAttribute attr="hashCode">$hashSHA256</setEventAttribute>
+      </when>
+      <when test="exist hashMD5">
+        <setEventAttribute attr="hashAlgo">MD5</setEventAttribute>
+        <setEventAttribute attr="hashCode">$hashMD5</setEventAttribute>
+      </when>
+      <when test="exist hashSHA1">
+        <setEventAttribute attr="hashAlgo">SHA1</setEventAttribute>
+        <setEventAttribute attr="hashCode">$hashSHA1</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _aip">
+      <setEventAttribute attr="hostIpAddr">$_aip</setEventAttribute>
+      <setEventAttribute attr="reptDevIpAddr">$_aip</setEventAttribute>
+      <setEventAttribute attr="reptDevName">combineMsgId("HOST-", $_aip)</setEventAttribute>
+    </when>
+
+    <when test="exist _evtType">
+      <setEventAttribute attr="_evtType">replaceStrInStr($_evtType, "Event_", "")</setEventAttribute>
+      <setEventAttribute attr="eventType">combineMsgId("Crowdstrike-Falcon-", $_evtType)</setEventAttribute>
+      <choose>
+        <when test="$_evtType = 'DetectionSummaryEvent'">
+          <when test="exist jobName">
+            <setEventAttribute attr="_jobName">replaceStrInStr($jobName, " ", "-")</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $_jobName)</setEventAttribute>
+          </when>
+        </when>
+
+        <when test="$_evtType = 'AuthActivityAuditEvent'">
+          <when test="exist opName">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $opName)</setEventAttribute>
+          </when>
+
+          <when test="exist isSuccess">
+            <choose>
+              <when test="$isSuccess = 'true'">
+                <setEventAttribute attr="eventType">combineMsgId($eventType, "-success")</setEventAttribute>
+              </when>
+              <when test="$isSuccess = 'false'">
+                <setEventAttribute attr="eventType">combineMsgId($eventType, "-failure")</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+        </when>
+
+        <when test="$_evtType = 'UserActivityAuditEvent'">
+          <when test="exist opName">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $opName)</setEventAttribute>
+          </when>
+        </when>
+
+      </choose>
+    </when>
+
+    <when test="exist _severity">
+      <choose>
+        <when test="$_severity = '1'">
+          <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        </when>
+        <when test="$_severity = '2'">
+          <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+        </when>
+        <when test="$_severity = '3'">
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </when>
+        <when test="$_severity = '4'">
+          <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        </when>
+        <when test="$_severity = '5'">
+          <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist _patternDispositionFlags">
+      <collectAndSetAttrByJSON src="$_patternDispositionFlags">
+        <attrKeyMap attr="isProcessBlocked" key="ProcessBlocked"/>
+        <attrKeyMap attr="isFileQuarantined" key="QuarantineFile"/>
+        <attrKeyMap attr="isMachineQuarantined" key="QuarantineMachine"/>
+      </collectAndSetAttrByJSON>
+    </when>
+  </parsingInstructions>
+</eventParser>

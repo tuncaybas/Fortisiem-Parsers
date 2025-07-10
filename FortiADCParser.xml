@@ -1,0 +1,682 @@
+<eventParser name="FortiADCParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiADC</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<6>date=2019-06-12 time=13:05:52 device_id=FAD2KD3114000026 log_id=0000000100 type=event subtype=config pri=information vd=root msg_id=71118385 user=user1 ui=GUI(1.2.3.4) action=add cfgpath=log setting remote cfgobj=<No.> cfgattr=1 logdesc=Change the configuration msg="added a new entry '1' for "log setting remote" on domain "root""]]></testEvent>
+    <testEvent><![CDATA[<1>date=2019-06-12 time=13:06:52 device_id=FAD2KD3114000026 log_id=0003000235 type=event subtype=system pri=alert vd=root msg_id=71118386 submod=update user=system ui=system action=update status=none logdesc=License could not be validated msg="Unable to connect to FDS server"]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\s(?:device_id|devid)="?(?:FAD|FADV|FBL)-?\d\w*"?\s]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[^\s*<:gPatSyslogPRI>?<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="fwAction" key="action"/>
+      <attrKeyMap attr="_date" key="date"/>
+      <attrKeyMap attr="deviceIdentification" key="device_id"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="destIpPort" key="dst_port"/>
+      <attrKeyMap attr="httpUserAgent" key="http_agent"/>
+      <attrKeyMap attr="httpHost" key="http_host"/>
+      <attrKeyMap attr="httpMethod" key="http_method"/>
+      <attrKeyMap attr="sentBytes64" key="http_request_bytes"/>
+      <attrKeyMap attr="httpRequestTime" key="http_request_time"/>
+      <attrKeyMap attr="recvBytes64" key="http_response_bytes"/>
+      <attrKeyMap attr="httpResponseTimeMs" key="http_response_time"/>
+      <attrKeyMap attr="httpStatusCode" key="http_retcode"/>
+      <attrKeyMap attr="infoURL" key="http_url"/>
+      <attrKeyMap attr="logID" key="log_id"/>
+      <attrKeyMap attr="usrMsg" key="msg"/>
+      <attrKeyMap attr="owaspTop10" key="owasp_top10"/>
+      <attrKeyMap attr="policyName" key="policy"/>
+      <attrKeyMap attr="_severity" key="pri"/>
+      <attrKeyMap attr="ipProto" key="proto"/>
+      <attrKeyMap attr="errReason" key="reason"/>
+      <attrKeyMap attr="serviceName" key="service"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="srcIpPort" key="src_port"/>
+      <attrKeyMap attr="status" key="status"/>
+      <attrKeyMap attr="categoryType" key="subcat"/>
+      <attrKeyMap attr="subtype" key="subtype"/>
+      <attrKeyMap attr="_time" key="time"/>
+      <attrKeyMap attr="_timezone" key="timezone"/>
+      <attrKeyMap attr="postNATDestIpAddr" key="trans_dst"/>
+      <attrKeyMap attr="postNATDestIpPort" key="trans_dst_port"/>
+      <attrKeyMap attr="postNATSrcIpAddr" key="trans_src"/>
+      <attrKeyMap attr="postNATSrcIpPort" key="trans_src_port"/>
+      <attrKeyMap attr="type" key="type"/>
+      <attrKeyMap attr="_ui" key="ui"/>
+      <attrKeyMap attr="_user" key="user"/>
+      <attrKeyMap attr="httpUserAgent" key="user_agent"/>
+      <attrKeyMap attr="vdom" key="vd"/>
+    </collectFieldsByKeyValuePair>
+
+    <collectFieldsByRegex src="$_date">
+      <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>]]></regex>
+    </collectFieldsByRegex>
+    <when test="exist $_timezone">
+      <collectFieldsByRegex src="$_timezone">
+        <regex><![CDATA[^\(GMT<_tz:gPatStr>\)]]></regex>
+      </collectFieldsByRegex>
+    </when>
+    <when test="not_exist _tz">
+      <setEventAttribute attr="_tz">UTC</setEventAttribute>
+    </when>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+
+    <setEventAttribute attr="eventType">FortiADC-Generic</setEventAttribute>
+
+    <choose>
+      <when test="$logID = '0000000100'">
+        <setEventAttribute attr="eventType">FortiADC-Event-Configuration-change</setEventAttribute>
+      </when>
+      <when test="$logID = '0001001000'">
+        <setEventAttribute attr="eventType">FortiADC-Event-Admin-login</setEventAttribute>
+      </when>
+      <when test="$logID = '0001001001'">
+        <setEventAttribute attr="eventType">FortiADC-Event-Admin-logout</setEventAttribute>
+      </when>
+      <when test="$logID = '0002001800'">
+        <setEventAttribute attr="eventType">FortiADC-Event-HealthCheck-LLB</setEventAttribute>
+      </when>
+      <when test="$logID = '0002001801'">
+        <setEventAttribute attr="eventType">FortiADC-Event-HealthCheck-SLB</setEventAttribute>
+      </when>
+      <when test="$logID = '0002001802'">
+        <setEventAttribute attr="eventType">FortiADC-Event-HealthCheck-GLB</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000200'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-CertExpired</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000201'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-CrlUpdate</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000202'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-Reboot</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000203'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-Shutdown</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000204'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-CleanIsp</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000205'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-ConfigBackup</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000206'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-IspBackup</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000207'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-LogBackup</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000208'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-GenerateCert</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000209'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-ImportCaCert</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000210'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-ImportCrl</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000211'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-ImportOcsp</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000212'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-SetTime</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000213'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-Reset</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000214'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-LogRebuilt</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000215'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-LogDeleted</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000216'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-Reloaded</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000217'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-FirmwareUpgraded</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000218'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-FirmwareDowngraded</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000219'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-FirmwareError</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000220'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-CryptoUpgraded</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000221'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-IspUpdated</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000222'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-DatabaseReset</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000223'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-DatabaseRestore</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000224'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-AlertDelete</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000225'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-CaRetrieved</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000226'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-IntermediateCaRetrieved</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000227'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-CsrVdom</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000228'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-GenerateLocalCert</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000229'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-ImportCert</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000230'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-RemoteCertRetrieved</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000231'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-LogDownload</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000232'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-DeleteReport</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000233'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-DeleteLogTable</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000234'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-PortStatusChanged</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000235'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-VmLicenseUpdate</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000236'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-LogDbFailedToStart</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000237'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-GetLogVersionFailed</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000238'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-CreateLogFile</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000239'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-GenerateSelf-signedCert</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000240'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-TemperatureHigh</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000241'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-TemperatureCritical</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000242'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-TemperatureNormal</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000243'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-FanBad</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000244'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-FanSlow</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000245'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-InputVoltageHigh</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000246'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-InputVoltageLow</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000247'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-HddUnhealthy</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000248'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-SsdReachedEndOfLife</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000249'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-SsdNearEndOfLife</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000250'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-DeviceUsage</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000251'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-HddMountStatus</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000252'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-LogIndexTableBroken</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000253'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-LogIndexNon_existent</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000254'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-LogDbDiskFull</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000255'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-StatisticsDiskFull</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000257'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-MountHddFailed</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000258'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-UpdateFortiguardSuccess</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000259'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-ReportDiskFull</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000260'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-ReportExpired</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000261'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-HASwitchConsoleReceived</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000262'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-HASwitchConsole</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000263'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-HASlaveSync</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000264'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-HAForcedSync</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000265'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-HASystemUpgrade</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000266'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-HAReceivedImage</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000267'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-HARemote_IPStatusChanged</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000268'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-HARemote_IPInactiveTooLong</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000269'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-HADiskCheck</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000270'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-HAPushImage</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000271'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-HAFullConfigSync</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000272'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-HAInit</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000273'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-HAChangeMode</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000274'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-HADeviceJoinedGroup</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000275'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-HADeviceLeftGroup</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000276'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-HAInterfaceStateChanged</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000277'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-HATrafficGroupChanges</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000278'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-HAExecutedForcedSync</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000279'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-ArpConflict</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000280'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-LinkStatusChanged</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000281'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-PortExhausted</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000282'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-LogDiskFull</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000283'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-LogRotate</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000284'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-ShareMemoryDiskFull</setEventAttribute>
+      </when>
+      <when test="$logID = '0003000285'">
+        <setEventAttribute attr="eventType">FortiADC-Event-System-HaVrrpGroupChanged</setEventAttribute>
+      </when>
+      <when test="$logID = '0004001500'">
+        <setEventAttribute attr="eventType">FortiADC-Event-User-UserAuthentication</setEventAttribute>
+      </when>
+      <when test="$logID = '0004001501'">
+        <setEventAttribute attr="eventType">FortiADC-Event-User-UserAuthenticationRelay</setEventAttribute>
+      </when>
+      <when test="$logID = '0005002000'">
+        <setEventAttribute attr="eventType">FortiADC-Event-SLB-ScriptLoadFileError</setEventAttribute>
+      </when>
+      <when test="$logID = '0005002001'">
+        <setEventAttribute attr="eventType">FortiADC-Event-SLB-ScriptRunTimeError</setEventAttribute>
+      </when>
+      <when test="$logID = '0005002002'">
+        <setEventAttribute attr="eventType">FortiADC-Event-SLB-TransactionRateLimit</setEventAttribute>
+      </when>
+      <when test="$logID = '0005002003'">
+        <setEventAttribute attr="eventType">FortiADC-Event-SLB-ConnectionRateLimit</setEventAttribute>
+      </when>
+      <when test="$logID = '0005002004'">
+        <setEventAttribute attr="eventType">FortiADC-Event-SLB-ClientCertificateVerify</setEventAttribute>
+      </when>
+      <when test="$logID = '0005002005'">
+        <setEventAttribute attr="eventType">FortiADC-Event-SLB-SslHandshake</setEventAttribute>
+      </when>
+      <when test="$logID = '0005002007'">
+        <setEventAttribute attr="eventType">FortiADC-Event-SLB-VdomRpsLimit</setEventAttribute>
+      </when>
+      <when test="$logID = '0005002008'">
+        <setEventAttribute attr="eventType">FortiADC-Event-SLB-VdomCpsLimit</setEventAttribute>
+      </when>
+      <when test="$logID = '0005002009'">
+        <setEventAttribute attr="eventType">FortiADC-Event-SLB-VdomTpLimit</setEventAttribute>
+      </when>
+      <when test="$logID = '0005002010'">
+        <setEventAttribute attr="eventType">FortiADC-Event-SLB-ConnectionLimit</setEventAttribute>
+      </when>
+      <when test="$logID = '0005002011'">
+        <setEventAttribute attr="eventType">FortiADC-Event-SLB-SourcePortExhausted</setEventAttribute>
+      </when>
+      <when test="$logID = '0005002012'">
+        <setEventAttribute attr="eventType">FortiADC-Event-SLB-IpPoolExhausted</setEventAttribute>
+      </when>
+      <when test="$logID = '0005002013'">
+        <setEventAttribute attr="eventType">FortiADC-Event-SLB-ConfigError</setEventAttribute>
+      </when>
+      <when test="$logID = '0005002014'">
+        <setEventAttribute attr="eventType">FortiADC-Event-SLB-MemoryAllocationError</setEventAttribute>
+      </when>
+      <when test="$logID = '0005002015'">
+        <setEventAttribute attr="eventType">FortiADC-Event-SLB-MkdirError</setEventAttribute>
+      </when>
+      <when test="$logID = '0005002016'">
+        <setEventAttribute attr="eventType">FortiADC-Event-SLB-OpenFileError</setEventAttribute>
+      </when>
+      <when test="$logID = '0005002017'">
+        <setEventAttribute attr="eventType">FortiADC-Event-SLB-WriteFileError</setEventAttribute>
+      </when>
+      <when test="$logID = '0005002018'">
+        <setEventAttribute attr="eventType">FortiADC-Event-SLB-DropLog</setEventAttribute>
+      </when>
+      <when test="$logID = '0005002019'">
+        <setEventAttribute attr="eventType">FortiADC-Event-SLB-VsRestart</setEventAttribute>
+      </when>
+      <when test="$logID = '0005002020'">
+        <setEventAttribute attr="eventType">FortiADC-Event-SLB-TerminateHttproxy</setEventAttribute>
+      </when>
+      <when test="$logID = '0005002021'">
+        <setEventAttribute attr="eventType">FortiADC-Event-SLB-ResolveRealServerFQDN</setEventAttribute>
+      </when>
+      <when test="$logID = '0006003000'">
+        <setEventAttribute attr="eventType">FortiADC-Event-LLB-BandwidthUsage</setEventAttribute>
+      </when>
+      <when test="$logID = '0007005000'">
+        <setEventAttribute attr="eventType">FortiADC-Event-GLB-PeerStatusChange</setEventAttribute>
+      </when>
+      <when test="$logID = '0007005001'">
+        <setEventAttribute attr="eventType">FortiADC-Event-GLB-RemoteServerStatusChange</setEventAttribute>
+      </when>
+      <when test="$logID = '0008004000'">
+        <setEventAttribute attr="eventType">FortiADC-Event-Firewall-SnatSourcePortExhausted</setEventAttribute>
+      </when>
+      <when test="$logID = '0100008000'">
+        <setEventAttribute attr="eventType">FortiADC-Event-SLB-Generic</setEventAttribute>
+      </when>
+      <when test="$logID = '0100009000'">
+        <setEventAttribute attr="eventType">FortiADC-Traffic-GLB</setEventAttribute>
+      </when>
+      <when test="$logID = '0101008001'">
+        <setEventAttribute attr="eventType">FortiADC-Traffic-SLB_LB4</setEventAttribute>
+      </when>
+      <when test="$logID = '0101008002'">
+        <setEventAttribute attr="eventType">FortiADC-Traffic-SLB_HTTP</setEventAttribute>
+      </when>
+      <when test="$logID = '0101008003'">
+        <setEventAttribute attr="eventType">FortiADC-Traffic-SLB_TCP</setEventAttribute>
+      </when>
+      <when test="$logID = '0101008004'">
+        <setEventAttribute attr="eventType">FortiADC-Traffic-SLB_SIP</setEventAttribute>
+      </when>
+      <when test="$logID = '0101008005'">
+        <setEventAttribute attr="eventType">FortiADC-Traffic-SLB_RDP</setEventAttribute>
+      </when>
+      <when test="$logID = '0101008007'">
+        <setEventAttribute attr="eventType">FortiADC-Traffic-SLB_RTSP</setEventAttribute>
+      </when>
+      <when test="$logID = '0101008008'">
+        <setEventAttribute attr="eventType">FortiADC-Traffic-SLB_SMTP</setEventAttribute>
+      </when>
+      <when test="$logID = '0101008009'">
+        <setEventAttribute attr="eventType">FortiADC-Traffic-SLB_Diameter</setEventAttribute>
+      </when>
+      <when test="$logID = '0101008010'">
+        <setEventAttribute attr="eventType">FortiADC-Traffic-SLB_RTMP</setEventAttribute>
+      </when>
+      <when test="$logID = '0101008011'">
+        <setEventAttribute attr="eventType">FortiADC-Traffic-SLB_Mysql</setEventAttribute>
+      </when>
+      <when test="$logID = '0101008012'">
+        <setEventAttribute attr="eventType">FortiADC-Traffic-SLB_FTP</setEventAttribute>
+      </when>
+      <when test="$logID = '0101008013'">
+        <setEventAttribute attr="eventType">FortiADC-Traffic-SLB_Iso8583</setEventAttribute>
+      </when>
+      <when test="$logID = '0101008014'">
+        <setEventAttribute attr="eventType">FortiADC-Traffic-SLB</setEventAttribute>
+      </when>
+      <when test="$logID = '0101008015'">
+        <setEventAttribute attr="eventType">FortiADC-Traffic-SLB_Mysql</setEventAttribute>
+      </when>
+      <when test="$logID = '0200006001'">
+        <setEventAttribute attr="eventType">FortiADC-Security-IP_Reputation</setEventAttribute>
+      </when>
+      <when test="$logID = '0200006003'">
+        <setEventAttribute attr="eventType">FortiADC-Security-Synflood</setEventAttribute>
+      </when>
+      <when test="$logID = '0200006002'">
+        <setEventAttribute attr="eventType">FortiADC-Security-GEO</setEventAttribute>
+      </when>
+      <when test="$logID = '0200006004'">
+        <setEventAttribute attr="eventType">FortiADC-Security-WAF-Signature</setEventAttribute>
+      </when>
+      <when test="$logID = '0200006005'">
+        <setEventAttribute attr="eventType">FortiADC-Security-WAF-HttpProtocolConstraint</setEventAttribute>
+      </when>
+      <when test="$logID = '0200006006'">
+        <setEventAttribute attr="eventType">FortiADC-Security-WAF-SqlInjection</setEventAttribute>
+      </when>
+      <when test="$logID = '0200006007'">
+        <setEventAttribute attr="eventType">FortiADC-Security-WAF-UrlProtection</setEventAttribute>
+      </when>
+      <when test="$logID = '0200006008'">
+        <setEventAttribute attr="eventType">FortiADC-Security-WAF-Bot</setEventAttribute>
+      </when>
+      <when test="$logID = '0200006009'">
+        <setEventAttribute attr="eventType">FortiADC-Security-WAF-XmlValidation</setEventAttribute>
+      </when>
+      <when test="$logID = '0200006010'">
+        <setEventAttribute attr="eventType">FortiADC-Security-WAF-JsonValidation</setEventAttribute>
+      </when>
+      <when test="$logID = '0200006011'">
+        <setEventAttribute attr="eventType">FortiADC-Security-WAF-SoapValidation</setEventAttribute>
+      </when>
+      <when test="$logID = '0201006150'">
+        <setEventAttribute attr="eventType">FortiADC-Security-Synflood</setEventAttribute>
+      </when>
+      <when test="$logID = '0201006151'">
+        <setEventAttribute attr="eventType">FortiADC-Security-IpFragment</setEventAttribute>
+        <setEventAttribute attr="_severity">alert</setEventAttribute>
+      </when>
+      <when test="$logID = '0201006152'">
+        <setEventAttribute attr="eventType">FortiADC-Security-TcpSlowData</setEventAttribute>
+        <setEventAttribute attr="_severity">alert</setEventAttribute>
+      </when>
+      <when test="$logID = '0201006153'">
+        <setEventAttribute attr="eventType">FortiADC-Security-TcpAccessFlood</setEventAttribute>
+        <setEventAttribute attr="_severity">alert</setEventAttribute>
+      </when>
+      <when test="$logID = '0201006154'">
+        <setEventAttribute attr="eventType">FortiADC-Security-DosHttpRequest</setEventAttribute>
+        <setEventAttribute attr="_severity">alert</setEventAttribute>
+      </when>
+      <when test="$logID = '0201006156'">
+        <setEventAttribute attr="eventType">FortiADC-Security-DosHttpAccess</setEventAttribute>
+        <setEventAttribute attr="_severity">alert</setEventAttribute>
+      </when>
+      <when test="$logID = '0202006004'">
+        <setEventAttribute attr="eventType">FortiADC-Security-WAF-Signature</setEventAttribute>
+      </when>
+      <when test="$logID = '0202006005'">
+        <setEventAttribute attr="eventType">FortiADC-Security-WAF-HttpProtocolConstraint</setEventAttribute>
+      </when>
+      <when test="$logID = '0202006006'">
+        <setEventAttribute attr="eventType">FortiADC-Security-WAF-SqlInjection</setEventAttribute>
+      </when>
+      <when test="$logID = '0202006007'">
+        <setEventAttribute attr="eventType">FortiADC-Security-WAF-UrlProtection</setEventAttribute>
+      </when>
+      <when test="$logID = '0202006008'">
+        <setEventAttribute attr="eventType">FortiADC-Security-WAF-Bot</setEventAttribute>
+      </when>
+      <when test="$logID = '0202006009'">
+        <setEventAttribute attr="eventType">FortiADC-Security-WAF-XmlValidation</setEventAttribute>
+      </when>
+      <when test="$logID = '0202006010'">
+        <setEventAttribute attr="eventType">FortiADC-Security-WAF-JsonValidation</setEventAttribute>
+      </when>
+      <when test="$logID = '0202006011'">
+        <setEventAttribute attr="eventType">FortiADC-Security-WAF-SoapValidation</setEventAttribute>
+      </when>
+      <when test="$logID = '0203006002'">
+        <setEventAttribute attr="eventType">FortiADC-Security-GEO</setEventAttribute>
+      </when>
+      <when test="$logID = '0204006500'">
+        <setEventAttribute attr="eventType">FortiADC-Security-AvDetectedVirus</setEventAttribute>
+        <setEventAttribute attr="_severity">alert</setEventAttribute>
+      </when>
+      <when test="$logID = '0204006501'">
+        <setEventAttribute attr="eventType">FortiADC-Security-AvHeuristic</setEventAttribute>
+        <setEventAttribute attr="_severity">alert</setEventAttribute>
+      </when>
+      <when test="$logID = '0204006502'">
+        <setEventAttribute attr="eventType">FortiADC-Security-AvUploadToSandbox</setEventAttribute>
+        <setEventAttribute attr="_severity">alert</setEventAttribute>
+      </when>
+      <when test="$logID = '0204006503'">
+        <setEventAttribute attr="eventType">FortiADC-Security-AvScanLength</setEventAttribute>
+        <setEventAttribute attr="_severity">alert</setEventAttribute>
+      </when>
+      <when test="$logID = '0204006504'">
+        <setEventAttribute attr="eventType">FortiADC-Security-AvError</setEventAttribute>
+        <setEventAttribute attr="_severity">alert</setEventAttribute>
+      </when>
+      <when test="$logID = '0204006507'">
+        <setEventAttribute attr="eventType">FortiADC-Security-AvDeleteQuarantinedFile</setEventAttribute>
+        <setEventAttribute attr="_severity">alert</setEventAttribute>
+      </when>
+      <when test="$logID = '0205006600'">
+        <setEventAttribute attr="eventType">FortiADC-Security-IpsAttack</setEventAttribute>
+      </when>
+      <when test="$logID = '0300010000'">
+        <setEventAttribute attr="eventType">FortiADC-Script-SLB</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _user"/>
+      <when test="$_user = 'N/A'"/>
+      <otherwise>
+        <setEventAttribute attr="user">$_user</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist usrMsg">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_body">
+            <regex><![CDATA[ msg="<usrMsg:gPatMesgBody>"(?: \w+=|$)]]></regex>
+          </collectFieldsByRegex>
+        </case>
+
+        <case>
+          <collectFieldsByRegex src="$_body">
+            <regex><![CDATA[ msg=<usrMsg:gPatMesgBody>(?: \w+=|$)]]></regex>
+          </collectFieldsByRegex>
+        </case>
+      </switch>
+
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$usrMsg">
+            <regex><![CDATA[^User <user:gPatMesgBodyMin> (?:login successfully|logout) from <_src:gPatMesgBodyMin>\.?\s*$]]></regex>
+          </collectFieldsByRegex>
+
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_src">
+                <regex><![CDATA[GUI\(<srcIpAddr:gPatIpAddr>\)]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <case>
+              <collectFieldsByRegex src="$_src">
+                <regex><![CDATA[^\s*<srcIpAddr:gPatIpAddr>\s*$]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <choose>
+      <when test="not_exist _severity"/>
+      <when test="$_severity = 'critical'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_severity = 'alert'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_severity = 'error'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_severity = 'warning'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$_severity = 'information'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist infoURL">
+      <setEventAttribute attr="destName">extractHostFromURL($infoURL)</setEventAttribute>
+    </when>
+
+    <when test="not_exist srcIpAddr">
+      <when test="exist _ui">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_ui">
+              <regex><![CDATA[GUI\(<srcIpAddr:gPatIpAddr>\)]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_ui">
+              <regex><![CDATA[^\s*<srcIpAddr:gPatIpAddr>\s*$]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+    </when>
+  </parsingInstructions>
+</eventParser>

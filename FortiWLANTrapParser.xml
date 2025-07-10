@@ -1,0 +1,85 @@
+<eventParser name="FortiWLANTrapParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiWLC</Model>
+    <Version>ANY</Version>
+  </deviceType>
+  <patternDefinitions>
+    <pattern name="patAngleBrackets"><![CDATA[[^>]*]]></pattern>
+  </patternDefinitions>
+  <eventFormatRecognizer><![CDATA[\bSNMPv2-SMI::enterprises\.15983\b]]></eventFormatRecognizer>
+  <testEvents>
+    <testEvent><![CDATA[2116-11-14 19:57:17 1.1.1.1TRAP2, SNMP v2c, community Advanced	. Cold Start Trap (1) Uptime: 1:11:11.11	DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (217576766) 24 days, 1:36:17.66	SNMPv2-MIB::snmpTrapOID.1 = OID: SNMPv2-SMI::enterprises.15983.3.1.3.32	SNMPv2-SMI::enterprises.15983.3.1.2.1.21 = Hex-STRING: 11 11 11 11 11 11 	SNMPv2-SMI::enterprises.15983.3.1.2.1.38 = ""	SNMPv2-SMI::enterprises.15983.3.1.2.1.39 = ""	SNMPv2-SMI::enterprises.15983.3.1.2.1.37 = INTEGER: 1	SNMPv2-SMI::enterprises.15983.3.1.2.1.14 = STRING: "Access Request rejected for Calling Station ID: <9c:f4:8e:1d:e8:a3>, Authentication Type: <812.1X>, Reason: <Four Way Handshake Timeout>"]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+<_reptIp:gPatIpAddr><_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+<hostName:gPatStr><_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventType">FortiWLC-Generic</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">Snmp Trap</setEventAttribute>
+
+    <when test="$_reptIp != '127.0.0.1'">
+      <when test="$_reptIp != '0.0.0.0'">
+        <setEventAttribute attr="reptDevIpAddr">$_reptIp</setEventAttribute>
+      </when>
+    </when>
+    <collectAndSetAttrByKeyValuePair sep="\t\\| SNMP" src="$_body">
+      <attrKeyMap attr="msg" key="SNMPv2-SMI::enterprises.15983.3.1.2.1.14 = STRING: "/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <when test="exist msg">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_rawmsg">
+            <regex><![CDATA[Access\s+Request\s+rejected\s+for\s+Calling\s+Station\s+ID:\s*\<<destMACAddr:patAngleBrackets>\>,\s*Authentication\s+Type:\s*\<<:patAngleBrackets>\>,\s*Reason:\s*\<<errReason:patAngleBrackets>\>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventType">FortiWLC-Access-Request-rejected</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_rawmsg">
+            <regex><![CDATA[A\s+rogue\s+STATION\s+MAC\s+address\s*\<<destMACAddr:patAngleBrackets>\>\s+has\s+been\s+detected\s+with\s+BSSID\<.*\>\s+Channel\<\d+\>\s+ESSID\<.*\>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventType">FortiWLC-Rogue-station-detected</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_rawmsg">
+            <regex><![CDATA[A\s+rogue\s+STATION\s+MAC\s+address\s*\<<destMACAddr:patAngleBrackets>\>\s*has\s+been\s+removed]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventType">FortiWLC-Rogue-station-removed</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_rawmsg">
+            <regex><![CDATA[A\s+rogue\s+AP\s+MAC\s+address\s*\<<destMACAddr:patAngleBrackets>\>\s+has\s+been\s+detected\s+with\s+BSSID\<.*\>\s+Channel\<\d+\>\s+ESSID\<.*\>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventType">FortiWLC-Rogue-AP-Detected</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_rawmsg">
+            <regex><![CDATA[A\s+rogue\s+AP\s+MAC\s+address\s*\<<destMACAddr:patAngleBrackets>\>\s*has\s+been\s+removed]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventType">FortiWLC-Rogue-AP-Removed</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$msg">
+            <regex><![CDATA[^AP\s+\[\s+\<<nepDevName:gPatHostName>\>\s+MAC address\<<nepMACAddr:gPatStr>\>\s+IP\<<nepDevIpAddr:gPatIpAddr>\>\] is <_action:gPatMesgBody>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="_et">replaceStringByRegex($_action, "\s+", "-")</setEventAttribute>
+          <setEventAttribute attr="eventType">combineMsgId("FortiWLC-AP-", $_et)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

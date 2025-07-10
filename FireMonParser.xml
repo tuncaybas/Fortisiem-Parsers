@@ -1,0 +1,110 @@
+<eventParser name="FireMonParser">
+  <deviceType>
+    <Vendor>FireMon</Vendor>
+    <Model>Security Manager</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<30>Jun 25 15:54:11 firemon02 DataCollector: [0x7fa3257da700] INFO HitCountRetrieval[1/27] null - [3N89Z9] Device [1/27]: Finished [com.fm.sm.dp.cisco-asa-cisco_pix_asa_fwsm]]]></testEvent>
+    <testEvent><![CDATA[<30>Jun 25 15:54:11 firemon02 DataCollector: [0x7fa3257da700] INFO DPConnectSession[1/27] null - [30QT69] Destructor for DPConnectSession]]></testEvent>
+    <testEvent><![CDATA[<30>Jun 25 15:54:42 firemon02 DataCollector: [0x7fa359ffb700] INFO ASClient null - [2LFAC2] Processing request. [0] requests remaining in queue.]]></testEvent>
+    <testEvent><![CDATA[<9>Jun 25 15:54:42 firemon02 DataCollector: Total received messages [0], total dropped messages [0]]]></testEvent>
+    <testEvent><![CDATA[<30>Jun 25 16:45:10 firemon02 DataCollector: line 1:0 no viable alternative at input u'access-list']]></testEvent>
+    <testEvent><![CDATA[<30>Jun 25 15:54:14 firemon02 DataCollector: [0x7fa28e7fc700] INFO Metrics null - {"snapshot":[{"SyslogServer":{"queued":{"count":0,"timestamp":"20190625T155414.464231"},"totalDropped":{"count":0,"timestamp":"20190625T155414.464236"},"totalReceived":{"count":0,"timestamp":"20190625T155414.464237"},"dropPerSecond":{"count":0,"timestamp":"20190625T155414.464241"}}},{"TrafficMessageQueue":{"queued":{"count":0,"timestamp":"20190625T155414.464239"},"totalDropped":{"count":0,"timestamp":"20190625T155414.464271"},"totalReceived":{"count":717480,"timestamp":"20190625T155414.464242"},"dropPerSecond":{"count":0,"timestamp":"20190625T155414.464243"}}},{"SyslogUDPServer":{"totalBytesReceived":{"count":0,"timestamp":"20190625T155414.464246"},"totalMessageParsingErrors":{"count":0,"timestamp":"20190625T155414.464251"},"bytesPerSecond":{"count":0,"timestamp":"20190625T155414.464262"},"messagesPerSecond":{"count":0,"timestamp":"20190625T155414.464257"}}},{"LeaMessageQueue":{"queued":{"count":0,"timestamp":"20190625T155414.464267"},"totalDropped":{"count":0,"timestamp":"20190625T155414.464273"},"totalReceived":{"count":0,"timestamp":"20190625T155414.464283"},"dropPerSecond":{"count":0,"timestamp":"20190625T155414.464278"},"messagesPerSecond":{"count":0,"timestamp":"20190625T155414.464287"}}}]}]]></testEvent>
+    <testEvent><![CDATA[<86>Jun 26 13:17:54 firemon02 fmos[31891]: root : TTY=NOTTY ; PWD=/ ; COMMAND=check-update --quiet]]></testEvent>
+    <testEvent><![CDATA[<14>Jun 26 13:17:54 firemon02 requests.packages.urllib3.connec INFO Starting new HTTPS connection (1): fmosupdate.firemon.com]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patMod"><![CDATA[DataCollector|fmos|requests\.packages\.urllib3\.connec|ansible-stat]]></pattern>
+    <pattern name="patStrEndColon"><![CDATA[[^:]*]]></pattern>
+    <pattern name="patStrDoubleQuoted"><![CDATA[[^"]*]]></pattern>
+    <pattern name="gPatStrLeftSB"><![CDATA[[^\[]*]]></pattern>
+    <pattern name="patSev"><![CDATA[INFO|WARN|ERROR|CRIT|CRITICAL|DEBUG]]></pattern>
+  </patternDefinitions>
+  <!-- <14>Jun 26 13:17:54 firemon02 requests.packages.urllib3.connec INFO Starting new HTTPS connection (1): fmosupdate.firemon.com -->
+  <eventFormatRecognizer><![CDATA[^\s*<:gPatSyslogPRI>\s*<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+<:patMod>(?:\[<:gPatInt>\])?[:\s]]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>\s*<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<reptDevName:gPatHostName>\s+<_subbody:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+
+    <switch>
+      <!-- Parse header and leftover to _body -->
+      <case>
+        <!-- <86>Jun 26 13:17:54 firemon02 fmos[31891]: root : -->
+        <collectFieldsByRegex src="$_subbody">
+          <regex><![CDATA[^<_type:patMod>\[<procId:gPatInt>\]:\s*<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <!-- <30>Jun 25 15:54:11 firemon02 DataCollector: [0x7fa3257da700] INFO HitCountRetrieval[1/27] null - [3N89Z9] Device [1/27]: Finished [com.fm.sm.dp.cisco-asa-cisco_pix_asa_fwsm] -->
+      <case>
+        <collectFieldsByRegex src="$_subbody">
+          <regex><![CDATA[^<_type:patMod>:\s*\[<:gPatStr>\]\s*<_sev:patSev>\s*<_et:gPatStr>(?:\[<:gPatStr>\]|\s-)<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <!-- <30>Jun 25 16:45:10 firemon02 DataCollector: line 1:0 no viable alternative at input u'access-list' -->
+        <collectFieldsByRegex src="$_subbody">
+          <regex><![CDATA[^<_type:patMod>:?\s*<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+
+    <choose>
+      <when test="$_type = 'fmos'">
+        <!-- root : TTY=NOTTY ; PWD=/ ; COMMAND=check-update -quiet -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<user:gPatStr>\s*:\s*<_subBody:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+
+        <switch>
+          <case>
+            <!-- TTY=NOTTY ; PWD=/ ; COMMAND=check-update -quiet -->
+            <collectAndSetAttrByKeyValuePair sep=" ; " src="$_body">
+              <attrKeyMap attr="srcTerminal" key="TTY="/>
+              <attrKeyMap attr="srcFilePath" key="PWD="/>
+              <attrKeyMap attr="command" key="COMMAND="/>
+            </collectAndSetAttrByKeyValuePair>
+            <setEventAttribute attr="_et">FMOS-Audit</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="not_exist _et">
+        <setEventAttribute attr="_et">Generic</setEventAttribute>
+      </when>
+    </choose>
+
+    <setEventAttribute attr="eventType">combineMsgId("FireMon-SecMgr-",$_et)</setEventAttribute>
+
+    <choose>
+      <when test="not_exist _sev"/>
+      <when test="$_sev = 'INFO'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_sev = 'WARN'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$_sev = 'ERROR'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_sev = 'CRIT'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_sev = 'CRITICAL'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_sev = 'DEBUG'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+    </choose>
+
+  </parsingInstructions>
+</eventParser>
+

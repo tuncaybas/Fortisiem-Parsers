@@ -1,0 +1,73 @@
+<eventParser name="ElasticClusterSettingParser">
+  <deviceType>
+    <Vendor>CentOS</Vendor>
+    <Model>Linux</Model>
+    <Version>ANY</Version>
+  </deviceType>
+  <appType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiSIEM</Model>
+    <Version>ANY</Version>
+    <Name>Fortinet FortiSIEM</Name>
+  </appType>
+  <!-- pattern definitions -->
+  <patternDefinitions>
+    <pattern name="patStrEndWithLeftSquareBracket"><![CDATA[[^\[]*]]></pattern>
+    <pattern name="patStrEndWithRightSquareBracket"><![CDATA[[^\]]*]]></pattern>
+    <pattern name="patStrStatus"><![CDATA[Success|Fail]]></pattern>
+  </patternDefinitions>
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+(?:<:gPatIpAddr>|<:gPatHostName>)\s+elasticClusterSettings\s*-\s*\S+\s*-\s*\[<:patStrEndWithRightSquareBracket>\]\s*]]></eventFormatRecognizer>
+  <testEvents>
+    <testEvent><![CDATA[<14>Nov  2 14:47:15 FSM-ABC-Rocky-sp204-172 elasticClusterSettings - INFO - [set_ilm_state] res.status_code: 200 and res.text: {"acknowledged":true}]]></testEvent>
+    <testEvent><![CDATA[<14>Nov  2 14:47:15 FSM-ABC-Rocky-sp204-172 elasticClusterSettings - INFO - [set_ilm_state] Success]]></testEvent>
+    <testEvent><![CDATA[<14>Nov  2 14:36:03 FSM-ABC-Rocky-sp204-172 elasticClusterSettings - INFO - [test_box_type] nodes: {'QMav': {'xpack.installed': 'true', 'box_type': 'hot', 'transform.node': 'true', 'role': 'cdfhmstw', 'ip': '10.10.10.10', 'name': 'node58128'}}]]></testEvent>
+  </testEvents>
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+elasticClusterSettings\s*-\s*<_evtSeverity:gPatStr>\s*-\s*\[<action:patStrEndWithRightSquareBracket>\]\s*<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+        <setEventAttribute attr="details">$_body</setEventAttribute>
+      </case>
+      <default>
+        <setEventAttribute attr="_body">$_rawmsg</setEventAttribute>
+      </default>
+    </switch>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^res.status_code:\s*<actionReturnCode:gPatInt>\s+and\s+res.text:\s*<details:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^Testing:\s*<destIpAddr:gPatIpAddr>:<destIpPort:gPatInt>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^<status:patStrStatus>\s*$]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+    <choose>
+      <when test="not_exist _evtSeverity"/>
+      <when test="$_evtSeverity = 'CRITICAL'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+      <when test="$_evtSeverity IN 'ERROR, WARNING'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_evtSeverity IN 'INFO, DEBUG'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+    </choose>
+    <setEventAttribute attr="eventType">ES-Generic</setEventAttribute>
+    <when test="exist action">
+      <setEventAttribute attr="eventType">combineMsgId("ES-", $action)</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>

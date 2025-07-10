@@ -1,0 +1,444 @@
+<eventParser name="FortiAnalyzerParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiAnalyzer</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<190>timestamp=1621345787 tz="UTC+0:00" devname=".self" devid="FAZ-VMTM21001111" vd="root" itime=1621370987 idseq=102006481121119552 date="2021-05-18" time="13:49:47" log_id="0001010026" type="event" subtype="system" pri="notice" desc="CLI execution info" user="admin" userfrom="jsconsole(172.16.197.168)" msg="path=system.locallog.syslogd.setting,act=edit,status=enable(disable),syslog-name=rob-test()" session_id=50336 objname="" path="system.locallog.syslogd.setting" objattr="" cli_act=add cmd_from=cli]]></testEvent>
+    <testEvent><![CDATA[<185>date=2021-05-18 time=13:56:33 devname=faz-4352-111 device_id=FAZ-VMTM21001111 log_id=0001010014 type=event subtype=system pri=alert desc="User login from SSH failed" user="root" msg="Login from ssh: Failed for invalid user root from 10.1.197.168 port 50436" remote_ip="10.1.197.168" remote_port=50436 operation="login failed" performed_on="ssh(10.1.197.168)" valid=0 authmsg="Failed" extrainfo=""]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[(?:^|\s)(?:devid|device_id)="?(?:FAZ|FL|FLG)\S+"?\s]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_body">
+      <attrKeyMap attr="action" key="action"/>
+      <attrKeyMap attr="profileName" key="adminprof"/>
+      <attrKeyMap attr="_authmsg" key="authmsg"/>
+      <attrKeyMap attr="changeSet" key="changes"/>
+      <attrKeyMap attr="action" key="cli_act"/>
+      <attrKeyMap attr="_method" key="cmd_from"/>
+      <attrKeyMap attr="_date" key="date"/>
+      <attrKeyMap attr="description" key="desc"/>
+      <attrKeyMap attr="serialNumber" key="device_id"/>
+      <attrKeyMap attr="serialNumber" key="devid"/>
+      <attrKeyMap attr="_reptDevName" key="devname"/>
+      <attrKeyMap attr="_idseq" key="idseq"/>
+      <attrKeyMap attr="_logId" key="log_id"/>
+      <attrKeyMap attr="_logIdOld" key="logid"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="osObjValue" key="objattr"/>
+      <attrKeyMap attr="osObjName" key="objname"/>
+      <attrKeyMap attr="opName" key="operation"/>
+      <attrKeyMap attr="objectPath" key="path"/>
+      <attrKeyMap attr="_performedOn" key="performed_on"/>
+      <attrKeyMap attr="_pri" key="pri"/>
+      <attrKeyMap attr="srcIpAddr" key="remote_ip"/>
+      <attrKeyMap attr="srcIpPort" key="remote_port"/>
+      <attrKeyMap attr="sessionId" key="session_id"/>
+      <attrKeyMap attr="subtype" key="subtype"/>
+      <attrKeyMap attr="_time" key="time"/>
+      <attrKeyMap attr="type" key="type"/>
+      <attrKeyMap attr="_tz" key="tz"/>
+      <attrKeyMap attr="user" key="user"/>
+      <attrKeyMap attr="_userFrom" key="userfrom"/>
+      <attrKeyMap attr="vdom" key="vd"/>
+      <attrKeyMap attr="deviceIdentification" key="logdev_id"/>
+      <attrKeyMap attr="hostName" key="logdev_name"/>
+      <attrKeyMap attr="offlineDuration" key="logdev_offline_duration"/>
+    </collectFieldsByKeyValuePair>
+    <!-- convert minutes to seconds for durationSec display of attribute to be consistent. -->
+    <when test="exist offlineDuration">
+      <setEventAttribute attr="offlineDuration">scale($offlineDuration, 60)</setEventAttribute>
+    </when>
+
+    <!-- for events that have devname .self, dont set reptDevName -->
+    <when test="exist _reptDevName">
+      <when test="$_reptDevName != '.self'">
+        <setEventAttribute attr="reptDevName">$_reptDevName</setEventAttribute>
+      </when>
+    </when>
+
+    <!-- Generic based on Subtype -->
+    <setEventAttribute attr="eventType">combineMsgId("FortiAnalyzer-", $subtype)</setEventAttribute>
+
+    <!-- Extract log short message id, first 4 comprise type and subtype, the rest message, although first digit of messageDetail not used -->
+    <!-- older faz formats use a truncated log id consisting of last 6 digits only -->
+    <choose>
+      <when test="exist _logId">
+        <collectFieldsByRegex src="$_logId">
+          <regex><![CDATA[\d{5}<_logDetailId:gPatInt>]]></regex>
+        </collectFieldsByRegex>
+      </when>
+      <when test="exist _logIdOld">
+        <setEventAttribute attr="_logDetailId">$_logIdOld</setEventAttribute>
+      </when>
+      <otherwise>
+        <!-- edge case set to 0 where logId fields are not present -->
+        <setEventAttribute attr="_logDetailId">0</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <!-- set deviceTime with our without timezone -->
+    <when test="exist _date">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_date">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+      <choose>
+        <when test="exist _tz">
+          <!-- format UTC+0:00 must be stripped to just offset -->
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_tz">
+                <regex><![CDATA[<:gPatWord><_tz:gPatTimeZone>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </when>
+        <otherwise>
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </otherwise>
+      </choose>
+    </when>
+
+    <when test="exist _userFrom">
+      <!-- Parse method ssh or GUI or jsconsole userfrom="GUI(1.1.197.168) -->
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_userFrom">
+            <regex><![CDATA[<_method:gPatWord>\(<srcIpAddr:gPatIpAddr>\)]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <when test="exist _performedOn">
+      <!-- Parse method ssh or GUI or jsconsole userfrom="GUI(1.1.197.168), ip not needed in this case -->
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_performedOn">
+            <regex><![CDATA[<_method:gPatWord>\(<:gPatIpAddr>\)]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _method">
+      <!-- ssh or GUI, this field is available for many system events -->
+      <setEventAttribute attr="eventType">combineMsgId($eventType,"-", $_method)</setEventAttribute>
+    </when>
+
+    <!-- each faz log subtype per FortiManager  FortiAnalyzer - Event Log Reference -->
+    <choose>
+      <when test="$subtype = 'system'">
+        <choose>
+          <when test="$_logDetailId = '10014'">
+            <!-- ssh auth login failure -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-login-failed")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '10018'">
+            <!-- General login info -->
+            <choose>
+              <when test="$opName = 'login'">
+                <!-- login success -->
+                <setEventAttribute attr="eventType">combineMsgId($eventType, "-login-success")</setEventAttribute>
+              </when>
+              <when test="$opName = 'login timed out'">
+                <setEventAttribute attr="eventType">combineMsgId($eventType, "-login-timeout")</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+          <when test="$_logDetailId = '10019'">
+            <!-- Login Alert, can also mean auth failure -->
+            <choose>
+              <when test="$opName = 'login failed'">
+                <setEventAttribute attr="eventType">combineMsgId($eventType, "-login-failed")</setEventAttribute>
+              </when>
+              <otherwise>
+                <setEventAttribute attr="eventType">combineMsgId($eventType, "-login-generic")</setEventAttribute>
+              </otherwise>
+            </choose>
+          </when>
+          <when test="$_logDetailId = '10026'">
+            <!-- CLI command run, either via ssh or the jsconsole -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-cfg-change")</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+      <when test="$subtype = 'fazsys'">
+        <choose>
+          <when test="$_logDetailId = '37024'">
+            <!-- license limit reached -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-license-limit-reached")</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+      <when test="$subtype = 'logdev'">
+        <choose>
+          <when test="$_logDetailId = '38002'">
+            <!-- device add -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-device-add")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '38003'">
+            <!-- device add fail -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-device-add-fail")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '38004'">
+            <!-- device delete -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-device-delete")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '38005'">
+            <!-- device delete fail -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-device-delete-fail")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '38006'">
+            <!-- device update -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-device-update")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '38007'">
+            <!-- device update fail -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-device-update-fail")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '38008'">
+            <!-- device online -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-device-online")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '38009'">
+            <!-- device offline -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-device-offline")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '220001'">
+            <!-- device offline as well -->
+            <!-- <188>timestamp=1634750902 devname=".self" devid="FL-2KET31800123" vd="root" itime=1634743701 date="2021-10-20" time="17:28:22" type="appevent" user="system" user_from="system" logid="220001" subtype="logdev" eventtype="logging-status" level="warning" desc="Device offline" logdev_id="FG3H1E5818123456" logdev_name="FWLab1" logdev_offline_duration=69413 logdev_last_logging=1630578868 msg="Did not receive any log from device FWLab1[FG3H1E5818123456\] in last 69413 minutes." tz="+0000" -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-device-offline")</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+      <when test="$subtype = 'logging'">
+        <choose>
+          <when test="$_logDetailId = '39002'">
+            <!-- log rate alert -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-lograte-alert")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '39003'">
+            <!-- log rate notify -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-lograte-notify")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '39004'">
+            <!-- diag -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-diag")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '39005'">
+            <!-- resume -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-resume")</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+      <when test="$subtype = 'logfile'">
+        <choose>
+          <when test="$_logDetailId = '40043'">
+            <!-- cloud usage alert -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-cloud-usage-alert")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '40044'">
+            <!-- cloud usage license alert -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-cloud-usage-lic-alert")</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+      <when test="$subtype = 'report'">
+        <choose>
+          <when test="$_logDetailId = '41002'">
+            <!-- report delete -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-delete")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '41030'">
+            <!-- group delete -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-group-delete")</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+      <when test="$subtype = 'eventmgmt'">
+        <choose>
+          <when test="$_logDetailId = '42004'">
+            <!-- eventmgmt delete -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-delete")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '42006'">
+            <!-- eventmgmt update -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-update")</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+      <when test="$subtype = 'logdb'">
+        <choose>
+          <when test="$_logDetailId = '43010'">
+            <!-- db age approaching -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-db_age-approaching")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '43011'">
+            <!-- db age exceeded -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-db_age-exceed")</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+      <when test="$subtype = 'hcache'">
+        <choose>
+          <when test="$_logDetailId = '44002'">
+            <!-- cache rebuild -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-rebuild")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '44003'">
+            <!-- cache rebuild fail -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-rebuild-fail")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '44004'">
+            <!-- cache upgrade -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-upgrade")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '44005'">
+            <!-- upgrade fail -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-upgrade-fail")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '44006'">
+            <!-- cache limit -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-limit")</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+      <when test="$subtype = 'diskquota'">
+        <choose>
+          <when test="$_logDetailId = '45002'">
+            <!-- quota alert -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-alert")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '45005'">
+            <!-- quota warn -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-warn")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '45006'">
+            <!-- quota notify -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-notify")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '45007'">
+            <!-- quota info -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-info")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '45010'">
+            <!-- quota change -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-change")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '45011'">
+            <!-- quota change fail -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-change-fail")</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+      <when test="$subtype = 'ediscovery'">
+        <!-- email discovery -->
+        <choose>
+          <when test="$_logDetailId = '47002'">
+            <!-- create -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-create")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '47003'">
+            <!-- create fail -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-create-fail")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '47004'">
+            <!-- delete -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-delete")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '47005'">
+            <!-- delete fail -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-delete-fail")</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+      <when test="$subtype = 'fazha'">
+        <choose>
+          <when test="$_logDetailId = '48002'">
+            <!-- state change -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-state-change")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '48003'">
+            <!-- sync start -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-sync-start")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '48004'">
+            <!-- sync end -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-sync-end")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '48005'">
+            <!-- sync fail -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-sync-fail")</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+      <when test="$subtype = 'docker'">
+        <choose>
+          <when test="$_logDetailId = '10258'">
+            <!-- docker emergency -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-emergency")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '10259'">
+            <!-- docker alert -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-alert")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '10260'">
+            <!-- docker critical -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-critical")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '10261'">
+            <!-- docker error -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-error")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '10262'">
+            <!-- docker warning -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-warning")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '10263'">
+            <!-- docker notif -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-notif")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '10264'">
+            <!-- docker info -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-info")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '10265'">
+            <!-- docker debug -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-debug")</setEventAttribute>
+          </when>
+          <when test="$_logDetailId = '10266'">
+            <!-- docker resource -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-resource")</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-generic")</setEventAttribute>
+      </otherwise>
+    </choose>
+  </parsingInstructions>
+
+</eventParser>

@@ -1,0 +1,69 @@
+<eventParser name="FireEyeJsonParser">
+  <deviceType>
+    <Vendor>FireEye</Vendor>
+    <Model>Web MPS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<161>fenotify-42111.alert: { "appliance": "example.edu", "msg": "normal", "product": "Web MPS", "appliance-id": "000BABDFE8CC", "version": "8.1.0.703452", "alert": { "class": "RISKWARE", "occurred": "2018-05-15T15:10:00Z", "explanation": { "malware-detected": { "malware": { "executed-at": "2018-05-15T15:10:00Z", "name": "PUP.DealPly", "malicious": "no", "url": "http://example.com/?v=2.2&pcrc=526361856&rv=4.0&r=1" } }, "cnc-services": { "cnc-service": { "port": 80, "protocol": "tcp", "location": "US/VA/Ashburn", "address": "example.com", "channel": "POST /?v=2.2&pcrc=526361856&rv=4.0&r=1 HTTP/1.1::~~Connection: Keep-Alive::~~Content-Type: text/plain; Charset=UTF-8::~~Accept: */*::~~Accept-Language: en-US::~~User-Agent: Mozilla/4.0 (compatible; Win32; WinHttp.WinHttpRequest.5)::~~Content-Length: 472::~~Host: example1.com::~~::~~" } } }, "id": 42111, "uuid": "11111111-1111-1111-1111-111111111111", "name": "riskware-callback", "action": "notified", "severity": "minr", "alert-url": "https://example.edu/notification_url/riskware?ev_id=23853&inf_id=42111&inf_type=Riskware%20Callback&ref=wMPS", "dst": { "ip": "192.168.1.25", "port": 80, "mac": "00:09:0f:09:19:24" }, "src": { "port": 54593, "vlan": 0, "ip": "10.145.11.27", "mac": "00:24:f9:c0:6c:00" } } }]]></testEvent>
+    <testEvent><![CDATA[<161>fenotify-42110.alert: { "appliance": "example.edu", "msg": "normal", "product": "Web MPS", "appliance-id": "000BABDFE8CC", "version": "8.1.0.703452", "alert": { "class": "RISKWARE", "occurred": "2018-05-15T15:09:30Z", "explanation": { "malware-detected": { "malware": { "executed-at": "2018-05-15T15:09:30Z", "name": "Adware.Coupons", "malicious": "no", "url": "http://example1.coupons.com/fds/NMU.aspx?aueuZhPdbsDLZAbpUuGbiPJMUuGsGkccouazPBxAytQBJqkiHyyzrrAHGJAMPwJlknxMXKoWxJJtxsAAcpxpAivppWYIyaLsARvtEEgKltDfSWeeckRJAIKkehvpMKbzDxeGNuGAYdem" } }, "cnc-services": { "cnc-service": { "port": 80, "protocol": "tcp", "location": "US", "address": "example1.coupons.com", "channel": "GET /fds/NMU.aspx?aueuZhPdbsDLZAbpUuGbiPJMUuGsGkccouazPabcdeqkiHyyzrrAHGJAMPwJlknxMXKoWxJJtxsAAcpxpAivppWYIyaLsARvtEEgKltDfSWeeckRJAIKkehvpMKbzDxeGNuGAYdem HTTP/1.1::~~User-Agent: Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.1; NET CLR 1.1.4322; .NET CLR 2.0.50727)::~~Host: example1.coupons.com::~~::~~" } } }, "id": 42110, "uuid": "11111111-1111-1111-1111-111111111111", "name": "riskware-callback", "action": "notified", "severity": "minr", "alert-url": "https://example.edu/notification_url/riskware?ev_id=23853&inf_id=42110&inf_type=Riskware%20Callback&ref=wMPS", "dst": { "ip": "192.168.1.25", "port": 80, "mac": "00:09:0f:08:18:24" }, "src": { "port": 51717, "vlan": 0, "ip": "10.10.10.1", "mac": "00:24:f9:c0:6d:00" } } }]]></testEvent>
+  </testEvents>
+
+  <!-- pattern definitions -->
+  <patternDefinitions>
+    <pattern name="patStrEndColon"><![CDATA[[^:]*]]></pattern>
+    <pattern name="patStrDoubleQuoted"><![CDATA[[^"]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[^\s*<:gPatSyslogPRI>fenotify-\d+\.<:patStrEndColon>:\s*\{(?:[^,]+,)*\s*"product":\s*"Web MPS"\s*(?:,.+)?\}\s*$]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <!-- parsing common fields -->
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>fenotify-<actionId:gPatInt>\.<_securityType:patStrEndColon>:\s*<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <collectAndSetAttrByJSON src="$_body">
+      <attrKeyMap attr="appName" key="appliance"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="product" key="product"/>
+      <attrKeyMap attr="serialNumber" key="appliance-id"/>
+      <attrKeyMap attr="appVersion" key="version"/>
+      <attrKeyMap attr="virusType" key="alert.class"/>
+      <attrKeyMap attr="_eventTime" key="alert.occurred"/>
+      <attrKeyMap attr="virusName" key="alert.explanation.malware-detected.malware.name"/>
+      <attrKeyMap attr="infoURL" key="alert.explanation.malware-detected.malware.url"/>
+      <attrKeyMap attr="appPort" key="alert.explanation.cnc-services.cnc-service.port"/>
+      <attrKeyMap attr="appTransportProto" key="alert.explanation.cnc-services.cnc-service.protocol"/>
+      <attrKeyMap attr="hostLocation" key="alert.explanation.cnc-services.cnc-service.location"/>
+      <attrKeyMap attr="cncName" key="alert.explanation.cnc-services.cnc-service.address"/>
+      <attrKeyMap attr="riskName" key="alert.name"/>
+      <attrKeyMap attr="actionName" key="alert.action"/>
+      <attrKeyMap attr="uuid" key="alert.uuid"/>
+      <attrKeyMap attr="_severity" key="alert.severity"/>
+      <attrKeyMap attr="destIpAddr" key="alert.dst.ip"/>
+      <attrKeyMap attr="destIpPort" key="alert.dst.port"/>
+      <attrKeyMap attr="destMACAddr" key="alert.dst.mac"/>
+      <attrKeyMap attr="srcIpAddr" key="alert.src.ip"/>
+      <attrKeyMap attr="srcIpPort" key="alert.src.port"/>
+      <attrKeyMap attr="srcMACAddr" key="alert.src.mac"/>
+    </collectAndSetAttrByJSON>
+
+    <setEventAttribute attr="eventType">combineMsgId("FireEye-WebMPS-",$riskName)</setEventAttribute>
+
+    <!--"2018-05-15T15:10:00Z"-->
+    <collectFieldsByRegex src="$_eventTime">
+      <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime><_zone:gPatTimeZone>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time, $_zone)</setEventAttribute>
+
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+    <when test="$_securityType = 'alert'">
+      <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

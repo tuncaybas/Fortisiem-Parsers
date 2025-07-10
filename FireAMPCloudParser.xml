@@ -1,0 +1,94 @@
+<eventParser name="FireAMPCloudParser">
+  <deviceType>
+    <Vendor>Cisco</Vendor>
+    <Model>FireAMP Cloud</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[\[FireAMP_Cloud]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[[FireAMP_Cloud_Threat_Detected]:[eventSeverity]=PHL_CRITICAL,[connectorGUID]=11111111-1111-1111-1111-111111111111,[date]=2015-11-25T19:17:39+00:00,[detection]=W32.DFC.MalParent,[detectionId]=6159251516445163587,[eventId]=6159251516445163587,[eventType]=Threat Detected,[eventTypeId]=1090519054,[fileDispostion]=Malicious,[fileName]=rjtsbks.exe,[fileSHA256]=3372c1edab46837f1e973164fa2d726c5c5e17bcb888828ccd7c4dfcc234a370,[hostName]=Demo_TeslaCrypt]]></testEvent>
+    <testEvent><![CDATA[[FireAMP_Cloud_EVENT]:[phCustId]=1,[msg]={"computer":{"active":true,"connector_guid":"11111111-1111-1111-1111-111111111111","external_ip":"10.10.10.11","hostname":"test-mac","links":{"computer":"https://api.amp.sourcefire.com/v0/computers/11111111-1111-1111-1111-111111111111","group":"https://api.amp.sourcefire.com/v0/groups/11111111-1111-1111-1111-111111111111","trajectory":"https://api.amp.sourcefire.com/v0/computers/11111111-1111-1111-1111-111111111111/trajectory"},"network_addresses":[{"ip":"10.0.0.103","mac":"xx:22:xx:45:xx:14"},{"ip":"","mac":"xx:xx:xx:xx:60:05"},{"ip":"","mac":"xx:xx:xx:xx:11:22"}]},"connector_guid":"11111111-1111-1111-1111-111111111111","date":"2022-04-27T18:59:31+00:00","event_type":"Scan Completed, No Detections","event_type_id":554696715,"group_guids":["11111111-1111-1111-1111-111111111111"],"id":1651085971778921004,"scan":{"clean":true,"description":"Flash Scan","malicious_detections":0,"scanned_files":1305,"scanned_paths":5,"scanned_processes":0},"timestamp":1651085971,"timestamp_nanoseconds":778921000}]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <setEventAttribute attr="extEventRecvProto">FIREAMP_CLOUD_API</setEventAttribute>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[\[FireAMP_Cloud_EVENT\]:\[phCustId\]=<phCustId:gPatInt>(?:,\[reptDevIpAddr\]=<reptDevIpAddr:gPatStrComma>,\[reptDevName\]=<reptDevName:gPatStrComma>)?,\[msg\]=<_jsonString:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">FireAMP_Cloud_Generic</setEventAttribute>
+        <collectAndSetAttrByJSON src="$_jsonString">
+          <attrKeyMap attr="fireAmpCloudEventId" key="id"/>
+          <attrKeyMap attr="eventTime" key="timestamp"/>
+          <attrKeyMap attr="_eventType" key="event_type"/>
+          <attrKeyMap attr="virusName" key="detection"/>
+          <attrKeyMap attr="fireAmpCloudDetectionId" key="detection_id"/>
+          <attrKeyMap attr="connectorGUID" key="computer.connector_guid"/>
+          <attrKeyMap attr="hostName" key="computer.hostname"/>
+          <attrKeyMap attr="user" key="computer.user"/>
+          <attrKeyMap attr="destIpAddr" key="network_info.remote_ip"/>
+          <attrKeyMap attr="destIpPort" key="network_info.remote_port"/>
+          <attrKeyMap attr="srcIpAddr" key="network_info.local_ip"/>
+          <attrKeyMap attr="srcIpPort" key="network_info.local_port"/>
+          <attrKeyMap attr="hashCode" key="file.identity.sha256"/>
+          <attrKeyMap attr="fileDisposition" key="file.disposition"/>
+          <attrKeyMap attr="fileName" key="file.file_name"/>
+          <attrKeyMap attr="scanProfile" key="scan.description"/>
+          <attrKeyMap attr="scanClean" key="scan.clean"/>
+          <attrKeyMap attr="scannedFiles" key="scan.scanned_files"/>
+          <attrKeyMap attr="scannedProcesses" key="scan.scanned_processes"/>
+          <attrKeyMap attr="scannedPaths" key="scan.scanned_paths"/>
+          <attrKeyMap attr="scannedDetections" key="scan.malicious_detections"/>
+          <attrKeyMap attr="errorNo" key="error.error_code"/>
+          <attrKeyMap attr="errorString" key="error.description"/>
+          <attrKeyMap attr="iocDesc" key="generic_ioc.description"/>
+          <attrKeyMap attr="iocName" key="generic_ioc.short_description"/>
+          <attrKeyMap attr="infoURL" key="network_info.dirty_url"/>
+          <attrKeyMap attr="hostIpAddr" key="computer.network_addresses[0].ip"/>
+          <attrKeyMap attr="hostMACAddr" key="computer.network_addresses[0].mac"/>
+          <attrKeyMap attr="iocDesc" key="cloud_ioc.description"/>
+          <attrKeyMap attr="iocName" key="cloud_ioc.short_description"/>
+          <attrKeyMap attr="filePath" key="file.file_path"/>
+          <attrKeyMap attr="command" key="command_line.arguments"/>
+        </collectAndSetAttrByJSON>
+        <when test="exist _eventType">
+          <setEventAttribute attr="eventType">combineMsgId("FireAMP_Cloud_", $_eventType)</setEventAttribute>
+          <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "\W+", "_")</setEventAttribute>
+          <setEventAttribute attr="eventType">trimAttribute($eventType, "_")</setEventAttribute>
+        </when>
+        <when test="exist hashCode">
+          <setEventAttribute attr="hashAlgo">SHA256</setEventAttribute>
+        </when>
+      </case>
+      <default>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[\[<eventType:gPatWord>\]:<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+
+        <!-- FireAMP event type contains ',', don't parser it as AO event type, show it in raw data-->
+        <collectAndSetAttrBySymbol src="$_body" sep=",[" symStart="[" symEnd="]=">
+          <excludeAttr>eventType</excludeAttr>
+        </collectAndSetAttrBySymbol>
+      </default>
+    </switch>
+
+    <choose>
+      <when test="not_exist eventSeverity"/>
+      <when test="$eventSeverity = 'PHL_CRITICAL'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$eventSeverity = 'PHL_ERROR'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$eventSeverity = 'PHL_WARNING'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$eventSeverity = 'PHL_INFO'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

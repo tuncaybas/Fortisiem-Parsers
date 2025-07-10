@@ -1,0 +1,183 @@
+<eventParser name="FalconStreamingParser">
+  <deviceType>
+    <Vendor>CrowdStrike</Vendor>
+    <Model>Falcon</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[2018-09-29 17:56:00 [10.10.10.10] [a.com] [CrowdStrike-Falcon-Streaming] [1] [AuthActivityAuditEvent]:{"OperationName":"validateEntitlementsHmac","ServiceName":"CrowdStrike Authentication","Success":false,"UTCTimestamp":1538214960941,"UserId":"Customer","UserIp":"10.20.10.21"}]]></testEvent>
+    <testEvent><![CDATA[2019-07-26 09:09:38 [10.10.10.10] [a.com] [CrowdStrike-Falcon-Streaming] [1] [DetectionSummaryEvent]:{"CommandLine":"ping systemlowcheck.com","ComputerName":"host1","DetectDescription":"A domain lookup matched a CrowdStrike Intelligence indicator that has previously been used in targeted attacks.","DetectId":"ldt:50a1596b27ca41cf7ea00e7a17f5797b:47244807172","DetectName":"Intel Detection","DnsRequests":[{"CausedDetect":false,"DomainName":"systemlowcheck.com","InterfaceIndex":0,"LoadTime":1564157363,"RequestType":"A"}],"FalconHostLink":"https://falcon.crowdstrike.com/activity/detections/detail/50a1596b27ca41cf7ea00e7a17f5797b/47244807172?_cid=5d740db363c644c6afe8e6008808fa44","FileName":"PING.EXE","FilePath":"\\Device\\HarddiskVolume1\\Windows\\System32","GrandparentCommandLine":"C:\\Windows\\Explorer.EXE","GrandparentImageFileName":"\\Device\\HarddiskVolume1\\Windows\\explorer.exe","IOCType":"domain","IOCValue":"systemlowcheck.com","LocalIP":"1.2.3.4","MACAddress":"00-50-56-8a-61-bf","MD5String":"a41659711f3b9b48afba65bcd5c8c4e2","MachineDomain":"host1","Objective":"Falcon Detection Method","ParentCommandLine":"\"C:\\Windows\\system32\\cmd.exe\" ","ParentImageFileName":"\\Device\\HarddiskVolume1\\Windows\\System32\\cmd.exe","ParentProcessId":73352194527,"PatternDispositionDescription":"Detection, standard detection.","PatternDispositionFlags":{"Detect":false,"InddetMask":false,"Indicator":false,"KillParent":false,"KillProcess":false,"KillSubProcess":false,"OperationBlocked":false,"PolicyDisabled":false,"ProcessBlocked":false,"QuarantineFile":false,"QuarantineMachine":false,"Rooting":false,"SensorOnly":false},"PatternDispositionValue":0,"ProcessEndTime":1564157302,"ProcessId":73355228296,"ProcessStartTime":1564157301,"SHA1String":"bffc28401d8e1fdcb634434330bc8c1e221aae62","SHA256String":"a510579a207c53ba35ef3551d2d62cfd9fe0e9d7f13c1dd6beb8ced0d7f1154e","SensorId":"50a1596b27ca41cf7ea00e7a17f5797b","Severity":4,"SeverityName":"High","Tactic":"Falcon Intel","Technique":"Intelligence Indicator - Domain","UserName":"user1"}]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patEpochSec"><![CDATA[\d{10}]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\[CrowdStrike-Falcon-Streaming\]]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[(?:\[<reptDevIpAddr:gPatStrRightSB>\]\s+\[<reptDevName:gPatStrRightSB>\]\s+)?\[CrowdStrike-Falcon-Streaming\]\s+\[<phCustId:gPatInt>\]\s+\[<_evtType:gPatMesgBodyMin>\]:<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">Crowdstrike-Falcon-Generic</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">FALCON_STREAMING_API</setEventAttribute>
+
+    <collectAndSetAttrByJSON src="$_body">
+      <attrKeyMap attr="_creatTime" key="eventCreationTime"/>
+      <attrKeyMap attr="_timestampUTC" key="UTCTimestamp"/>
+      <attrKeyMap attr="_timestamp" key="timestamp"/>
+      <attrKeyMap attr="opName" key="OperationName"/>
+      <attrKeyMap attr="serviceName" key="ServiceName"/>
+      <attrKeyMap attr="isSuccess" key="Success"/>
+      <attrKeyMap attr="userId" key="UserId"/>
+      <attrKeyMap attr="user" key="UserName"/>
+      <attrKeyMap attr="fileName" key="FileName"/>
+      <attrKeyMap attr="filePath" key="FilePath"/>
+      <attrKeyMap attr="hostIpAddr" key="UserIp"/>
+      <attrKeyMap attr="command" key="CommandLine"/>
+      <attrKeyMap attr="hostName" key="ComputerName"/>
+      <attrKeyMap attr="customer" key="customerIDString"/>
+      <attrKeyMap attr="jobName" key="DetectName"/>
+      <attrKeyMap attr="jobId" key="DetectId"/>
+      <attrKeyMap attr="infoURL" key="FalconHostLink"/>
+      <attrKeyMap attr="hashMD5" key="MD5String"/>
+      <attrKeyMap attr="domain" key="MachineDomain"/>
+      <attrKeyMap attr="parentProcId" key="ParentProcessId"/>
+      <attrKeyMap attr="endTime" key="ProcessEndTime"/>
+      <attrKeyMap attr="procId" key="ProcessId"/>
+      <attrKeyMap attr="_startTime" key="ProcessStartTime"/>
+      <attrKeyMap attr="hashSHA1" key="SHA1String"/>
+      <attrKeyMap attr="hashSHA256" key="SHA256String"/>
+      <attrKeyMap attr="envSensorId" key="SensorId"/>
+      <attrKeyMap attr="reptDevName" key="DeviceId"/>
+      <attrKeyMap attr="_severity" key="Severity"/>
+      <attrKeyMap attr="_severityName" key="SeverityName"/>
+      <attrKeyMap attr="attackTactic" key="Tactic"/>
+      <attrKeyMap attr="attackTechnique" key="Technique"/>
+      <attrKeyMap attr="iocType" key="IOCType"/>
+      <attrKeyMap attr="iocValue" key="IOCValue"/>
+      <attrKeyMap attr="hostIpAddr" key="LocalIP"/>
+      <attrKeyMap attr="hostMACAddr" key="MACAddress"/>
+      <attrKeyMap attr="msg" key="DetectDescription"/>
+      <attrKeyMap attr="_patternDispositionFlags" key="PatternDispositionFlags"/>
+    </collectAndSetAttrByJSON>
+
+    <!-- Many events dont have UTCTimestamp populated, and timestamp can be either epoch or dateTime for timestamp column -->
+    <choose>
+      <when test="exist _timestampUTC">
+        <switch>
+          <case>
+            <!-- timestamp already in epoch seconds or millis -->
+            <collectFieldsByRegex src="$_timestampUTC">
+              <regex><![CDATA[^<deviceTime:patEpochSec>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="exist _timestamp">
+        <!-- Newer formats can contain epoch millis or date string -->
+        <switch>
+          <case>
+            <!-- timestamp already in millis convert to sec -->
+            <collectFieldsByRegex src="$_timestamp">
+              <regex><![CDATA[^<deviceTime:patEpochSec>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_timestamp">
+              <regex><![CDATA[^<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>(?:<_tz:gPatTimeZone>)?]]></regex>
+            </collectFieldsByRegex>
+            <choose>
+              <when test="not_exist _tz">
+                <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+              </when>
+              <otherwise>
+                <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+              </otherwise>
+            </choose>
+          </case>
+          <default/>
+        </switch>
+      </when>
+    </choose>
+
+    <when test="exist _startTime">
+      <switch>
+        <case>
+          <!-- timestamp in epoch millis convert to seconds -->
+          <collectFieldsByRegex src="$_startTime">
+            <regex><![CDATA[^<startTime:patEpochSec>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _evtType">
+      <setEventAttribute attr="eventType">combineMsgId("Crowdstrike-Falcon-", $_evtType)</setEventAttribute>
+      <choose>
+        <when test="$_evtType = 'DetectionSummaryEvent'">
+          <when test="exist jobName">
+            <setEventAttribute attr="_jobName">replaceStrInStr($jobName, " ", "-")</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $_jobName)</setEventAttribute>
+          </when>
+        </when>
+
+        <when test="$_evtType = 'AuthActivityAuditEvent'">
+          <when test="exist opName">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $opName)</setEventAttribute>
+          </when>
+
+          <when test="exist isSuccess">
+            <choose>
+              <when test="$isSuccess = 'true'">
+                <setEventAttribute attr="eventType">combineMsgId($eventType, "-success")</setEventAttribute>
+              </when>
+              <when test="$isSuccess = 'false'">
+                <setEventAttribute attr="eventType">combineMsgId($eventType, "-failure")</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+        </when>
+
+        <when test="$_evtType = 'UserActivityAuditEvent'">
+          <when test="exist opName">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $opName)</setEventAttribute>
+          </when>
+        </when>
+
+      </choose>
+    </when>
+
+    <when test="exist _severity">
+      <choose>
+        <when test="$_severity = '1'">
+          <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        </when>
+        <when test="$_severity = '2'">
+          <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+        </when>
+        <when test="$_severity = '3'">
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </when>
+        <when test="$_severity = '4'">
+          <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        </when>
+        <when test="$_severity = '5'">
+          <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist _patternDispositionFlags">
+      <collectAndSetAttrByJSON src="$_patternDispositionFlags">
+        <attrKeyMap attr="isProcessBlocked" key="ProcessBlocked"/>
+        <attrKeyMap attr="isFileQuarantined" key="QuarantineFile"/>
+        <attrKeyMap attr="isMachineQuarantined" key="QuarantineMachine"/>
+      </collectAndSetAttrByJSON>
+    </when>
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,343 @@
+<eventParser name="FortinetParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiOS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[date=\d{4}-\d{2}-\d{2}\s+time=<:gPatTime>.*\s+log_?id=\d+\s+]]></eventFormatRecognizer>
+
+  <testEvents>
+
+    <testEvent><![CDATA[date=2015-09-29 time=15:30:40 logid=0100022923 type=event subtype=system level=notice vd="vd1" logdesc="Virtual WAN Link status" interface="port2" msg="The service(FTP_APP) will be redirected to the member 2 (interface port2) (link-cost-factor: Jitter; Latency: 0.280; Jitter: 0.15; Packet-Loss: 3.33%;Bandwidth: 5 Mbps; Custom-Profile-1:50)]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patId"><![CDATA[\d{5}]]></pattern>
+    <pattern name="patFloat"><![CDATA[\d+(?:\.\d+)?]]></pattern>
+  </patternDefinitions>
+
+  <parsingInstructions>
+
+    <!-- parsing common fields -->
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>?<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+    <setEventAttribute attr="eventType">"Fortinet-Generic"</setEventAttribute>
+    <setEventAttribute attr="totFlows">1</setEventAttribute>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="eventDesc" key="logdesc"/>
+      <attrKeyMap attr="sessionId" key="session_id"/>
+      <attrKeyMap attr="httpUserAgent" key="agent"/>
+      <attrKeyMap attr="encryptAlgo" key="encryption"/>
+      <attrKeyMap attr="wlanRadioId" key="radioid"/>
+      <attrKeyMap attr="profileDetails" key="profile"/>
+      <attrKeyMap attr="deviceType" key="dtype"/>
+      <attrKeyMap attr="fileName" key="filename"/>
+      <attrKeyMap attr="_action" key="action"/>
+      <attrKeyMap attr="appGroupName" key="app_cat"/>
+      <attrKeyMap attr="appGroupName" key="appcat"/>
+      <attrKeyMap attr="nepDevName" key="ap"/>
+      <attrKeyMap attr="appName" key="app"/>
+      <attrKeyMap attr="appName" key="app_type"/>
+      <attrKeyMap attr="appName" key="apptype"/>
+      <attrKeyMap attr="attackName" key="attack"/>
+      <attrKeyMap attr="_attackId" key="attack_id"/>
+      <attrKeyMap attr="_attackId" key="attackid"/>
+      <attrKeyMap attr="attackName" key="attack_name"/>
+      <attrKeyMap attr="attackName" key="attackname"/>
+      <attrKeyMap attr="checksum" key="checksum"/>
+      <attrKeyMap attr="_date" key="date"/>
+      <attrKeyMap attr="description" key="manuf"/>
+      <attrKeyMap attr="_destGeoCountry" key="dst_country"/>
+      <attrKeyMap attr="_destGeoCountry" key="dstcountry"/>
+      <attrKeyMap attr="destIntfName" key="dst_int"/>
+      <attrKeyMap attr="destIntfName" key="dstintf"/>
+      <attrKeyMap attr="_destIp1" key="loc_ip"/>
+      <attrKeyMap attr="_destIp1" key="local_ip"/>
+      <attrKeyMap attr="_destIp1" key="locip"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="destIpAddr" key="dstip"/>
+      <attrKeyMap attr="destIpPort" key="port"/>
+      <attrKeyMap attr="destIpPort" key="dport"/>
+      <attrKeyMap attr="destIpPort" key="dst_port"/>
+      <attrKeyMap attr="destIpPort" key="dstport"/>
+      <attrKeyMap attr="destMACAddr" key="destmac"/>
+      <attrKeyMap attr="destName" key="dstname"/>
+      <attrKeyMap attr="_destPort" key="loc_port"/>
+      <attrKeyMap attr="_destPort" key="locport"/>
+      <attrKeyMap attr="_deviceId" key="device_id"/>
+      <attrKeyMap attr="_deviceId" key="devid"/>
+      <attrKeyMap attr="DHCPAvail" key="total"/>
+      <attrKeyMap attr="DHCPUsed" key="used"/>
+      <attrKeyMap attr="_direction" key="dir_disp"/>
+      <attrKeyMap attr="_direction" key="dirdisp"/>
+      <attrKeyMap attr="_duration" key="duration"/>
+      <attrKeyMap attr="encryptAlgo" key="securitymode"/>
+      <attrKeyMap attr="errReason" key="reason"/>
+      <attrKeyMap attr="fileName" key="file"/>
+      <attrKeyMap attr="fwAction" key="status"/>
+      <attrKeyMap attr="fwRule" key="policyid"/>
+      <attrKeyMap attr="fwRule" key="rule"/>
+      <attrKeyMap attr="hostIpAddr" key="ip"/>
+      <attrKeyMap attr="hostMACAddr" key="bssid"/>
+      <attrKeyMap attr="hostMACAddr" key="mac"/>
+      <attrKeyMap attr="_hostName" key="hostname"/>
+      <attrKeyMap attr="infoURL" key="ref"/>
+      <attrKeyMap attr="intfName" key="interface"/>
+      <attrKeyMap attr="ipProto" key="proto"/>
+      <attrKeyMap attr="logID" key="log_id"/>
+      <attrKeyMap attr="logID" key="logid"/>
+      <attrKeyMap attr="_name" key="name"/>
+      <attrKeyMap attr="osType" key="osname"/>
+      <attrKeyMap attr="osVersion" key="osversion"/>
+      <attrKeyMap attr="_outIntf" key="out_intf"/>
+      <attrKeyMap attr="_outIntf" key="outintf"/>
+      <attrKeyMap attr="postNATSrcIpAddr" key="tunnel_ip"/>
+      <attrKeyMap attr="postNATSrcIpAddr" key="tunnelip"/>
+      <attrKeyMap attr="receiverMailAddr" key="to"/>
+      <attrKeyMap attr="recvBytes64" key="rcvd"/>
+      <attrKeyMap attr="recvBytes64" key="rcvdbyte"/>
+      <attrKeyMap attr="recvPkts64" key="rcvd_pkt"/>
+      <attrKeyMap attr="recvPkts64" key="rcvdpkt"/>
+      <attrKeyMap attr="reptDevName" key="devname"/>
+      <attrKeyMap attr="rogueAPOnWire" key="onwire"/>
+      <attrKeyMap attr="senderMailAddr" key="from"/>
+      <attrKeyMap attr="sentBytes64" key="sent"/>
+      <attrKeyMap attr="sentBytes64" key="sentbyte"/>
+      <attrKeyMap attr="sentPkts64" key="sent_pkt"/>
+      <attrKeyMap attr="sentPkts64" key="sentpkt"/>
+      <attrKeyMap attr="_server" key="server"/>
+      <attrKeyMap attr="_service" key="service"/>
+      <attrKeyMap attr="serviceName" key="service"/>
+      <attrKeyMap attr="_ipssev" key="severity"/>
+      <attrKeyMap attr="_severity" key="level"/>
+      <attrKeyMap attr="_severity" key="pri"/>
+      <attrKeyMap attr="_srcGeoCountry" key="src_country"/>
+      <attrKeyMap attr="_srcGeoCountry" key="srccountry"/>
+      <attrKeyMap attr="srcIntfName" key="src_int"/>
+      <attrKeyMap attr="srcIntfName" key="srcintf"/>
+      <attrKeyMap attr="_srcIp" key="ui"/>
+      <attrKeyMap attr="_srcIp1" key="rem_ip"/>
+      <attrKeyMap attr="_srcIp1" key="remip"/>
+      <attrKeyMap attr="_srcIp1" key="remote_ip"/>
+      <attrKeyMap attr="_srcIp1" key="remoteip"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="srcIpAddr" key="srcip"/>
+      <attrKeyMap attr="srcIpPort" key="sport"/>
+      <attrKeyMap attr="srcIpPort" key="src_port"/>
+      <attrKeyMap attr="srcIpPort" key="srcport"/>
+      <attrKeyMap attr="srcMACAddr" key="srcmac"/>
+      <attrKeyMap attr="srcName" key="srcname"/>
+      <attrKeyMap attr="_srcPort" key="rem_port"/>
+      <attrKeyMap attr="_srcPort" key="remport"/>
+      <attrKeyMap attr="_stage" key="stage"/>
+      <attrKeyMap attr="_subtype" key="subtype"/>
+      <attrKeyMap attr="_time" key="time"/>
+      <attrKeyMap attr="_tran" key="tran_disp"/>
+      <attrKeyMap attr="_tran" key="trandisp"/>
+      <attrKeyMap attr="_tranIp" key="tran_ip"/>
+      <attrKeyMap attr="_tranIp" key="tran_sip"/>
+      <attrKeyMap attr="_tranIp" key="tranip"/>
+      <attrKeyMap attr="_tranIp" key="transip"/>
+      <attrKeyMap attr="_tranPort" key="tran_port"/>
+      <attrKeyMap attr="_tranPort" key="tran_sport"/>
+      <attrKeyMap attr="_tranPort" key="tranport"/>
+      <attrKeyMap attr="_tranPort" key="transport"/>
+      <attrKeyMap attr="type" key="devtype"/>
+      <attrKeyMap attr="_type" key="type"/>
+      <attrKeyMap attr="infoURL" key="url"/>
+      <attrKeyMap attr="_user" key="unauthuser"/>
+      <attrKeyMap attr="_user" key="user"/>
+      <attrKeyMap attr="userGrp" key="adgroup"/>
+      <attrKeyMap attr="userGrp" key="group"/>
+      <attrKeyMap attr="usrMsg" key="message"/>
+      <attrKeyMap attr="usrMsg" key="msg"/>
+      <attrKeyMap attr="vdom" key="vd"/>
+      <attrKeyMap attr="_vpnName" key="vpn"/>
+      <attrKeyMap attr="_vpnTunnel" key="vpn_tunnel"/>
+      <attrKeyMap attr="_vpnTunnel" key="vpntunnel"/>
+      <attrKeyMap attr="webCategory" key="cat_desc"/>
+      <attrKeyMap attr="webCategory" key="catdesc"/>
+      <attrKeyMap attr="webFilterAction" key="utmaction"/>
+      <attrKeyMap attr="wlanApAssocUpTime" key="live"/>
+      <attrKeyMap attr="wlanSsid" key="ssid"/>
+      <attrKeyMap attr="_xauthGroup" key="xauth_group"/>
+      <attrKeyMap attr="_xauthGroup" key="xauthgroup"/>
+      <attrKeyMap attr="_xauthUser" key="xauth_user"/>
+      <attrKeyMap attr="_xauthUser" key="xauthuser"/>
+      <attrKeyMap attr="wlanChannelId" key="channel"/>
+      <attrKeyMap attr="radioBand" key="radioband"/>
+      <attrKeyMap attr="wlanSecuritySetting" key="security"/>
+      <attrKeyMap attr="localVpnIpAddr" key="assignip"/>
+      <attrKeyMap attr="vulnName" key="vuln"/>
+      <attrKeyMap attr="vulnId" key="vuln_id"/>
+      <attrKeyMap attr="infoURL" key="vuln_ref"/>
+      <attrKeyMap attr="vulnScore" key="vuln_score"/>
+      <attrKeyMap attr="vulnCount" key="vuln_cnt"/>
+      <attrKeyMap attr="virusName" key="virus"/>
+      <attrKeyMap attr="virusType" key="dtype"/>
+    </collectFieldsByKeyValuePair>
+    <choose>
+      <when test="exist _date">
+        <collectFieldsByRegex src="$_date">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </otherwise>
+    </choose>
+    <collectFieldsByRegex src="$logID">
+      <regex><![CDATA[<_id:patId>\D*$]]></regex>
+    </collectFieldsByRegex>
+    <when test="$_id = '22923'">
+      <setEventAttribute attr="eventType">FortiGate-virtual-wlan-status</setEventAttribute>
+    </when>
+    <!-- special handling case  Severity level: Information 1, Notification 3, Warning 4, Error 5, Critical 7, Alert 8, Emergency 9-->
+    <choose>
+      <when test="not_exist _severity"/>
+      <when test="$_severity = 'information'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_severity = 'notice'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$_severity = 'warning'">
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+      <when test="$_severity = 'error'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_severity = 'critical'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_severity = 'alert'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$_severity = 'emergency'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist ipProto">
+      <when test="$ipProto = '1'">
+        <collectFieldsByRegex src="$_service">
+          <regex><![CDATA[<icmpType:gPatInt>/icmp]]></regex>
+        </collectFieldsByRegex>
+      </when>
+    </when>
+
+    <when test="exist _tran">
+      <when test="$_tran = 'snat'">
+        <setEventAttribute attr="postNATSrcIpAddr">$_tranIp</setEventAttribute>
+        <setEventAttribute attr="postNATSrcIpPort">$_tranPort</setEventAttribute>
+      </when>
+      <when test="$_tran = 'dnat'">
+        <setEventAttribute attr="preNATDestIpAddr">$destIpAddr</setEventAttribute>
+        <setEventAttribute attr="preNATDestIpPort">$destIpPort</setEventAttribute>
+        <setEventAttribute attr="destIpAddr">$_tranIp</setEventAttribute>
+        <setEventAttribute attr="destIpPort">$_tranPort</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _srcIp">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_srcIp">
+            <regex><![CDATA[<appTransportProto:gPatStr>\(<srcIpAddr:gPatIpAddr>\)]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_srcIp">
+            <regex><![CDATA[<srcIpAddr:gPatIpAddr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _srcIp1">
+      <setEventAttribute attr="srcIpAddr">$_srcIp1</setEventAttribute>
+    </when>
+
+    <when test="exist _destIp1">
+      <setEventAttribute attr="destIpAddr">$_destIp1</setEventAttribute>
+    </when>
+
+    <when test="exist _srcPort">
+      <setEventAttribute attr="srcIpPort">$_srcPort</setEventAttribute>
+    </when>
+
+    <when test="exist _destPort">
+      <setEventAttribute attr="destIpPort">$_destPort</setEventAttribute>
+    </when>
+
+    <when test="exist _user">
+      <choose>
+        <when test="$_user = 'N/A'">
+          <when test="exist _xauthUser">
+            <setEventAttribute attr="user">$_xauthUser</setEventAttribute>
+          </when>
+        </when>
+        <otherwise>
+          <setEventAttribute attr="user">$_user</setEventAttribute>
+        </otherwise>
+      </choose>
+    </when>
+
+    <when test="exist userGrp">
+      <when test="$userGrp = 'N/A'">
+        <when test="exist _xauthGroup">
+          <setEventAttribute attr="userGrp">$_xauthGroup</setEventAttribute>
+        </when>
+      </when>
+    </when>
+
+    <when test="exist _duration">
+      <setEventAttribute attr="durationMSec">combineMsgId($_duration,"000")</setEventAttribute>
+    </when>
+
+    <when test="exist _vpnTunnel">
+      <setEventAttribute attr="vpnTunnelName">$_vpnTunnel</setEventAttribute>
+    </when>
+
+    <when test="exist _outIntf">
+      <setEventAttribute attr="srcIntfName">$_outIntf</setEventAttribute>
+    </when>
+
+    <when test="exist sentBytes64">
+      <when test="exist recvBytes64">
+        <setEventAttribute attr="totBytes64">add($sentBytes64, $recvBytes64)</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist sentPkts64">
+      <when test="exist recvPkts64">
+        <setEventAttribute attr="totPkts64">add($sentPkts64, $recvPkts64)</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _hostName">
+      <when test="$_hostName != 'N/A'">
+        <setEventAttribute attr="hostName">$_hostName</setEventAttribute>
+
+        <when test="not_exist destName">
+          <setEventAttribute attr="destName">$_hostName</setEventAttribute>
+        </when>
+      </when>
+    </when>
+    <when test="not_private_ip destIpAddr">
+      <when test="exist destName">
+        <setEventAttribute attr="domainEntropy">calcDomainEntropy($destName)</setEventAttribute>
+      </when>
+    </when>
+  </parsingInstructions>
+
+</eventParser>

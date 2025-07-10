@@ -1,0 +1,236 @@
+<eventParser name="FortiPAMParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiPAM</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<189>date=2023-12-14 time=12:36:33 devname="FPAVULTM1234567" devid="FPAVULTM1234567" eventtime=1702557393665511462 tz="+0000" logid="0100040704" type="event" subtype="system" level="notice" vd="root" logdesc="System performance statistics" action="perf-stats" cpu=0 mem=52 totalsession=107 disk=1 bandwidth="1/0" setuprate=0 disklograte=0 fazlograte=0 freediskstorage=28493 sysuptime=485465 waninfo="N/A" msg="Performance statistics: average CPU: 0, memory:  52, concurrent sessions:  107, setup-rate: 0"]]></testEvent>
+    <testEvent><![CDATA[<187>date=2023-12-14 time=12:38:50 devname="FPAVULTM1234567" devid="FPAVULTM1234567" eventtime=1702557529389749042 tz="+0000" logid="0105048038" type="event" subtype="wad" level="error" vd="root" logdesc="SSL Fatal Alert received" session_id=6458ac42 policyid=1 srcip=10.0.5.3 srcport=57291 dstip=10.0.5.45 dstport=443 action="receive" alert="2" desc="certificate unknown" msg="SSL Alert received"]]></testEvent>
+    <testEvent><![CDATA[date=2023-08-24 time=17:23:03 devname="FPAVULTM1234567" devid="FPAVULTM1234567" eventtime=1692922983764461604 tz="-0700" logid="2304064604" type="secret" subtype="secret-request" eventtype="secret-request" action="pass" operation="request" secretid=2820 secret="PC0" account="testUser1" uuid="11111111-1111-1111-1111-111111111111" user="user1" starttime="2023-08-24 17:23:00" expirytime="2023-08-24 17:53:00" msg="Created secret request."]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patId"><![CDATA[\d{5}]]></pattern>
+    <pattern name="patTimestamp"><![CDATA[\d{9,}]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\s(?:device_id|devid)="?FPA\w*"?\s]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[^\s*<:gPatSyslogPRI>?<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="accountName" key="account"/>
+      <attrKeyMap attr="action" key="action"/>
+      <attrKeyMap attr="allocatedBandwidth" key="bandwidth"/>
+      <attrKeyMap attr="cpuUtil" key="cpu"/>
+      <attrKeyMap attr="_date" key="date"/>
+      <attrKeyMap attr="eventDesc" key="desc"/>
+      <attrKeyMap attr="deviceIdentification" key="device_id"/>
+      <attrKeyMap attr="_reptDevName" key="devname"/>
+      <attrKeyMap attr="diskUtil" key="disk"/>
+      <attrKeyMap attr="_destGeoCountry" key="dstcountry"/>
+      <attrKeyMap attr="destIntfName" key="dstintf"/>
+      <attrKeyMap attr="destFwZone" key="dstintfrole"/>
+      <attrKeyMap attr="destIpAddr" key="dstip"/>
+      <attrKeyMap attr="destIpPort" key="dstport"/>
+      <attrKeyMap attr="eventTime" key="eventtime"/>
+      <attrKeyMap attr="endTime" key="expirytime"/>
+      <attrKeyMap attr="freeDiskMB" key="freediskstorage"/>
+      <attrKeyMap attr="logLevel" key="level"/>
+      <attrKeyMap attr="eventDesc" key="logdesc"/>
+      <attrKeyMap attr="logID" key="logid"/>
+      <attrKeyMap attr="memUtil" key="mem"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="policyName" key="policyname"/>
+      <attrKeyMap attr="ipsPolicyId" key="policyid"/>
+      <attrKeyMap attr="policyId" key="policyid"/>
+      <attrKeyMap attr="_severity" key="pri"/>
+      <attrKeyMap attr="ipProto" key="proto"/>
+      <attrKeyMap attr="reason" key="reason"/>
+      <attrKeyMap attr="sessionId" key="sessionid"/>
+      <attrKeyMap attr="_srcGeoCountry" key="srccountry"/>
+      <attrKeyMap attr="srcIntfName" key="srcintf"/>
+      <attrKeyMap attr="srcFwZone" key="srcintfrole"/>
+      <attrKeyMap attr="srcIpAddr" key="srcip"/>
+      <attrKeyMap attr="srcIpPort" key="srcport"/>
+      <attrKeyMap attr="status" key="status"/>
+      <attrKeyMap attr="startTime" key="starttime"/>
+      <attrKeyMap attr="status" key="status"/>
+      <attrKeyMap attr="subtype" key="subtype"/>
+      <attrKeyMap attr="sysUpTime" key="sysuptime"/>
+      <attrKeyMap attr="_time" key="time"/>
+      <attrKeyMap attr="activeSessionTotal" key="totalsession"/>
+      <attrKeyMap attr="type" key="type"/>
+      <attrKeyMap attr="_tz" key="tz"/>
+      <attrKeyMap attr="_ui" key="ui"/>
+      <attrKeyMap attr="user" key="user"/>
+      <attrKeyMap attr="uuid" key="uuid"/>
+      <attrKeyMap attr="vdom" key="vd"/>
+      <!-- Secret Logs -->
+      <attrKeyMap attr="sessionAgentType" key="agent"/>
+      <attrKeyMap attr="appName" key="apptype"/>
+      <attrKeyMap attr="changer" key="changeSet"/>
+      <attrKeyMap attr="jobName" key="job"/>
+      <attrKeyMap attr="jobType" key="jobtype"/>
+      <attrKeyMap attr="opName" key="operation"/>
+      <attrKeyMap attr="programName" key="secret"/>
+      <attrKeyMap attr="hostId" key="secretid"/>
+      <!-- Traffic Logs -->
+      <attrKeyMap attr="httpUserAgent" key="agent"/>
+      <attrKeyMap attr="clientReputationAction" key="craction"/>
+      <attrKeyMap attr="clientReputationLevel" key="crlevel"/>
+      <attrKeyMap attr="clientReputationScore" key="crscore"/>
+      <attrKeyMap attr="direction" key="direction"/>
+      <attrKeyMap attr="fileName" key="filename"/>
+      <attrKeyMap attr="userGrp" key="group"/>
+      <attrKeyMap attr="profileDetails" key="profile"/>
+      <attrKeyMap attr="ipProto" key="proto"/>
+      <attrKeyMap attr="isFileQuarantined" key="quarskip"/>
+      <attrKeyMap attr="httpReferrer" key="ref"/>
+      <attrKeyMap attr="serviceName" key="service"/>
+      <attrKeyMap attr="downloadURL" key="url"/>
+      <attrKeyMap attr="virusType" key="viruscat"/>
+      <attrKeyMap attr="virusId" key="virusid"/>
+      <!-- UTM Logs -->
+      <attrKeyMap attr="command" key="command"/>
+      <attrKeyMap attr="eventId" key="eventid"/>
+      <attrKeyMap attr="filter" key="filtername"/>
+      <attrKeyMap attr="_hostName" key="hostname"/>
+      <attrKeyMap attr="loginType" key="login"/>
+      <attrKeyMap attr="token" key="pamtokenid"/>
+      <attrKeyMap attr="eventSeverity" key="severity"/>
+      <attrKeyMap attr="token" key="tokenid"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist _date">
+      <collectFieldsByRegex src="$_date">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>]]></regex>
+      </collectFieldsByRegex>
+      <choose>
+        <when test="exist _tz">
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </when>
+        <otherwise>
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </otherwise>
+      </choose>
+    </when>
+
+    <when test="exist eventTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$eventTime">
+            <regex><![CDATA[^<eventTime:patTimestamp>\d{9}$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _reptDevName">
+      <setEventAttribute attr="reptDevName">$_reptDevName</setEventAttribute>
+      <setEventAttribute attr="reptDevIpAddr">resolveDNSName($reptDevName)</setEventAttribute>
+    </when>
+
+    <when test="not_exist fwAction">
+      <when test="exist action">
+        <setEventAttribute attr="fwAction">$action</setEventAttribute>
+      </when>
+    </when>
+
+    <collectFieldsByRegex src="$logID">
+      <regex><![CDATA[<_id:patId>\D*$]]></regex>
+    </collectFieldsByRegex>
+
+    <choose>
+      <!-- Generic parsing for secret logs, more info needed on logid  -->
+      <when test="not_exist type"/>
+      <when test="$type = 'secret'">
+        <setEventAttribute attr="eventType">combineMsgId("FortiPAM-secret-generic")</setEventAttribute>
+        <when test="exist msg">
+          <setEventAttribute attr="_msg">toLower($msg)</setEventAttribute>
+          <setEventAttribute attr="_msg">replaceStringByRegex($_msg, "\s+", "-")</setEventAttribute>
+          <setEventAttribute attr="eventType">combineMsgId("FortiPAM-", $type, "-", $_msg)</setEventAttribute>
+        </when>
+      </when>
+      <!-- Parsing for event logs based on logdesc -->
+      <when test="$type = 'event'">
+        <setEventAttribute attr="eventType">combineMsgId("FortiPAM-event-generic")</setEventAttribute>
+        <when test="exist eventDesc">
+          <setEventAttribute attr="_logdesc">toLower($eventDesc)</setEventAttribute>
+          <setEventAttribute attr="_logdesc">replaceStringByRegex($_logdesc, "\s+", "-")</setEventAttribute>
+          <setEventAttribute attr="eventType">combineMsgId("FortiPAM-", $type, "-", $_logdesc)</setEventAttribute>
+        </when>
+      </when>
+      <when test="$type IN 'traffic,utm'">
+        <setEventAttribute attr="eventType">combineMsgId("FortiPAM-", $type, "-generic")</setEventAttribute>
+        <when test="exist subtype">
+          <setEventAttribute attr="eventType">combineMsgId("FortiPAM-", $type, "-", $subtype)</setEventAttribute>
+        </when>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">combineMsgId("FortiPAM-", $type, "-generic")</setEventAttribute>
+      </otherwise>
+    </choose>
+    <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "\.", "")</setEventAttribute>
+
+    <choose>
+      <when test="not_exist _id"/>
+      <when test="$_id IN '08192'">
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+        <setEventAttribute attr="eventType">"FortiPAM-antivirus-infected-file-detect"</setEventAttribute>
+      </when>
+      <when test="$_id IN '20003'">
+        <setEventAttribute attr="eventType">"FortiPAM-alert-email-send-failed"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$_id IN ''22813">
+        <setEventAttribute attr="eventType">"FortiPAM-scanunit-reloaded-AVDB"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$_id IN '24577'">
+        <setEventAttribute attr="eventType">"FortiPAM-dlp-leak-detected"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+      <when test="$_id IN '32107'">
+        <setEventAttribute attr="eventType">"FortiPAM-ntp-server-unresolvable"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$_id IN '32142'">
+        <setEventAttribute attr="eventType">"FortiPAM-system-config-backedup"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$_id IN '37894'">
+        <setEventAttribute attr="eventType">"FortiPAM-vCluster-member-joined"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$_id IN '40704'">
+        <setEventAttribute attr="eventType">"FortiPAM-system-performance-statistics"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$_id IN '41000'">
+        <setEventAttribute attr="eventType">"FortiPAM-update-succeeded"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$_id IN '43025'">
+        <setEventAttribute attr="eventType">"FortiPAM-event-user-login-success"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_id IN '48038'">
+        <setEventAttribute attr="eventType">"FortiPAM-ssl-fatal-alert-received"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$_id = '61000'">
+        <setEventAttribute attr="eventType">FortiPAM-ssh-command-block</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <otherwise/>
+    </choose>
+
+  </parsingInstructions>
+</eventParser>

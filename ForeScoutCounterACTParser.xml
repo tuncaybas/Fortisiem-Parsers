@@ -1,0 +1,192 @@
+<eventParser name="ForeScoutCounterACTParser">
+  <deviceType>
+    <Vendor>ForeScout</Vendor>
+    <Model>CounterACT</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[Feb 20 12:44:56 abc.com Scout[1087]: Log: Login success by Admin@10.0.0.11. Details: User Admin logged in from 10.0.0.11]]></testEvent>
+    <testEvent><![CDATA[Feb 20 16:13:30 abc.com CounterACT[9593]: Scan event. src: 2.2.2.2.]]></testEvent>
+    <testEvent><![CDATA[Feb 20 16:13:40 abc.com CounterACT[9593]: Port bite. src: 2.2.2.2. dst: 3.3.3.3. d_port: 24.]]></testEvent>
+    <testEvent><![CDATA[<166>CounterACT[9859]: NAC Policy Log: Source: 172.20.16.118, Rule: Policy 2.1 Windows OS Clarification , Match: ENFNet:Pending, Category: N/A, Details: Host evaluation changed from 2.1 Windows OS Clarification:Unmatched to ENFNet:Pending due to condition . Reason: Host added to group Windows because it matches rule 1.1 Asset Classification->Windows.]]></testEvent>
+    <testEvent><![CDATA[<166>CounterACT[9859]: System statistics: CPU usage: 9%, Available memory : 6131056 KB, Used memory: 5735416 KB, Available swap: 2040212 KB, Used swap: 62368 KB]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patACTMod"><![CDATA[Forescout|Scout|Counter(?:ACT|Act)[-\w]*]]></pattern>
+    <pattern name="patStrDot"><![CDATA[[^.]*]]></pattern>
+    <pattern name="patExceptQuote"><![CDATA[[^"]*]]></pattern>
+    <pattern name="patExceptDotComma"><![CDATA[[^\.,]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[(?:<:gPatSyslogPRI>)?(?:<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+)?<:patACTMod>\[<:gPatInt>\]:]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">ForeScout-CounterACT-Generic</setEventAttribute>
+    <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+
+    <!-- Separate header from body -->
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[(?:<:gPatSyslogPRI>)?(?:<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+)?<:patACTMod>\[<:gPatInt>\]:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+
+    <when test="exist reptDevName">
+      <setEventAttribute attr="hostName">$reptDevName</setEventAttribute>
+    </when>
+
+    <when test="exist _mon">
+      <when test="exist _day">
+        <when test="exist _time">
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+        </when>
+      </when>
+    </when>
+
+    <!-- varied body structures -->
+    <switch>
+      <!-- NAC Policy Logs -->
+      <case>
+        <!--
+       <171>May  4 15:45:53 nac CounterACT[19185]: NAC Policy Log: Source: 10.10.10.10, Rule: Policy "2.1 Windows Managebility"  Rule "Windows Unauthorized on mini switch" , Details: Action completed O.K. - Send Send Email: To : xxx@xxx.test,yyy@xxx.test, Subject : CounterACT: Uauthorized Windows on multi-host port 10.10.10.11, Message to email recipient : Hello,CounterACT has detected  event. Host Information:IP Address: 		10.10.10.11MAC Address: 		e47fb21aca38Hostname:		Irresolvable/IrresolvableDNS Name:		IrresolvableLogged in User: 	UserSwitchport:                                       10.10.10.12:GigabitEthernet1/0/4, Aggregate messages : false, Signature preference : Default; Schedule: Action runs when the endpoint matches a policy condition.
+    -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[Send Email:\s*To\s*:\s*<receiverMailAddr:gPatMesgBody>,\s*Subject\s*:\s*<mailSubject:gPatMesgBody>,\s*Message to email recipient\s*:\s*<msg:patStrDot>\.\s*Host Information:IP Address:\s*<hostIpAddr:gPatIpAddr>MAC Address:\s*<hostMACAddr:gPatMesgBody>Hostname:\s*<hostName:gPatMesgBody>DNS Name:\s*<dnsServerName:gPatMesgBody>Logged in User:\s*<user:gPatMesgBody>port:\s*<devPort:gPatStrComma>,<:gPatMesgBody>\s+Schedule:\s*<maintScheduleName:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[NAC Policy Log:\s+(?:Source:\s+<srcIpAddr:gPatIpAddr>)?]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">ForeScout-CounterACT-NACPolicyLog</setEventAttribute>
+      </case>
+      <case>
+        <!-- Login Success -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[Log: Login success by <user:gPatStr>@<srcIpAddr:gPatIpAddr>\.\s+Details:\s+<details:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">ForeScout-CounterACT-LoginSuccess</setEventAttribute>
+      </case>
+      <case>
+        <!-- Scan event -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[Scan event\.\s+src:\s+<srcIpAddr:gPatIpAddr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">ForeScout-CounterACT-event.intrusion.scan</setEventAttribute>
+      </case>
+      <case>
+        <!-- Port Bite -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[Port\sbite\.\s+src:\s+<srcIpAddr:gPatIpAddr>\.\s+dst:\s+<destIpAddr:gPatIpAddr>\.\s+d_port:\s+<devPort:gPatInt>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">ForeScout-CounterACT-event.intrusion.bait.FSFingerUserBaitEvent</setEventAttribute>
+      </case>
+      <!-- connection lost-->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[Log: Connection has been lost. Details: Connection Type\[<type:gPatWord>\] IP\[<srcIpAddr:gPatIpAddr>\] - Relogin. Severity: <eventSeverity:gPatInt>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">ForeScout-CounterACT-ConnectionLost</setEventAttribute>
+      </case>
+      <!-- Login failure -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[Log: Fail to establish connection. Details: Connection type\[<type:gPatWord>\] IP\[<srcIpAddr:gPatIpAddr>\] error[Login Incorrect]. Severity: <eventSeverity:gPatInt>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">ForeScout-CounterACT-LoginFailed</setEventAttribute>
+      </case>
+      <!-- System Stats Event -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[System statistics:\s+CPU usage\s*:\s+<cpuUtil:gPatInt>%,\s+Available memory\s*:\s+<freeMemKB:gPatInt>\s+KB,\s+Used memory\s*:\s+<usedMemKB:gPatInt>\s+KB,\s+Available swap\s*:\s+<freeSwapMemKB:gPatInt>\s+KB,]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">ForeScout-CounterACT-SystemPerfStat</setEventAttribute>
+        <setEventAttribute attr="_val1">combineMsgId($usedMemKB, "00")</setEventAttribute>
+        <setEventAttribute attr="_val2">add($freeMemKB, $usedMemKB)</setEventAttribute>
+        <setEventAttribute attr="memUtil">divide($_val1, $_val2)</setEventAttribute>
+      </case>
+      <!-- Radius Event -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[Log:.*802.1x plugin audit message:\s+<msg:patExceptDotComma>\.\s+\Details:\s+User\s+<user:gPatStr>\s+\(mac=<_mac:gPatStr>\)\s+<fwAction:gPatWord>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">ForeScout-CounterACT-RADIUS</setEventAttribute>
+        <when test="exist fwAction">
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$fwAction)</setEventAttribute>
+        </when>
+      </case>
+      <default/>
+    </switch>
+
+    <!-- Body fields that are separated by ', ' or '. ' replace with a tag separator -->
+    <setEventAttribute attr="_body">replaceStringByRegex($_body, "\. ", "FIELDSEP")</setEventAttribute>
+    <setEventAttribute attr="_body">replaceStringByRegex($_body, ", ", "FIELDSEP")</setEventAttribute>
+
+    <collectFieldsByKeyValuePair sep="FIELDSEP" kvsep=": " src="$_body">
+      <attrKeyMap attr="_class" key="class"/>
+      <attrKeyMap attr="destIpPort" key="d_port"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="msg" key="message"/>
+      <attrKeyMap attr="_action" key="operation"/>
+      <attrKeyMap attr="ipProto" key="proto"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="srcIpPort" key="s_port"/>
+      <attrKeyMap attr="cpuUtil" key="cpu"/>
+      <attrKeyMap attr="freeMemKB" key="mem_avail"/>
+      <attrKeyMap attr="freeSwapMemKB" key="swap_avail"/>
+      <attrKeyMap attr="user" key="user"/>
+      <attrKeyMap attr="_javaClass" key="javaclass"/>
+      <attrKeyMap attr="_rule" key="Rule"/>
+      <attrKeyMap attr="errReason" key="Reason"/>
+      <attrKeyMap attr="_source" key="Source"/>
+      <attrKeyMap attr="errorString" key="Error is"/>
+      <attrKeyMap attr="_duration" key="Duration"/>
+      <attrKeyMap attr="details" key="Details"/>
+      <attrKeyMap attr="status" key="Match"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist _class">
+      <setEventAttribute attr="eventType">combineMsgId("ForeScout-CounterACT-", $_class)</setEventAttribute>
+    </when>
+
+    <when test="exist _source">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_source">
+            <regex><![CDATA[<srcIpAddr:gPatIpAddr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <when test="exist _rule">
+      <switch>
+        <case>
+          <!--Policy "2.1 Windows Managebility"  Rule "Windows Unauthorized on mini switch"-->
+          <collectFieldsByRegex src="$_rule">
+            <regex><![CDATA[Policy\s+"<policyName:patExceptQuote>"(?:\s+Rule\s+"?<fwRule:patExceptQuote>"?)?]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="fwRule">$_rule</setEventAttribute>
+        </default>
+      </switch>
+      <choose>
+        <when test="matches($_rule, 'Unauthorized')">
+          <setEventAttribute attr="eventType">ForeScout-CounterACT-Unauthorized</setEventAttribute>
+        </when>
+        <when test="matches($_rule, 'Unrecognized')">
+          <setEventAttribute attr="eventType">ForeScout-CounterACT-Unrecognized</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+    <when test="exist _mac">
+      <setEventAttribute attr="srcMACAddr">normalizeMAC($_mac)</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>

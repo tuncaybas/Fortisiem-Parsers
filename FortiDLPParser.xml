@@ -1,0 +1,241 @@
+<eventParser name="FortiDLPParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiDLP</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[2025-04-07T16:09:13Z reptDevName="FortiDLP.com" reptDevIpAddr="10.10.10.10" phCustId="1" extEventRecvProto="FORTIDLP_STREAMING_API" : {"audit_log":{"tenant_id":"11111111-1111-1111-1111-111111111111","tenant_name":"ftnt-fabric-cse","tenant_origin":"https://ftnt-fabric-cse.reveal.nextdlp.com","type":"RoleDeleted","fields":{"auth":{"audience":["webapp"],"operator_display_name":"User1","operator_id":"11111111-1111-1111-1111-111111111111","operator_login_name":"meiliu","role":["Built-in/Global Administrator"],"session_id":"11111111-1111-1111-1111-111111111111"},"http":{"host":"ftnt-fabric-cse.reveal.nextdlp.com","method":"DELETE","path":"/api/v1/roles/11111111-1111-1111-1111-111111111111","remote_address":"73.162.190.191","user_agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.3 Safari/605.1.15"},"role_id":"11111111-1111-1111-1111-111111111111","role_name":"AAAA (Copy)","summary":"Role \"AAAA (Copy)\" deleted","target_tenant":"11111111-1111-1111-1111-111111111111","timestamp":"2025-03-08T00:08:32.137434902Z","trace_id":"01d0a4a9a2f2aa7a2332c5f879d279e1","type":"RoleDeleted","type_id":17}},"enrichment_errors":[]}]]></testEvent>
+    <testEvent><![CDATA[2025-04-07T16:09:13Z reptDevName="FortiDLP.com" reptDevIpAddr="10.11.11.11" phCustId="1" extEventRecvProto="FORTIDLP_STREAMING_API" : {"sensor":{"tenant_id":"11111111-1111-1111-1111-111111111111","tenant_name":"tenantName1","tenant_origin":"https://example.com","uuid":"11111111-1111-1111-1111-111111111111","created_by":{"uri":"policy:///11111111-1111-1111-1111-111111111111/11111111-1111-1111-1111-111111111111?instance=11111111-1111-1111-1111-111111111111\u0026name=Login+to+unexpected+domain","policy":{"group_id":"11111111-1111-1111-1111-111111111111","policy_id":"11111111-1111-1111-1111-111111111111","name":"Login to unexpected domain","instance":"11111111-1111-1111-1111-111111111111"}},"sensor_type":"AGENT_POLICY","agent_uuid":"11111111-1111-1111-1111-111111111111","agent_hostname":"Pod4","user_id":"","user_name":"","user_email":"","score":0,"label_ids":["11111111-1111-1111-1111-111111111111","11111111-1111-1111-1111-111111111111"],"label_names":["Windows","12.0.0"],"timestamp":"2025-03-11T15:26:37.050307526Z","description":"Login to domain by POD4\\Inside_Host with SID S-1-5-21-1689569825-1748639512-2511477946-1001","anonymised_description":"Login to domain by [REDACTED] with SID [REDACTED]","tags":["unusualbehavior","login","insiderrisk"],"metadata":{"source_ip":[],"source_port":[],"destination_ip":["10.10.10.10", "10.10.10.11"],"destination_port":[10,11,13],"url":[],"host":["POD4"],"application_name":[],"file_name":[],"file_path":[],"target_file_name":[],"target_file_path":[],"recipient_mail_address":[],"sender_mail_address":[],"wifi_ssid":[],"wifi_bssid":[],"usb_vid":[],"usb_pid":[],"usb_serial":[],"content_pattern_name":[],"account_name":["POD4\\Inside_Host"],"certificate_name":[],"mime_type":[],"window_title":[],"file_size":[],"printer_uuid":[]},"process_info":[],"requested_actions":[],"suppressed_actions":[],"classifications":{"url":[]},"extended_metadata":{"schema":{"id":"11111111-1111-1111-1111-111111111111","version":"e1f2bab31d7a553e"},"data":{}},"data_origin":[],"indicators":[{"kind":"mitre","tactic":{"id":"TA0001","title":"Initial Access"},"technique":{"id":"T1078.002","title":"Domain Accounts"}}]},"enrichment_errors":[]}]]></testEvent>
+    <testEvent><![CDATA[2025-04-07T16:09:13Z reptDevName="example.com" reptDevIpAddr="10.10.10.10" phCustId="1" extEventRecvProto="FORTIDLP_STREAMING_API" : {"incident":{"tenant_id":"11111111-1111-1111-1111-111111111111","tenant_name":"tenantName1","tenant_origin":"https://example.com","uuid":"11111111-1111-1111-1111-111111111111","type":"deactivated","clustering_rule":"11111111-1111-1111-1111-111111111111","family":"f18e241fb1fb59b1577c83ab8402bb3cd5d06b90","created_by":{"uri":"policy:///11111111-1111-1111-1111-111111111111/11111111-1111-1111-1111-111111111111?name=Generative+AI+website+accessed","policy":{"group_id":"11111111-1111-1111-1111-111111111111","policy_id":"11111111-1111-1111-1111-111111111111","name":"Generative AI website accessed","instance":""}},"description":"chatgpt.com accessed","anonymised_description":"chatgpt.com accessed","generation":5,"status":"resolved","started":"2025-02-07T14:32:15.794426Z","last_updated":"2025-03-10T15:42:51.196551Z","sensor_count":6,"score":35,"changed_status_at":"2025-03-12T00:25:01.148109398Z","changed_status_by":"operator://11111111-1111-1111-1111-111111111111@domain?name=Mel+use1","changed_status_reason":"test","first_detection":"2025-02-07T14:32:13Z","last_detection":"2025-03-10T15:42:49Z","new_entity":null,"cluster_data":{},"incident_type":"clustering_incident"},"enrichment_errors":[]}]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patET"><![CDATA[[^:]+]]></pattern>
+    <pattern name="patExceptDQ"><![CDATA[[^"]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[^\s*<:gPatYear>-<:gPatMonNum>-<:gPatDay>T<:gPatTime><:gPatTimeZone>\s+reptDevName="<:patExceptDQ>"\s+reptDevIpAddr="<:gPatIpAddr>"\s+phCustId="<:gPatInt>"\s+extEventRecvProto="FORTIDLP_STREAMING_API"\s*:]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[^\s*<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime><_tz:gPatTimeZone>\s+reptDevName="<reptDevName:patExceptDQ>"\s+reptDevIpAddr="<reptDevIpAddr:gPatIpAddr>"\s+phCustId="<phCustId:gPatInt>"\s+extEventRecvProto="<extEventRecvProto:patExceptDQ>"\s*:\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <collectAndSetAttrByJSON src="$_body">
+      <attrKeyMap attr="_auditLog" key="audit_log"/>
+      <attrKeyMap attr="_detectionLog" key="sensor"/>
+      <attrKeyMap attr="_incidentLog" key="incident"/>
+    </collectAndSetAttrByJSON>
+
+    <choose>
+      <when test="exist _auditLog">
+        <setEventAttribute attr="eventSource">audit</setEventAttribute>
+        <collectAndSetAttrByJSON src="$_auditLog">
+          <attrKeyMap attr="tenantId" key="tenant_id"/>
+          <attrKeyMap attr="tenantName" key="tenant_name"/>
+          <attrKeyMap attr="type" key="type"/>
+          <attrKeyMap attr="user" key="fields.auth.operator_login_name"/>
+          <attrKeyMap attr="userId" key="fields.auth.operator_id"/>
+          <attrKeyMap attr="userRole" key="fields.auth.role.toPlain()"/>
+          <attrKeyMap attr="sessionId" key="fields.auth.session_id"/>
+          <attrKeyMap attr="httpHost" key="fields.http.host"/>
+          <attrKeyMap attr="httpMethod" key="fields.http.method"/>
+          <attrKeyMap attr="uriStem" key="fields.http.path"/>
+          <attrKeyMap attr="srcIpAddr" key="fields.http.remote_address"/>
+          <attrKeyMap attr="httpUserAgent" key="fields.http.user_agent"/>
+          <attrKeyMap attr="role" key="fields.role_name"/>
+          <attrKeyMap attr="description" key="fields.summary"/>
+          <attrKeyMap attr="_actionTime" key="fields.timestamp"/>
+          <attrKeyMap attr="company" key="fields.company"/>
+          <attrKeyMap attr="emailId" key="fields.email"/>
+          <attrKeyMap attr="accountName" key="fields.new_operator_name"/>
+          <attrKeyMap attr="targetUser" key="fields.target_operator_login_name"/>
+        </collectAndSetAttrByJSON>
+        <setEventAttribute attr="eventType">FortiDLP-AuditLog</setEventAttribute>
+        <when test="exist type">
+          <setEventAttribute attr="eventType">combineMsgId("FortiDLP-", $type)</setEventAttribute>
+        </when>
+      </when>
+      <when test="exist _detectionLog">
+        <setEventAttribute attr="eventSource">detection</setEventAttribute>
+        <collectAndSetAttrByJSON src="$_detectionLog">
+          <attrKeyMap attr="tenantId" key="tenant_id"/>
+          <attrKeyMap attr="tenantName" key="tenant_name"/>
+          <attrKeyMap attr="uuid" key="uuid"/>
+          <attrKeyMap attr="ruleIdStr" key="created_by.uri"/>
+          <attrKeyMap attr="groupID" key="created_by.policy.group_id"/>
+          <attrKeyMap attr="policyId" key="created_by.policy.policy_id"/>
+          <attrKeyMap attr="policyName" key="created_by.policy.name"/>
+          <attrKeyMap attr="policyName" key="created_by.ml.name"/>
+          <attrKeyMap attr="policyIdentityType" key="sensor_type"/>
+          <attrKeyMap attr="sessionAgentHostName" key="agent_hostname"/>
+          <attrKeyMap attr="userId" key="user_id"/>
+          <attrKeyMap attr="user" key="user_name"/>
+          <attrKeyMap attr="emailId" key="user_email"/>
+          <attrKeyMap attr="riskScore" key="score"/>
+          <attrKeyMap attr="_actionTime" key="timestamp"/>
+          <attrKeyMap attr="description" key="description"/>
+          <attrKeyMap attr="tagName" key="tags.toPlain()"/>
+          <attrKeyMap attr="srcIpAddrList" key="metadata.source_ip.toPlain()"/>
+          <attrKeyMap attr="_srcIpPort" key="metadata.source_port.toPlain()"/>
+          <attrKeyMap attr="destIpAddrList" key="metadata.destination_ip.toPlain()"/>
+          <attrKeyMap attr="_destIpPort" key="metadata.destination_port.toPlain()"/>
+          <attrKeyMap attr="infoURL" key="metadata.url.toPlain()"/>
+          <attrKeyMap attr="hostIpAddrList" key="metadata.host.toPlain()"/>
+          <attrKeyMap attr="appName" key="metadata.application_name.toPlain()"/>
+          <attrKeyMap attr="fileName" key="metadata.file_name.toPlain()"/>
+          <attrKeyMap attr="filePath" key="metadata.file_path.toPlain()"/>
+          <attrKeyMap attr="fileName" key="metadata.target_file_name.toPlain()"/>
+          <attrKeyMap attr="destFilePath" key="metadata.target_file_path.toPlain()"/>
+          <attrKeyMap attr="receiverMailAddr" key="metadata.recipient_mail_address.toPlain()"/>
+          <attrKeyMap attr="senderMailAddr" key="metadata.sender_mail_address.toPlain()"/>
+          <attrKeyMap attr="accountName" key="metadata.account_name.toPlain()"/>
+          <attrKeyMap attr="certInfo" key="metadata.certificate_name.toPlain()"/>
+          <attrKeyMap attr="mimeType" key="metadata.mime_type.toPlain()"/>
+          <attrKeyMap attr="title" key="metadata.window_title.toPlain()"/>
+        </collectAndSetAttrByJSON>
+        <choose>
+          <when test="exist policyName">
+            <setEventAttribute attr="eventType">combineMsgId("FortiDLP-", $policyName)</setEventAttribute>
+            <setEventAttribute attr="eventType">replaceStrInStr($eventType, " ", "-")</setEventAttribute>
+          </when>
+          <when test="exist policyIdentityType">
+            <setEventAttribute attr="eventType">combineMsgId("FortiDLP-", $policyIdentityType)</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">FortiDLP-DetectionLog</setEventAttribute>
+          </otherwise>
+        </choose>
+        <when test="exist srcIpAddrList">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$srcIpAddrList">
+                <regex><![CDATA[^<srcIpAddr:gPatIpAddr>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+        </when>
+        <when test="exist destIpAddrList">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$destIpAddrList">
+                <regex><![CDATA[^<destIpAddr:gPatIpAddr>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+        </when>
+
+        <when test="exist _srcIpPort">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_srcIpPort">
+                <regex><![CDATA[^<srcIpPort:gPatInt>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+        </when>
+
+        <when test="exist _destIpPort">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_destIpPort">
+                <regex><![CDATA[^<destIpPort:gPatInt>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+        </when>
+      </when>
+
+      <when test="exist _incidentLog">
+        <setEventAttribute attr="eventSource">incident</setEventAttribute>
+        <collectAndSetAttrByJSON src="$_incidentLog">
+          <attrKeyMap attr="tenantId" key="tenant_id"/>
+          <attrKeyMap attr="tenantName" key="tenant_name"/>
+          <attrKeyMap attr="uuid" key="uuid"/>
+          <attrKeyMap attr="type" key="type"/>
+          <attrKeyMap attr="ruleIdStr" key="clustering_rule"/>
+          <attrKeyMap attr="dataSource" key="created_by.uri"/>
+          <attrKeyMap attr="groupID" key="created_by.policy.group_id"/>
+          <attrKeyMap attr="policyId" key="created_by.policy.policy_id"/>
+          <attrKeyMap attr="policyName" key="created_by.policy.name"/>
+          <attrKeyMap attr="policyName" key="created_by.ml.name"/>
+          <attrKeyMap attr="description" key="description"/>
+          <attrKeyMap attr="version" key="generation"/>
+          <attrKeyMap attr="status" key="status"/>
+          <attrKeyMap attr="_startTime" key="started"/>
+          <attrKeyMap attr="_updateTime" key="last_updated"/>
+          <attrKeyMap attr="riskScore" key="score"/>
+          <attrKeyMap attr="user" key="changed_status_by"/>
+          <attrKeyMap attr="reason" key="changed_status_reason"/>
+          <attrKeyMap attr="_incidentFirstSeen" key="first_detection"/>
+          <attrKeyMap attr="_incidentLastSeen" key="last_detection"/>
+          <!-- fields in IncidentStatusChanged -->
+          <attrKeyMap attr="status" key="fields.status"/>
+          <attrKeyMap attr="appName" key="fields.auth.audience[0]"/>
+          <attrKeyMap attr="user" key="fields.auth.operator_login_name"/>
+          <attrKeyMap attr="userFullName" key="fields.auth.operator_display_name"/>
+          <attrKeyMap attr="userId" key="fields.auth.operator_id"/>
+          <attrKeyMap attr="roleName" key="fields.auth.role[0]"/>
+          <attrKeyMap attr="sessionId" key="fields.auth.sessionId"/>
+          <attrKeyMap attr="enabledState" key="fields.deactivated"/>
+          <attrKeyMap attr="httpMethod" key="fields.http.method"/>
+          <attrKeyMap attr="srcIpAddr" key="fields.http.remote_address"/>
+          <attrKeyMap attr="uriStem" key="fields.http.path"/>
+          <attrKeyMap attr="destName" key="fields.http.host"/>
+          <attrKeyMap attr="reason" key="fields.reason"/>
+        </collectAndSetAttrByJSON>
+        <choose>
+          <when test="exist policyName">
+            <setEventAttribute attr="eventType">combineMsgId("FortiDLP-Incident-", $policyName)</setEventAttribute>
+            <setEventAttribute attr="eventType">replaceStrInStr($eventType, " ", "-")</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">FortiDLP-IncidentLog</setEventAttribute>
+          </otherwise>
+        </choose>
+        <when test="exist _startTime">
+          <collectFieldsByRegex src="$_startTime">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>(?:\.\d+)?<_tz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="startTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </when>
+        <when test="exist _updateTime">
+          <collectFieldsByRegex src="$_updateTime">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>(?:\.\d+)?<_tz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="updateTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </when>
+        <when test="exist _incidentFirstSeen">
+          <collectFieldsByRegex src="$_incidentFirstSeen">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>(?:\.\d+)?<_tz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="incidentFirstSeen">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </when>
+        <when test="exist _incidentLastSeen">
+          <collectFieldsByRegex src="$_incidentLastSeen">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>(?:\.\d+)?<_tz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="incidentLastSeen">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </when>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventSource">generic</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist _actionTime">
+      <!-- 2025-03-08T00:08:32.137434902Z-->
+      <collectFieldsByRegex src="$_actionTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>(?:\.\d+)?<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

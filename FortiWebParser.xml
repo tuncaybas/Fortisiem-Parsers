@@ -1,0 +1,368 @@
+<eventParser name="FortiWebParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiWeb</Model>
+    <Version>ANY</Version>
+  </deviceType>
+  <!-- Fortivoice and FortiWeb product abbr are similar, exclude FVC and FVE-->
+  <!-- FV or FWB abbreviations -->
+  <eventFormatRecognizer><![CDATA[\s(?:device_id|devid)="?(?:FV[^EeCc]?|FWB)-?\w*"?\s]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[date=2016-02-18 time=10:00:05 log_id=00001002 msg_id=000067508821 device_id=FV400D3A15000010 vd="root" timezone="(GMT+3:00)Baghdad" type=event subtype="admin" pri=information trigger_policy="" user=admin ui=GUI action=edit status=success msg="User admin changed global from GUI(172.22.6.66)"]]></testEvent>
+    <testEvent><![CDATA[date=2012-02-13 time=18:49:09 log_id=00032901 msg_id=000015400628 type=event subtype="admin" pri=warning device_id=FV-1KC3R08600008 vd="root" timezone="(GMT+8:00)Beijing,ChongQing,HongKong,Urumgi" ui=anti-defacement action=monitor status=alert reason=filechange msg="Fail to connect to website www.example.com (host is 10.0.0.1)"]]></testEvent>
+    <testEvent><![CDATA[<185>date=2017-03-20 time=10:33:59 log_id=20000010 msg_id=000000145870 device_id=FVVM00UNLICENSED vd="root" timezone="(GMT-8:00)Pacific Time(US&xxx)" type=attack subtype="waf_signature_detection" pri=alert trigger_policy="" severity_level=High proto=tcp service=https action=Alert_Deny policy="POLICY_PORTAL" src=1.1.1.1 src_port=59029 dst=1.1.1.2 dst_port=443 http_method=get http_url="/etc/favicon.ico" http_host="www.foo.com" http_agent="Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36" http_session_id=3BA3D99AFGUHB1S5P6T5QT3GE4SL029D msg="[Signatures name: Medium Level Security] [main class name: Generic Attacks] [sub class name: File Injection]: 050070002" signature_subclass="File Injection" signature_id="050070002" srccountry="Portugal" content_switch_name="none" server_pool_name="PORTAL" false_positive_mitigation="none" log_type=LOG_TYPE_NONE event_score=0 score_message="N/A" entry_sequence="N/A" user_name="Unknown" monitor_status="Disabled" http_refer="https://www.foo.com/?catid=-1" http_version="1.x"]]></testEvent>
+    <testEvent><![CDATA[<115>device=FortiWeb-DC2000 severity=high from=FortiAnalyzer(FAZ-VM0000089271) trigger=CopyofHighattacks log="logver=133 itime=1508196370 date=2017-10-17 time=02:26:10 log_id=20000091 msg_id=000010157421 device_id=FVVM020000089274 vd="root" timezone="(GMT+3:00)Moscow,St.Petersburg,Volgograd,Minsk" type=attack subtype="waf_malformed_character_in_url" pri=alert trigger_policy="" severity_level=High proto=tcp service=https action=Alert policy="FG_Publishing_1" src=1.1.1.1 src_port=57316 dst=10.53.81.34 dst_port=443 http_method=none http_url="none" http_host="none" http_agent="none" http_session_id=none msg="[policy_name=Exchange 2013] : Malformed URL" signature_subclass="N/A" signature_id="N/A" srccountry="Russian Federation" content_switch_name="mail.example.com OA" server_pool_name="example OA" false_positive_mitigation="none" user_name="Unknown" monitor_status="Disabled" http_refer="none" http_version="1.x" dev_id="none" threat_weight=0 history_threat_weight=0 threat_level=Off"]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="pat5Digit"><![CDATA[\d{5}]]></pattern>
+    <pattern name="patExceptQues"><![CDATA[[^\?]+]]></pattern>
+    <pattern name="patUpdateType"><![CDATA[(?:virus engine|(?:ip (?:intelligence|reputation)|virus extend|virus|waf)\s+signature)]]></pattern>
+    <pattern name="patExceptLeftParen"><![CDATA[[^\(]+]]></pattern>
+  </patternDefinitions>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^\s*<:gPatSyslogPRI>?device=<hostName:gPatStr>\s+severity=<_eventSeverity:gPatStr>\s+from=<reportName:gPatStr>\s+trigger=<:gPatStr>\s+log="<_body:gPatMesgBody>"]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^\s*<:gPatSyslogPRI>?<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </default>
+    </switch>
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="action" key="action"/>
+      <attrKeyMap attr="attackType" key="attack_type"/>
+      <attrKeyMap attr="serviceName" key="backend_service"/>
+      <attrKeyMap attr="tlsCipher" key="cipher_suite"/>
+      <attrKeyMap attr="clientReputationLevel" key="client_level"/>
+      <attrKeyMap attr="_date" key="date"/>
+      <attrKeyMap attr="deviceIdentification" key="device_id"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="destIpPort" key="dst_port"/>
+      <attrKeyMap attr="httpUserAgent" key="http_agent"/>
+      <attrKeyMap attr="httpHost" key="http_host"/>
+      <attrKeyMap attr="httpMethod" key="http_method"/>
+      <attrKeyMap attr="httpReferrer" key="http_refer"/>
+      <attrKeyMap attr="sentBytes64" key="http_request_bytes"/>
+      <attrKeyMap attr="httpRequestTime" key="http_request_time"/>
+      <attrKeyMap attr="recvBytes64" key="http_response_bytes"/>
+      <attrKeyMap attr="httpResponseTimeMs" key="http_response_time"/>
+      <attrKeyMap attr="httpStatusCode" key="http_retcode"/>
+      <attrKeyMap attr="infoURL" key="http_url"/>
+      <attrKeyMap attr="httpVersion" key="http_version"/>
+      <attrKeyMap attr="_logId" key="log_id"/>
+      <attrKeyMap attr="_user" key="login_user"/>
+      <attrKeyMap attr="targetType" key="matched_field"/>
+      <attrKeyMap attr="attackInfo" key="matched_pattern"/>
+      <attrKeyMap attr="categoryType" key="main_type"/>
+      <attrKeyMap attr="usrMsg" key="msg"/>
+      <attrKeyMap attr="msgId" key="msg_id"/>
+      <attrKeyMap attr="policyName" key="policy"/>
+      <attrKeyMap attr="_severity" key="pri"/>
+      <attrKeyMap attr="ipsSeverity" key="severity_level"/>
+      <attrKeyMap attr="_proto" key="proto"/>
+      <attrKeyMap attr="errReason" key="reason"/>
+      <attrKeyMap attr="poolName" key="server_pool_name"/>
+      <attrKeyMap attr="_service" key="service"/>
+      <attrKeyMap attr="msg" key="smsg"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="srcIpPort" key="src_port"/>
+      <attrKeyMap attr="status" key="status"/>
+      <attrKeyMap attr="subtype" key="subtype"/>
+      <attrKeyMap attr="subtype" key="sub_type"/>
+      <attrKeyMap attr="threatLevel" key="threat_level"/>
+      <attrKeyMap attr="confidence" key="threat_weight"/>
+      <attrKeyMap attr="_time" key="time"/>
+      <attrKeyMap attr="_timezone" key="timezone"/>
+      <attrKeyMap attr="type" key="type"/>
+      <attrKeyMap attr="_user" key="user"/>
+      <attrKeyMap attr="userId" key="user_id"/>
+      <attrKeyMap attr="_user" key="user_name"/>
+      <attrKeyMap attr="vdom" key="vd"/>
+      <attrKeyMap attr="signatureType" key="signature_subclass"/>
+      <attrKeyMap attr="ipsSignatureId" key="signature_id"/>
+      <attrKeyMap attr="_vulnCVEId" key="signature_cve_id"/>
+      <attrKeyMap attr="threatScore" key="threat_weight"/>
+      <attrKeyMap attr="owaspTop10" key="owasp_top10"/>
+      <attrKeyMap attr="clientIpAddr" key="original_src"/>
+      <attrKeyMap attr="reptDevName" key="devname"/>
+      <attrKeyMap attr="tlsServerSubject" key="x509_cert_subject"/>
+      <attrKeyMap attr="authenMethod" key="ui"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist action">
+      <setEventAttribute attr="action">toLower($action)</setEventAttribute>
+      <setEventAttribute attr="fwAction">$action</setEventAttribute>
+      <choose>
+        <when test="$action IN 'alert_deny,block,deny'">
+          <setEventAttribute attr="eventAction">1</setEventAttribute>
+        </when>
+        <when test="$action = 'permit'">
+          <setEventAttribute attr="eventAction">0</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist reptDevName">
+      <setEventAttribute attr="reptDevIpAddr">resolveDNSName($reptDevName)</setEventAttribute>
+    </when>
+
+    <collectFieldsByRegex src="$_date">
+      <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>]]></regex>
+    </collectFieldsByRegex>
+    <collectFieldsByRegex src="$_timezone">
+      <regex><![CDATA[^\(GMT<_tz:gPatStr>\)]]></regex>
+    </collectFieldsByRegex>
+    <when test="not_exist _tz">
+      <setEventAttribute attr="_tz">UTC</setEventAttribute>
+    </when>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+
+    <setEventAttribute attr="eventType">FortiWeb-Generic</setEventAttribute>
+
+    <switch>
+      <case>
+        <!-- parser references entire 8 digit log_id field, ones with preceding 0s truncated -->
+        <collectFieldsByRegex src="$_logId">
+          <regex><![CDATA[^0*<_logId:pat5Digit>$]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <!-- If failure to use truncated format of 00012345, then use entire 8 digit log_id -->
+      <default/>
+    </switch>
+    <setEventAttribute attr="eventType">combineMsgId("FortiWeb-", $_logId)</setEventAttribute>
+
+    <choose>
+      <when test="$_logId = '11006004'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$usrMsg">
+              <regex><![CDATA[interface <intfName:gPatStr> link <_status:gPatWord>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $_status)</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_logId IN '11006005, 11006006'">
+        <switch>
+          <case>
+            <!-- mem usage raise too high,mem(96)
+                 CPU usage raise too high,CPU(96)
+            -->
+            <collectFieldsByRegex src="$usrMsg">
+              <regex><![CDATA[\w+ usage raise too high(?:,\s*<_name:gPatWord>\(<_util:gPatInt>\))?]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-high")</setEventAttribute>
+          </case>
+          <case>
+            <!-- mem usage reduced,mem(52)
+                 CPU usage reduced, CPU usage is 53
+            -->
+            <collectFieldsByRegex src="$usrMsg">
+              <regex><![CDATA[\w+ usage reduced(?:,\s*<_name:gPatWord>.*?<_util:gPatInt>)?]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-low")</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+        <when test="exist _util">
+          <choose>
+            <when test="not_exist _name"/>
+            <when test="$_name = 'mem'">
+              <setEventAttribute attr="memUtil">$_util</setEventAttribute>
+            </when>
+            <when test="$_name = 'CPU'">
+              <setEventAttribute attr="cpuUtil">$_util</setEventAttribute>
+            </when>
+          </choose>
+        </when>
+      </when>
+      <when test="$_logId = '10000015'">
+        <choose>
+          <when test="matches($usrMsg, 'download Event LOG')">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-download-log")</setEventAttribute>
+          </when>
+          <when test="matches($usrMsg, 'download .* client certificate file')">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-download-cert")</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+      <when test="$_logId = '10000016'">
+        <when test="exist status">
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $status)</setEventAttribute>
+        </when>
+      </when>
+      <when test="$_logId = '10000022'">
+        <choose>
+          <when test="matches($usrMsg, 'update virus signature')">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-virus-database")</setEventAttribute>
+          </when>
+          <when test="matches($usrMsg, 'update virus extend signature')">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-extended-virus-database")</setEventAttribute>
+          </when>
+          <when test="matches($usrMsg, 'update virus engine')">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-virus-engine")</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+      <when test="$_logId = '10000023'">
+        <when test="exist action">
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $action)</setEventAttribute>
+        </when>
+      </when>
+      <when test="$_logId = '21000022'">
+        <choose>
+          <when test="matches($usrMsg, '\bStopped\b')">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-SYN-Flood-Stopped")</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-SYN-Flood-Start")</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+      <when test="$_logId = '30001000'">
+        <choose>
+          <when test="exist status">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-http-traffic-", $status)</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-http-traffic")</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+      <when test="$_logId = '11005901'">
+        <!-- This log id fires with many meanings, either successful fortiguard updates, or varying failures -->
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$usrMsg">
+              <regex><![CDATA[^Fortiweb\s+<categoryType:patUpdateType>\s+<reason:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <choose>
+              <when test="not_exist reason"/>
+              <when test="$reason IN 'is unauthorized,update failed'">
+                <setEventAttribute attr="eventType">FortiWeb-FortiGuard-Update-Failed</setEventAttribute>
+              </when>
+              <when test="$reason = 'is already up-to-date'">
+                <setEventAttribute attr="eventType">FortiWeb-FortiGuard-Already-Up-To-Date</setEventAttribute>
+              </when>
+              <when test="$reason = 'update succeeded'">
+                <setEventAttribute attr="eventType">FortiWeb-FortiGuard-Update-Success</setEventAttribute>
+              </when>
+            </choose>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$usrMsg">
+              <regex><![CDATA[^update failed,?\s+<reason:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiWeb-FortiGuard-Update-Failed</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$usrMsg">
+              <regex><![CDATA[^License status changed to <_licenseStatus:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("FortiWeb-FortiGuard-License-Changed-To-", $_licenseStatus)</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_logId = '10000017'">
+        <switch>
+          <case>
+            <!-- Get source IP form user message -->
+            <collectFieldsByRegex src="$usrMsg">
+              <regex><![CDATA[from <:patExceptLeftParen>\(<srcIpAddr:gPatIpAddr>\)]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+        <choose>
+          <when test="not_exist status"/>
+          <when test="$status = 'success'">
+            <setEventAttribute attr="eventType">FortiWeb-Admin-Login-Success</setEventAttribute>
+          </when>
+          <when test="$status = 'failure'">
+            <setEventAttribute attr="eventType">FortiWeb-Admin-Login-Failure</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+    </choose>
+
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist _user"/>
+      <when test="$_user = 'N/A'"/>
+      <when test="$_user = 'Unknown'"/>
+      <otherwise>
+        <setEventAttribute attr="user">$_user</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <choose>
+      <when test="not_exist _vulnCVEId"/>
+      <when test="$_vulnCVEId = 'N/A'"/>
+      <otherwise>
+        <setEventAttribute attr="vulnCVEId">$_vulnCVEId</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist sentBytes64">
+      <when test="exist recvBytes64">
+        <setEventAttribute attr="totBytes64">add($sentBytes64, $recvBytes64)</setEventAttribute>
+      </when>
+    </when>
+
+    <choose>
+      <when test="not_exist _severity"/>
+      <when test="$_severity = 'critical'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_severity = 'alert'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_severity = 'error'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_severity = 'warning'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist infoURL">
+      <setEventAttribute attr="destName">extractHostFromURL($infoURL)</setEventAttribute>
+      <switch>
+        <case>
+          <!-- attempt to parse uriStem -->
+          <collectFieldsByRegex src="$infoURL">
+            <regex><![CDATA[^<uriStem:patExceptQues>\??]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _service">
+      <!-- https/tls1.3 -->
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_service">
+            <regex><![CDATA[^<appTransportProto:gPatWord>\/<tlsVersion:gPatStr>$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="appTransportProto">$_service</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

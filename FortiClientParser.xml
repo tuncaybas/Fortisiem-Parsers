@@ -1,0 +1,897 @@
+<eventParser name="FortiClientParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiClient</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[\s+(?:devid|device_id|emsserial)="?FCT(?:EMS)?-?<:gPatWord>"?\s]]></eventFormatRecognizer>
+  <testEvents>
+    <testEvent><![CDATA[<116> device=FCTEMS0036759495 severity=medium from=FAZVM64(FAZ-VM0000000001) trigger=EVT2SIEM1 log="itime=1490261538 date=2017-03-23 time=17:32:18 logver=2 level=info uid=03866CA3DFBD45AD8009E0C59A6F513C vd=root fctver=10.5.23.1022 os="Microsoft Windows 7 Professional Edition, 64-bit Service Pack 1 (build 7601)" usingpolicy=AOFCT fgtserial=N/A emsserial=FCTEMS0036759495 devid=FCT8000424633208 hostname=aa-PC pcdomain=clientfeature=system deviceip=devicemac=N/A type=event user=N/A id=96882 msg="Policy 'AOFCT' was received and applied""]]></testEvent>
+    <testEvent><![CDATA[<116> device=FCTEMS0000000001 severity=medium from=FAZVM64(FAZ-VM0000000001) trigger=EVT2SIEM log="itime=1489562233 date=2017-03-15 time=00:17:13 logver=2 type=traffic sessionid=N/A hostname=hostname.local uid=1000000000 devid=FCT8000000000008 fgtserial=FCTEMS0000000005 level=warning regip=10.1.1.1 srcname="Opera" srcproduct=N/A srcip=10.1.1.3 srcport=18398 direction=outbound dstip=10.0.0.4 remotename="aa.com" dstport=20480 user="user1" service=http proto=6 rcvdbyte=N/A sentbyte=N/A utmaction=blocked utmevent=webfilter threat="Gambling" vd=root fctver=1.2.1.1 os="Mac OS X 1.1.1" usingpolicy=N/A url=/ userinitiated=0 browsetime=N/A"]]></testEvent>
+    <testEvent><![CDATA[<190>Nov 10 13:22:13 host1 clientfeature=webfilter date=2017-11-10 time=13:22:13 logver=2 type=traffic level=info sessionid=36349696 hostname=host1 pcdomain=example.com uid=E6DF2CF30EC74AA79FE398C14AF91077 devid=FCT8004213450867 fgtserial=FG140P3G13800054 emsserial=FCTEMS0000094531 regip=N/A srcname=fit.exe srcproduct=N/A srcip=10.1.1.1 srcport=65191 direction=outbound dstip=192.168.1.1 remotename=remote.example.com dstport=80 user=user1@example.com proto=6 rcvdbyte=N/A sentbyte=N/A utmaction=passthrough utmevent=antivirus threat="General Interest - Business:Business" vd=root fctver=5.6.0.1075 os="Microsoft Windows 10 Professional Edition, 64-bit (build 15063)" usingpolicy="FortiDemo-Employees-Profile" service=http url=/ userinitiated=0 browsetime=N/A]]></testEvent>
+    <testEvent><![CDATA[<190>date=2017-12-12 time=06:40:30 date=2017-12-12 time=06:40:30 logver=2 level="info" uid="5656070408164EAB90C861A32812E48B" vd="fcm_root" fctver="1.1.1.1" os="Microsoft Windows 10 Professional Edition, 64-bit (build 14393)" usingpolicy="Default" fgtserial="N/A" emsserial="FCTEMS3041734569" devname="FortiClientEMS" devid="FCT8001332080479" hostname="mis-7" pcdomain= clientfeature="vulnerabilityscan" deviceip= devicemac="N/A" type="netscan" id=96521 user="user1" msg="A vulnerability scan result has been logged" status="N/A" vulncat="Applications" vulnid=25224 vulnname="Security Vulnerability CVE-2014-6591 in Oracle JRE" vulnref="https://www.fortiguard.com/product/encyclopedia/vuln/25224" vulnseverity="Low"]]></testEvent>
+  </testEvents>
+  <patternDefinitions>
+    <pattern name="pat5Digit"><![CDATA[\d{5}]]></pattern>
+    <pattern name="patStrDollar"><![CDATA[[^\$]+]]></pattern>
+    <pattern name="patStrAt"><![CDATA[[^@]*]]></pattern>
+  </patternDefinitions>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>\s*device=<:gPatStr>\s+severity=<:gPatStr>\s+from=<:gPatStr>\s+trigger=<policyName:gPatStr>\s+log="<_body:gPatMesgBody>"]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <setEventAttribute attr="_body">replaceStringByRegex($_body, "\s+(?:[^= ]+=)+([^= ]+=\S+)", " \1 ")</setEventAttribute>
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="_time" key="time"/>
+      <attrKeyMap attr="_date" key="date"/>
+      <attrKeyMap attr="_type" key="type"/>
+      <attrKeyMap attr="_severity" key="level"/>
+      <attrKeyMap attr="logID" key="log_id"/>
+      <attrKeyMap attr="logID" key="logid"/>
+      <attrKeyMap attr="logID" key="id"/>
+      <attrKeyMap attr="vdom" key="vd"/>
+      <attrKeyMap attr="_deviceId" key="devid"/>
+      <attrKeyMap attr="_deviceId" key="device_id"/>
+      <attrKeyMap attr="hostName" key="devicehostname"/>
+      <attrKeyMap attr="domain" key="domain"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="user" key="user"/>
+      <attrKeyMap attr="feature" key="clientfeature"/>
+      <attrKeyMap attr="hostIpAddr" key="deviceip"/>
+      <attrKeyMap attr="srcIpAddr" key="deviceip"/>
+      <attrKeyMap attr="srcMACAddr" key="devicemac"/>
+      <attrKeyMap attr="serialNumber" key="fctver"/>
+      <attrKeyMap attr="osType" key="os"/>
+      <attrKeyMap attr="policyName" key="usingpolicy"/>
+      <attrKeyMap attr="action" key="action"/>
+      <attrKeyMap attr="fileType" key="filetype"/>
+      <attrKeyMap attr="fileName" key="file"/>
+      <attrKeyMap attr="virusName" key="virus"/>
+      <attrKeyMap attr="checksum" key="checksum"/>
+      <attrKeyMap attr="infoURL" key="ref"/>
+      <attrKeyMap attr="ipsSignatureId" key="sigid"/>
+      <attrKeyMap attr="fileSize" key="filesize"/>
+      <attrKeyMap attr="senderMailAddr" key="from"/>
+      <attrKeyMap attr="receiverMailAddr" key="to"/>
+      <attrKeyMap attr="serviceName" key="service"/>
+      <attrKeyMap attr="vpnTunnelName" key="vpn"/>
+      <attrKeyMap attr="status" key="status"/>
+      <attrKeyMap attr="webCategory" key="cat"/>
+      <attrKeyMap attr="count" key="count"/>
+      <attrKeyMap attr="hostName" key="hostname"/>
+      <attrKeyMap attr="infoURL" key="url"/>
+      <attrKeyMap attr="intfName" key="mac"/>
+      <attrKeyMap attr="vulnId" key="vulnid"/>
+      <attrKeyMap attr="vulnName" key="vulnname"/>
+      <attrKeyMap attr="scanEngineVer" key="vulnengine"/>
+      <attrKeyMap attr="vulnCount" key="vulncnt"/>
+      <attrKeyMap attr="appName" key="app"/>
+      <attrKeyMap attr="applicationIdStr" key="appid"/>
+      <attrKeyMap attr="appCategory" key="apppath"/>
+      <attrKeyMap attr="ruleName" key="rule"/>
+      <attrKeyMap attr="ruleId" key="ruleid"/>
+      <attrKeyMap attr="patternRuleVer" key="ruletype"/>
+      <attrKeyMap attr="policyName" key="policyname"/>
+      <attrKeyMap attr="vpnTunnelName" key="vpntunnel"/>
+      <attrKeyMap attr="vpnStatus" key="vpnstate"/>
+      <attrKeyMap attr="user" key="vpnuser"/>
+      <attrKeyMap attr="appTransportProto" key="protocols"/>
+      <attrKeyMap attr="sessionId" key="sessionid"/>
+      <attrKeyMap attr="domain" key="pcdomain"/>
+      <attrKeyMap attr="srcName" key="srcname"/>
+      <attrKeyMap attr="appName" key="srcproduct"/>
+      <attrKeyMap attr="srcIpAddr" key="srcip"/>
+      <attrKeyMap attr="srcIpPort" key="srcport"/>
+      <attrKeyMap attr="direction" key="direction"/>
+      <attrKeyMap attr="destIpAddr" key="dstip"/>
+      <attrKeyMap attr="destName" key="remotename"/>
+      <attrKeyMap attr="destIpPort" key="dstport"/>
+      <attrKeyMap attr="ipProto" key="proto"/>
+      <attrKeyMap attr="recvBytes64" key="rcvdbyte"/>
+      <attrKeyMap attr="sentBytes64" key="sentbyte"/>
+      <attrKeyMap attr="actionName" key="utmaction"/>
+      <attrKeyMap attr="fwAction" key="utmaction"/>
+      <attrKeyMap attr="activityType" key="utmevent"/>
+      <attrKeyMap attr="threatLevel" key="threat"/>
+      <attrKeyMap attr="virusName" key="threat"/>
+      <attrKeyMap attr="runTime" key="browsetime"/>
+      <attrKeyMap attr="hostVirtIpAddr" key="ip"/>
+      <attrKeyMap attr="vpnConnType" key="vpntype"/>
+      <attrKeyMap attr="_vulnseverity" key="vulnseverity"/>
+      <attrKeyMap attr="vpnConnType" key="vulncat"/>
+      <attrKeyMap attr="vulnCvssScore" key="vulncvss"/>
+      <attrKeyMap attr="vulnScore" key="vulncvss"/>
+      <attrKeyMap attr="vulnFortiGuardRef" key="vulnref"/>
+      <attrKeyMap attr="vulnProducts" key="vulnproducts"/>
+      <attrKeyMap attr="destName" key="remotegw"/>
+      <attrKeyMap attr="hostVirtIpAddr" key="vip"/>
+      <attrKeyMap attr="avEngineVer" key="avengine"/>
+      <attrKeyMap attr="avSigVer" key="avsig"/>
+      <attrKeyMap attr="avSigExtendedVer" key="avsigext"/>
+      <attrKeyMap attr="avSigExtremeVer" key="avsigetm"/>
+      <attrKeyMap attr="avSigHeuristicVer" key="avsigheu"/>
+      <attrKeyMap attr="rootkitEngineVer" key="rootkitengine"/>
+      <attrKeyMap attr="rootkitSigVer" key="rootkitsig"/>
+      <attrKeyMap attr="rootkitSigVer" key="appsig"/>
+      <attrKeyMap attr="vulnSigVer" key="vulnsig"/>
+      <attrKeyMap attr="ipsEngineVer" key="ipseng"/>
+      <attrKeyMap attr="ipsSigVer" key="ipssig"/>
+      <attrKeyMap attr="hostIpAddr" key="regip"/>
+      <attrKeyMap attr="clientIpAddr" key="client_ip"/>
+      <!-- If log source EMS, try to resolve and assign as reporting ip -->
+      <attrKeyMap attr="_reptDevName" key="emshostname"/>
+      <attrKeyMap attr="srcType" key="source_type"/>
+      <attrKeyMap attr="_reptDevName" key="devname"/>
+      <attrKeyMap attr="subtype" key="subtype"/>
+      <attrKeyMap attr="_detectedPath" key="detectedpath"/>
+      <attrKeyMap attr="_fctEventType" key="eventtype"/>
+      <attrKeyMap attr="virusType" key="viruscat"/>
+      <attrKeyMap attr="virusId" key="vid"/>
+      <attrKeyMap attr="detectorId" key="detectedby"/>
+      <attrKeyMap attr="_detectedIn" key="detectedin"/>
+      <attrKeyMap attr="reason" key="ae_reason"/>
+      <attrKeyMap attr="apiGroup" key="ae_api"/>
+      <attrKeyMap attr="procPath" key="payload_process"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist _date">
+      <collectFieldsByRegex src="$_date">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>]]></regex>
+      </collectFieldsByRegex>
+      <when test="exist _time">
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </when>
+    </when>
+
+    <setEventAttribute attr="eventType">FortiClient-Generic</setEventAttribute>
+
+    <setEventAttribute attr="_eventType">FortiClient-</setEventAttribute>
+
+    <choose>
+      <when test="$_type = 'traffic'">
+        <setEventAttribute attr="_eventType">combineMsgId($_eventType, "traffic")</setEventAttribute>
+      </when>
+      <when test="not_exist feature">
+        <setEventAttribute attr="_eventType">combineMsgId($_eventType, $_type)</setEventAttribute>
+      </when>
+      <when test="$feature != 'vulnerabilityscan'">
+        <setEventAttribute attr="_eventType">combineMsgId($_eventType, $feature)</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist logID">
+        <choose>
+          <when test="not_exist msg"/>
+          <when test="$msg = 'IP-changed'">
+            <setEventAttribute attr="eventType">combineMsgId($_eventType,"-ip-changed")</setEventAttribute>
+          </when>
+          <when test="$msg = 'offline'">
+            <setEventAttribute attr="eventType">combineMsgId($_eventType,"-device-offline")</setEventAttribute>
+          </when>
+          <when test="$msg = 'online'">
+            <setEventAttribute attr="eventType">combineMsgId($_eventType,"-device-online")</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+      <!-- securtityevent - antiexploit -->
+      <when test="$logID = '96548'">
+        <setEventAttribute attr="eventType">FortiClient-antiexploit-violation</setEventAttribute>
+      </when>
+
+      <!-- securtityevent - antiransomware -->
+      <when test="$logID = '98000'">
+        <setEventAttribute attr="eventType">FortiClient-antiransomware-suspicious-process</setEventAttribute>
+      </when>
+
+      <when test="$logID = '98001'">
+        <setEventAttribute attr="eventType">FortiClient-antiransomware-file-recovered</setEventAttribute>
+      </when>
+
+      <when test="$logID = '98002'">
+        <setEventAttribute attr="eventType">FortiClient-antiransomware-file-quarantined</setEventAttribute>
+      </when>
+
+      <when test="$logID = '98003'">
+        <setEventAttribute attr="eventType">FortiClient-antiransomware-files-restored</setEventAttribute>
+      </when>
+
+      <!-- securtityevent - applicationcontrol -->
+      <when test="$logID = '96701'">
+        <setEventAttribute attr="eventType">FortiClient-AppControl-Violation</setEventAttribute>
+      </when>
+
+      <!-- securtityevent - av -->
+      <when test="$logID IN '96530, 96531'">
+        <setEventAttribute attr="eventType">FortiClient-av</setEventAttribute>
+
+        <choose>
+          <when test="not_matches($osType, '^Microsoft')">
+            <when test="exist _detectedIn">
+              <setEventAttribute attr="filePath">$_detectedIn</setEventAttribute>
+            </when>
+          </when>
+          <otherwise>
+            <when test="exist fileName">
+              <setEventAttribute attr="filePath">$fileName</setEventAttribute>
+            </when>
+          </otherwise>
+        </choose>
+
+        <when test="exist fileName">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$fileName">
+                <regex><![CDATA[<filePath:gPatMesgBody>\/<fileName:gPatMesgBodyMin>$]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <case>
+              <collectFieldsByRegex src="$fileName">
+                <regex><![CDATA[^(?:<filePath:gPatMesgBody>\\)?<fileName:gPatMesgBodyMin>\s*$]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default>
+              <setEventAttribute attr="filePath">$fileName</setEventAttribute>
+            </default>
+          </switch>
+        </when>
+      </when>
+      <!-- When fixed Mantis 0759853
+  <when test="$logID = '96531'">
+    <setEventAttribute attr="eventType">FortiClient-av</setEventAttribute>
+	<when test="exist action">
+	  <setEventAttribute attr="eventType">combineMsgId("FortiClient-av-", $action)</setEventAttribute>
+	</when>
+  </when>
+  -->
+      <when test="$logID = '96534'">
+        <setEventAttribute attr="eventType">FortiClient-av-user-disabled-protection</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96535'">
+        <setEventAttribute attr="eventType">FortiClient-av-communication-error</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96536'">
+        <setEventAttribute attr="eventType">FortiClient-av-rt-protection-killed-malware-process</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96537'">
+        <setEventAttribute attr="eventType">FortiClient-av-scan-thread-suspended</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96538'">
+        <setEventAttribute attr="eventType">FortiClient-av-scan-thread-resumed</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96540'">
+        <setEventAttribute attr="eventType">FortiClient-av-license-expired</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96541'">
+        <setEventAttribute attr="eventType">FortiClient-av-scan-started</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96542'">
+        <setEventAttribute attr="eventType">FortiClient-av-scan-stopped</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96543'">
+        <setEventAttribute attr="eventType">FortiClient-av-scheduled-scan-failed</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96550'">
+        <setEventAttribute attr="eventType">FortiClient-av-quarantined-file-restore-failed</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96551'">
+        <setEventAttribute attr="eventType">FortiClient-av-quarantine-file-restored</setEventAttribute>
+      </when>
+
+      <!-- securtityevent - cloudscan -->
+      <when test="$logID = '97100'">
+        <setEventAttribute attr="eventType">FortiClient-cloudscan-score</setEventAttribute>
+      </when>
+
+      <!-- securtityevent - firewall -->
+      <when test="$logID = '96645'">
+        <setEventAttribute attr="eventType">FortiClient-firewall-disabled</setEventAttribute>
+      </when>
+
+      <!-- securtityevent - fsso -->
+      <when test="$logID = '96980'">
+        <setEventAttribute attr="eventType">FortiClient-fsso-sso</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96983'">
+        <setEventAttribute attr="eventType">FortiClient-fsso-starting</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96984'">
+        <setEventAttribute attr="eventType">FortiClient-fsso-stopping</setEventAttribute>
+      </when>
+
+      <!-- securtityevent - ipsecvpn -->
+      <when test="$logID = '96560'">
+        <setEventAttribute attr="eventType">FortiClient-ipsecvpn-status</setEventAttribute>
+
+        <when test="exist vpnStatus">
+          <setEventAttribute attr="eventType">combineMsgId("FortiClient-ipsecvpn-", $vpnStatus)</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$logID = '96561'">
+        <setEventAttribute attr="eventType">FortiClient-ipsecvpn-phase1-error</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96562'">
+        <setEventAttribute attr="eventType">FortiClient-ipsecvpn-phase2-error</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96563'">
+        <setEventAttribute attr="eventType">FortiClient-ipsecvpn-delete-payload-recv</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96564'">
+        <setEventAttribute attr="eventType">FortiClient-ipsecvpn-failed-to-acquire-ip</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96565'">
+        <setEventAttribute attr="eventType">FortiClient-ipsecvpn-ike-error</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96566'">
+        <setEventAttribute attr="eventType">FortiClient-ipsecvpn-negotiation</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96567'">
+        <setEventAttribute attr="eventType">FortiClient-ipsecvpn-negotiation-error</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96568'">
+        <setEventAttribute attr="eventType">FortiClient-ipsecvpn-packed-dropped</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96569'">
+        <setEventAttribute attr="eventType">FortiClient-ipsecvpn-user-accept-banner</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96570'">
+        <setEventAttribute attr="eventType">FortiClient-ipsecvpn-user-reject-banner</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96571'">
+        <setEventAttribute attr="eventType">FortiClient-ipsecvpn-sa-status</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96574'">
+        <setEventAttribute attr="eventType">FortiClient-ipsecvpn-rule-failure</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96575'">
+        <setEventAttribute attr="eventType">FortiClient-ipsecvpn-connection-error</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96576'">
+        <setEventAttribute attr="eventType">FortiClient-ipsecvpn-ike-phase1-auth-failure</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96577'">
+        <setEventAttribute attr="eventType">FortiClient-ipsecvpn-ike-phase2-auth-failure</setEventAttribute>
+      </when>
+
+      <!-- securtityevent - pam -->
+      <when test="$logID = '99000'">
+        <setEventAttribute attr="eventType">FortiClient-pam-started</setEventAttribute>
+      </when>
+
+      <when test="$logID = '99001'">
+        <setEventAttribute attr="eventType">FortiClient-pam-stopped</setEventAttribute>
+      </when>
+
+      <when test="$logID = '99002'">
+        <setEventAttribute attr="eventType">FortiClient-pam-new-browser-request</setEventAttribute>
+      </when>
+
+      <when test="$logID = '99003'">
+        <setEventAttribute attr="eventType">FortiClient-pam-new-secret-request</setEventAttribute>
+      </when>
+
+      <when test="$logID = '99008'">
+        <setEventAttribute attr="eventType">FortiClient-pam-invalid-request</setEventAttribute>
+      </when>
+
+      <when test="$logID = '99004'">
+        <setEventAttribute attr="eventType">FortiClient-pam-launced-secret</setEventAttribute>
+      </when>
+
+      <when test="$logID = '99005'">
+        <setEventAttribute attr="eventType">FortiClient-pam-failure</setEventAttribute>
+      </when>
+
+      <when test="$logID = '99006'">
+        <setEventAttribute attr="eventType">FortiClient-pam-secret-terminated</setEventAttribute>
+      </when>
+
+      <!-- securtityevent - removablemediaaccess -->
+      <when test="$logID = '96620'">
+        <setEventAttribute attr="eventType">FortiClient-removablemediaaccess-activity</setEventAttribute>
+      </when>
+
+      <!-- securtityevent - sandboxing -->
+      <when test="$logID = '96545'">
+        <setEventAttribute attr="eventType">FortiClient-sandboxing-connection-error</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96556'">
+        <setEventAttribute attr="eventType">FortiClient-sandboxing-file-submit-error</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96557'">
+        <setEventAttribute attr="eventType">FortiClient-sandboxing-query-failed</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96546'">
+        <setEventAttribute attr="eventType">FortiClient-sandboxing-virus-found</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96547'">
+        <setEventAttribute attr="eventType">FortiClient-sandboxing-not-authorized</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96554'">
+        <setEventAttribute attr="eventType">FortiClient-sandboxing-file-submit</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96555'">
+        <setEventAttribute attr="eventType">FortiClient-sandboxing-score</setEventAttribute>
+      </when>
+
+      <!-- securtityevent - sslvpn -->
+      <when test="$logID = '96600'">
+        <setEventAttribute attr="eventType">FortiClient-sslvpn-tunnel-status</setEventAttribute>
+
+        <when test="exist vpnStatus">
+          <setEventAttribute attr="eventType">combineMsgId("FortiClient-sslvpn-tunnel-", $vpnStatus)</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$logID = '96601'">
+        <setEventAttribute attr="eventType">FortiClient-sslvpn-tapisrv-notrunning</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96602'">
+        <setEventAttribute attr="eventType">FortiClient-sslvpn-service--started</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96603'">
+        <setEventAttribute attr="eventType">FortiClient-sslvpn-tunnel-failed</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96605'">
+        <setEventAttribute attr="eventType">FortiClient-sslvpn-conn-failure</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96610'">
+        <setEventAttribute attr="eventType">FortiClient-sslvpn-dtls-status</setEventAttribute>
+
+        <when test="exist vpnStatus">
+          <setEventAttribute attr="eventType">combineMsgId("FortiClient-sslvpn-dtls-", $vpnStatus)</setEventAttribute>
+        </when>
+      </when>
+
+      <!-- securtityevent - videofilter -->
+      <when test="$logID = '96508'">
+        <setEventAttribute attr="eventType">FortiClient-videofilter-blocked</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96509'">
+        <setEventAttribute attr="eventType">FortiClient-videofilter-bypassed</setEventAttribute>
+      </when>
+
+      <!-- securtityevent - vulnerabilityscan -->
+      <when test="$logID = '96520'">
+        <setEventAttribute attr="eventType">FortiClient-vulnerabilityscan-status-change</setEventAttribute>
+        <when test="exist status">
+          <choose>
+            <when test="$status IN 'start, scanning started'">
+              <setEventAttribute attr="eventType">FortiClient-vulnerabilityscan-started</setEventAttribute>
+            </when>
+            <when test="$status = 'scanning finished'">
+              <setEventAttribute attr="eventType">FortiClient-vulnerabilityscan-finished</setEventAttribute>
+            </when>
+            <otherwise>
+              <setEventAttribute attr="eventType">FortiClient-vulnerabilityscan-process</setEventAttribute>
+            </otherwise>
+          </choose>
+        </when>
+      </when>
+      <when test="$logID = '96521'">
+        <setEventAttribute attr="eventType">FortiClient-vulnerabilityscan-vulnerability-record</setEventAttribute>
+        <setEventAttribute attr="scanEnd">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        <choose>
+          <when test="$_vulnseverity IN 'critical,Critical,CRITICAL'">
+            <setEventAttribute attr="vulnCvssBaseScore">10</setEventAttribute>
+            <setEventAttribute attr="vulnCvssScore">10</setEventAttribute>
+            <setEventAttribute attr="vulnCvssBaseTemporal">10</setEventAttribute>
+            <setEventAttribute attr="vulnScore">10</setEventAttribute>
+            <setEventAttribute attr="isExploitable">true</setEventAttribute>
+          </when>
+          <when test="$_vulnseverity IN 'high,High,HIGH'">
+            <setEventAttribute attr="vulnCvssBaseScore">9</setEventAttribute>
+            <setEventAttribute attr="vulnCvssScore">9</setEventAttribute>
+            <setEventAttribute attr="vulnCvssBaseTemporal">10</setEventAttribute>
+            <setEventAttribute attr="vulnScore">9</setEventAttribute>
+            <setEventAttribute attr="isExploitable">true</setEventAttribute>
+          </when>
+          <when test="$_vulnseverity IN 'medium,Medium,MEDIUM'">
+            <setEventAttribute attr="vulnCvssBaseScore">6</setEventAttribute>
+            <setEventAttribute attr="vulnCvssScore">6</setEventAttribute>
+            <setEventAttribute attr="vulnCvssBaseTemporal">10</setEventAttribute>
+            <setEventAttribute attr="vulnScore">6</setEventAttribute>
+            <setEventAttribute attr="isExploitable">true</setEventAttribute>
+          </when>
+          <when test="$_vulnseverity IN 'low,Low,LOW'">
+            <setEventAttribute attr="vulnCvssBaseScore">2</setEventAttribute>
+            <setEventAttribute attr="vulnCvssScore">2</setEventAttribute>
+            <setEventAttribute attr="vulnCvssBaseTemporal">10</setEventAttribute>
+            <setEventAttribute attr="vulnScore">2</setEventAttribute>
+            <setEventAttribute attr="isExploitable">true</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="vulnCvssBaseScore">4</setEventAttribute>
+            <setEventAttribute attr="vulnCvssScore">4</setEventAttribute>
+            <setEventAttribute attr="vulnCvssBaseTemporal">10</setEventAttribute>
+            <setEventAttribute attr="vulnScore">4</setEventAttribute>
+            <setEventAttribute attr="isExploitable">true</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+
+      <when test="exist _detectedPath">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_detectedPath">
+              <regex><![CDATA[<filePath:gPatMesgBody>\/<fileName:gPatMesgBodyMin>$]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_detectedPath">
+              <regex><![CDATA[^(?:<filePath:gPatMesgBody>\\)?<fileName:gPatMesgBodyMin>\s*$]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default>
+            <setEventAttribute attr="filePath">$_detectedPath</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+
+      <when test="$logID IN '96522,96523'">
+        <setEventAttribute attr="eventType">FortiClient-vulnerabilityscan-vulnerability-patching-attempt</setEventAttribute>
+      </when>
+
+      <!-- securtityevent - webfilter -->
+      <when test="$logID = '96500'">
+        <setEventAttribute attr="eventType">FortiClient-webfilter-enabled</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96501'">
+        <setEventAttribute attr="eventType">FortiClient-webfilter-disabled</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96502'">
+        <setEventAttribute attr="eventType">FortiClient-webfilter-block</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96503'">
+        <setEventAttribute attr="eventType">FortiClient-webfilter-bypassed</setEventAttribute>
+      </when>
+
+      <!-- systemevent - endpoint -->
+      <when test="$logID = '96953'">
+        <setEventAttribute attr="eventType">FortiClient-endpoint-status-change</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96955'">
+        <setEventAttribute attr="eventType">FortiClient-endpoint-registration-change</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96956'">
+        <setEventAttribute attr="eventType">FortiClient-endpoint-quarantine-change</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96957'">
+        <setEventAttribute attr="eventType">FortiClient-endpoint-log-to-faz</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96958'">
+        <setEventAttribute attr="eventType">FortiClient-endpoint-social-media-info</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96959'">
+        <setEventAttribute attr="eventType">FortiClient-endpoint-status</setEventAttribute>
+      </when>
+
+      <!-- securtityevent - system -->
+      <when test="$logID = '96800'">
+        <setEventAttribute attr="eventType">FortiClient-system-error</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96801'">
+        <setEventAttribute attr="eventType">FortiClient-system-error-license-expired</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96812'">
+        <setEventAttribute attr="eventType">FortiClient-system-error-license-invalid</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96813'">
+        <setEventAttribute attr="eventType">FortiClient-system-soft-updates-disabled</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96814'">
+        <setEventAttribute attr="eventType">FortiClient-system-fguard-soft-updates-disabled</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96815'">
+        <setEventAttribute attr="eventType">FortiClient-system-soft-updates-error</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96816'">
+        <setEventAttribute attr="eventType">FortiClient-system-soft-updates-success</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96817'">
+        <setEventAttribute attr="eventType">FortiClient-system-soft-updates-failure</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96818'">
+        <setEventAttribute attr="eventType">FortiClient-system-soft-imageid-notfound</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96820'">
+        <setEventAttribute attr="eventType">FortiClient-system-load-av-engine-error</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96821'">
+        <setEventAttribute attr="eventType">FortiClient-system-patching-av-sign-error</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96822'">
+        <setEventAttribute attr="eventType">FortiClient-system-load-false-engine-error</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96823'">
+        <setEventAttribute attr="eventType">FortiClient-system-updates-check</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96824'">
+        <setEventAttribute attr="eventType">FortiClient-system-soft-update-started</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96825'">
+        <setEventAttribute attr="eventType">FortiClient-system-update-success</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96840'">
+        <setEventAttribute attr="eventType">FortiClient-system-fortiproxy-disabled</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96841'">
+        <setEventAttribute attr="eventType">FortiClient-system-fortiproxy-enabled</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96851'">
+        <setEventAttribute attr="eventType">FortiClient-system-fortishield-enabled</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96850'">
+        <setEventAttribute attr="eventType">FortiClient-system-fortishield-disabled</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96855'">
+        <setEventAttribute attr="eventType">FortiClient-system-fortishield-action</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96873'">
+        <setEventAttribute attr="eventType">FortiClient-system-shutting-down</setEventAttribute>
+      </when>
+
+      <when test="$logID = '96882'">
+        <setEventAttribute attr="eventType">FortiClient-system-status</setEventAttribute>
+      </when>
+
+      <!-- systemevent - update -->
+      <when test="$logID IN '96650,96819'">
+        <setEventAttribute attr="eventType">FortiClient-signature-update-success</setEventAttribute>
+      </when>
+
+      <!-- traffic -->
+      <when test="$logID = '96900'">
+        <setEventAttribute attr="eventType">FortiClient-traffic</setEventAttribute>
+        <setEventAttribute attr="webCategory">$virusName</setEventAttribute>
+      </when>
+
+      <otherwise/>
+    </choose>
+
+    <when test="not_exist fwAction">
+      <when test="exist action">
+        <setEventAttribute attr="fwAction">$action</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist fwAction">
+      <setEventAttribute attr="eventType">combineMsgId($eventType,"-", $fwAction)</setEventAttribute>
+    </when>
+
+
+    <choose>
+      <when test="not_exist _type"/>
+      <when test="$_type = 'traffic'">
+
+        <when test="exist fwAction">
+          <setEventAttribute attr="eventType">combineMsgId("FortiClient-traffic-", $fwAction)</setEventAttribute>
+
+          <choose>
+            <when test="$eventType = FortiClient-traffic-passthrough'">
+              <setEventAttribute attr="eventAction">0</setEventAttribute>
+              <when test="exist activityType">
+                <when test="matches($activityType, 'webfilter')">
+                  <setEventAttribute attr="procName">$srcName</setEventAttribute>
+                  <setEventAttribute attr="srcName">$hostName</setEventAttribute>
+                </when>
+              </when>
+            </when>
+
+            <when test="$eventType = FortiClient-traffic-blocked'">
+              <setEventAttribute attr="eventAction">1</setEventAttribute>
+              <when test="exist activityType">
+                <when test="matches($activityType, 'webfilter')">
+                  <setEventAttribute attr="procName">$srcName</setEventAttribute>
+                  <setEventAttribute attr="srcName">$hostName</setEventAttribute>
+                </when>
+              </when>
+            </when>
+
+            <when test="$eventType = 'FortiClient-traffic-userbrowsed'">
+              <setEventAttribute attr="eventAction">0</setEventAttribute>
+              <setEventAttribute attr="srcName">$hostName</setEventAttribute>
+            </when>
+
+            <when test="matches($eventType, 'FortiClient-traffic-(?:clean|ignored|warning|accessdenied|quarantined|quarantinefailed|deleted|deletefailed|repaired|repairfailed)')">
+              <when test="exist activityType">
+                <when test="matches($activityType, 'antivirus')">
+                  <when test="exist srcName">
+                    <collectFieldsByRegex src="$srcName">
+                      <regex><![CDATA[<filePath:gPatMesgBody>\/<fileName:gPatMesgBodyMin>$]]></regex>
+                    </collectFieldsByRegex>
+                  </when>
+                  <setEventAttribute attr="srcName">$hostName</setEventAttribute>
+                </when>
+              </when>
+              <!--
+              <setEventAttribute attr="eventType">combineMsgId("FortiClient-traffic-", $activityType, "-", $fwAction)</setEventAttribute>
+              -->
+            </when>
+          </choose>
+        </when>
+
+        <when test="not_exist fwAction">
+          <when test="$eventType = 'FortiClient-traffic'">
+            <when test="exist srcName">
+              <when test="matches($srcName, 'ipsec|vpn|sslvpn')">
+                <setEventAttribute attr="appName">$srcName</setEventAttribute>
+                <setEventAttribute attr="srcName">$hostName</setEventAttribute>
+                <setEventAttribute attr="eventType">FortiClient-traffic-vpn</setEventAttribute>
+              </when>
+            </when>
+          </when>
+        </when>
+      </when>
+    </choose>
+
+    <when test="$_eventType != 'FortiClient-'">
+      <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "\s+", "-")</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist _user"/>
+      <when test="$_user = 'N/A'"/>
+      <otherwise>
+        <setEventAttribute attr="user">$_user</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist sentBytes64">
+      <when test="exist recvBytes64">
+        <setEventAttribute attr="totBytes64">add($sentBytes64, $recvBytes64)</setEventAttribute>
+      </when>
+    </when>
+
+    <choose>
+      <when test="not_exist _vulnseverity">
+        <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+      </when>
+      <when test="$_vulnseverity IN 'critical, Critical, CRITICAL'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+      <when test="$_vulnseverity IN 'high, High, HIGH'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_vulnseverity IN 'medium, Medium, MEDIUM'">
+        <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+      </when>
+      <when test="$_vulnseverity IN 'low, Low, LOW'">
+        <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+      </when>
+      <otherwise>
+        <choose>
+          <when test="$_severity = 'debug'">
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+          </when>
+
+          <when test="$_severity = 'error'">
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+          </when>
+
+          <when test="$_severity = 'warning'">
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+          </when>
+
+          <when test="$_severity = 'info'">
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+          </when>
+        </choose>
+      </otherwise>
+    </choose>
+
+    <when test="exist infoURL">
+      <setEventAttribute attr="destName">extractHostFromURL($infoURL)</setEventAttribute>
+    </when>
+
+    <when test="exist vulnName">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$vulnName">
+            <regex><![CDATA[^Security Vulnerability <vulnCVEId:gPatStr> in ]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <when test="exist _reptDevName">
+      <!-- only try to override if reporting name explicitly in log file -->
+      <setEventAttribute attr="_newReptIp">resolveDNSName($_reptDevName)</setEventAttribute>
+      <when test="exist _newReptIp">
+        <setEventAttribute attr="reptDevName">$_reptDevName</setEventAttribute>
+        <setEventAttribute attr="reptDevIpAddr">$_newReptIp</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist clientIpAddr">
+      <when test="not_exist srcIpAddr">
+        <setEventAttribute attr="srcIpAddr">$clientIpAddr</setEventAttribute>
+      </when>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

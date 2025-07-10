@@ -1,0 +1,435 @@
+<eventParser name="FortiReconParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiRecon</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[^<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatYear>\s+<:gPatHostName>\s+<:gPatIpAddr>(?:\s+<:gPatInt>\s+<:gPatStr>)?\s+(?i)FORTIRECON[_-]]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[Jan 13 14:55:09 2023 api.fortirecon.forticloud.com 192.168.1.25 FORTIRECON_ACI_LEAKED_CARDS: {"org_id": "exxx1238-ax20-40c5-a7a6-97134501723", "bin": "437551", "bank_name": "Example Bank", "base_name": "DEC 14 USA MAGENTO SSN DOB EMAIL IP", "category": "VISA", "type": "CREDIT", "shop_name": "findsome", "city": "Sunnyvale", "holder_name": "Example User", "expiry": "January/2024", "country": "UNITED STATES", "price": "15.00", "state": "ca", "unique_id": "4961534989", "zip": "90210", "brand_name": "VISA", "bg_code": 2, "index_ts": "2022-12-15T15:20:40Z"}]]></testEvent>
+    <testEvent><![CDATA[Jan 13 12:29:25 2023 api.fortirecon.forticloud.com 192.168.1.25 FORTIRECON_EASM_ISSUES: {"id": "6284d0f7dbb73af1cab5aa40", "issue_name": "Exposed HTTP Service", "asset": "1.1.1.1", "severity": "low", "port": null, "bucket": "Exposed Insecure Service", "status": "active", "user_name": null, "issue_name_identifier": "exposed_http_service", "bucket_id": "exposed_insecure_service"}]]></testEvent>
+    <testEvent><![CDATA[Jan 13 14:36:16 2023 api.fortirecon.forticloud.com 192.168.1.25 FORTIRECON_BP_ROGUE_APPS: {"id": "11111111-1111-1111-1111-111111111111", "name": "Best Ringtones 1.5 by Excellente Ringtones Sounds", "size": "6.54", "download_count": "0", "index_ts": "2022-11-10T04:13:13Z", "first_seen": "2022-11-10T08:52:56Z", "source_name": "apk-watch", "ticket_id": null, "keyword": "zoom", "developer_name": "Excellente Ringtones Sounds", "status": "Unofficial"}]]></testEvent>
+    <testEvent><![CDATA[Jan 13 15:04:06 2023 api.fortirecon.forticloud.com 192.168.1.25 FORTIRECON_ACI_REPORTS: {"report_id": "2022080476177", "motivation": "Cyber Crime", "relevance_rating": "Medium", "status": "Published", "geography": ["south asia"], "tlp": "Amber", "source_name": "Breached aka BreachForums", "source_reliability": "B-Usually reliable", "information_reliability": "2-Probably true", "information_date": "2022-08-04T00:00:00Z", "adversary": ["leakbase"], "summary": "FortiGuard Threat Research identified two posts on the English language cybercrime forum 'Breached', where an actor who operates by the handle 'LeakBase' shared the database claiming to be from an Indian payment facilitator SecurePe, and an Indian DTH and mobile recharge service provider Click On Recharge.", "industry_tags": ["consumer services", "financial services"], "source_category": "Darknet", "report_title": "Actor 'LeakBase' shared databases claimed to be from Indian payment facilitator 'SecurePe', and Indian TV and mobile recharge service provider 'Click On Recharge'", "report_type": "Threat Alert", "threat": ["data breach", "personal information identification (pii)", "account(s) compromised", "database"], "publish_date": "2022-08-04T00:00:00Z"}]]></testEvent>
+    <testEvent><![CDATA[Mar 07 13:50:29 2024 api.fortirecon.forticloud.com 192.168.1.25 FORTIRECON_ACI_IOC: {"report_id": "1122334455667", "report_title": "[Threat Campaign Alert] Researchers analysed the modus operandi and attack patterns of pro Russian group 'UAC-0177 (JokerDPR)'", "ioc": "drive.googie.com.connectssl.in", "ioc_type": "domain"}]]></testEvent>
+    <testEvent><![CDATA[Sep 13 12:20:32 2024 api.fortirecon.forticloud.com 192.168.1.25 FORTIRECON_EASM_LEAKED_CREDS: {"id": "ea1e1733d3b22d743b709322885178b6", "breach_id": 74, "email": "myuser@example.com", "domain": "demo2.com", "breach_name": "Ashley Madison", "breach_date": "2015-07-19", "added_on": "2015-08-18", "has_password": true, "status": "RESOLVED"}]]></testEvent>
+    <testEvent><![CDATA[Sep 13 12:20:32 2024 api.fortirecon.forticloud.com 192.168.1.25 1 FORTIRECON_API FORTIRECON_EASM_LEAKED_CREDS: {"id": "ea1e1733d3b22d743b709322885178b6", "breach_id": 74, "email": "myuser@example.com", "domain": "demo2.com", "breach_name": "Ashley Madison", "breach_date": "2015-07-19", "added_on": "2015-08-18", "has_password": true, "status": "RESOLVED"}]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patET"><![CDATA[[^:]+]]></pattern>
+  </patternDefinitions>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <!-- <128>1 2023-07-27T00:37:12.256297+00:00 syslog.fortiweb-cloud.com syslogng 8 - -  -->
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^\s*<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>\s+<reptDevName:gPatHostName>\s+<reptDevIpAddr:gPatIpAddr>(?:\s+<phCustId:gPatInt>\s+<extEventRecvProto:gPatStr>)?\s+(?i)FORTIRECON[_-]<_et:patET>:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <!-- keyword of generic poller is user controlled, may make a mistake in case sensitivity -->
+        <setEventAttribute attr="_et">toLower($_et)</setEventAttribute>
+        <setEventAttribute attr="eventType">combineMsgId("FortiRecon-", $_et)</setEventAttribute>
+      </case>
+      <default>
+        <setEventAttribute attr="eventType">FortiRecon-Generic</setEventAttribute>
+      </default>
+    </switch>
+
+    <choose>
+      <when test="not_exist _et">
+        <!-- Attempt general json parsing -->
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="tenantId" key="org_id"/>
+          <attrKeyMap attr="bankIdNum" key="bin"/>
+          <attrKeyMap attr="bankName" key="bank_name"/>
+          <attrKeyMap attr="baseName" key="base_name"/>
+          <attrKeyMap attr="categoryType" key="category"/>
+          <attrKeyMap attr="type" key="type"/>
+          <attrKeyMap attr="shopName" key="shop_name"/>
+          <attrKeyMap attr="_cardCity" key="city"/>
+          <attrKeyMap attr="cardHolderName" key="holder_name"/>
+          <attrKeyMap attr="cardCountry" key="country"/>
+          <attrKeyMap attr="price" key="price"/>
+          <attrKeyMap attr="_cardState" key="state"/>
+          <attrKeyMap attr="_uniqueId" key="unique_id"/>
+          <attrKeyMap attr="cardZipCode" key="zip"/>
+          <attrKeyMap attr="_cardBrand" key="brand_name"/>
+          <attrKeyMap attr="_bgCode" key="bg_code"/>
+          <attrKeyMap attr="_indexTime" key="index_ts"/>
+          <attrKeyMap attr="reportId" key="report_id"/>
+          <attrKeyMap attr="type" key="motivation"/>
+          <attrKeyMap attr="_severityCat" key="relevance_rating"/>
+          <attrKeyMap attr="status" key="status"/>
+          <attrKeyMap attr="tlpLabel" key="tlp"/>
+          <attrKeyMap attr="threatSource" key="source_name"/>
+          <attrKeyMap attr="threatSrcReliability" key="source_reliability"/>
+          <attrKeyMap attr="threatInfoReliability" key="information_reliability"/>
+          <attrKeyMap attr="_infoDate" key="information_date"/>
+          <attrKeyMap attr="_adversaryArray" key="adversary"/>
+          <attrKeyMap attr="details" key="summary"/>
+          <attrKeyMap attr="_industryTagsArray" key="industry_tags"/>
+          <attrKeyMap attr="categoryType" key="source_category"/>
+          <attrKeyMap attr="title" key="report_title"/>
+          <attrKeyMap attr="subtype" key="report_type"/>
+          <attrKeyMap attr="_threatTypeArray" key="threat"/>
+          <attrKeyMap attr="_firstSeenTime" key="publish_date"/>
+        </collectAndSetAttrByJSON>
+      </when>
+      <when test="$_et = 'aci_leaked_cards'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="tenantId" key="org_id"/>
+          <attrKeyMap attr="bankIdNum" key="bin"/>
+          <attrKeyMap attr="bankName" key="bank_name"/>
+          <attrKeyMap attr="baseName" key="base_name"/>
+          <attrKeyMap attr="categoryType" key="category"/>
+          <attrKeyMap attr="type" key="type"/>
+          <attrKeyMap attr="shopName" key="shop_name"/>
+          <attrKeyMap attr="_cardCity" key="city"/>
+          <attrKeyMap attr="cardHolderName" key="holder_name"/>
+          <attrKeyMap attr="_cardExpiry" key="expiry"/>
+          <attrKeyMap attr="cardCountry" key="country"/>
+          <attrKeyMap attr="price" key="price"/>
+          <attrKeyMap attr="_cardState" key="state"/>
+          <attrKeyMap attr="_uniqueId" key="unique_id"/>
+          <attrKeyMap attr="cardZipCode" key="zip"/>
+          <attrKeyMap attr="_cardBrand" key="brand_name"/>
+          <attrKeyMap attr="_bgCode" key="bg_code"/>
+          <attrKeyMap attr="_publishDate" key="index_ts"/>
+        </collectAndSetAttrByJSON>
+        <!-- calculate card expiration as end of month date time -->
+        <when test="exist _cardExpiry">
+          <switch>
+            <case>
+              <!-- January/2024 -->
+              <collectFieldsByRegex src="$_cardExpiry">
+                <regex><![CDATA[^<_cardMon:gPatStr>/<_cardYear:gPatYear>$]]></regex>
+              </collectFieldsByRegex>
+              <choose>
+                <when test="not_exist _cardMon"/>
+                <when test="$_cardMon = 'January'">
+                  <setEventAttribute attr="_cardMon">2</setEventAttribute>
+                </when>
+                <when test="$_cardMon = 'February'">
+                  <setEventAttribute attr="_cardMon">3</setEventAttribute>
+                </when>
+                <when test="$_cardMon = 'March'">
+                  <setEventAttribute attr="_cardMon">4</setEventAttribute>
+                </when>
+                <when test="$_cardMon = 'April'">
+                  <setEventAttribute attr="_cardMon">5</setEventAttribute>
+                </when>
+                <when test="$_cardMon = 'May'">
+                  <setEventAttribute attr="_cardMon">6</setEventAttribute>
+                </when>
+                <when test="$_cardMon = 'June'">
+                  <setEventAttribute attr="_cardMon">7</setEventAttribute>
+                </when>
+                <when test="$_cardMon = 'July'">
+                  <setEventAttribute attr="_cardMon">8</setEventAttribute>
+                </when>
+                <when test="$_cardMon = 'August'">
+                  <setEventAttribute attr="_cardMon">9</setEventAttribute>
+                </when>
+                <when test="$_cardMon = 'September'">
+                  <setEventAttribute attr="_cardMon">10</setEventAttribute>
+                </when>
+                <when test="$_cardMon = 'October'">
+                  <setEventAttribute attr="_cardMon">11</setEventAttribute>
+                </when>
+                <when test="$_cardMon = 'November'">
+                  <setEventAttribute attr="_cardMon">12</setEventAttribute>
+                </when>
+                <when test="$_cardMon = 'December'">
+                  <setEventAttribute attr="_cardMon">1</setEventAttribute>
+                  <!-- also increment the year -->
+                  <setEventAttribute attr="_cardYear">add($_cardYear, 1)</setEventAttribute>
+                </when>
+              </choose>
+              <!-- Now calc the timestamp -->
+              <setEventAttribute attr="_cardTime">00:00:00</setEventAttribute>
+              <setEventAttribute attr="_cardDay">1</setEventAttribute>
+              <setEventAttribute attr="cardExpiry">toDateTime($_cardMon, $_cardDay, $_cardYear, $_cardTime)</setEventAttribute>
+              <!-- now subtract 1 day from cardExpiry to get end of the month -->
+              <setEventAttribute attr="cardExpiry">add($cardExpiry, "-86400")</setEventAttribute>
+            </case>
+            <default/>
+          </switch>
+        </when>
+
+      </when>
+      <when test="$_et = 'bp_rogue_apps'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="tenantId" key="org_id"/>
+          <attrKeyMap attr="applicationIdStr" key="id"/>
+          <attrKeyMap attr="appName" key="name"/>
+          <attrKeyMap attr="fileDownloadCount" key="download_count"/>
+          <attrKeyMap attr="_firstSeenTime" key="first_seen"/>
+          <attrKeyMap attr="eventSource" key="source_name"/>
+          <attrKeyMap attr="developerName" key="developer_name"/>
+          <attrKeyMap attr="status" key="status"/>
+        </collectAndSetAttrByJSON>
+      </when>
+      <when test="$_et = 'bp_domain_threat'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="uuid" key="id"/>
+          <attrKeyMap attr="domain" key="domain"/>
+          <attrKeyMap attr="_publishDate" key="notable_change_ts"/>
+          <attrKeyMap attr="_severity" key="severity"/>
+          <attrKeyMap attr="threatSource" key="source_name"/>
+          <attrKeyMap attr="status" key="status"/>
+        </collectAndSetAttrByJSON>
+      </when>
+      <when test="$_et = 'easm_issues'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="tenantId" key="org_id"/>
+          <attrKeyMap attr="_id" key="id"/>
+          <attrKeyMap attr="msg" key="issue_name"/>
+          <attrKeyMap attr="_issueDispName" key="issue_name"/>
+          <attrKeyMap attr="asset" key="asset"/>
+          <attrKeyMap attr="destIpPort" key="port"/>
+          <attrKeyMap attr="_severity" key="severity"/>
+          <attrKeyMap attr="_bucketDispName" key="bucket"/>
+          <attrKeyMap attr="status" key="status"/>
+          <attrKeyMap attr="user" key="user_name"/>
+          <attrKeyMap attr="subtype" key="issue_name_identifier"/>
+          <attrKeyMap attr="type" key="bucket_id"/>
+          <attrKeyMap attr="details" key="data"/>
+        </collectAndSetAttrByJSON>
+        <setEventAttribute attr="eventType">combineMsgId("FortiRecon-easm-", $type)</setEventAttribute>
+        <!-- attempt to map cve id if present -->
+        <when test="$type = 'vulnerable_software'">
+          <when test="matches($_issueDispName, '^CVE-)">
+            <setEventAttribute attr="vulnCVEId">$_issueDispName</setEventAttribute>
+          </when>
+        </when>
+        <!-- if affected asset is an IP, map to hostIp field -->
+        <when test="exist asset">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$asset">
+                <regex><![CDATA[^<hostIpAddr:gPatIpAddr>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default>
+              <setEventAttribute attr="hostName">$asset</setEventAttribute>
+            </default>
+          </switch>
+        </when>
+
+      </when>
+      <when test="$_et = 'aci_reports'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="tenantId" key="org_id"/>
+          <attrKeyMap attr="reportId" key="report_id"/>
+          <attrKeyMap attr="type" key="motivation"/>
+          <attrKeyMap attr="_severityCat" key="relevance_rating"/>
+          <attrKeyMap attr="status" key="status"/>
+          <attrKeyMap attr="tlpLabel" key="tlp"/>
+          <attrKeyMap attr="threatSource" key="source_name"/>
+          <attrKeyMap attr="threatSrcReliability" key="source_reliability"/>
+          <attrKeyMap attr="threatInfoReliability" key="information_reliability"/>
+          <attrKeyMap attr="_infoDate" key="information_date"/>
+          <attrKeyMap attr="_adversaryArray" key="adversary"/>
+          <attrKeyMap attr="details" key="summary"/>
+          <attrKeyMap attr="_industryTagsArray" key="industry_tags"/>
+          <attrKeyMap attr="categoryType" key="source_category"/>
+          <attrKeyMap attr="title" key="report_title"/>
+          <attrKeyMap attr="subtype" key="report_type"/>
+          <attrKeyMap attr="_threatTypeArray" key="threat"/>
+          <attrKeyMap attr="_publishDate" key="publish_date"/>
+        </collectAndSetAttrByJSON>
+      </when>
+
+      <when test="$_et = 'aci_ioc'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="iocValue" key="ioc"/>
+          <attrKeyMap attr="iocType" key="ioc_type"/>
+        </collectAndSetAttrByJSON>
+      </when>
+
+      <!-- /easm/{org id}/exposed_services -->
+      <when test="$_et = 'easm_exposed_services'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="hostIpAddr" key="ip_address"/>
+          <attrKeyMap attr="destIpPort" key="port"/>
+          <attrKeyMap attr="product" key="product"/>
+          <attrKeyMap attr="serviceName" key="service"/>
+          <attrKeyMap attr="osType" key="cpe[0]"/>
+          <attrKeyMap attr="version" key="version"/>
+          <attrKeyMap attr="osName" key="os"/>
+          <attrKeyMap attr="serviceDesc" key="service_banner"/>
+          <attrKeyMap attr="_sslExpiryDateStr" key="ssl.expires"/>
+          <attrKeyMap attr="_isExpired" key="ssl.expired"/>
+          <attrKeyMap attr="hashSHA256" key="ssl.fingerprint_sha256"/>
+          <attrKeyMap attr="tlsServerIssuer" key="ssl.issuer.CN"/>
+          <attrKeyMap attr="tlsServerSubject" key="ssl.subject.CN"/>
+          <attrKeyMap attr="domain" key="domains[0]"/>
+          <attrKeyMap attr="_subdomains" key="subdomains"/>
+        </collectAndSetAttrByJSON>
+      </when>
+
+      <!-- /easm/{org id}/leaked_creds -->
+      <when test="$_et = 'easm_leaked_creds'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="_id" key="id"/>
+          <attrKeyMap attr="_breachId" key="breach_id"/>
+          <attrKeyMap attr="receiverMailAddr" key="email"/>
+          <attrKeyMap attr="domain" key="domain"/>
+          <attrKeyMap attr="breachName" key="breach_name"/>
+          <attrKeyMap attr="_publishDate" key="added_on"/>
+          <attrKeyMap attr="password" key="has_password"/>
+          <attrKeyMap attr="status" key="status"/>
+        </collectAndSetAttrByJSON>
+      </when>
+      <otherwise/>
+    </choose>
+
+    <!-- We parse the log header date and the key value pair date, if the latter exists use it. -->
+    <when test="exist _indexTime">
+      <collectFieldsByRegex src="$_indexTime">
+        <regex><![CDATA[^<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime><_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+    </when>
+
+    <when test="exist _firstSeenTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_firstSeenTime">
+            <regex><![CDATA[^<_year1:gPatYear>-<_mon1:gPatMonNum>-<_day1:gPatDay>T<_time1:gPatTime><_tz1:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <choose>
+            <when test="not_exist _year1"/>
+            <when test="not_exist _mon1"/>
+            <when test="not_exist _day1"/>
+            <when test="not_exist _time1"/>
+            <when test="exist _tz1">
+              <setEventAttribute attr="firstSeenTime">toDateTime($_mon1, $_day1, $_year1, $_time1, $_tz1)</setEventAttribute>
+            </when>
+            <otherwise>
+              <setEventAttribute attr="firstSeenTime">toDateTime($_mon1, $_day1, $_year1, $_time1)</setEventAttribute>
+            </otherwise>
+          </choose>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _publishDate">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_publishDate">
+            <regex><![CDATA[^<_year2:gPatYear>-<_mon2:gPatMonNum>-<_day2:gPatDay>T<_time2:gPatTime><_tz2:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="publishDate">toDateTime($_mon2, $_day2, $_year2, $_time2, $_tz2)</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_publishDate">
+            <regex><![CDATA[^<_year2:gPatYear>-<_mon2:gPatMonNum>-<_day2:gPatDay>T<_time2:gPatTime>(?:\.\d+)?]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="publishDate">toDateTime($_mon2, $_day2, $_year2, $_time2)</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_publishDate">
+            <regex><![CDATA[^<_year2:gPatYear>-<_mon2:gPatMonNum>-<_day2:gPatDay>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="publishDate">toDateTime($_mon2, $_day2, $_year2, "00:00:00")</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <choose>
+      <when test="not_exist _year"/>
+      <when test="not_exist _mon"/>
+      <when test="not_exist _day"/>
+      <when test="not_exist _time"/>
+      <when test="exist _tz">
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+
+    <when test="exist _severity">
+      <setEventAttribute attr="_severity">toLower($_severity)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist _severity"/>
+      <when test="$_severity = 'low'">
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+      <when test="$_severity = 'medium'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_severity = 'high'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_severity = 'critical'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+    </choose>
+
+    <!-- adversary field is a json array -->
+    <when test="exist _adversaryArray">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_adversaryArray">
+            <regex><![CDATA[^\s*\[\s*<adversary:gPatMesgBody>\s*\]\s*$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="adversary">$_adversaryArray</setEventAttribute>
+        </default>
+      </switch>
+      <setEventAttribute attr="adversary">replaceStringByRegex($adversary, "\"", "")</setEventAttribute>
+      <setEventAttribute attr="adversary">replaceStringByRegex($adversary, ",\s+", ",")</setEventAttribute>
+    </when>
+
+    <!-- industry tags field is a json array -->
+    <when test="exist _industryTagsArray">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_industryTagsArray">
+            <regex><![CDATA[^\s*\[\s*<tagName:gPatMesgBody>\s*\]\s*$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="tagName">$_industryTagsArray</setEventAttribute>
+        </default>
+      </switch>
+      <setEventAttribute attr="tagName">replaceStringByRegex($tagName, "\"", "")</setEventAttribute>
+      <setEventAttribute attr="tagName">replaceStringByRegex($tagName, ",\s+", ",")</setEventAttribute>
+    </when>
+
+    <!-- threat field is a json string array -->
+    <when test="exist _threatTypeArray">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_threatTypeArray">
+            <regex><![CDATA[^\s*\[\s*<threatType:gPatMesgBody>\s*\]\s*$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="threatType">$_threatTypeArray</setEventAttribute>
+        </default>
+      </switch>
+      <setEventAttribute attr="threatType">replaceStringByRegex($threatType, "\"", "")</setEventAttribute>
+      <setEventAttribute attr="threatType">replaceStringByRegex($threatType, ",\s+", ",")</setEventAttribute>
+    </when>
+
+    <when test="exist hostName">
+      <when test="not_exist hostIpAddr">
+        <setEventAttribute attr="hostIpAddr">resolveDNSName($hostName)</setEventAttribute>
+      </when>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

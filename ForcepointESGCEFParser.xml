@@ -1,0 +1,237 @@
+<eventParser name="ForcepointESGCEFParser">
+  <deviceType>
+    <Vendor>Forcepoint</Vendor>
+    <Model>Email Security Gateway</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+
+  <testEvents>
+    <testEvent><![CDATA[<13>Apr 19 14:52:11 example1.com CEF:0|Forcepoint|Email Security|8.4.0|Message|Message|5| dvc=10.10.164.55 dvchost=example2.com rt=1555685561000 externalId=5813617053960722202 messageId=716572042407142108 suser=user1@example3.com duser=user2@example4.com msg=RE: 202 Campus Drive, Franklin Township, NJ in=38289 trueSrc=1.1.1.1 from="user3" <user3@example5.com> to="user4" <user4@example6.com> cc= x-mailer= fname= url=]]></testEvent>
+    <testEvent><![CDATA[<22>May 8 21:53:56 host1 /usr/local/sbin/filter[1808]: message id 922BED678E8DF29EEA01, is quarantined into archive]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patStrEndSep"><![CDATA[[^|]*]]></pattern>
+    <pattern name="patMod"><![CDATA[/usr/local/sbin/filter|screen]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>(?:\s+<:gPatHostName>)?\s+(?:CEF:\d+\|Forcepoint\|Email\sSecurity\||<:patMod>\[\d+\]\s*:\s*)]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>(?:\s+<reptDevName:gPatHostName>)?\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[CEF:\d+\|Forcepoint\|Email Security\|<appVersion:patStrEndSep>?\|<categoryType:patStrEndSep>\|<_name:patStrEndSep>\|<eventSeverity:gPatInt>\|\s+<_subCEFBody:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="_eventType">Forcepoint</setEventAttribute>
+        <when test="exist categoryType">
+          <setEventAttribute attr="_eventType">combineMsgId($_eventType, "-", $categoryType)</setEventAttribute>
+        </when>
+        <when test="exist _name">
+          <when test="$categoryType = 'Policy'">
+            <setEventAttribute attr="testResult">$_name</setEventAttribute>
+          </when>
+        </when>
+        <choose>
+          <when test="$_eventType = 'Forcepoint'">
+            <setEventAttribute attr="eventType">Forcepoint-CEF-Generic</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">$_eventType</setEventAttribute>
+          </otherwise>
+        </choose>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<_mode:patMod>\[\d+\]\s*:\s*<_subBody:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+    <when test="exist _subCEFBody">
+      <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_subCEFBody">
+        <attrKeyMap attr="hostIpAddr" key="dvc"/>
+        <attrKeyMap attr="hostName" key="dvchost"/>
+        <attrKeyMap attr="_direction" key="deviceDirection"/>
+        <attrKeyMap attr="policyName" key="deviceFacility"/>
+        <attrKeyMap attr="ipConnId" key="messageId"/>
+        <attrKeyMap attr="_rt" key="rt"/>
+        <attrKeyMap attr="extEventId" key="externalId"/>
+        <attrKeyMap attr="srcIpAddr" key="src"/>
+        <attrKeyMap attr="destIpAddr" key="dst"/>
+        <attrKeyMap attr="appName" key="app"/>
+        <attrKeyMap attr="errReason" key="reason"/>
+        <attrKeyMap attr="status" key="spfResult"/>
+        <attrKeyMap attr="destUser" key="duser"/>
+        <attrKeyMap attr="srcUser" key="suser"/>
+        <attrKeyMap attr="encryptAlgo" key="encryptedDelivery"/>
+        <attrKeyMap attr="deliveryId" key="deliveryCode"/>
+        <attrKeyMap attr="statusDetailedReason" key="deliveryCodeInfo"/>
+        <attrKeyMap attr="osObjAction" key="act"/>
+        <attrKeyMap attr="msg" key="msg"/>
+        <attrKeyMap attr="recvBytes" key="in"/>
+        <attrKeyMap attr="srcIpAddr" key="trueSrc"/>
+        <attrKeyMap attr="_fileName" key="fname"/>
+        <attrKeyMap attr="_fileName" key="fnameAndfileHash"/>
+        <attrKeyMap attr="_infoURL" key="url"/>
+        <attrKeyMap attr="ruleName" key="deviceProcessName"/>
+        <attrKeyMap attr="statusDetailedReason" key="exceptionReason"/>
+        <attrKeyMap attr="_senderMailAddr" key="from"/>
+        <attrKeyMap attr="receiverMailAddr" key="replyTo"/>
+        <attrKeyMap attr="receiverMailAddr" key="to"/>
+        <attrKeyMap attr="relatedReceiverMailAddr" key="cc"/>
+        <attrKeyMap attr="spamScore" key="spamScore"/>
+        <attrKeyMap attr="item" key="element"/>
+        <attrKeyMap attr="item" key="page"/>
+        <attrKeyMap attr="role" key="spriv"/>
+        <attrKeyMap attr="page" key="page"/>
+        <attrKeyMap attr="appClientVersion" key="x-mailer"/>
+        <attrKeyMap attr="localSpamScore" key="localSpamScore"/>
+        <attrKeyMap attr="hybridSpamScore" key="hybridSpamScore"/>
+      </collectFieldsByKeyValuePair>
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_subCEFBody">
+            <regex><![CDATA[from=\s*<senderMailAddr:gPatMesgBody>\s+replyTo]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <!-- MMM dd yyyy HH:mm:ss or milliseconds since epoch (Jan 1st 1970). -->
+    <when test="exist _rt">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_rt">
+            <regex><![CDATA[<_mon1:gPatMon>\s+<_day1:gPatDay>\s+<_year1:gPatYear>\s+<_time1:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventTime">toDateTime($_mon1, $_day1, $_year1, $_time1)</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_rt">
+            <regex><![CDATA[^<eventTime:gPatInt>\d{3}$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <when test="exist _direction">
+      <choose>
+        <when test="$_direction = '0'">
+          <setEventAttribute attr="direction">Inbound/Internal</setEventAttribute>
+        </when>
+        <when test="$_direction = '1'">
+          <setEventAttribute attr="direction">Outbound</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+    <when test="exist _infoURL">
+      <choose>
+        <when test="matches($_infoURL, '(?:http.*){2,}')">
+          <setEventAttribute attr="infoURL">$_infoURL</setEventAttribute>
+        </when>
+        <otherwise>
+          <collectFieldsByRegex src="$_infoURL">
+            <regex><![CDATA[<infoURL:patStrEndSep>\|<webCategory:patStrEndSep>\|<trigger:patStrEndSep>;]]></regex>
+          </collectFieldsByRegex>
+        </otherwise>
+      </choose>
+    </when>
+    <when test="exist _fileName">
+      <choose>
+        <when test="matches($_fileName, '(?:;.*){2,}')">
+          <setEventAttribute attr="fileName">$_fileName</setEventAttribute>
+        </when>
+        <when test="matches($_fileName, '[\S|\s]+\.\S+')">
+          <setEventAttribute attr="fileName">$_fileName</setEventAttribute>
+        </when>
+        <otherwise>
+          <collectFieldsByRegex src="$_fileName">
+            <regex><![CDATA[<fileName:patStrEndSep>\|<hashCode:patStrEndSep>\|<threatCategory:patStrEndSep>;]]></regex>
+          </collectFieldsByRegex>
+        </otherwise>
+      </choose>
+    </when>
+    <choose>
+      <when test="not_exist _mode"/>
+      <when test="$_mode = 'screen'">
+        <setEventAttribute attr="eventType">Forcepoint-Screen-Generic</setEventAttribute>
+      </when>
+      <when test="$_mode = '/usr/local/sbin/filter'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_subBody">
+              <regex><![CDATA[configure shm read <_lock:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Forcepoint-shm-read-",$_lock)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_subBody">
+              <regex><![CDATA[fork_message.*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Forcepoint-fork-message</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_subBody">
+              <regex><![CDATA[Function:\s*<_fun:gPatStr> ]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Forcepoint-",$_fun)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_subBody">
+              <regex><![CDATA[match_rule_bypass_list sender:<senderMailAddr:gPatStrComma>,rcpt:<receiverMailAddr:gPatStrComma>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Forcepoint-match-rule-bypass-list</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_subBody">
+              <regex><![CDATA[message \S+ \S+,\s*action name: <_action:gPatStrComma>,\s*cc:<:gPatStrComma>,\s*bcc:<:gPatStrComma>,]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Forcepoint-",$_action)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_subBody">
+              <regex><![CDATA[message \S+ \S+, filter <:gPatStrComma>, policy <policyName:gPatStrComma>, rule <ruleName:gPatStrComma>,]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Forcepoint-Message-Generic</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_subBody">
+              <regex><![CDATA[message \S+ \S+, filter <:gPatStrComma>, policy <policyName:gPatStrComma>, rule <ruleName:gPatStrComma>,]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Forcepoint-Message-Generic</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_subBody">
+              <regex><![CDATA[message \S+ \S+, is quarantined into archive]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Forcepoint-Message-Filtered</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_subBody">
+              <regex><![CDATA[message \S+ from <srcIpAddr:gPatStr>, hybrid service dkim verify pass, virus clean <:gPatInt>, name (?:<:gPatStr>)?, spam score <spamScore:gPatStr>, reputation <reputation:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Forcepoint-Message</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_subBody">
+              <regex><![CDATA[message id <ipConnId:gPatStr>, query policy done]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Forcepoint-Message-Query-Policy</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">Forcepoint-Filter-Generic</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+    </choose>
+    <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "\s+$", "")</setEventAttribute>
+    <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "\s+", "-")</setEventAttribute>
+  </parsingInstructions>
+
+</eventParser>

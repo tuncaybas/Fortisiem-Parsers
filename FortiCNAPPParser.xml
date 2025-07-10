@@ -1,0 +1,239 @@
+<eventParser name="FortiCNAPPParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>CNAPP</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <!-- FortiCNAPP is using AWS Event Bridge to publish Alerts to a customer controlled SQS queue -->
+  <!-- FortiSIEM polls this SQS queue using the AWS_SQS Integration -->
+  <testEvents>
+    <testEvent><![CDATA[[AWS_SQS_EVENT_DATA] = {"account":"111111111111","detail":{"ACCOUNT":"MYLABACCOUNT-1","DERIVED_FIELDS":{"CATEGORY":"Policy","SOURCE":"AWS","SUBCATEGORY":"Cloud Activity"},"EVENT_CATEGORY":"Aws","EVENT_DETAILS":{"data":[{"END_TIME":"2025-03-06T16:00:00Z","ENTITY_MAP":{"API":[{"API":"DescribeOrganization","END_TIME":"2025-03-06T16:00:00Z","SERVICE":"organizations.amazonaws.com"},{"API":"DescribeTags","END_TIME":"2025-03-06T16:00:00Z","SERVICE":"ec2.amazonaws.com"}],"CT_RawTime":[{"EARLIEST":"2025-03-06 07:25:00.000 -0800","LATEST":"2025-03-06 07:40:47.000 -0800"}],"CT_User":[{"ACCOUNT_ID":"2222222222222","API_LIST":["DescribeOrganization","DescribeTags"],"END_TIME":"2025-03-06T16:00:00Z","MFA":0,"PRINCIPAL_ID":"AIDXXXXXXXXXXXXXX","REGION_LIST":["us-east-1"],"USERNAME":"IAMUser/2222222222222:example.user-12345@examplelab"},{"ACCOUNT_ID":"2222222222222","API_LIST":["DescribeOrganization"],"END_TIME":"2025-03-06T16:00:00Z","MFA":0,"PRINCIPAL_ID":"AROXXXXXXXXXXXX:i-0xxxxxxxxxxx","REGION_LIST":["us-east-1"],"USERNAME":"AssumedRole/2222222222222:ec2_profile_example_xxxx"},{"ACCOUNT_ID":"2222222222222","API_LIST":["DescribeOrganization"],"END_TIME":"2025-03-06T16:00:00Z","MFA":0,"PRINCIPAL_ID":"AROAW3MEEDZU3OVIV2L4Z:i-0d26e9acacc1f4ca9","REGION_LIST":["us-east-1"],"USERNAME":"AssumedRole/2222222222222:ec2_profile_app_target_12345"}],"Region":[{"ACCOUNT_LIST":["2222222222222"],"END_TIME":"2025-03-06T16:00:00Z","REGION":"us-east-1"}],"Resource":[{"NAME":"maxResults","VALUE":"100"},{"NAME":"name","VALUE":"resource-id"},{"NAME":"value","VALUE":"i-0axxxxxxxxx"}],"RulesTriggered":[{"END_TIME":"2025-03-06T16:00:00Z","RULE_DESCRIPTION":"Detected an unauthorized API call.","RULE_ID":"lacework-global-29","RULE_SEVERITY":3,"RULE_TITLE":"Unauthorized API Call"},{"END_TIME":"2025-03-06T16:00:00Z","RULE_DESCRIPTION":"Detected an unauthorized API call.","RULE_ID":"lacework-global-29","RULE_SEVERITY":3,"RULE_TITLE":"Unauthorized API Call"},{"END_TIME":"2025-03-06T16:00:00Z","RULE_DESCRIPTION":"Detected an unauthorized API call.","RULE_ID":"lacework-global-29","RULE_SEVERITY":3,"RULE_TITLE":"Unauthorized API Call"},{"END_TIME":"2025-03-06T16:00:00Z","RULE_DESCRIPTION":"Detected an unauthorized API call.","RULE_ID":"lacework-global-29","RULE_SEVERITY":3,"RULE_TITLE":"Unauthorized API Call"}],"SourceIpAddress":[{"CLOUDTRAIL_IP_ADDRESS":"1.1.1.1","END_TIME":"2025-03-06T16:00:00Z"},{"CLOUDTRAIL_IP_ADDRESS":"192.168.0.10","END_TIME":"2025-03-06T16:00:00Z"},{"CLOUDTRAIL_IP_ADDRESS":"2.2.2.2","END_TIME":"2025-03-06T16:00:00Z"},{"CLOUDTRAIL_IP_ADDRESS":"3.3.3.3","END_TIME":"2025-03-06T16:00:00Z"}]},"EVENT_ACTOR":"Aws","EVENT_ID":"677401","EVENT_MODEL":"CloudTrailCep","EVENT_TYPE":"UnauthorizedAPICall","START_TIME":"2025-03-06T15:00:00Z"}]},"EVENT_ID":"677401","EVENT_NAME":"Unauthorized API Call","EVENT_TYPE":"UnauthorizedAPICall","LINK":"https://lab-demo-z.lacework.net/ui/investigation/monitor/AlertInbox/677401/details?accountName=MYLABACCOUNT-1&ci=xxxx_xxxx&startTime=1741273200000&endTime=1741276800000&intgGuid=XXXX_8D35745CE02669678FC96A06F660EDE1E3B9B2E5503D9CA","SEVERITY":5,"SOURCE":"CloudTrail","START_TIME":"06 Mar 2025 15:00 GMT","SUMMARY":" For account: 2222222222222  : Unauthorized API call was attempted 4 times  by user  AIDXXXXXXXXXXXXXX   (and 2 more) ","SUPPORTING_FACTS":[]},"detail-type":"LaceworkEvents","id":"b0a4aeca-6053-5866-f702-xxxxx","phCustId":1,"region":"us-east-1","reptDevIpAddr":"52.94.236.248","reptDevName":"amazon.com","resources":[],"source":"XXXX_8D35745CE02669678FC96A06F660EDE1E3B9B2E5503D9CA","time":"2025-03-06T16:25:45Z","version":"0"}
+]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patExceptComma"><![CDATA[[^,]+]]></pattern>
+    <pattern name="patExceptAt"><![CDATA[[^@]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[^\s*\[AWS_SQS_EVENT_DATA\]\s*=\s*\{.*"detail-type"\s*:\s*"LaceworkEvents"]]></eventFormatRecognizer>
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^\s*\[AWS_SQS_EVENT_DATA\] = <_json:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+    <setEventAttribute attr="extEventRecvProto">AWS_SQS</setEventAttribute>
+    <setEventAttribute attr="eventType">FortiCNAPP-Generic</setEventAttribute>
+    <collectAndSetAttrByJSON src="$_json">
+      <attrKeyMap attr="phCustId" key="phCustId"/>
+      <attrKeyMap attr="reptDevIpAddr" key="reptDevIpAddr"/>
+      <attrKeyMap attr="reptDevName" key="reptDevName"/>
+      <attrKeyMap attr="alertIdStr" key="id"/>
+      <attrKeyMap attr="awsRegion" key="region"/>
+      <attrKeyMap attr="_resourcesArr" key="resources"/>
+      <attrKeyMap attr="_eventTime" key="time"/>
+      <attrKeyMap attr="accountId" key="account"/>
+      <!-- Alert Details -->
+      <attrKeyMap attr="_et" key="detail.EVENT_TYPE"/>
+      <attrKeyMap attr="categoryType" key="detail.EVENT_CATEGORY"/>
+      <attrKeyMap attr="accountName" key="detail.ACCOUNT"/>
+      <attrKeyMap attr="msgId" key="detail.EVENT_ID"/>
+      <attrKeyMap attr="opName" key="detail.EVENT_NAME"/>
+      <attrKeyMap attr="infoURL" key="detail.LINK"/>
+      <attrKeyMap attr="_eventSeverity" key="detail.SEVERITY"/>
+      <attrKeyMap attr="eventSource" key="detail.SOURCE"/>
+      <attrKeyMap attr="title" key="detail.SUMMARY"/>
+      <attrKeyMap attr="type" key="detail.DERIVED_FIELDS.CATEGORY"/>
+      <attrKeyMap attr="subtype" key="detail.DERIVED_FIELDS.SUBCATEGORY"/>
+
+      <!-- Raw Underlying Events for Alert -->
+      <attrKeyMap attr="details" key="detail.EVENT_DETAILS.data[0]"/>
+      <attrKeyMap attr="srcIpAddr" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.SourceIpAddress[0].CLOUDTRAIL_IP_ADDRESS"/>
+      <attrKeyMap attr="_srcIP1" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.SourceIpAddress[1].CLOUDTRAIL_IP_ADDRESS"/>
+      <attrKeyMap attr="_srcIP2" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.SourceIpAddress[2].CLOUDTRAIL_IP_ADDRESS"/>
+      <attrKeyMap attr="_srcIP3" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.SourceIpAddress[3].CLOUDTRAIL_IP_ADDRESS"/>
+      <attrKeyMap attr="_srcIP4" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.SourceIpAddress[4].CLOUDTRAIL_IP_ADDRESS"/>
+      <attrKeyMap attr="srcUser" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.CT_User[0].USERNAME"/>
+      <attrKeyMap attr="_ctUser1" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.CT_User[1].USERNAME"/>
+      <attrKeyMap attr="_ctUser2" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.CT_User[2].USERNAME"/>
+      <attrKeyMap attr="_ctUser3" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.CT_User[3].USERNAME"/>
+      <attrKeyMap attr="_ctUser4" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.CT_User[4].USERNAME"/>
+      <!-- FileExePath -->
+      <attrKeyMap attr="procPath" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.FileExePath[0].EXE_PATH"/>
+      <attrKeyMap attr="hashSHA256" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.FileExePath[0].LAST_FILEDATA_HASH"/>
+      <attrKeyMap attr="module" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.FileExePath[0].LAST_PACKAGE_NAME"/>
+      <attrKeyMap attr="version" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.FileExePath[0].LAST_VERSION"/>
+      <!-- IpAddress -->
+      <!-- directionality not known initially - depends on context of event -->
+      <attrKeyMap attr="_ip0" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.IpAddress[0].IP_ADDRESS"/>
+      <attrKeyMap attr="_ipPort0" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.IpAddress[0].PORT_LIST[0]"/>
+      <attrKeyMap attr="_ip1" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.IpAddress[1].IP_ADDRESS"/>
+      <attrKeyMap attr="_ipPort1" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.IpAddress[1].PORT_LIST[0]"/>
+      <attrKeyMap attr="_ip2" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.IpAddress[2].IP_ADDRESS"/>
+      <attrKeyMap attr="_ipPort2" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.IpAddress[2].PORT_LIST[0]"/>
+      <attrKeyMap attr="_ip3" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.IpAddress[3].IP_ADDRESS"/>
+      <attrKeyMap attr="_ipPort3" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.IpAddress[3].PORT_LIST[0]"/>
+      <attrKeyMap attr="_ip4" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.IpAddress[4].IP_ADDRESS"/>
+      <attrKeyMap attr="_ipPort4" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.IpAddress[4].PORT_LIST[0]"/>
+
+      <attrKeyMap attr="threatSource" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.IpAddress[0].THREAT_SOURCE[0].source"/>
+      <attrKeyMap attr="tagName" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.IpAddress[0].THREAT_TAGS"/>
+      <attrKeyMap attr="recvBytes64" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.IpAddress[0].TOTAL_IN_BYTES"/>
+      <attrKeyMap attr="sentBytes64" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.IpAddress[0].TOTAL_OUT_BYTES"/>
+      <!-- Application -->
+      <attrKeyMap attr="appName" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.Application[0].APPLICATION"/>
+      <!-- Machine -->
+      <attrKeyMap attr="hostVirtIpAddr" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.Machine[0].EXTERNAL_IP"/>
+      <attrKeyMap attr="hostName" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.Machine[0].HOSTNAME"/>
+      <attrKeyMap attr="ec2InstanceId" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.Machine[0].INSTANCE_ID"/>
+      <attrKeyMap attr="hostIpAddr" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.Machine[0].INTERNAL_IP_ADDR"/>
+      <!-- Process -->
+      <attrKeyMap attr="command" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.Process[0].CMDLINE"/>
+      <attrKeyMap attr="procId" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.Process[0].PROCESS_ID"/>
+      <!-- User -->
+      <attrKeyMap attr="user" key="detail.EVENT_DETAILS.data[0].ENTITY_MAP.User[0].USERNAME"/>
+    </collectAndSetAttrByJSON>
+
+    <when test="exist _eventTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_eventTime">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime><_zone:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time, $_zone)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <!-- event type formulation -->
+    <choose>
+      <when test="exist _et">
+        <setEventAttribute attr="eventType">combineMsgId("FortiCNAPP-Alert-", $_et)</setEventAttribute>
+      </when>
+      <!-- _et should always exist, but if for some reason it does not try to append type/subtype -->
+      <when test="exist type">
+        <setEventAttribute attr="eventType">combineMsgId("FortiCNAPP-Alert-", $type)</setEventAttribute>
+        <when test="exist subtype">
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-", $subtype)</setEventAttribute>
+        </when>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="$_eventSeverity IN '1,2,3,4,5,6,7,8,9,10'">
+        <setEventAttribute attr="eventSeverity">$_eventSeverity</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <!-- If SourceIPAddress array no need to guess -->
+    <when test="exist srcIpAddr">
+      <!-- Check if other elements in the source IP arrays -->
+      <setEventAttribute attr="srcIpAddrList">$srcIpAddr</setEventAttribute>
+      <when test="exist _srcIP1">
+        <setEventAttribute attr="srcIpAddrList">combineMsgId($srcIpAddrList,",",$_srcIP1)</setEventAttribute>
+      </when>
+      <when test="exist _srcIP2">
+        <setEventAttribute attr="srcIpAddrList">combineMsgId($srcIpAddrList,",",$_srcIP2)</setEventAttribute>
+      </when>
+      <when test="exist _srcIP3">
+        <setEventAttribute attr="srcIpAddrList">combineMsgId($srcIpAddrList,",",$_srcIP3)</setEventAttribute>
+      </when>
+      <when test="exist _srcIP4">
+        <setEventAttribute attr="srcIpAddrList">combineMsgId($srcIpAddrList,",",$_srcIP4)</setEventAttribute>
+      </when>
+    </when>
+
+    <!-- for IPAddress array try to determine directionality of the IP source vs dest -->
+    <choose>
+      <when test="not_exist _ip0"/>
+      <when test="not_exist hostIpAddr"/>
+      <otherwise>
+        <!-- When the IPAddress array is defined in alert, and the Machine (hostIpAddr/hostName) set, we assume that these are destination IPs -->
+        <setEventAttribute attr="destIpAddr">$_ip0</setEventAttribute>
+        <when test="exist _ipPort0">
+          <setEventAttribute attr="destIpPort">$_ipPort0</setEventAttribute>
+        </when>
+        <setEventAttribute attr="destIpAddrList">$destIpAddr</setEventAttribute>
+        <when test="exist _ip1">
+          <when test="$_ip1 != $destIpAddr">
+            <setEventAttribute attr="destIpAddrList">combineMsgId($destIpAddrList,",",$_ip1)</setEventAttribute>
+          </when>
+        </when>
+        <when test="exist _ip2">
+          <when test="$_ip2 != $destIpAddr">
+            <setEventAttribute attr="destIpAddrList">combineMsgId($destIpAddrList,",",$_ip2)</setEventAttribute>
+          </when>
+        </when>
+        <when test="exist _ip3">
+          <when test="$_ip3 != $destIpAddr">
+            <setEventAttribute attr="destIpAddrList">combineMsgId($destIpAddrList,",",$_ip3)</setEventAttribute>
+          </when>
+        </when>
+        <when test="exist _ip4">
+          <when test="$_ip4 != $destIpAddr">
+            <setEventAttribute attr="destIpAddrList">combineMsgId($destIpAddrList,",",$_ip4)</setEventAttribute>
+          </when>
+        </when>
+      </otherwise>
+    </choose>
+
+    <when test="exist srcUser">
+      <setEventAttribute attr="srcUserList">$srcUser</setEventAttribute>
+      <when test="not_exist user">
+        <setEventAttribute attr="user">$srcUser</setEventAttribute>
+      </when>
+      <!-- check other users in array element -->
+      <when test="exist _ctUser1">
+        <setEventAttribute attr="srcUserList">combineMsgId($srcUserList,",",$_ctUser1)</setEventAttribute>
+      </when>
+      <when test="exist _ctUser2">
+        <setEventAttribute attr="srcUserList">combineMsgId($srcUserList,",",$_ctUser2)</setEventAttribute>
+      </when>
+      <when test="exist _ctUser3">
+        <setEventAttribute attr="srcUserList">combineMsgId($srcUserList,",",$_ctUser3)</setEventAttribute>
+      </when>
+      <when test="exist _ctUser4">
+        <setEventAttribute attr="srcUserList">combineMsgId($srcUserList,",",$_ctUser4)</setEventAttribute>
+      </when>
+    </when>
+
+    <choose>
+      <when test="not_exist user"/>
+      <otherwise>
+        <switch>
+          <!-- IAMUser/2222222222222:example.user-12345@examplelab -->
+          <case>
+            <collectFieldsByRegex src="$user">
+              <regex><![CDATA[^.*[/:]<user:patExceptAt>(?:@<domain:gPatStr>)?$]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </otherwise>
+    </choose>
+
+    <choose>
+      <when test="not_exist srcUser"/>
+      <otherwise>
+        <switch>
+          <!-- IAMUser/2222222222222:example.user-12345@examplelab -->
+          <case>
+            <collectFieldsByRegex src="$srcUser">
+              <regex><![CDATA[^.*[/:]<srcUser:patExceptAt>(?:@<domain:gPatStr>)?$]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </otherwise>
+    </choose>
+
+  </parsingInstructions>
+</eventParser>

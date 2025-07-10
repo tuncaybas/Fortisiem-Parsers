@@ -1,0 +1,53 @@
+<eventParser name="EmcParser">
+  <deviceType>
+    <Vendor>EMC</Vendor>
+    <Model>VNX</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patSnmpInfo"><![CDATA[[^\t]+\t]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[SNMPv2-SMI::enterprises\.1981\s]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[2013-06-27 03:39:56 172.24.31.12(via UDP: [172.24.31.12]:57623) TRAP, SNMP v1, community public	SNMPv2-SMI::enterprises.1981 Enterprise Specific Trap (3) Uptime: 126 days, 0:52:38.00	SNMPv2-SMI::enterprises.1981.1.4.3 = STRING: "SPA"	SNMPv2-SMI::enterprises.1981.1.4.4 = ""	SNMPv2-SMI::enterprises.1981.1.4.5 = STRING: "4600"	SNMPv2-SMI::enterprises.1981.1.4.6 = STRING: "'ExecuteClientRequest' called by ' Navi User nasadmin' (172.24.24.51) on 'CLIFeature' (Result: Success). autoTiering -info called"	SNMPv2-SMI::enterprises.1981.1.4.7 = STRING: "APM00122501980"]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay> <_time:gPatTime>.*Enterprise Specific Trap \(<_severity:gPatInt>\)[^\t]*\t<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <collectAndSetAttrByKeyValuePair sep="\t" src="$_body">
+      <attrKeyMap attr="hostName" key="SNMPv2-SMI::enterprises.1981.1.4.3 = STRING: "/>
+      <attrKeyMap attr="hwComponentName" key="SNMPv2-SMI::enterprises.1981.1.4.4 = STRING: "/>
+      <attrKeyMap attr="_emcEventId" key="SNMPv2-SMI::enterprises.1981.1.4.5 = STRING: "/>
+      <attrKeyMap attr="msg" key="SNMPv2-SMI::enterprises.1981.1.4.6 = STRING: "/>
+      <attrKeyMap attr="phyMachName" key="SNMPv2-SMI::enterprises.1981.1.4.7 = STRING: "/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventType">combineMsgId("EMC-VNX-", $_emcEventId)</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">Snmp Trap</setEventAttribute>
+
+    <choose>
+      <when test="$_severity = '6'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+      <when test="$_severity = '5'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$_severity = '4'">
+        <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+      </when>
+      <when test="$_severity = '3'">
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+      <when test="$_severity = '2'">
+        <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

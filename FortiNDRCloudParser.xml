@@ -1,0 +1,225 @@
+<eventParser name="FortiNDRCloudParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiNDR Cloud</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patExceptComma"><![CDATA[[^,]+]]></pattern>
+  </patternDefinitions>
+
+  <testEvents>
+    <testEvent><![CDATA[Aug 30 2023 21:47:05Z FortiNDR_CloudAgent: phCustId=1,reptDevIpAddr=1.1.1.1,reptDevName=detections.icebrg.io,bucketKey=v1/my/key/location,eventType=signals,msg={"vendor": "Gigamon", "product": "GTI", "signal_version": "1", "event_type": "detection", "subject": "src_sensor", "timestamp": "2023-08-16T10:20:35.193Z", "customer_id": "example", "sensor_id": "sensor1", "device_ip": "192.168.1.25", "score": 15, "score_pctl": 0}]]></testEvent>
+    <testEvent><![CDATA[Sep 27 2023 17:03:05Z FortiNDR_CloudAgent: phCustId=1,reptDevIpAddr=1.1.1.1,reptDevName=detections.icebrg.io,bucketKey=v1/customer/cust-cust1/sensor-cust11/20230926/ssl/v1/ssl.19:30:00-19:40:00.json.gz,eventType=sensor_data,msg={"timestamp":"2023-09-26T19:32:33.443460Z","uuid":"11111111-1111-1111-1111-111111111111","event_type":"ssl","customer_id":"cust1","sensor_id":"cust11","source":"Zeek","flow_id":"CdIxOn4wULvV6AAph4","src_ip":"192.168.1.22800","src_ip_enrichments":{"internal":true,"geo":null,"asn":null,"annotations":null},"src_port":52494,"src_username":null,"src_hostname":null,"dst_ip":"192.168.1.28","dst_ip_enrichments":{"internal":false,"geo":{"location":null,"country":null,"subdivision":null,"city":null},"asn":{"asn":13335,"org":"Cloudflare","isp":"Cloudflare","asn_org":"CLOUDFLARENET"},"annotations":null},"geo_distance":null,"dst_port":443,"version":"TLSv12","cipher":"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256","server_name":"www.parallels.com","server_name_enrichments":{"ip_enrichments":null,"domain_enrichments":{"domain_entropy":3.29277}},"server_subject":null,"server_issuer":null,"client_subject":null,"client_issuer":null,"ja3":"10ee8d30a5d01c042afd7b2b205facc4","ja3s":null,"intel":null,"application":null}]]></testEvent>
+    <testEvent><![CDATA[Sep 27 2023 19:33:40Z FortiNDR_CloudAgent: phCustId=1,reptDevIpAddr=1.1.1.1,reptDevName=detections.icebrg.io,bucketKey=v1/customer/cust-cust1/devices/date_partition=20230926/sensor_id=cust11/part-00061-11111111-1111-1111-1111-111111111111.json.gz,eventType=devices,msg={"customer_id":"cust1","ip":"192.168.1.228","external":true,"internal":true,"date":"2023-09-26T00:00:00.000Z"}]]></testEvent>
+    <testEvent><![CDATA[Sep 28 2023 22:28:20Z FortiNDR_CloudAgent: phCustId=1,reptDevIpAddr=1.1.1.1,reptDevName=detections.icebrg.io,eventType=detections,msg={"account_uuid":"11111-9cdf-46af-8ca2-e71e8e8243c8","created":"2023-09-25T10:21:09.199883Z","device_ip":"192.168.1.25","event_count":2,"first_seen":"2023-09-25T10:18:46.835172Z","hostname":null,"indicators":[{"field":"dst.ip","values":["172.217.15.98"]},{"field":"http:host","values":["cm.g.doubleclick.net"]},{"field":"http:uri.uri","values":["/pixel?google_nid=ibehavior&google_cm&google_sc&pid=266&go=244276&m=&xid=CvQGB1qMZqIAAAAUPryNAw=="]},{"field":"http:user_agent","values":["Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko"]},{"field":"http:files.sha256","values":["97305fdaaf49fd575a20f52430fa23007f88f9a72d52065bfeec3c7af95ec251"]}],"last_seen":"2023-09-25T10:18:47.070614Z","muted":false,"muted_comment":null,"muted_device_uuid":null,"muted_rule":false,"muted_timestamp":null,"muted_user_uuid":null,"resolution":"true_positive_mitigated","resolution_comment":"test resolve","resolution_timestamp":"2023-09-25T14:52:54.460836Z","resolution_user_uuid":"1113411-b1e0-461d-a53e-a426a497bd51","ruleCategory":"Attack:Installation","ruleConfidence":"low","ruleDesc":"This logic is intended to detect malicious executable downloads matching indicators from first- or third-party threat intelligence sources. These indicators are subject to usual caveats of threat intelligence. For example, legitimate services may be hosted on the same domain, or an indicator may be erroneously associated with malicious activity.\n\nFortiGuard ATR considers this detection to be low severity, as it may detect a variety of malware samples of varying severities and downloaded executables may not be executed. FortiGuard ATR considers this detection to be low confidence, as threat intelligence sources routinely misclassify benign infrastructure as malicious.\n\n## Next Steps \n1. Determine if this detection is a true positive by: \n    1. Checking that the event is not downloading a benign file from a reputable domain erroneously misclassified as malicious by intelligence sources. If the domain is reputable, and the resource name is thematically consistent, the detection could be a false positive or a well concealed attack using a compromised domain. \n    2. Verifying that the file is malicious in nature. \n2. Quarantine the impacted device. \n3. Begin incident response procedures on the impacted device. \n4. Block traffic to attacker infrastructure. \n5. Search for other impacted devices.","ruleName":"Executable Binary or Script from Intel Indicator Match","ruleQuery":"response_mime LIKE \"%application/x-macbinary%\"","ruleSeverity":"low","rule_uuid":"11111111-1111-1111-1111-111111111111","sensor_id":"gdm3","status":"resolved","updated":"2023-09-25T14:52:54.460836Z","username":null,"uuid":"11111111-1111-1111-1111-111111111111"}]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[^<:gPatMon>\s<:gPatDay>\s<:gPatYear>\s<:gPatTime><:gPatTimeZone>\sFortiNDR_CloudAgent:]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^<_mon:gPatMon>\s<_day:gPatDay>\s<_year:gPatYear>\s<_time:gPatTime><_tz:gPatTimeZone>\sFortiNDR_CloudAgent:\sphCustId=<phCustId:gPatInt>,reptDevIpAddr=<reptDevIpAddr:gPatIpAddr>,reptDevName=<reptDevName:patExceptComma>(?:,bucketKey=<userKey:patExceptComma>)?,eventType=<_et:patExceptComma>,msg=<_json:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId("FortiNDRCloud_", $_et)</setEventAttribute>
+      </case>
+      <default>
+        <setEventAttribute attr="eventType">FortiNDRCloud_Generic</setEventAttribute>
+      </default>
+    </switch>
+    <setEventAttribute attr="extEventRecvProto">FORTINDR_CLOUD</setEventAttribute>
+    <choose>
+      <when test="not_exist _et"/>
+      <when test="$_et = 'detections'">
+        <collectAndSetAttrByJSON src="$_json">
+          <attrKeyMap attr="uuid" key="uuid"/>
+          <attrKeyMap attr="hostIpAddr" key="device_ip"/>
+          <attrKeyMap attr="ruleIdStr" key="rule_uuid"/>
+          <attrKeyMap attr="srcApp" key="sensor_id"/>
+          <attrKeyMap attr="user" key="username"/>
+          <attrKeyMap attr="hostName" key="hostname"/>
+          <attrKeyMap attr="accountId" key="account_uuid"/>
+          <attrKeyMap attr="_createdTime" key="created"/>
+          <attrKeyMap attr="_updatedTime" key="updated"/>
+          <attrKeyMap attr="_firstEventTime" key="first_seen"/>
+          <attrKeyMap attr="_lastEventTime" key="last_seen"/>
+          <attrKeyMap attr="incidentCount" key="event_count"/>
+          <!-- auto_resolved, true_positive_mitigated, true_positive_no_action, false_positive, unknown -->
+          <attrKeyMap attr="resoStatus" key="resolution"/>
+          <attrKeyMap attr="_resoUserId" key="resolution_user_uuid"/>
+          <attrKeyMap attr="_resoTime" key="resolution_timestamp"/>
+          <attrKeyMap attr="comment" key="resolution_comment"/>
+          <attrKeyMap attr="_isMuted" key="muted"/>
+          <attrKeyMap attr="_userWhoMuted" key="muted_user_uuid"/>
+          <attrKeyMap attr="_timeDetectionWasMuted" key="muted_timestamp"/>
+          <attrKeyMap attr="_firstEventTime" key="muted_comment"/>
+          <attrKeyMap attr="_isRuleMuted" key="muted_rule"/>
+          <attrKeyMap attr="_mutedDevUUID" key="muted_device_uuid"/>
+          <attrKeyMap attr="_indicatorsArray" key="indicators"/>
+          <!-- Following fields are generated based on rule section of &include=rules of detection api -->
+          <attrKeyMap attr="ruleName" key="ruleName"/>
+          <attrKeyMap attr="categoryType" key="ruleCategory"/>
+          <attrKeyMap attr="dbQuery" key="ruleQuery"/>
+          <attrKeyMap attr="msg" key="ruleDesc"/>
+          <attrKeyMap attr="_severity" key="ruleSeverity"/>
+          <attrKeyMap attr="ipsConfidence" key="ruleConfidence"/>
+        </collectAndSetAttrByJSON>
+      </when>
+      <when test="$_et = 'signals'">
+        <collectAndSetAttrByJSON src="$_json">
+          <attrKeyMap attr="product" key="product"/>
+          <attrKeyMap attr="appVersion" key="signal_version"/>
+          <attrKeyMap attr="_eventType" key="event_type"/>
+          <attrKeyMap attr="type" key="subject"/>
+          <attrKeyMap attr="_timestamp" key="timestamp"/>
+          <attrKeyMap attr="tenantName" key="customer_id"/>
+          <attrKeyMap attr="srcApp" key="sensor_id"/>
+          <attrKeyMap attr="hostIpAddr" key="device_ip"/>
+          <attrKeyMap attr="confidence" key="score"/>
+          <attrKeyMap attr="threatScore" key="score_pctl"/>
+        </collectAndSetAttrByJSON>
+      </when>
+      <when test="$_et = 'sensor_data'">
+        <collectAndSetAttrByJSON src="$_json">
+          <!-- fields seen in conn zeek logs -->
+          <attrKeyMap attr="_timestamp" key="timestamp"/>
+          <attrKeyMap attr="_eventType" key="event_type"/>
+          <attrKeyMap attr="tenantName" key="customer_id"/>
+          <attrKeyMap attr="srcApp" key="sensor_id"/>
+          <attrKeyMap attr="eventSource" key="source"/>
+          <attrKeyMap attr="srcIpAddr" key="src_ip"/>
+          <attrKeyMap attr="srcIpPort" key="src_port"/>
+          <attrKeyMap attr="destIpAddr" key="dst_ip"/>
+          <attrKeyMap attr="destIpPort" key="dst_port"/>
+          <attrKeyMap attr="sessionId" key="flow_id"/>
+          <attrKeyMap attr="status" key="state"/>
+          <attrKeyMap attr="_durationFloat" key="duration"/>
+          <attrKeyMap attr="_proto" key="protocol"/>
+          <attrKeyMap attr="appTransportProto" key="service[0]"/>
+          <attrKeyMap attr="sentBytes64" key="request_bytes"/>
+          <attrKeyMap attr="sentPkts64" key="request_packets"/>
+          <attrKeyMap attr="recvBytes64" key="response_bytes"/>
+          <attrKeyMap attr="recvPkts64" key="response_packets"/>
+          <attrKeyMap attr="_totalIPBytes" key="total_ip_bytes"/>
+          <attrKeyMap attr="_totalIPPackets" key="total_ip_packets"/>
+          <!-- ssl zeek logs -->
+          <attrKeyMap attr="tlsVersion" key="version"/>
+          <attrKeyMap attr="tlsCipher" key="cipher"/>
+          <attrKeyMap attr="serverName" key="server_name"/>
+          <attrKeyMap attr="tlsServerSubject" key="server_subject"/>
+          <attrKeyMap attr="tlsServerIssuer" key="server_issuer"/>
+          <!-- x509 zeek logs -->
+          <attrKeyMap attr="tlsVersion" key="version"/>
+          <attrKeyMap attr="tlsCipher" key="cipher"/>
+          <attrKeyMap attr="serverName" key="server_name"/>
+          <attrKeyMap attr="tlsServerSubject" key="certificate.subject"/>
+          <attrKeyMap attr="tlsServerIssuer" key="certificate.issuer"/>
+          <attrKeyMap attr="_tlsServerNotBefore" key="certificate.not_valid_before"/>
+          <attrKeyMap attr="_tlsServerNotAfter" key="certificate.not_valid_after"/>
+          <attrKeyMap attr="tlsServerX509KeyAlgo" key="certificate.key_algorithm"/>
+          <attrKeyMap attr="_x509SigAlgo" key="certificate.signature_algorithm"/>
+          <attrKeyMap attr="_x509KeyType" key="certificate.key_type"/>
+          <attrKeyMap attr="_x509KeyLen" key="certificate.key_length"/>
+          <attrKeyMap attr="tlsServerX509KeyCurve" key="certificate.curve"/>
+          <attrKeyMap attr="tlsServerX509AltNames" key="subject_alternative_name"/>
+        </collectAndSetAttrByJSON>
+      </when>
+      <when test="$_et = 'devices'">
+        <collectAndSetAttrByJSON src="$_json">
+          <attrKeyMap attr="tenantName" key="customer_id"/>
+          <attrKeyMap attr="hostIpAddr" key="ip"/>
+          <attrKeyMap attr="_timestamp" key="date"/>
+        </collectAndSetAttrByJSON>
+      </when>
+    </choose>
+
+    <when test="exist eventSource">
+      <setEventAttribute attr="eventSource">toLower($eventSource)</setEventAttribute>
+      <setEventAttribute attr="eventType">combineMsgId($eventType, "_", $eventSource)</setEventAttribute>
+    </when>
+    <when test="exist _eventType">
+      <choose>
+        <when test="$_eventType = 'suricata'"/>
+        <otherwise>
+          <setEventAttribute attr="_eventType">toLower($_eventType)</setEventAttribute>
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "_", $_eventType)</setEventAttribute>
+        </otherwise>
+      </choose>
+    </when>
+
+    <when test="exist _timestamp">
+      <!-- 2023-08-16T10:20:35.193Z -->
+      <collectFieldsByRegex src="$_timestamp">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>(?:\.\d+)?(?:<_tz:gPatTimeZone>)?]]></regex>
+      </collectFieldsByRegex>
+      <choose>
+        <when test="exist _tz">
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </when>
+        <otherwise>
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </otherwise>
+      </choose>
+    </when>
+
+    <when test="exist _firstEventTime">
+      <!-- 2023-08-16T10:20:35.193Z -->
+      <!-- 2023-09-24T14:08:22.453707Z -->
+      <collectFieldsByRegex src="$_firstEventTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>(?:\.\d+)?(?:<_tz:gPatTimeZone>)?]]></regex>
+      </collectFieldsByRegex>
+      <choose>
+        <when test="exist _tz">
+          <setEventAttribute attr="firstSeenTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </when>
+        <otherwise>
+          <setEventAttribute attr="firstSeenTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </otherwise>
+      </choose>
+    </when>
+
+    <when test="exist _lastEventTime">
+      <!-- 2023-08-16T10:20:35.193Z -->
+      <collectFieldsByRegex src="$_lastEventTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>(?:\.\d+)?(?:<_tz:gPatTimeZone>)?]]></regex>
+      </collectFieldsByRegex>
+      <choose>
+        <when test="exist _tz">
+          <setEventAttribute attr="lastSeenTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </when>
+        <otherwise>
+          <setEventAttribute attr="lastSeenTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </otherwise>
+      </choose>
+    </when>
+
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist _severity"/>
+      <when test="$_severity = 'low'">
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+      <when test="$_severity = 'moderate'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$_severity = 'high'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+    </choose>
+
+    <!-- primarily for detections api, set severity in event type -->
+    <choose>
+      <when test="not_exist _severity"/>
+      <otherwise>
+        <setEventAttribute attr="eventType">combineMsgId($eventType,"_", $_severity)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+  </parsingInstructions>
+</eventParser>

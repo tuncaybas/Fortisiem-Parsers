@@ -1,0 +1,637 @@
+<eventParser name="FortiManagerParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiManager</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<189>date=2018-10-03 time=10:10:12 devname=FMG-VM64 device_id=FMG-VM0A15001575 log_id=0021030002 type=event subtype=objcfg pri=notice desc="cdb event log for object changed" user="admin" userfrom="" msg="dev=global,adom=root,type=wireless_controller_wtp,act=edit,pkgname=1302629-3,key=FP221C3X16003670,_r1-oper-chan=6(1),_r1-oper-txpower=18(17),_r2-client-count=5(4),_rogue-ap-count=92(90)" adom="root" ]]></testEvent>
+    <testEvent><![CDATA[<188>date=2018-10-03 time=10:10:49 devname=FMG-VM64 device_id=FMG-VM0A15001575 log_id=0002011003 type=event subtype=fgfm pri=warning desc="fgfm connection down" msg="fgfm connection to device 351991-YogaWorks-MV is down" user="fgfm" device="351991-YogaWorks-MV"]]></testEvent>
+    <testEvent><![CDATA[<189>date=2018-10-03 time=10:10:51 devname=FMG-VM64 device_id=FMG-VM0A15001575 log_id=0022031009 type=event subtype=dvm pri=notice desc="Device Manager dvm log at notice level" user="dmworker:commit dvmdb" userfrom="" msg="Edited device 351991-YogaWorks-MV (FGT30D3X15022149)" adom="root"]]></testEvent>
+    <testEvent><![CDATA[<190>timestamp=1690992034 devname="FortiManager" devid="FMGVMSTM11001100" vd="root" itime=1690988434 date="2023-08-02" time="08:00:34" tz="-0700" log_id="0021030002" type="event" subtype="objcfg" pri="notice" desc="cdb event log for object changed" user="admin" userfrom="" msg="" adom="backup" session_id=0 operation="edit" performed_on="dev=global,adom=backup" changes="type=wireless_controller_wtp_radio_3,pkgname=3878-3,_health-interfering_ssids={ value: 40, severity: poor }({ value: 48, severity: poor })" ]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patId"><![CDATA[\d{5}]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\s+(?:device_id|devid)="?FMG-?\w+\d+"?\s]]></eventFormatRecognizer>
+  <parsingInstructions>
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_rawmsg">
+      <attrKeyMap attr="_date" key="date"/>
+      <attrKeyMap attr="_time" key="time"/>
+      <attrKeyMap attr="reptDevName" key="devname"/>
+      <attrKeyMap attr="logID" key="log_id"/>
+      <attrKeyMap attr="_type" key="type"/>
+      <attrKeyMap attr="deviceIdentification" key="device_id"/>
+      <attrKeyMap attr="deviceIdentification" key="devid"/>
+      <attrKeyMap attr="_subtype" key="subtype"/>
+      <attrKeyMap attr="_severity" key="pri"/>
+      <attrKeyMap attr="eventDesc" key="desc"/>
+      <attrKeyMap attr="usrMsg" key="msg"/>
+      <attrKeyMap attr="user" key="user"/>
+      <attrKeyMap attr="hostName" key="device"/>
+      <attrKeyMap attr="domain" key="adom"/>
+      <attrKeyMap attr="actionName" key="act"/>
+      <attrKeyMap attr="_userfrom" key="userfrom"/>
+      <attrKeyMap attr="accessKeyId" key="key"/>
+      <attrKeyMap attr="hostIpAddr" key="address"/>
+      <attrKeyMap attr="profileName" key="adminprof"/>
+      <attrKeyMap attr="groupName" key="attrname"/>
+      <attrKeyMap attr="msg" key="authmsg"/>
+      <attrKeyMap attr="_msg" key="changes"/>
+      <attrKeyMap attr="memUtil" key="capacity"/>
+      <attrKeyMap attr="loginType" key="category"/>
+      <attrKeyMap attr="certInfo" key="certname"/>
+      <attrKeyMap attr="targetType" key="certtype"/>
+      <attrKeyMap attr="reptDevName" key="devlog"/>
+      <attrKeyMap attr="objId" key="dev_oid"/>
+      <attrKeyMap attr="diskName" key="disk_label"/>
+      <attrKeyMap attr="origStatus" key="disk_stat_before"/>
+      <attrKeyMap attr="newStatus" key="disk_stat_current"/>
+      <attrKeyMap attr="objType" key="dvmdb_obj"/>
+      <attrKeyMap attr="authResult" key="extrainfo"/>
+      <attrKeyMap attr="tablespaceType" key="importance"/>
+      <attrKeyMap attr="policyName" key="instpkg"/>
+      <attrKeyMap attr="intfName" key="intfname"/>
+      <attrKeyMap attr="filePath" key="lnk_path"/>
+      <attrKeyMap attr="serverName" key="server"/>
+      <attrKeyMap attr="srcFileName" key="local_file"/>
+      <attrKeyMap attr="logID" key="log_id"/>
+      <attrKeyMap attr="srcFilePath" key="log_path"/>
+      <attrKeyMap attr="fileSize" key="log_size"/>
+      <attrKeyMap attr="infoURL" key="url"/>
+      <attrKeyMap attr="sessionId" key="session_id"/>
+      <attrKeyMap attr="opName" key="operation"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist _date">
+      <collectFieldsByRegex src="$_date">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+
+    <collectFieldsByRegex src="$logID">
+      <regex><![CDATA[<_id:patId>\D*$]]></regex>
+    </collectFieldsByRegex>
+
+    <choose>
+      <when test="$_id  = '10002'">
+        <setEventAttribute attr="_eventType">"Hwmon-Intf"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10003'">
+        <setEventAttribute attr="_eventType">"Hwmon-Raid-Error"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10004'">
+        <setEventAttribute attr="_eventType">"Hwmon-Raid-Info"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10005'">
+        <setEventAttribute attr="_eventType">"Hwmon-Raid-Disk-Error"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10006'">
+        <setEventAttribute attr="_eventType">"Hwmon-Raid-Disk-Info"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10007'">
+        <setEventAttribute attr="_eventType">"Hwmon-Power-Status"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10008'">
+        <setEventAttribute attr="_eventType">"Hwmon-Power-Button"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10009'">
+        <setEventAttribute attr="_eventType">"Schedule-Backup-Notif"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10010'">
+        <setEventAttribute attr="_eventType">"Schedule-Backup-Warning"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10011'">
+        <setEventAttribute attr="_eventType">"License-GB-Trap"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10012'">
+        <setEventAttribute attr="_eventType">"Device-Quota-Trap"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10013'">
+        <setEventAttribute attr="_eventType">"Ssh-Auth-Profile"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10014'">
+        <setEventAttribute attr="_eventType">"Ssh-Auth-Login-Failure"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10015'">
+        <setEventAttribute attr="_eventType">"Dvm-Db"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10016'">
+        <setEventAttribute attr="_eventType">"Devprof-Obj"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10017'">
+        <setEventAttribute attr="_eventType">"Policy-Obj"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10018'">
+        <setEventAttribute attr="_eventType">"Login-Info"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10019'">
+        <setEventAttribute attr="_eventType">"Login-Alert"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10020'">
+        <setEventAttribute attr="_eventType">"Pm-Chkpoint"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10021'">
+        <setEventAttribute attr="_eventType">"Sessionmgr"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10022'">
+        <setEventAttribute attr="_eventType">"Restart-Upgrade"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10025'">
+        <setEventAttribute attr="_eventType">"Upgrade-Failure"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10026'">
+        <setEventAttribute attr="_eventType">"Cli-Command"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10027'">
+        <setEventAttribute attr="_eventType">"Reboot"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10028'">
+        <setEventAttribute attr="_eventType">"Shutdown"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10029'">
+        <setEventAttribute attr="_eventType">"Setting-Changed"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10030'">
+        <setEventAttribute attr="_eventType">"Backup-All-Settings"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10031'">
+        <setEventAttribute attr="_eventType">"Restore-All-Settings"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10032'">
+        <setEventAttribute attr="_eventType">"Adom-Lock"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10033'">
+        <setEventAttribute attr="_eventType">"Fwm-Upgrade"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10034'">
+        <setEventAttribute attr="_eventType">"Policy-Package-Install"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10035'">
+        <setEventAttribute attr="_eventType">"Log-Rolling-Reach-Max"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10036'">
+        <setEventAttribute attr="_eventType">"Log-Rolling-Uploading"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10037'">
+        <setEventAttribute attr="_eventType">"Log-Uploading-Process-Reach-Max"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10038'">
+        <setEventAttribute attr="_eventType">"Log-Uploading-Info"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10039'">
+        <setEventAttribute attr="_eventType">"Log-Uploading-Warning"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10040'">
+        <setEventAttribute attr="_eventType">"Lost-Power-At"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10041'">
+        <setEventAttribute attr="_eventType">"Pty-Operation"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10042'">
+        <setEventAttribute attr="_eventType">"Memlog-Capacity-Info"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10043'">
+        <setEventAttribute attr="_eventType">"Memlog-Capacity-Warning"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10049'">
+        <setEventAttribute attr="_eventType">"Exec-Shell"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10050'">
+        <setEventAttribute attr="_eventType">"Exit-Shell"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10051'">
+        <setEventAttribute attr="_eventType">"Vm-License-Changed"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10052'">
+        <setEventAttribute attr="_eventType">"Vm-License-Invalid"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10053'">
+        <setEventAttribute attr="_eventType">"Export-Ssl-Cert"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10054'">
+        <setEventAttribute attr="_eventType">"Clean-Local-Log"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10055'">
+        <setEventAttribute attr="_eventType">"Cdb-Upgrade"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10056'">
+        <setEventAttribute attr="_eventType">"Policy-Package-Lock"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10057'">
+        <setEventAttribute attr="_eventType">"Policy-Package-Install-Target-Change"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10058'">
+        <setEventAttribute attr="_eventType">"Pm3-Object-Rename"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10059'">
+        <setEventAttribute attr="_eventType">"Image-Upgrade"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10060'">
+        <setEventAttribute attr="_eventType">"Protocol-Failed"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10061'">
+        <setEventAttribute attr="_eventType">"Lickey-Changed"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10062'">
+        <setEventAttribute attr="_eventType">"Lickey-Invalid"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10063'">
+        <setEventAttribute attr="_eventType">"Ssh-Auth-Login-Accept"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10064'">
+        <setEventAttribute attr="_eventType">"Check-Integrity-Error"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10065'">
+        <setEventAttribute attr="_eventType">"Adom-Upgrade-Info"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10066'">
+        <setEventAttribute attr="_eventType">"Adom-Upgrade-Error"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10067'">
+        <setEventAttribute attr="_eventType">"Check-Integrity"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10068'">
+        <setEventAttribute attr="_eventType">"Ssl-Connect"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10069'">
+        <setEventAttribute attr="_eventType">"Time-Modified"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10070'">
+        <setEventAttribute attr="_eventType">"Disk-Full"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10071'">
+        <setEventAttribute attr="_eventType">"Connect-Debug"</setEventAttribute>
+      </when>
+      <when test="$_id  = '10072'">
+        <setEventAttribute attr="_eventType">"Reset-All-Settings"</setEventAttribute>
+      </when>
+      <when test="$_id  = '11002'">
+        <setEventAttribute attr="_eventType">"Connection-Up"</setEventAttribute>
+      </when>
+      <when test="$_id  = '11003'">
+        <setEventAttribute attr="_eventType">"Connection-Down"</setEventAttribute>
+      </when>
+      <when test="$_id  = '11004'">
+        <setEventAttribute attr="_eventType">"Offline-Mode"</setEventAttribute>
+      </when>
+      <when test="$_id  = '12002'">
+        <setEventAttribute attr="_eventType">"Installcmd"</setEventAttribute>
+      </when>
+      <when test="$_id  = '13002'">
+        <setEventAttribute attr="_eventType">"Installcmd"</setEventAttribute>
+      </when>
+      <when test="$_id  = '14002'">
+        <setEventAttribute attr="_eventType">"Scm2"</setEventAttribute>
+      </when>
+      <when test="$_id  = '15002'">
+        <setEventAttribute attr="_eventType">"Install"</setEventAttribute>
+      </when>
+      <when test="$_id  = '15003'">
+        <setEventAttribute attr="_eventType">"Notification"</setEventAttribute>
+      </when>
+      <when test="$_id  = '17002'">
+        <setEventAttribute attr="_eventType">"Task-Error"</setEventAttribute>
+      </when>
+      <when test="$_id  = '17003'">
+        <setEventAttribute attr="_eventType">"Task-Debug"</setEventAttribute>
+      </when>
+      <when test="$_id  = '17004'">
+        <setEventAttribute attr="_eventType">"Install-Policy"</setEventAttribute>
+      </when>
+      <when test="$_id  = '17005'">
+        <setEventAttribute attr="_eventType">"Generic-Error"</setEventAttribute>
+      </when>
+      <when test="$_id  = '17006'">
+        <setEventAttribute attr="_eventType">"Global-Policy-Package"</setEventAttribute>
+      </when>
+      <when test="$_id  = '21002'">
+        <setEventAttribute attr="_eventType">"Update-N-Export-Db"</setEventAttribute>
+      </when>
+      <when test="$_id  = '21004'">
+        <setEventAttribute attr="_eventType">"Schedule-Install-Adom"</setEventAttribute>
+      </when>
+      <when test="$_id  = '21005'">
+        <setEventAttribute attr="_eventType">"Schedule-Install-Global"</setEventAttribute>
+      </when>
+      <when test="$_id  = '21006'">
+        <setEventAttribute attr="_eventType">"Schedule-Install-Device"</setEventAttribute>
+      </when>
+      <when test="$_id  = '21007'">
+        <setEventAttribute attr="_eventType">"Install-Script"</setEventAttribute>
+      </when>
+      <when test="$_id  = '21008'">
+        <setEventAttribute attr="_eventType">"Update-And-Save"</setEventAttribute>
+      </when>
+      <when test="$_id  = '21009'">
+        <setEventAttribute attr="_eventType">"Cfg-Checkin"</setEventAttribute>
+      </when>
+      <when test="$_id  = '21010'">
+        <setEventAttribute attr="_eventType">"Cfg-Retrieve"</setEventAttribute>
+      </when>
+      <when test="$_id  = '21011'">
+        <setEventAttribute attr="_eventType">"Cfg-Import"</setEventAttribute>
+      </when>
+      <when test="$_id  = '21012'">
+        <setEventAttribute attr="_eventType">"Cfg-Sync"</setEventAttribute>
+      </when>
+      <when test="$_id  = '21013'">
+        <setEventAttribute attr="_eventType">"Cfg-Edit"</setEventAttribute>
+      </when>
+      <when test="$_id  = '21014'">
+        <setEventAttribute attr="_eventType">"Cfg-Revert"</setEventAttribute>
+      </when>
+      <when test="$_id  = '21015'">
+        <setEventAttribute attr="_eventType">"Cfg-Install"</setEventAttribute>
+      </when>
+      <when test="$_id  = '21016'">
+        <setEventAttribute attr="_eventType">"Cfg-Delrev"</setEventAttribute>
+      </when>
+      <when test="$_id  = '21017'">
+        <setEventAttribute attr="_eventType">"Cfg-Download"</setEventAttribute>
+      </when>
+      <when test="$_id  = '21018'">
+        <setEventAttribute attr="_eventType">"Dev-State"</setEventAttribute>
+      </when>
+      <when test="$_id  = '21019'">
+        <setEventAttribute attr="_eventType">"Adom-Rev-Import-Info"</setEventAttribute>
+      </when>
+      <when test="$_id  = '21020'">
+        <setEventAttribute attr="_eventType">"Adom-Rev-Import-Error"</setEventAttribute>
+      </when>
+      <when test="$_id  = '21021'">
+        <setEventAttribute attr="_eventType">"Add-Fortiap"</setEventAttribute>
+      </when>
+      <when test="$_id  = '21022'">
+        <setEventAttribute attr="_eventType">"Connect-Status"</setEventAttribute>
+      </when>
+      <when test="$_id  = '21023'">
+        <setEventAttribute attr="_eventType">"Policy-Package-Install"</setEventAttribute>
+      </when>
+      <when test="$_id  = '21024'">
+        <setEventAttribute attr="_eventType">"Policy-Package-Install-Failure"</setEventAttribute>
+      </when>
+      <when test="$_id  = '21025'">
+        <setEventAttribute attr="_eventType">"Cfg-Install-Preview"</setEventAttribute>
+      </when>
+      <when test="$_id  = '22002'">
+        <setEventAttribute attr="_eventType">"Debug"</setEventAttribute>
+      </when>
+      <when test="$_id  = '24002'">
+        <setEventAttribute attr="_eventType">"Status-Chg-Up"</setEventAttribute>
+      </when>
+      <when test="$_id  = '24003'">
+        <setEventAttribute attr="_eventType">"Status-Chg-Down"</setEventAttribute>
+      </when>
+      <when test="$_id  = '24004'">
+        <setEventAttribute attr="_eventType">"Sync-Info"</setEventAttribute>
+      </when>
+      <when test="$_id  = '24005'">
+        <setEventAttribute attr="_eventType">"Sync-Alert"</setEventAttribute>
+      </when>
+      <when test="$_id  = '24006'">
+        <setEventAttribute attr="_eventType">"App-Sync"</setEventAttribute>
+      </when>
+      <when test="$_id  = '24007'">
+        <setEventAttribute attr="_eventType">"Peer-Status"</setEventAttribute>
+      </when>
+      <when test="$_id  = '24008'">
+        <setEventAttribute attr="_eventType">"Image-Upgrade"</setEventAttribute>
+      </when>
+      <when test="$_id  = '25002'">
+        <setEventAttribute attr="_eventType">"Emerg"</setEventAttribute>
+      </when>
+      <when test="$_id  = '25003'">
+        <setEventAttribute attr="_eventType">"Alert"</setEventAttribute>
+      </when>
+      <when test="$_id  = '25004'">
+        <setEventAttribute attr="_eventType">"Critical"</setEventAttribute>
+      </when>
+      <when test="$_id  = '25005'">
+        <setEventAttribute attr="_eventType">"Error"</setEventAttribute>
+      </when>
+      <when test="$_id  = '25006'">
+        <setEventAttribute attr="_eventType">"Warning"</setEventAttribute>
+      </when>
+      <when test="$_id  = '25007'">
+        <setEventAttribute attr="_eventType">"Notif"</setEventAttribute>
+      </when>
+      <when test="$_id  = '25008'">
+        <setEventAttribute attr="_eventType">"Info"</setEventAttribute>
+      </when>
+      <when test="$_id  = '25009'">
+        <setEventAttribute attr="_eventType">"Debug"</setEventAttribute>
+      </when>
+      <when test="$_id  = '26002'">
+        <setEventAttribute attr="_eventType">"Fmupdate-Info"</setEventAttribute>
+      </when>
+      <when test="$_id  = '26003'">
+        <setEventAttribute attr="_eventType">"Fmupdate-Error"</setEventAttribute>
+      </when>
+      <when test="$_id  = '26004'">
+        <setEventAttribute attr="_eventType">"Config"</setEventAttribute>
+      </when>
+      <when test="$_id  = '26005'">
+        <setEventAttribute attr="_eventType">"Linkdcmd"</setEventAttribute>
+      </when>
+      <when test="$_id  = '26006'">
+        <setEventAttribute attr="_eventType">"Recv-Connect-Request"</setEventAttribute>
+      </when>
+      <when test="$_id  = '26007'">
+        <setEventAttribute attr="_eventType">"Recv-Update-Request"</setEventAttribute>
+      </when>
+      <when test="$_id  = '26008'">
+        <setEventAttribute attr="_eventType">"Send-Announcement"</setEventAttribute>
+      </when>
+      <when test="$_id  = '26009'">
+        <setEventAttribute attr="_eventType">"Recv-Update-Response"</setEventAttribute>
+      </when>
+      <when test="$_id  = '26010'">
+        <setEventAttribute attr="_eventType">"Send-Uppull-Request"</setEventAttribute>
+      </when>
+      <when test="$_id  = '26011'">
+        <setEventAttribute attr="_eventType">"Append-Subscriber"</setEventAttribute>
+      </when>
+      <when test="$_id  = '26012'">
+        <setEventAttribute attr="_eventType">"Disk-Quota"</setEventAttribute>
+      </when>
+      <when test="$_id  = '26013'">
+        <setEventAttribute attr="_eventType">"Uppull-Error"</setEventAttribute>
+      </when>
+      <when test="$_id  = '26014'">
+        <setEventAttribute attr="_eventType">"Fguard-Throughput"</setEventAttribute>
+      </when>
+      <when test="$_id  = '26015'">
+        <setEventAttribute attr="_eventType">"Url-Hit"</setEventAttribute>
+      </when>
+      <when test="$_id  = '26016'">
+        <setEventAttribute attr="_eventType">"Url-Miss"</setEventAttribute>
+      </when>
+      <when test="$_id  = '26017'">
+        <setEventAttribute attr="_eventType">"Spam"</setEventAttribute>
+      </when>
+      <when test="$_id  = '26018'">
+        <setEventAttribute attr="_eventType">"Nonspam"</setEventAttribute>
+      </when>
+      <when test="$_id  = '26019'">
+        <setEventAttribute attr="_eventType">"Fgdsvr-Service"</setEventAttribute>
+      </when>
+      <when test="$_id  = '26020'">
+        <setEventAttribute attr="_eventType">"Fgdsvr-Statistic"</setEventAttribute>
+      </when>
+      <when test="$_id  = '26021'">
+        <setEventAttribute attr="_eventType">"Fgdsvr-License"</setEventAttribute>
+      </when>
+      <when test="$_id  = '26022'">
+        <setEventAttribute attr="_eventType">"Fgdsvr-Debug"</setEventAttribute>
+      </when>
+      <when test="$_id  = '26023'">
+        <setEventAttribute attr="_eventType">"Fgdsvr-Warning"</setEventAttribute>
+      </when>
+      <when test="$_id  = '26024'">
+        <setEventAttribute attr="_eventType">"Fgdsvr-Error"</setEventAttribute>
+      </when>
+      <when test="$_id  = '26025'">
+        <setEventAttribute attr="_eventType">"Fgdsvr-Db-Update"</setEventAttribute>
+      </when>
+      <when test="$_id  = '29002'">
+        <setEventAttribute attr="_eventType">"System-Keymsg"</setEventAttribute>
+      </when>
+      <when test="$_id  = '30002'">
+        <setEventAttribute attr="_eventType">"Cdbevlog"</setEventAttribute>
+      </when>
+      <when test="$_id  = '31002'">
+        <setEventAttribute attr="_eventType">"Dev-Reload"</setEventAttribute>
+      </when>
+      <when test="$_id  = '31003'">
+        <setEventAttribute attr="_eventType">"Generic-Info"</setEventAttribute>
+      </when>
+      <when test="$_id  = '31004'">
+        <setEventAttribute attr="_eventType">"Dvmlog-Emerg"</setEventAttribute>
+      </when>
+      <when test="$_id  = '31005'">
+        <setEventAttribute attr="_eventType">"Dvmlog-Alert"</setEventAttribute>
+      </when>
+      <when test="$_id  = '31006'">
+        <setEventAttribute attr="_eventType">"Dvmlog-Critical"</setEventAttribute>
+      </when>
+      <when test="$_id  = '31007'">
+        <setEventAttribute attr="_eventType">"Dvmlog-Error"</setEventAttribute>
+      </when>
+      <when test="$_id  = '31008'">
+        <setEventAttribute attr="_eventType">"Dvmlog-Warning"</setEventAttribute>
+      </when>
+      <when test="$_id  = '31009'">
+        <setEventAttribute attr="_eventType">"Dvmlog-Notice"</setEventAttribute>
+      </when>
+      <when test="$_id  = '31010'">
+        <setEventAttribute attr="_eventType">"Dvmlog-Info"</setEventAttribute>
+      </when>
+      <when test="$_id  = '31011'">
+        <setEventAttribute attr="_eventType">"Dvmlog-Debug"</setEventAttribute>
+      </when>
+      <when test="$_id  = '32002'">
+        <setEventAttribute attr="_eventType">"Connection"</setEventAttribute>
+      </when>
+      <when test="$_id  = '32003'">
+        <setEventAttribute attr="_eventType">"Login-Notif"</setEventAttribute>
+      </when>
+      <when test="$_id  = '32004'">
+        <setEventAttribute attr="_eventType">"Login-Error"</setEventAttribute>
+      </when>
+      <when test="$_id  = '34002'">
+        <setEventAttribute attr="_eventType">"Error-Mode"</setEventAttribute>
+      </when>
+      <when test="$_id  = '34003'">
+        <setEventAttribute attr="_eventType">"Enable-Fips-Mode"</setEventAttribute>
+      </when>
+      <when test="$_id  = '34004'">
+        <setEventAttribute attr="_eventType">"Self-Test"</setEventAttribute>
+      </when>
+      <when test="$_id  = '34005'">
+        <setEventAttribute attr="_eventType">"Encryption"</setEventAttribute>
+      </when>
+      <when test="$_id  = '34006'">
+        <setEventAttribute attr="_eventType">"Decryption"</setEventAttribute>
+      </when>
+      <when test="$_id  = '34007'">
+        <setEventAttribute attr="_eventType">"Prng"</setEventAttribute>
+      </when>
+      <when test="$_id  = '35002'">
+        <setEventAttribute attr="_eventType">"Log-View-Notif"</setEventAttribute>
+      </when>
+      <when test="$_id  = '35003'">
+        <setEventAttribute attr="_eventType">"Logdaemon-Updown-Notif"</setEventAttribute>
+      </when>
+      <when test="$_id  = '36002'">
+        <setEventAttribute attr="_eventType">"Reboot"</setEventAttribute>
+      </when>
+      <when test="$_id  = '36003'">
+        <setEventAttribute attr="_eventType">"Shutdown"</setEventAttribute>
+      </when>
+    </choose>
+
+    <setEventAttribute attr="eventType">combineMsgId("FMGR-","Generic")</setEventAttribute>
+
+    <when test="exist _subtype">
+      <switch>
+        <case>
+          <when test="exist _eventType">
+            <setEventAttribute attr="eventType">combineMsgId("FMGR-",$_subtype,"-",$_eventType)</setEventAttribute>
+          </when>
+        </case>
+        <default>
+          <setEventAttribute attr="eventType">combineMsgId("FMGR-",$_subtype,"-","Generic")</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+    <when test="not_exist usrMsg">
+      <when test="exist _msg">
+        <setEventAttribute attr="usrMsg">$_msg</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="not_exist srcIpAddr">
+      <when test="exist _userfrom">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_userfrom">
+              <regex><![CDATA[^<authenMethod:gPatWord>\(<srcIpAddr:gPatIpAddr>\)$]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+    </when>
+
+    <choose>
+      <when test="not_exist _severity"/>
+      <when test="$_severity = 'information'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_severity = 'notice'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$_severity = 'warning'">
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+      <when test="$_severity = 'error'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_severity = 'critical'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_severity = 'alert'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$_severity = 'emergency'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

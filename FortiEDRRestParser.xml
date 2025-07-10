@@ -1,0 +1,147 @@
+<eventParser name="FortiEDRRestParser">
+
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiEDR</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[[FortiEDR-EVENT] = {"serverHostName":"aa.com","serverIp":"10.10.10.10","timeZone":"UTC -04:00","action":"Log","archived":false,"certified":true,"classification":"PUP","collectors":[{"collectorGroup":"FEDCA","device":"PSS-EPS-test","id":171350,"ip":"10.10.10.11","lastSeen":"2021-04-01 17:04:06","macAddresses":["AA-AA-AA-AA-AA-AA","BB-Bb-Bb-BB-BB-BB"],"operatingSystem":"Windows 10 Enterprise"}],"comment":null,"destinations":["Network Access","10.10.163.108","10.10.197.200","10.10.58.194","10.10.91.29","10.10.230.82","Service Access","10.10.20.22","10.10.255.250","10.10.219.173","10.10.63.16","10.10.62.16","fd3e:4f5a:5b81:0:0:0:0:1","10.10.197.219","10.0.0.251","0:0:0:0:0:0:0:1","127.0.0.1","10.10.97.229"],"eventId":319588,"firstSeen":"2021-03-19 11:26:34","handled":false,"lastSeen":"2021-03-25 13:13:53","loggedUsers":["user1","user2"],"muteEndTime":null,"muted":false,"organization":"org1","process":"TeamViewer.exe","processOwner":"Owner1","processPath":"C:\\Program Files (x86)\\TeamViewer\\TeamViewer.exe","processType":"32 bit","rules":["PUP"],"seen":false,"severity":"High"}]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[^\[FortiEDR-EVENT\] = \{.*\}]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[^\[<:gPatStrRightSB>\]\s*=\s*<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">FortiEDR-Security-Generic</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">FORTIEDR_API</setEventAttribute>
+
+    <collectAndSetAttrByJSON src="$_body">
+      <attrKeyMap attr="reptDevIpAddr" key="serverIp"/>
+      <attrKeyMap attr="reptDevName" key="serverHostName"/>
+      <attrKeyMap attr="_tz" key="timeZone"/>
+      <attrKeyMap attr="msgId" key="eventId"/>
+      <attrKeyMap attr="procName" key="process"/>
+      <attrKeyMap attr="procPath" key="processPath"/>
+      <attrKeyMap attr="type" key="processType"/>
+      <attrKeyMap attr="_firstSeenTime" key="firstSeen"/>
+      <attrKeyMap attr="_lastSeenTime" key="lastSeen"/>
+      <attrKeyMap attr="comment" key="comment"/>
+      <attrKeyMap attr="_severity" key="severity"/>
+      <attrKeyMap attr="classifier" key="classification"/>
+      <attrKeyMap attr="destIpAddrList" key="destinations"/>
+      <attrKeyMap attr="ruleName" key="rules"/>
+      <attrKeyMap attr="user" key="loggedUsers[0]"/>
+      <attrKeyMap attr="tenantName" key="organization"/>
+      <attrKeyMap attr="procOwner" key="processOwner"/>
+      <attrKeyMap attr="groupName" key="collectors[0].collectorGroup"/>
+      <attrKeyMap attr="hostIpAddr" key="collectors[0].ip"/>
+      <attrKeyMap attr="hostMACAddr" key="collectors[0].macAddresses[0]"/>
+      <attrKeyMap attr="hostId" key="collectors[0].id"/>
+      <attrKeyMap attr="hostName" key="collectors[0].device"/>
+      <attrKeyMap attr="osType" key="collectors[0].operatingSystem"/>
+      <attrKeyMap attr="fwAction" key="action"/>
+      <attrKeyMap attr="imageSigned" key="certified"/>
+      <!-- FortiEDR 5.0.3 and above ThreatDetails if intel available -->
+      <attrKeyMap attr="virusFamily" key="threatDetails.threatFamily"/>
+      <attrKeyMap attr="virusName" key="threatDetails.threatName"/>
+      <attrKeyMap attr="virusType" key="threatDetails.threatType"/>
+    </collectAndSetAttrByJSON>
+
+    <!-- Syslog and API have some inconsistent action names eg block vs blocked or log vs logging -->
+    <choose>
+      <when test="not_exist fwAction"/>
+      <when test="$fwAction = 'Log'">
+        <setEventAttribute attr="fwAction">Logging</setEventAttribute>
+      </when>
+      <when test="$fwAction = 'Block'">
+        <setEventAttribute attr="fwAction">Blocked</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _tz">
+      <collectFieldsByRegex src="$_tz">
+        <!--"timeZone" : "UTC -04:00",-->
+        <regex><![CDATA[UTC <_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+    </when>
+
+    <!--2021-03-17 17:35:04-->
+    <when test="exist _lastSeenTime">
+      <collectFieldsByRegex src="$_lastSeenTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="endTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <when test="exist _firstSeenTime">
+      <collectFieldsByRegex src="$_firstSeenTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="startTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <when test="exist classifier">
+      <choose>
+        <when test="$classifier = 'Malicious'">
+          <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+        </when>
+        <when test="$classifier = 'Suspicious'">
+          <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+        </when>
+        <when test="$classifier = 'PUP'">
+          <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+        </when>
+        <when test="$classifier = 'Inconclusive'">
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </when>
+        <when test="$classifier = 'Likely Safe'">
+          <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+        </when>
+        <when test="$classifier = 'Safe'">
+          <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        </when>
+      </choose>
+
+      <setEventAttribute attr="eventType">combineMsgId("FortiEDR-Security-", $classifier)</setEventAttribute>
+      <when test="exist fwAction">
+        <setEventAttribute attr="_action">replaceStringByRegex($fwAction, "\s+\(.*?\)", "")</setEventAttribute>
+        <setEventAttribute attr="_eventType">combineMsgId($eventType, "-", $_action)</setEventAttribute>
+      </when>
+      <setEventAttribute attr="eventType">replaceStringByRegex($_eventType, "\s+", "-")</setEventAttribute>
+    </when>
+
+    <when test="exist user">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$user">
+            <regex><![CDATA[<domain:gPatStr>[\\]<user:gPatStr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist destIpAddrList">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$destIpAddrList">
+            <regex><![CDATA[\"<destIpAddr:gPatIpAddr>\"]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <!-- Remove square braces and replace newline with comma in rulename-->
+    <when test="exist ruleName">
+      <setEventAttribute attr="ruleName">replaceStringByRegex($ruleName, "[\[\]\n\"\t]+", "")</setEventAttribute>
+      <setEventAttribute attr="ruleName">replaceStringByRegex($ruleName, ",\s+", ",")</setEventAttribute>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

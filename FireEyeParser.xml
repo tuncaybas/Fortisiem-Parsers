@@ -1,0 +1,169 @@
+<eventParser name="FireEyeParser">
+
+  <deviceType>
+    <Vendor>FireEye</Vendor>
+    <Model>MPS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[\s+CEF:\d+\|FireEye\|e?MPS\|]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<164>fenotify-45640.alert: CEF:0|FireEye|MPS|6.0.0.62528|MC|malware-callback|9|rt=Apr 16 2012 15:54:41 src=192.168.1.25 spt=0 smac=00:14:f1:91:c9:01 dst=2.2.2.2 dpt=80 dmac=00:10:db:ff:50:00 cn1Label=vlan cn1=203 cn2Label=sid cn2=33336391 cs1Label=sname cs1=Trojan.Gen.MFC cs4Label=link cs4=https://10.10.10.10/event_stream/events_for_bot?ev_id\=456304 cs5Label=ccName cs5=3.3.3.3 cn3Label=ccPort cn3=80 proto=tcp cs6Label=ccChannel cs6= shost=abc.org <http://abc.org>  dvchost=ExampleHost01 dvc=10.10.10.10 externalId=45640]]></testEvent>
+    <testEvent><![CDATA[<164>fenotify-49540.warning: CEF:0|FireEye|eMPS|8.1.0.713331|MO|malware-object|4|rt=Jan 30 2018 09:25:10 UTC cn2Label=sid cn2=88912705 request=hxxp://www.example.com/ act=blocked dvchost=examplehost.fortinet.com cs4Label=link cs4=https://examplehost.fortinet.com/emps/eanalysis?e_id\=134128&type\=url duser=example_user@fortinet.com cn1Label=vlan cn1=0 externalId=49540 dvc=10.1.2.176 suser=newsletter@fortinet.com msg=63cdcb03deb12340ece27bdfa00172285@fortinet.com cs1Label=sname cs1=Malicious.LIVE.DTI.URL devicePayloadId=11111111-1111-1111-1111-111111111111 fileType=url flexString2Label=subject flexString2=Example Subject]]></testEvent>
+    <testEvent><![CDATA[<161>Mar 10 15:49:24 10.6.204.70 fenotify-105843.alert: CEF:0|FireEye|MPS|8.2.2.838591|MC|malware-callback|7|requestClientApplication=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.121 Safari/537.36 cn2Label=sid cn2=11111112 cs5Label=cncHost cs5=1.1.1.1 spt=64875 smac=00:1b:0d:f4:cc:00 cn1Label=vlan cn1=122 cs4Label=link cs4=https://192.168.1.25/event_stream/events_for_bot?ev_id\=102843&lms_iden\=0CC47ADD3864 rt=Mar 10 2019 20:49:20 UTC proto=tcp dst=2.2.2.2 externalId=105844 dmac=00:1b:17:00:02:26 dvchost=a.example.com cs6Label=channel cs6=GET /appliance-test/alert.html HTTP/1.1::~~Host: fedeploycheck.fireeye.com::~~Connection: keep-alive::~~Upgrade-Insecure-Requests: 1::~~User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.121 Safari/537.36::~~DNT: 1::~~Accept: text/html,application/xhtml+xml,application/xml;q\=0.9,image/webp,image/apng,*/*;q\=0.8::~~Accept-Encoding: gzip, deflate::~~Accept-Language: en-US,en;q\=0.9::~~Cookie: visid_incap_153509\=oIqJJFGqTgmhxadRQ407M+v63FoAAAAAQUIPAAAAAAD0OJuhADsppqNP7l4fDoZ7; visid_incap_153515\=5RuqMlY+RvG3X17k941Wc8bmDFsABBBBQUIPAAAAAABTs5XJ1dIsYBmxZI5i5kH3; visid_incap_153517\=PvvKUoBxSB6JLOvVFcxZXKAyUFsBBBBQUIPAAAAAAANIAesz/xY0Wdeml+xxfs5; AMCVS_12390CDB53E9CC840A490D4E%40AdobeOrg\=1; s_cc\=true; AMCV_12390CDB53E9CC840A490D4E%40AdobeOrg\=817868104%7CMCIDTS%7C17858%7CMCMID%7C81109879658412536388492418966495613413%7CMCAID%7CNONE%7CMCOPTOUT-1542855813s%7CNONE; tp\=12075; s_ppv\=us-en%253Ablog%253Athreat-research%253A2018%253A11%253Anot-so-cozy-an-uncomfortable-examination-of-a-suspected-apt29-phishing-campaign%2C15%2C11%2C1867; nlbi_153517\=Ax3oUSUMwwpqlZTk9aJbDAAAAADd58HNcQA2lWTYarX+TleH; incap_ses_978_153509\=6tr9bdFCdViQeUt+dI6SDdxBgFwAAAAAq/MpyEx7SNsVso3Yzy4UAA\=\=::~~::~~ src=192.168.1.137 cn3Label=cncPort cn3=80 dpt=80 request=hxxp://fedeploycheck.fireeye.com/appliance-test/alert.html dvc=192.168.1.70 requestMethod=GET act=notified cs1Label=sname cs1=FETestEvent devicePayloadId=11111111-1111-1111-1111-111111111111]]></testEvent>
+  </testEvents>
+
+  <!-- pattern definitions -->
+  <patternDefinitions>
+    <pattern name="patStrEndColon"><![CDATA[[^:]*]]></pattern>
+  </patternDefinitions>
+
+  <parsingInstructions>
+    <!-- parsing common fields -->
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s<:gPatTime>\s<:gPatIpV4Dot>\sfenotify-\d+.alert:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><:patStrEndColon>:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <collectAndSetAttrByPos src="$_body" sep="|">
+      <attrPosMap attr="_version" pos="1"/>
+      <attrPosMap attr="_eventtype" pos="6"/>
+      <attrPosMap attr="eventSeverity" pos="7"/>
+      <attrPosMap attr="_body" pos="8"/>
+    </collectAndSetAttrByPos>
+    <setEventAttribute attr="eventType">combineMsgId("FireEye-", $_eventtype)</setEventAttribute>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[rt=<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>\s+<_tz:gPatTimeZone><:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[rt=<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>\s+<_time:gPatTimeMSec>\s+<:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[rt=<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>\s+<:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+      <default/>
+    </switch>
+
+    <collectAndSetAttrByKeyValuePair src="$_body" sep=" ">
+      <attrKeyMap attr="srcIpAddr" key="src="/>
+      <attrKeyMap attr="srcIpPort" key="spt="/>
+      <attrKeyMap attr="srcMACAddr" key="smac="/>
+      <attrKeyMap attr="destIpAddr" key="dst="/>
+      <attrKeyMap attr="destIpPort" key="dpt="/>
+      <attrKeyMap attr="destMACAddr" key="dmac="/>
+      <attrKeyMap attr="_proto" key="proto"/>
+      <attrKeyMap attr="reptDevName" key="dvchost="/>
+      <attrKeyMap attr="reptDevIpAddr" key="dvc="/>
+      <attrKeyMap attr="_cn1Label" key="cn1Label="/>
+      <attrKeyMap attr="_cn1Value" key="cn1="/>
+      <attrKeyMap attr="_cn2Label" key="cn2Label="/>
+      <attrKeyMap attr="_cn2Value" key="cn2="/>
+      <attrKeyMap attr="_cn3Label" key="cn3Label="/>
+      <attrKeyMap attr="_cn3Value" key="cn3="/>
+      <attrKeyMap attr="_cs1Label" key="cs1Label="/>
+      <attrKeyMap attr="_cs1Value" key="cs1="/>
+      <attrKeyMap attr="_cs2Label" key="cs2Label="/>
+      <attrKeyMap attr="_cs2Value" key="cs2="/>
+      <attrKeyMap attr="_cs3Label" key="cs3Label="/>
+      <attrKeyMap attr="_cs3Value" key="cs3="/>
+      <attrKeyMap attr="_cs4Label" key="cs4Label="/>
+      <attrKeyMap attr="_cs4Value" key="cs4="/>
+      <attrKeyMap attr="_cs5Label" key="cs5Label="/>
+      <attrKeyMap attr="_cs5Value" key="cs5="/>
+      <attrKeyMap attr="_cs6Label" key="cs6Label="/>
+      <attrKeyMap attr="_cs6Value" key="cs6="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+
+    <when test="exist _cn1Value">
+      <when test="$_cn1Label = 'vlan'">
+        <setEventAttribute attr="hostVLAN">$_cn1Value</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _cn2Value">
+      <when test="$_cn2Label = 'sid'">
+        <setEventAttribute attr="_sid">$_cn2Value</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _cn3Value">
+      <when test="$_cn3Label = 'ccPort'">
+        <setEventAttribute attr="destIpPort">$_cn3Value</setEventAttribute>
+      </when>
+      <when test="$_cn3Label = 'cncPort'">
+        <setEventAttribute attr="cncPort">$_cn3Value</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _cs1Value">
+      <when test="$_cs1Label = 'sname'">
+        <setEventAttribute attr="virusName">$_cs1Value</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _cs2Value">
+      <when test="$_cs2Label = 'anomaly'">
+        <setEventAttribute attr="virusAction">$_cs2Value</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _cs3Value">
+      <when test="$_cs3Label = 'osinfo'">
+        <setEventAttribute attr="osType">$_cs3Value</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _cs4Value">
+      <when test="$_cs4Label = 'link'">
+        <setEventAttribute attr="infoURL">$_cs4Value</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _cs5Value">
+      <when test="$_cs5Label = 'ccName'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_cs5Value">
+              <regex><![CDATA[<destIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default>
+            <setEventAttribute attr="destName">$_cs5Value</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+      <when test="$_cs5Label = 'cncHost'">
+        <setEventAttribute attr="destName">$_cs5Value</setEventAttribute>
+      </when>
+    </when>
+    <when test="not_private_ip destIpAddr">
+      <when test="exist destName">
+        <setEventAttribute attr="domainEntropy">calcDomainEntropy($destName)</setEventAttribute>
+      </when>
+    </when>
+  </parsingInstructions>
+</eventParser>

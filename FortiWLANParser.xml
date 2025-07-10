@@ -1,0 +1,430 @@
+<eventParser name="FortiWLANParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiWLC</Model>
+    <Version>ANY</Version>
+  </deviceType>
+  <patternDefinitions>
+    <pattern name="patTimeInt"><![CDATA[\d{9,10}]]></pattern>
+    <pattern name="patMac"><![CDATA[\w{2}:\w{2}:\w{2}:\w{2}:\w{2}:\w{2}]]></pattern>
+  </patternDefinitions>
+  <eventFormatRecognizer><![CDATA[<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatIpAddr>\s+(?:ALARM|xems|SecurityMM):\s+<:patTimeInt>l|<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatIpAddr>\s+(?:meru:|RADIUSInfo:|coordinator: Wireless Associations)|^\s*<:gPatWord>\s+<:gPatWord>\s+<:gPatMonNum>/<:gPatDay>/<:gPatYear>\s+<:gPatTime>\s+\<<:patMac>\>]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[Apr 09 13:25:28 172.18.37.203 coordinator: Wireless Associations, Unassociated for STA 00:1f:3b:6c:62:e7 in BSSID 00:0c:e6:56:dd:3b ESS 4088clear AP_ID 1 at Time Fri Apr 9 13:41:49 2010]]></testEvent>
+    <testEvent><![CDATA[Mar 29 13:43:40 172.18.86.229 SecurityMM: 1269866620l | security | info | RBAC | Sending RADIUS Access-Request message for user : pat]]></testEvent>
+    <testEvent><![CDATA[Oct 13 11:15:07 172.18.37.201 xems: 1255433051l | security | info | WAU | Controller Access User admin@172.18.37.12 login to controller at time Tue Oct 13 11:24:11 2009 is OK]]></testEvent>
+    <testEvent><![CDATA[Oct 13 11:11:32 172.18.37.201 ALARM: 1255432836l | system | notice | NOT | Controller administrative reboot requested]]></testEvent>
+    <testEvent><![CDATA[info NOT 10/08/2009 00:25:55 <00:90:0b:0a:81:af> 2nd interface link up.]]></testEvent>
+    <testEvent><![CDATA[Oct 13 11:13:01 172.18.37.201 meru: Kernel data gather- ing phase complete]]></testEvent>
+    <testEvent><![CDATA[Mar 29 13:14:06 172.18.98.221 RADIUSInfo: RADIUS Access-Request Message sent for Client (00:1e:37:0e:98:3e).]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">FortiWLC-Generic</setEventAttribute>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<reptDevIpAddr:gPatIpAddr>\s+<_mod:gPatStr>:\s+<deviceTime:patTimeInt>l<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <choose>
+          <when test="$_mod = 'ALARM'">
+            <switch>
+              <case>
+                <!-- Oct 13 11:11:32 172.18.37.201 ALARM: 1255432836l | system | notice | NOT | Controller administrative reboot requested-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\breboot requested\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Controller-Reboot</setEventAttribute>
+              </case>
+              <case>
+                <!--Mar 21 12:56:51 172.18.65.202 ALARM: 1206084411l | system | info | ALR | AP DOWN CRITICAL Access Point Pat-AP300 (2) at time Fri Mar 21 07:26:51 2008-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bAP DOWN CRITICAL\s+Access Point\s+<hostName:gPatMesgBody>\s+at time\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-AP-Down</setEventAttribute>
+              </case>
+              <case>
+                <!--Mar 21 12:57:20 172.18.65.202 ALARM: 1206084440l | system | info | ALR | AP UP Access Point Pat-AP300 (2) is up at time Fri Mar 21 07:27:20 2008-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bAP UP\s+Access Point\s+<hostName:gPatMesgBody>\s+is up at time\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-AP-Up</setEventAttribute>
+              </case>
+              <case>
+                <!--Mar 21 15:19:05 172.18.65.202 ALARM: 1206092945l | system | info | ALR | AP SOFTWARE VERSION MISMATCH CRITICAL AP Pat-AP300 (2) - Software Version Mismatch : AP version is 3.4.SR3m-10 and Controller version is 3.6-40-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bAP SOFTWARE VERSION MISMATCH CRITICAL\s+<hostName:gPatMesgBody>\s- Software Version Mismatch]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-AP-Software-Version-Mismatch</setEventAttribute>
+              </case>
+              <case>
+                <!--Apr 28 14:03:35 172.18.65.202 ALARM: 1209371615l | system | info | ALR | AP BOOTIMAGE VERSION MISMATCH CRITICAL BootImage_Version_MisMatch_for_AP1-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bAP BOOTIMAGE VERSION MISMATCH CRITICAL\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-AP-Boot-Image-Version-Mismatch</setEventAttribute>
+              </case>
+              <case>
+                <!--Apr 28 14:03:51 172.18.65.202 ALARM: 1209371631l | system | info | ALR | AP BOOTIMAGE VERSION MISMATCH CLEAR BootImage_Version_Match_for_AP1-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bAP BOOTIMAGE VERSION MISMATCH CLEAR\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-AP-Boot-Image-Match</setEventAttribute>
+              </case>
+
+              <case>
+                <!--Apr 28 14:01:12 172.18.65.202 ALARM: 1209371472l | system | info | ALR | AP NEIGHBOR LOSS CRITICAL Neighbor_Loss_for_AP1-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bAP\s+NEIGHBOR\s+LOSS\s+CRITICAL\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-AP-Neighbor-Loss</setEventAttribute>
+              </case>
+              <case>
+                <!--Apr 28 14:01:18 172.18.65.202 ALARM: 1209371478l | system | info | ALR | AP NEIGHBOR LOSS CLEAR Neighbor_Loss_for_AP1-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bAP\s+NEIGHBOR\s+LOSS\s+CLEAR\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-AP-Neighbor-Loss-Cleared</setEventAttribute>
+              </case>
+              <case>
+                <!--Mar 21 13:49:53 172.18.65.202 ALARM: 1206087593l | system | info | ALR | AP HARDWARE DIAGNOSTIC ERROR CRITICAL HardwareDiagnostics-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bAP\s+HARDWARE\s+DIAGNOSTIC\s+ERROR\s+CRITICAL\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Hardware-Diagnostics-Error</setEventAttribute>
+              </case>
+              <case>
+                <!--Mar 21 13:49:47 172.18.65.202 ALARM: 1206087587l | system | info | ALR | AP HARDWARE DIAGNOSTIC ERROR CLEAR HardwareDiagnostics-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bAP\s+HARDWARE\s+DIAGNOSTIC\s+ERROR\s+CLEAR\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Hardware-Diagnostics-Error-Cleared</setEventAttribute>
+              </case>
+              <case>
+                <!--Apr 28 14:02:04 172.18.65.202 ALARM: 1209371524l | system | info | ALR | HAND OFF FAIL CRITICAL Hand Off_Fail_for_AP1-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bHAND\s+OFF\s+FAIL\s+CRITICAL\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Handoff-Fail</setEventAttribute>
+              </case>
+              <case>
+                <!--Apr 28 14:02:21 172.18.65.202 ALARM: 1209371541l | system | info | ALR | HAND OFF FAIL CLEAR Hand Off_Fail_Cleared_for_AP1-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bHAND\s+OFF\s+FAIL\s+CLEAR\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Handoff-Fail-Cleared</setEventAttribute>
+              </case>
+              <case>
+                <!--Mar 21 13:56:27 172.18.65.202 ALARM: 1206087987l | system | info | ALR | RESOURCE THRESHOLD EXCEED CRITICAL ResourceThreshold-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bRESOURCE\s+THRESHOLD\s+EXCEED\s+CRITICAL\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Resource-Threshold-Exceeded</setEventAttribute>
+              </case>
+              <case>
+                <!--Mar 21 13:57:17 172.18.65.202 ALARM: 1206088037l | system | info | ALR | RESOURCE THRESHOLD EXCEED CLEAR ResourceThreshold-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bRESOURCE\s+THRESHOLD\s+EXCEED\s+CLEAR\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Resource-Threshold-Exceeded-Cleared</setEventAttribute>
+              </case>
+              <case>
+                <!--Mar 21 14:18:29 172.18.65.202 ALARM: 1206089309l | system | info | ALR | SYSTEM FAILURE CRITICAL SystemFailure-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bSYSTEM\s+FAILURE\s+CRITICAL\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-System-Failure</setEventAttribute>
+              </case>
+              <case>
+                <!--Mar 21 14:19:04 172.18.65.202 ALARM: 1206089344l | system | info | ALR | SYSTEM FAILURE CLEAR System Failure-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bSYSTEM\s+FAILURE\s+CLEAR\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-System-Failure-Cleared</setEventAttribute>
+              </case>
+              <!--Mar 21 14:27:28 172.18.65.202 ALARM: 1206089848l | system | info | ALR | WATCHDOG FAILURE CRITICAL WatchDog_Failure-->
+              <case>
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bWATCHDOG\s+FAILURE\s+CRITICAL\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Watchdog-Failure</setEventAttribute>
+              </case>
+              <case>
+                <!--Mar 21 14:27:59 172.18.65.202 ALARM: 1206089879l | system | info | ALR | WATCHDOG FAILURE CLEAR WatchDog_Failure-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bWATCHDOG\s+FAILURE\s+CLEAR\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Watchdog-Failure-Cleared</setEventAttribute>
+              </case>
+              <case>
+                <!--Mar 21 15:04:10 172.18.65.202 ALARM: 1206092050l | system | info | ALR | CERTIFICATE ERROR CRITICAL Certificare_Error-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bCERTIFICATE\s+ERROR\s+CRITICAL\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Certificate-Error</setEventAttribute>
+              </case>
+              <case>
+                <!--Apr 28 12:55:58 172.18.65.202 ALARM: 1209367557l | system | info | ALR | AP INIT FAILURE CRITICAL Init_Failure_for_AP1-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bAP\s+INIT\s+FAILURE\s+CRITICAL\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-AP-Init-Failure</setEventAttribute>
+              </case>
+              <case>
+                <!--Apr 28 12:55:45 172.18.65.202 ALARM: 1209367545l | system | info | ALR | AP INIT FAILURE CLEAR Init_Failure_ for_AP1-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bAP\s+INIT\s+FAILURE\s+CLEAR\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-AP-Init-Failure-Cleared</setEventAttribute>
+              </case>
+              <case>
+                <!--Apr 28 13:01:00 172.18.65.202 ALARM: 1209367860l | system | info | ALR | AP RADIO CARD FAILURE CRITICAL Radio_Card_Failure_for_AP1-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bAP RADIO CARD FAILURE CRITICAL\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-AP-Radio-Card-Failure</setEventAttribute>
+              </case>
+              <case>
+                <!--Apr 28 13:01:08 172.18.65.202 ALARM: 1209367868l | system | info | ALR | AP RADIO CARD FAILURE CLEAR Radio_Card_Failure_for_AP1-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bAP RADIO CARD FAILURE CLEAR\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-AP-Radio-Card-Failure-Cleared</setEventAttribute>
+              </case>
+              <case>
+                <!--Mar 21 15:50:53 172.18.65.202 ALARM: 1206094852l | system | info | ALR | PRIMARY RADIUS SERVER RESTORED CRITICAL RADIUS_Server_Restored-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bPRIMARY RADIUS SERVER RESTORED CRITICAL\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Primary-Radius-Server-Restored</setEventAttribute>
+              </case>
+              <case>
+                <!--Mar 21 15:12:08 172.18.65.202 ALARM: 1206092528l | system | info | ALR | RADAR DETECTED CRITICAL Radar Detected-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bRADAR DETECTED CRITICAL\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Radar-Detected</setEventAttribute>
+              </case>
+              <case>
+                <!--Apr 28 13:57:36 172.18.65.202 ALARM: 1209371256l | system | info | ALR | MIC COUNTERMEASURE ACTIVATION CRITICAL MIC_CounterMeasure_Activation_for_AP1-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bMIC COUNTERMEASURE ACTIVATION CRITICAL\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-MIC-Counter-Measure-Activation</setEventAttribute>
+              </case>
+              <case>
+                <!--Apr 28 13:13:12 172.18.65.202 ALARM: 1209368592l | system | info | ALR | AP MIC FAILURE CRITICAL MIC_Failure_for_AP1-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bAP MIC FAILURE CRITICAL\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-AP-MIC-Failure</setEventAttribute>
+              </case>
+              <case>
+                <!--Apr 13 19:48:23 172.18.48.151 ALARM: 1271169441l | system | info | ALR | 802.1X AUTHENTICATION FAILURE INFO Access Request rejected for User: <harsh>, NAS IP: <172.18.48.151>, SSID: <wpa2h>, Calling Station ID: <00:1f:3b:83:21:13>, Called Station ID: <00:90:0b:0a:82:48>, Authentication Type: <802.1X>, Reason: <Bad Username or Password>, AP Id: <1>-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\b802.1X AUTHENTICATION FAILURE INFO\b.*\<Bad Username or Password\>]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-802.1X-Radius-Access-Reject-With-Bad-Username</setEventAttribute>
+              </case>
+              <case>
+                <!--Mar 22 16:38:19 172.18.65.202 ALARM: 1206061018l | system | info | ALR | ACCOUNT RADIUS SERVER SWITCHOVER MAJOR Accounting RADIUS Server switches over from Primary <1.1.1.1> to Secondary <2.2.2.2> for Profile <WPA2>-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bACCOUNT RADIUS SERVER SWITCHOVER MAJOR\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Accounting-Radius-Switchover</setEventAttribute>
+              </case>
+              <case>
+                <!--Mar 22 16:41:51 172.18.65.202 ALARM: 1206061230l | system | info | ALR | ACCOUNT RADIUS SERVER SWITCHOVER FAILED MAJOR Primary Accounting RADIUS Server <1.1.1.1> failed. No valid Secondary Accounting RADIUS Server present. Switchover FAILED for Profile <WPA2>-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bACCOUNT RADIUS SERVER SWITCHOVER FAILED MAJOR\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Accounting-Radius-Switchover-Failure</setEventAttribute>
+              </case>
+              <case>
+                <!--Apr 09 15:07:54 172.18.37.203 ALARM: 1270826655l | system | info | ALR | RADIUS SERVER SWITCHOVER FAILED MAJOR Primary RADIUS Server <172.18.1.3> failed. No valid Secondary RADIUS Server present. Switchover FAILED for Profile <4089wpa2>-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bRADIUS SERVER SWITCHOVER FAILED\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Radius-Switchover-Failure</setEventAttribute>
+              </case>
+              <case>
+                <!--Mar 21 16:38:57 172.18.65.202 ALARM: 1206097736l | system | info | ALR | RADIUS SERVER SWITCHOVER MAJOR RADIUS Server switched over from Primary < 1.1.1.1 > to Secondary < 172.18.1.7 > for Mac Filtering-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bRADIUS SERVER SWITCHOVER MAJOR RADIUS\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Radius-Switchover</setEventAttribute>
+              </case>
+              <case>
+                <!--Mar 22 15:42:17 172.18.65.202 ALARM: 1206057655l | system | info | ALR | SOFTWARE LICENSE EXPIRED MAJOR controller license has already expired.-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\blicense has already expired\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-License-Expired</setEventAttribute>
+              </case>
+              <case>
+                <!--Mar 22 15:27:42 172.18.65.202 ALARM: 1205970893l | system | notice | NOT | controller license expires in 1 day-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\blicense expires\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-License-Expired-Warning</setEventAttribute>
+              </case>
+              <case>
+                <!--Mar 22 15:52:23 172.18.65.202 ALARM: 1206058262l | system | info | ALR | SOFTWARE LICENSE EXPIRED CLEAR controller-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bSOFTWARE LICENSE EXPIRED CLEAR\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-License-Expired-Alarm-Clear</setEventAttribute>
+              </case>
+              <case>
+                <!--May 15 16:07:49 172.18.32.201 ALARM: 1210847902l | system | info | ALR | MASTER CONTROLLER DOWN INFO-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bMASTER CONTROLLER DOWN\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Master-Controller-Down</setEventAttribute>
+              </case>
+              <case>
+                <!--May 15 16:07:59 172.18.32.201 ALARM: 1210847912l | system | info | ALR | MASTER CONTROLLER UP INFO-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bMASTER CONTROLLER UP\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Master-Controller-Up</setEventAttribute>
+              </case>
+              <case>
+                <!--Oct 13 11:11:31 172.18.37.201 ALARM: 1255432835l | system | info | ALR | ROGUE AP DETECTED CRITICAL CONTROLLER (1:13) ROGUE AP DETECTED. AP mac=00:1f:28:57:fa:b7 bss=00:1f:28:57:fa:b7 cch= 6 ess=Integral by AP AP-204 (204)-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bROGUE AP DETECTED CRITICAL\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Rogue-AP-Detected</setEventAttribute>
+              </case>
+              <case>
+                <!--Mar 29 13:12:43 172.18.86.229 ALARM: 1269864763l | system | info | ALR | ROGUE AP REMOVED CONTROLLER (1:24490) ROGUE AP DETECTED. AP mac=00:12:f2:00:17:63 bss=00:12:f2:00:17:63 cch=161 ess=rogue-35-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[\bROGUE AP DETECTED\b]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Rogue-AP-Removed</setEventAttribute>
+              </case>
+              <default>
+              </default>
+            </switch>
+          </when>
+          <when test="$_mod = 'xems'">
+            <switch>
+              <case>
+                <!--Oct 13 11:15:07 172.18.37.201 xems: 1255433051l | security | info | WAU | Controller Access User admin@172.18.37.12 login to controller at time Tue Oct 13 11:24:11 2009 is OK-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[Controller Access User\s+<user:gPatWord>@<srcIpAddr:gPatIpAddr>\s+login to controller at time <:gPatWeekday>\s+<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatYear>\s+is OK]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Admin-Logon-Sucess</setEventAttribute>
+              </case>
+              <case>
+                <!--Mar 29 13:50:43 172.18.86.229 xems: 1269867043l | security | info | WAU | Controller Access User local1234@172.18.45.17 login to controller at time Mon Mar 29 18:20:43 2010 is FAILED-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[Controller Access User\s+<user:gPatWord>@<srcIpAddr:gPatIpAddr>\s+login to controller at time <:gPatWeekday>\s+<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatYear>\s+is FAILED]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Admin-Logon-Failure</setEventAttribute>
+              </case>
+              <default>
+              </default>
+            </switch>
+          </when>
+          <when test="$_mod = 'SecurityMM'">
+            <switch>
+              <case>
+                <!--Mar 29 13:43:40 172.18.86.229 SecurityMM: 1269866620l | security | info | RBAC | Sending RADIUS Access-Request message for user : pat-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[RADIUS Access-Request message for user :\s+<user:gPatWord>]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Radius-Access-Sucess</setEventAttribute>
+              </case>
+              <case>
+                <!--Mar 29 13:50:42 172.18.86.229 SecurityMM: 1269867043l | security | info | RBAC | RADIUS Access failed for user <local1234>-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[RADIUS Access failed for user \<<user:gPatWord>\>]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Radius-Access-Failure</setEventAttribute>
+              </case>
+              <default>
+              </default>
+            </switch>
+          </when>
+        </choose>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<reptDevIpAddr:gPatIpAddr>\s+<_mod:gPatStr>:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+        <choose>
+          <when test="$_mod = 'meru'">
+            <switch>
+              <case>
+                <!--Oct 13 11:11:45 172.18.37.201 meru: snmp stopped.-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[<procName:gPatWord>\s+stopped]]></regex>
+                </collectFieldsByRegex>
+
+                <setEventAttribute attr="eventType">FortiWLC-Process-stop</setEventAttribute>
+              </case>
+              <default>
+                <!--Oct 13 11:13:01 172.18.37.201 meru: Setting up swap- space version 0, size = 43446272 bytes-->
+              </default>
+            </switch>
+          </when>
+          <when test="$_mod = 'RADIUSInfo'">
+            <!--Mar 29 13:14:06 172.18.98.221 RADIUSInfo: RADIUS Access-Request Message sent for Client (00:1e:37:0e:98:3e).-->
+            <setEventAttribute attr="eventType">FortiWLC-Radius</setEventAttribute>
+          </when>
+          <when test="$_mod = 'coordinator'">
+            <switch>
+              <case>
+                <!--Apr 09 13:25:28 172.18.37.203 coordinator: Wireless Associations, Unassociated for STA 00:1f:3b:6c:62:e7 in BSSID 00:0c:e6:56:dd:3b ESS 4088clear AP_ID 1 at Time Fri Apr 9 13:41:49 2010-->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[Wireless Associations, Unassociated for STA\s+<srcMACAddr:patMac>\s+in BSSID\s+<hostMACAddr:patMac>]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Station-Unassociated</setEventAttribute>
+              </case>
+              <case>
+                <!--Apr 09 14:05:04 172.18.37.203 coordinator: Wireless Associations, Associated for STA 00:1f:3b:6c:62:e7 in BSSID 00:0c:e6:56:dd:3b ESS 4088clear AP_ID 1 at Time Fri Apr 9 14:21:25 2010 -->
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[Wireless Associations, Associated for STA\s+<srcMACAddr:patMac>\s+in BSSID\s+<hostMACAddr:patMac>]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiWLC-Station-Associated</setEventAttribute>
+              </case>
+              <default>
+              </default>
+            </switch>
+          </when>
+        </choose>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[info\s+NOT\s+<_mon:gPatMonNum>/<_day:gPatDay>/<_year:gPatYear>\s+<_time:gPatTime>\s+\<<hostMACAddr:patMac>\><_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        <switch>
+          <!--info NOT 10/08/2009 00:16:14 <00:90:0b:0a:81:b0> 1st interface link down.-->
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\binterface link down\b]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiWLC-Interface-Down</setEventAttribute>
+          </case>
+          <!--info NOT 10/08/2009 00:25:55 <00:90:0b:0a:81:af> 2nd interface link up.-->
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\binterface link up\b]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiWLC-Interface-Up</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">FortiWLC-Interface</setEventAttribute>
+          </default>
+        </switch>
+      </case>
+      <default>
+      </default>
+    </switch>
+  </parsingInstructions>
+
+</eventParser>

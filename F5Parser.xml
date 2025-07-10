@@ -1,0 +1,64 @@
+<eventParser name="F5Parser">
+  <deviceType>
+    <Vendor>F5</Vendor>
+    <Model>Big-IPOS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[Hostname=<:gPatStrComma>,Entity=<:gPatStrComma>,]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[Hostname=example.com,Entity=ClientIP,AVRProfileName=/FLA_PROD_WEB/FLA_PROD_WEB_ANALYTICS,AggrInterval=299,EOCTimestamp=1387536600,HitCount=1,ApplicationName=<Unassigned>,VSName=/FLA_PROD_WEB/FLA-PROD-CRM-SSL,ClientIP=1.2.3.4,ClientIPRouteDomain=172,TPSMax=0.000000,ClientLatencyHitCount=0,ClientLatencyMax=0,ClientLatencyTotal=0,ServerLatencyMax=2605,ServerLatencyTotal=2605,ThroughputReqMax=0,ThroughputReqTotal=54801,ThroughputRespMax=0,ThroughputRespTotal=2828]]></testEvent>
+    <testEvent><![CDATA[Jul 20 16:10:02 192.168.245.151 info tmm[13448]: Hostname="host.com",Entity="VS",Module="http",AVRProfileName="/Common/external_syslog_analytics",AggrInterval="300",EOCTimestamp="1469045400",HitCount="295",ApplicationName="<Unassigned>",VSName="/Common/http_vs",DosL7ProfileName="Aggregated",DosL7AttackID="0",DosBotSigName="Aggregated",DosBotSigCategory="None",TransactionOutcome="Passthrough",ServerLatencyMax="15",ServerLatencyTotal="315",ThroughputReqTotal="48970",ThroughputRespTotal="86435"]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<reptDevIpAddr:gPatIpAddr>\s+<:gPatWord>\s+<procName:gPatStr>\[\d+\]:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default>
+        <setEventAttribute attr="_body">$_rawmsg</setEventAttribute>
+      </default>
+    </switch>
+
+    <collectAndSetAttrByKeyValuePair sep="," src="$_body">
+      <attrKeyMap attr="reptDevName" key="Hostname="/>
+      <attrKeyMap attr="_entity" key="Entity="/>
+      <attrKeyMap attr="ruleName" key="AVRProfileName="/>
+      <attrKeyMap attr="deviceTime" key="EOCTimestamp="/>
+      <attrKeyMap attr="count" key="HitCount="/>
+      <attrKeyMap attr="_appName" key="ApplicationName="/>
+      <attrKeyMap attr="srcIpAddr" key="ClientIP="/>
+      <attrKeyMap attr="srcIpPort" key="ClientPort="/>
+      <attrKeyMap attr="clientNetworkTimeMax" key="ClientLatencyMax="/>
+      <attrKeyMap attr="averageClientNetworkTime" key="ClientLatencyTotal="/>
+      <attrKeyMap attr="serverNetworkTimeMax" key="ServerLatencyMax="/>
+      <attrKeyMap attr="averageServerNetworkTime" key="ServerLatencyTotal="/>
+      <attrKeyMap attr="_httpMethod" key="Method="/>
+      <attrKeyMap attr="_httpMethod2" key="MethodString="/>
+      <attrKeyMap attr="recvBytes64" key="RequestSize="/>
+      <attrKeyMap attr="httpStatusCode" key="ResponseCode="/>
+      <attrKeyMap attr="sentBytes64" key="ResponseSize="/>
+      <attrKeyMap attr="httpUserAgent" key="UserAgentString="/>
+      <attrKeyMap attr="activeSessions" key="UserSessionsConcurrentTotal="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <setEventAttribute attr="eventType">combineMsgId("F5-LTM-", $_entity)</setEventAttribute>
+
+    <when test="not_matches($_appName, 'Unassigned')">
+      <setEventAttribute attr="appName">$_appName</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="exist _httpMethod">
+        <setEventAttribute attr="httpMethod">$_httpMethod</setEventAttribute>
+      </when>
+      <when test="exist _httpMethod2">
+        <setEventAttribute attr="httpMethod">$_httpMethod2</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

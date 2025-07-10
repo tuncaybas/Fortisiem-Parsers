@@ -1,0 +1,322 @@
+<eventParser name="FortiNDRParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiNDR</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[date="2021-04-14" time="10:02:33" tz="PDT" logid="1300000001" devhost="FAIVMSTM21000033" devid="FAIVMSTM21000033" type="attack" subtype="Attack Chain" level="alert" user="admin" ui="daemon" action="none" status="success" eventid=22812 discoverydate="2021-04-14 09:59:47" malwarefamily="N/A" scenariotype="Generic Trojan" filecnt=3 filelist="98896,98897,98898"]]></testEvent>
+    <testEvent><![CDATA[date="2021-04-14" time="10:02:33" tz="PDT" logid="1302000001" devid="FAIVMSTM21000033" type="attack" subtype="Downloader" level="alert" fossn="" fosvd="" fileid=98896 filetype="HTML" md5="f432d92add9cd6961b2790799ec66b6e" virusname="HTML/Virut.CE!tr" url="3NWdgOipC/ViXL0/e3l" detype="Mansabo" attackerip="10.10.10.4" attackerport=30296 victimip="10.10.10.4" victimport=80]]></testEvent>
+    <testEvent><![CDATA[date="2023-02-15" time="12:35:51" tz="PST" logid="0604000001" devid="FAI35FT000000000" type="ndr" subtype="IPS attack" severity="low" sessionid=1680882539 alproto="OTHER" tlproto="TCP" srcip="172.16.1.20" srcport=48135 dstip="172.16.1.1" dstport=79 behavior="" vname="Port.Scanning" vulntype=""]]></testEvent>
+    <testEvent><![CDATA[date="2023-02-15" time="12:45:02" tz="PST" logid="0408000001" devid="FAI35FT320000009" type="event" subtype="perf-stats" level="information" status="success" cpu=45 mem=25 logdisk=3 datadisk=59 msg="Performance statistics"]]></testEvent>
+    <testEvent><![CDATA[date="2024-05-06" time="08:59:01" tz="PDT" logid="0602000001" devid="FAIVMS0000000000" type="ndr" subtype="Botnet" severity="critical" sessionid=50015452 alproto="DNS" tlproto="UDP" srcip="10.0.0.20" srcport=51188 dstip="10.0.10.50" dstport=53 behavior="RESP" hostname="support.azrue-mircosoft.com" botname="Other"
+]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patExceptComma"><![CDATA[[^,]+]]></pattern>
+  </patternDefinitions>
+
+  <!-- FortiNDR logs header format  -->
+  <eventFormatRecognizer><![CDATA[date="<:gPatYear>-<:gPatMon>-<:gPatDay>"\stime="<:gPatTime>"\stz="<:gPatStr>"\s+logid="<:gPatInt>"\s+(?:devhost="<:gPatStr>"\s+)?devid="FAI<:gPatWord>"]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_rawmsg">
+      <attrKeyMap attr="fwAction" key="action"/>
+      <attrKeyMap attr="appTransportProto" key="alproto"/>
+      <attrKeyMap attr="srcIpAddr" key="attackerip"/>
+      <attrKeyMap attr="srcIpPort" key="attackerport"/>
+      <attrKeyMap attr="tlsCipher" key="cipher"/>
+      <attrKeyMap attr="cpuUtil" key="cpu"/>
+      <attrKeyMap attr="_date" key="date"/>
+      <attrKeyMap attr="diskUtil" key="datadisk"/>
+      <attrKeyMap attr="virusFamily" key="detype"/>
+      <attrKeyMap attr="_dettypelst" key="detypelst"/>
+      <attrKeyMap attr="reptDevName" key="devhost"/>
+      <attrKeyMap attr="deviceIdentification" key="devid"/>
+      <attrKeyMap attr="_discovdate" key="discoverydate"/>
+      <attrKeyMap attr="destIpAddr" key="dstip"/>
+      <attrKeyMap attr="destIpPort" key="dstport"/>
+      <attrKeyMap attr="_eventid" key="eventid"/>
+      <attrKeyMap attr="malwareThreat" key="filecnt"/>
+      <attrKeyMap attr="fileId" key="fileid"/>
+      <attrKeyMap attr="fileId" key="filelist"/>
+      <attrKeyMap attr="fileType" key="filetype"/>
+      <attrKeyMap attr="deviceIdentification" key="fossn"/>
+      <attrKeyMap attr="vdom" key="fosvd"/>
+      <!-- This is actually the destination host name in ioc and botnet logs -->
+      <attrKeyMap attr="destName" key="hostname"/>
+      <attrKeyMap attr="logLevel" key="level"/>
+      <attrKeyMap attr="logDiskStatus" key="logdisk"/>
+      <attrKeyMap attr="logID" key="logid"/>
+      <attrKeyMap attr="virusFamily" key="malwarefamily"/>
+      <attrKeyMap attr="hashMD5" key="md5"/>
+      <attrKeyMap attr="memUtil" key="mem"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="reason" key="reasons"/>
+      <attrKeyMap attr="threatCategory" key="scenariotype"/>
+      <attrKeyMap attr="sessionId" key="sessionid"/>
+      <attrKeyMap attr="eventSeverityCat" key="severity"/>
+      <attrKeyMap attr="srcIpAddr" key="srcip"/>
+      <attrKeyMap attr="srcIpPort" key="srcport"/>
+      <attrKeyMap attr="status" key="status"/>
+      <attrKeyMap attr="subtype" key="subtype"/>
+      <attrKeyMap attr="_time" key="time"/>
+      <attrKeyMap attr="_proto" key="tlproto"/>
+      <attrKeyMap attr="type" key="type"/>
+      <attrKeyMap attr="_tz" key="tz"/>
+      <attrKeyMap attr="_ui" key="ui"/>
+      <attrKeyMap attr="uriStem" key="url"/>
+      <attrKeyMap attr="user" key="user"/>
+      <attrKeyMap attr="appVersion" key="vers"/>
+      <attrKeyMap attr="destIpAddr" key="victimip"/>
+      <attrKeyMap attr="destIpPort" key="victimport"/>
+      <attrKeyMap attr="virusName" key="virusname"/>
+      <attrKeyMap attr="virusName" key="vname"/>
+      <attrKeyMap attr="vulnType" key="vulntype"/>
+      <attrKeyMap attr="threatSource" key="botname"/>
+      <!-- User activity, e.g. CONN, RESP, VISIT, GET -->
+      <attrKeyMap attr="opName" key="behavior"/>
+      <attrKeyMap attr="virusFamily" key="campaign"/>
+      <!-- sensor data -->
+      <attrKeyMap attr="_sensorName" key="sensor_hostname"/>
+      <attrKeyMap attr="_sensorIP" key="sensor_ip"/>
+      <attrKeyMap attr="_sensorSN" key="sensor_sn"/>
+      <attrKeyMap attr="srcVLAN" key="vlanid"/>
+      <attrKeyMap attr="_srcmac" key="srcmac"/>
+      <attrKeyMap attr="_dstmac" key="dstmac"/>
+      <attrKeyMap attr="virusFamily" key="featurelst"/>
+      <attrKeyMap attr="threatLevel" key="risklevel"/>
+      <!-- automation attrib -->
+      <attrKeyMap attr="destIpAddr" key="targetip"/>
+      <attrKeyMap attr="fwAction" key="postaction"/>
+      <attrKeyMap attr="profileName" key="profilename"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist _date">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_date">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+
+    <!-- base event type setting -->
+    <choose>
+      <when test="exist subtype">
+        <setEventAttribute attr="eventType">combineMsgId("FortiNDR-",$subtype)</setEventAttribute>
+      </when>
+      <!-- type is more generic, we shouldnt need this, only if subtype missing for some reason -->
+      <when test="exist type">
+        <setEventAttribute attr="eventType">combineMsgId("FortiNDR-",$type)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">FortiNDR-Generic</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <choose>
+      <when test="not_exist type"/>
+      <when test="$type = 'attack'">
+        <!-- Only Attack Chain contains permit or deny, Attack logs have a file id mapped to attack chain -->
+        <choose>
+          <when test="$subtype = 'Attack Chain'">
+            <!-- scneariotype used as category for attack chain events -->
+            <!-- Strip white space from scenario type -->
+            <setEventAttribute attr="threatCategory">replaceStrInStr($threatCategory, " ", "_")</setEventAttribute>
+            <!-- We just remove the dash between Attack-Chain -->
+            <setEventAttribute attr="eventType">FortiNDR-AttackChain</setEventAttribute>
+            <collectAndSetAttrFromAnotherEvent AnotherEventType="FortiNDR-Attack">
+              <when test="$fileId HAS $AnotherEvent.fileId">
+                <setEventAttribute attr="triggeringEventList">$AnotherEvent.eventId</setEventAttribute>
+                <setEventAttribute attr="fwAction">$AnotherEvent.fwAction</setEventAttribute>
+                <setEventAttribute attr="srcIpAddrList">$AnotherEvent.srcIpAddr</setEventAttribute>
+                <setEventAttribute attr="destIpAddrList">$AnotherEvent.destIpAddr</setEventAttribute>
+                <setEventAttribute attr="portList">$AnotherEvent.destIpPort</setEventAttribute>
+                <setEventAttribute attr="virusName">$AnotherEvent.virusName</setEventAttribute>
+                <setEventAttribute attr="deviceIdentification">$AnotherEvent.deviceIdentification</setEventAttribute>
+                <setEventAttribute attr="vdom">$AnotherEvent.vdom</setEventAttribute>
+                <setEventAttribute attr="threatType">$AnotherEvent.threatType</setEventAttribute>
+              </when>
+            </collectAndSetAttrFromAnotherEvent>
+            <when test="exist fwAction">
+              <!-- parse only first fwAction if csv list -->
+              <switch>
+                <case>
+                  <collectFieldsByRegex src="$fwAction">
+                    <regex><![CDATA[^<fwAction:gPatWord>]]></regex>
+                  </collectFieldsByRegex>
+                </case>
+                <default/>
+              </switch>
+              <!-- FAI does not provide a proper action, in most cases this will be of value "none" -->
+              <choose>
+                <when test="$fwAction = 'blocked'">
+                  <setEventAttribute attr="eventType">combineMsgId($eventType,"-Blocked")</setEventAttribute>
+                </when>
+                <!-- none or passed implies permitted, when in doubt label permit -->
+                <otherwise>
+                  <setEventAttribute attr="eventType">combineMsgId($eventType,"-Permit")</setEventAttribute>
+                </otherwise>
+              </choose>
+            </when>
+          </when>
+          <otherwise>
+            <!-- All other attack logs we normalized to FortiNDR-Attack for enrichment in the attack chain-->
+            <setEventAttribute attr="threatType">replaceStrInStr($subtype, " ", "_")</setEventAttribute>
+            <setEventAttribute attr="eventType">FortiNDR-Attack</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+
+      <when test="$type = 'ndr'">
+        <choose>
+          <when test="$subtype IN 'ML,ml'">
+            <!-- base format is already FortiNDR-ml -->
+            <setEventAttribute attr="eventType">combineMsgId($eventType,"-anomaly-detection")</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <when test="$type = 'event'">
+        <!-- FAI system level events, subtypes system,user -->
+        <choose>
+          <when test="$subtype IN 'System,system'">
+            <!-- placeholder for processing system events, pending sample events -->
+          </when>
+          <when test="$subtype IN 'User,user'">
+
+            <when test="exist _ui">
+              <!-- try to parse source IP from this field -->
+              <switch>
+                <case>
+                  <collectFieldsByRegex src="$_ui">
+                    <!-- ssh(x.x.x.x) or GUI(x.x.x.x) -->
+                    <regex><![CDATA[<_protoWord:gPatWord>\(<srcIpAddr:gPatIpAddr>]]></regex>
+                  </collectFieldsByRegex>
+                </case>
+                <case>
+                  <collectFieldsByRegex src="$_ui">
+                    <regex><![CDATA[<srcIpAddr:gPatIpAddr>]]></regex>
+                  </collectFieldsByRegex>
+                </case>
+                <default/>
+              </switch>
+              <switch>
+                <case>
+                  <!-- changed settings of 'ipaddr' for 'system syslog fortianalyzer settings' -->
+                  <collectFieldsByRegex src="$msg">
+                    <regex><![CDATA[^changed settings of '<osObjName:gPatStrSQ>' for '<configName:gPatStrSQ>']]></regex>
+                  </collectFieldsByRegex>
+                  <setEventAttribute attr="eventType">FortiNDR-user-config-change</setEventAttribute>
+                </case>
+                <default/>
+              </switch>
+
+            </when>
+            <when test="exist fwAction">
+              <when test="$fwAction = 'login'">
+                <!-- append success or failure later -->
+                <setEventAttribute attr="eventType">FortiNDR-user-login</setEventAttribute>
+                <when test="exist status">
+                  <choose>
+                    <when test="$status = 'success'">
+                      <setEventAttribute attr="eventType">FortiNDR-user-login-success</setEventAttribute>
+                    </when>
+                    <when test="$status = 'failed'">
+                      <setEventAttribute attr="eventType">FortiNDR-user-login-failed</setEventAttribute>
+                    </when>
+                  </choose>
+                </when>
+              </when>
+            </when>
+          </when>
+        </choose>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist eventSeverityCat"/>
+      <!-- debug, info, information, unknown: 1 -->
+      <when test="$eventSeverityCat = 'low'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$eventSeverityCat = 'medium'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$eventSeverityCat IN 'high'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$eventSeverityCat = 'critical'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist srcIpAddrList">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$srcIpAddrList">
+            <regex><![CDATA[^<srcIpAddr:gPatIpAddr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <when test="exist destIpAddrList">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$destIpAddrList">
+            <regex><![CDATA[^<destIpAddr:gPatIpAddr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <when test="exist portList">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$portList">
+            <regex><![CDATA[^<destIpPort:gPatInt>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist virusFamily">
+      <switch>
+        <case>
+          <!-- in some events we parse featurelst to virusFamily which is a csv of several -->
+          <!-- In these cases where you have "fam1,fam2,fam3" we parse the first one -->
+          <collectFieldsByRegex src="$virusFamily">
+            <regex><![CDATA[^"<virusFamily:patExceptComma>,]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+
+    <when test="exist _srcmac">
+      <setEventAttribute attr="srcMACAddr">normalizeMAC($_srcmac)</setEventAttribute>
+    </when>
+
+    <when test="exist _dstmac">
+      <setEventAttribute attr="destMACAddr">normalizeMAC($_dstmac)</setEventAttribute>
+    </when>
+
+    <!-- strip whitespace from base event type -->
+    <setEventAttribute attr="eventType">replaceStrInStr($eventType, " ", "-")</setEventAttribute>
+
+  </parsingInstructions>
+</eventParser>

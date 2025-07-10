@@ -1,0 +1,69 @@
+<eventParser name="ForeScoutCEFParser">
+  <deviceType>
+    <Vendor>ForeScout</Vendor>
+    <Model>CounterACT</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[CEF:0|ForeScout Technologies|CounterAct|8.0.0|COMPLIANCE|host is compliant|1|cs1Label=Compliancy Policy Name cs2Label=Compliancy Policy Subrule Name cs3Label=Host Compliancy Status cs4Label=Compliancy Event Trigger cs1=3.1.3 IM Compliance cs2=No IM Detected cs3=yes cs4=Periodical dst=10.3.3.75 dmac=a0:d3:c1:17:6d:d4 duser=bko dhost=WKS-BKO2 dntdom=aperiogroup dvc=10.3.0.235 dvchost=sau-forescout rt=1532959869000]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\bCEF:\d+\|ForeScout Technologies\|CounterAct\|]]></eventFormatRecognizer>
+  <parsingInstructions>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\bCEF:\d+\|ForeScout Technologies\|CounterAct\|<_other:gPatMesgBodyMin>\|<_event:gPatStr>\|<_detail:gPatMesgBodyMin>\|<eventSeverity:gPatInt>\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">combineMsgId("ForeScout-CounterACT-",$_event)</setEventAttribute>
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="_eventTime" key="rt"/>
+      <attrKeyMap attr="destDomain" key="dntdom"/>
+      <attrKeyMap attr="destMACAddr" key="dmac"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="hostName" key="dvchost"/>
+      <attrKeyMap attr="nepDevIpAddr" key="dvc"/>
+      <attrKeyMap attr="userName" key="duser"/>
+      <attrKeyMap attr="_cs1Label" key="cs1Label"/>
+      <attrKeyMap attr="_cs1" key="cs1"/>
+      <attrKeyMap attr="_cs2Label" key="cs2Label"/>
+      <attrKeyMap attr="_cs2" key="cs2"/>
+      <attrKeyMap attr="_cs3Label" key="cs3Label"/>
+      <attrKeyMap attr="_cs3" key="cs3"/>
+      <attrKeyMap attr="_cs4Label" key="cs4Label"/>
+      <attrKeyMap attr="_cs4" key="cs4"/>
+      <attrKeyMap attr="destName" key="dhost"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist _eventTime">
+      <collectFieldsByRegex src="$_eventTime">
+        <regex><![CDATA[<eventTime:gPatInt>\d{3}$]]></regex>
+      </collectFieldsByRegex>
+    </when>
+
+    <when test="exist _cs1Label">
+      <when test="$_cs1Label  = 'Compliancy Policy Name'">
+        <setEventAttribute attr="policyName">$_cs1</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _cs2Label">
+      <when test="$_cs2Label  = 'Compliancy Policy Subrule Name'">
+        <setEventAttribute attr="policyDetails">$_cs2</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _cs3Label">
+      <when test="$_cs3Label  = 'Host Compliancy Status'">
+        <setEventAttribute attr="incidentStatus">$_cs3</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _cs4Label">
+      <when test="$_cs4Label  = 'Compliancy Event Trigger'">
+        <setEventAttribute attr="actionName">$_cs4</setEventAttribute>
+      </when>
+    </when>
+  </parsingInstructions>
+</eventParser>

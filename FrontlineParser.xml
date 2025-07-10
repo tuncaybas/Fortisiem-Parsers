@@ -1,0 +1,130 @@
+<eventParser name="FrontlineParser">
+
+  <deviceType>
+    <Vendor>Digital Defense</Vendor>
+    <Model>Frontline Vulnerability Manager</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[[Frontline-Scan-Finished] = {"phCustId":1,"ServerIp":"1.1.1.1","ServerHostName":"vm.frontline.com","id":"277898","account":{"id":3516,"name":"name1"},"account_user":"user","account_user_id":15003,"businessgroups":{},"name":"Scan1","description":"Demo data scan","workflow":"va_workflow","status":"completed","scan_locations":"both","status_name":"Completed","status_message":null,"next_event":null,"scan_policy":"Default","account_id":3516,"host_count":45,"has_results":false,"build_reports":false,"deleting":false,"exclude_from_active_view":false,"force_target_detection":false,"is_rna_scan":true,"date_started":"2020-12-02T17:44:45.171119Z","date_modified":"2020-12-02T17:46:46.282603Z","date_finished":"2020-12-02T17:46:46.139995Z"}]]></testEvent>
+    <testEvent><![CDATA[[Frontline-Device-Vuln-Score] = {"phCustId":1,"ServerIp":"1.1.1.1","ServerHostName":"vm.frontline.com","id":85634667,"scan_id":"277898","scan_block_id":"548616","base_scan_id":"277898","partially_scanned":false,"hostname":"CORPORATE-HEARTBLEED","netbios_name":"CORPORATE-HEARTBLEED","dns_name":"","pentest_status":null,"os":"Ubuntu Linux","os_type":"server","os_family":"unix","discovery_method":"nbname","ip_address":"10.10.10.10","mac_address":"","network_profile_id":7286,"network_profile_name":"Internal Scanner Profile","internal":true,"labels":[{"deleted":false,"id":214187,"location":1,"labeled_by":0,"display_name":"WORKGROUP","color":"blue"}],"agent_uuid":null,"assessed_unauth":true,"assessed_os_auth":false,"assessed_db_auth":false,"assessed_cis_auth":false,"assessed_threatscan_auth":false,"has_antivirus":null,"has_outdated_antivirus":null,"has_disabled_antivirus":null,"has_malware":null,"has_exploitable":true,"has_crimewareable":null,"dns_smartname":"CORPORATE-HEARTBLEED","netbios_smartname":"CORPORATE-HEARTBLEED","hidden":false,"hide_from_now_on":false,"date_started":null,"date_finished":null,"matched_status":"new","scan_version_threat_rank":98.0,"scan_version_active_risk_score":96.885,"active_view_active_risk_details":{"risk_weight":{"host_risk_weight":50.0},"exposure_score":{"domain":"WORKGROUP","unweighted":69.7,"domain_host_count":7,"subnet":null,"domain_threat_rank":99.0,"weight":0.05,"external_asset":false,"subnet_host_count":0,"weighted":3.4850000000000003,"subnet_threat_rank":0},"severity_score":{"unweighted":100.0,"weighted":15.0,"weight":0.15},"threat_score":{"unweighted":98.0,"weighted":78.4,"weight":0.8},"ars_unweighted":96.885},"scan_version_active_risk_details":{"risk_weight":{"host_risk_weight":50.0},"exposure_score":{"domain":"WORKGROUP","unweighted":69.7,"domain_host_count":7,"subnet":null,"domain_threat_rank":99.0,"weight":0.05,"external_asset":false,"subnet_host_count":0,"weighted":3.4850000000000003,"subnet_threat_rank":0},"severity_score":{"unweighted":100.0,"weighted":15.0,"weight":0.15},"threat_score":{"unweighted":98.0,"weighted":78.4,"weight":0.8},"ars_unweighted":96.885},"named_asset_name":null,"has_notes":false,"notes_distribution":{"asset_only":false,"vuln_only":false,"asset":false},"is_compromised":false,"is_retired":false,"aws_instance_id":null,"active_view_date_first_created":"2020-12-02T17:46:12.640112Z","scan_version":1016281,"scan_version_active":true,"scan_version_date_created":"2020-12-02T17:46:12.640112Z","active_view_date_created":"2020-12-02T17:46:12.640112Z","scan_version_host_id":85634667,"scan_version_vulnerability_severity_counts":{"unweighted":{"pci_alt":{"counts":{"fail":8,"pass":141},"overall_security_gpa":0},"pci":{"counts":{"fail":8,"pass":141},"overall_security_gpa":0},"nvd_alt":{"counts":{"medium":6,"high":5,"low":138},"overall_security_gpa":0},"nvd":{"counts":{"medium":20,"high":15,"low":114},"overall_security_gpa":0},"ddi":{"counts":{"low":22,"info":80,"trivial":39,"medium":3,"high":0,"critical":5,"none":0},"overall_security_gpa":0.0},"ddi_alt":{"counts":{"low":7,"info":0,"trivial":131,"medium":2,"high":4,"critical":5,"none":0},"overall_security_gpa":0}},"weighted":{"pci_alt":{"counts":{"fail":8,"pass":141},"overall_security_gpa":0},"pci":{"counts":{"fail":8,"pass":141},"overall_security_gpa":0},"nvd_alt":{"counts":{"medium":6,"high":5,"low":138},"overall_security_gpa":0},"nvd":{"counts":{"medium":20,"high":15,"low":114},"overall_security_gpa":0},"ddi":{"counts":{"low":22,"info":80,"trivial":39,"medium":3,"high":0,"critical":5,"none":0},"overall_security_gpa":0.0},"ddi_alt":{"counts":{"low":7,"info":0,"trivial":131,"medium":2,"high":4,"critical":5,"none":0},"overall_security_gpa":0}}},"auth_status":{"extended_details":{"cis":null,"os":{"linux":null,"vmware":null,"windows":"Authentication Failure. Reason:\nNo valid credentials provided"},"db":{"oracle":null,"mysql":null,"postgresql":null,"mssql":null},"threatscan":"Authentication Failure. Reason:\nNo valid credentials provided"},"overall":"N/A","details":{}},"scan_version_vulnerability_count":149,"scan_version_host_severity_list":{"nvd":"high","pci":"fail","ddi":"critical"},"scan_version_host_rating_list":{"pci_alt":"Fail","pci":"Fail","nvd_alt":"High","nvd":"High","ddi":"F","ddi_alt":"F"},"scanner_version":"3.0.26.2","scan_version_cvss_score":10.0,"scan_version_cvss_version":2.0,"active_view_cvss_version":2.0,"scan_version_risk_weight":50.0,"scan_version_risk_score":250.0}]]></testEvent>
+    <testEvent><![CDATA[[Frontline-Vuln-Detected] = {"phCustId":1,"ServerIp":"1.1.1.1","ServerHostName":"vm.frontline.com","cve":"","id":3202201668,"hostname":"10.10.10.10","manually_added_fix_status_name":null,"manually_added_date_fix_confirmed":null,"acceptable_risk":null,"ip_address":"10.23.177.63","title":"Easily Guessable SSH Credentials","port":22,"transport":"tcp","protocol":"ssh","tunnel":"none","active_view_active_risk_score":38.65,"scan_version_active_risk_score":38.65,"active_view_active_risk_details":{"severity_score":{"weighted":14.25,"weight":0.15,"unweighted":95},"exposure_score":{"subnet_threat_rank":0,"weight":0.05,"domain_host_count":0,"subnet_host_count":0,"external_asset":false,"domain":null,"weighted":2.0,"domain_threat_rank":0,"unweighted":40.0,"subnet":null},"threat_score":{"weighted":22.400000000000002,"weight":0.8,"unweighted":28.0}},"scan_version_active_risk_details":{"severity_score":{"weighted":14.25,"weight":0.15,"unweighted":95},"exposure_score":{"subnet_threat_rank":0,"weight":0.05,"domain_host_count":0,"subnet_host_count":0,"external_asset":false,"domain":null,"weighted":2.0,"domain_threat_rank":0,"unweighted":40.0,"subnet":null},"threat_score":{"weighted":22.400000000000002,"weight":0.8,"unweighted":28.0}},"severities":{"nvd":"high","pci":"fail","nvd_alt":"low","ddi_alt":"low","pci_alt":"pass","ddi":"critical"},"hidden":false,"host_hidden":false,"data":"successfully logged in with username: user, password: root","manually_added":false,"false_positive":false,"date_started":null,"date_finished":null,"hide_from_now_on":false,"active_view_date_created":"2020-12-02T17:46:12.640112Z","scan_id":"277898","scan_block_id":"548616","host_id":85634703,"detect_type":"remote","vuln_class":"explicit","scanner_version":"3.0.26.2","matched_status":"new","cvss_score":"7.5","cvss_version":"2.0","cvss_base_score_v2":7.5,"cvss_base_score_v3":null,"has_notes":false,"active_view_date_first_created":"2020-12-02T17:46:12.640112Z","scan_version":1016281,"scan_version_vulnerability_id":3202201668,"scan_version_host_id":85634703,"scan_version_date_created":"2020-12-02T17:46:12.640112Z","active_view_threat_rank":28.0,"scan_version_threat_rank":28.0,"threat_activity":{"1w":0,"total":0,"1m":0,"1y":0,"3m":0},"exploitability":{"exploited_in_wild":false,"has_exploit_func":false,"is_priority_exploitable":null,"is_crimewareable":null,"has_exploit_poc":false,"has_exploit_kit":false,"is_exploitable":null},"analyst_threat_intel":null,"id_ddi":104120,"labels":[]}]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[^\[Frontline-[^\]]+\] = \{.*\}]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[^\[<eventType:gPatStrRightSB>\]\s*=\s*<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="extEventRecvProto">FRONTLINE_API</setEventAttribute>
+
+    <choose>
+      <when test="$eventType = 'Frontline-Vuln-Detected'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="phCustId" key="phCustId"/>
+          <attrKeyMap attr="vulnId" key="id"/>
+          <attrKeyMap attr="reptDevIpAddr" key="ServerIp"/>
+          <attrKeyMap attr="reptDevName" key="ServerHostName"/>
+          <attrKeyMap attr="vulnCVEId" key="cve"/>
+          <attrKeyMap attr="hostName" key="hostname"/>
+          <attrKeyMap attr="hostIpAddr" key="ip_address"/>
+          <attrKeyMap attr="vulnName" key="title"/>
+          <attrKeyMap attr="ipPort" key="port"/>
+          <attrKeyMap attr="appTransportProto" key="protocol"/>
+          <attrKeyMap attr="riskScore" key="active_view_active_risk_score"/>
+          <attrKeyMap attr="vulnDesc" key="data"/>
+          <attrKeyMap attr="_updateTime" key="active_view_date_created"/>
+          <attrKeyMap attr="scanId" key="scan_id"/>
+          <attrKeyMap attr="hostId" key="host_id"/>
+          <attrKeyMap attr="osName" key="os"/>
+          <attrKeyMap attr="osType" key="os_family"/>
+          <attrKeyMap attr="role" key="os_type"/>
+          <attrKeyMap attr="type" key="detect_type"/>
+          <attrKeyMap attr="vulnType" key="vuln_class"/>
+          <attrKeyMap attr="scanEngineVer" key="scanner_version"/>
+          <attrKeyMap attr="vulnCvssScore" key="cvss_score"/>
+          <attrKeyMap attr="vulnScore" key="cvss_score"/>
+          <attrKeyMap attr="vulnCvssBaseScore" key="cvss_base_score_v2"/>
+          <attrKeyMap attr="vulnCvssBaseScore" key="cvss_base_score_v3"/>
+          <attrKeyMap attr="_firstSeenTime" key="active_view_date_first_created"/>
+          <attrKeyMap attr="threatValue" key="active_view_threat_rank"/>
+        </collectAndSetAttrByJSON>
+      </when>
+
+      <when test="$eventType = 'Frontline-Scan-Finished'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="phCustId" key="phCustId"/>
+          <attrKeyMap attr="reptDevIpAddr" key="ServerIp"/>
+          <attrKeyMap attr="reptDevName" key="ServerHostName"/>
+          <attrKeyMap attr="scanId" key="id"/>
+          <attrKeyMap attr="user" key="account_user"/>
+          <attrKeyMap attr="userId" key="account_user_id"/>
+          <attrKeyMap attr="scanName" key="name"/>
+          <attrKeyMap attr="description" key="description"/>
+          <attrKeyMap attr="scanProfile" key="scan_policy"/>
+          <attrKeyMap attr="scanStatusDetail" key="status_message"/>
+          <attrKeyMap attr="accountId" key="account_id"/>
+          <attrKeyMap attr="count" key="host_count"/>
+          <attrKeyMap attr="_scanBegin" key="date_started"/>
+          <attrKeyMap attr="_scanEnd" key="date_finished"/>
+        </collectAndSetAttrByJSON>
+      </when>
+
+      <when test="$eventType = 'Frontline-Device-Vuln-Score'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="phCustId" key="phCustId"/>
+          <attrKeyMap attr="reptDevIpAddr" key="ServerIp"/>
+          <attrKeyMap attr="reptDevName" key="ServerHostName"/>
+          <attrKeyMap attr="hostId" key="id"/>
+          <attrKeyMap attr="scanId" key="scan_id"/>
+          <attrKeyMap attr="hostName" key="hostname"/>
+          <attrKeyMap attr="osName" key="os"/>
+          <attrKeyMap attr="osType" key="os_family"/>
+          <attrKeyMap attr="role" key="os_type"/>
+          <attrKeyMap attr="hostIpAddr" key="ip_address"/>
+          <attrKeyMap attr="hostMACAddr" key="mac_address"/>
+          <attrKeyMap attr="profileName" key="network_profile_name"/>
+          <attrKeyMap attr="uuid" key="agent_uuid"/>
+          <attrKeyMap attr="threatValue" key="scan_version_threat_rank"/>
+          <attrKeyMap attr="riskScore" key="scan_version_active_risk_score"/>
+          <attrKeyMap attr="scanEngineVer" key="scanner_version"/>
+          <attrKeyMap attr="vulnCvssScore" key="scan_version_cvss_score"/>
+          <attrKeyMap attr="vulnScore" key="scan_version_cvss_score"/>
+          <attrKeyMap attr="_firstSeenTime" key="active_view_date_first_created"/>
+          <attrKeyMap attr="_updateTime" key="active_view_date_created"/>
+          <attrKeyMap attr="pciComplianceStatus" key="scan_version_host_severity_list.pci"/>
+        </collectAndSetAttrByJSON>
+      </when>
+    </choose>
+
+    <when test="exist _updateTime">
+      <collectFieldsByRegex src="$_updateTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="updateTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+    <when test="exist _firstSeenTime">
+      <!--"2020-12-02T17:46:12.640112Z"-->
+      <collectFieldsByRegex src="$_firstSeenTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="firstSeenTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <when test="exist _scanBegin">
+      <collectFieldsByRegex src="$_scanBegin">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="scanBegin">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <when test="exist _scanEnd">
+      <collectFieldsByRegex src="$_scanEnd">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="scanEnd">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>

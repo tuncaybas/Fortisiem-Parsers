@@ -1,0 +1,72 @@
+<eventParser name="FortiEMSParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiClient EMS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[\[FortiEMS-Vuln(?:-Detected|-Scan)\]\s*=\s*]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[[FortiEMS-Vuln-Detected] = {"avatar":0,"client_id":1651,"critical":1,"device_id":"1463","dont_patch":1,"fct_version":"7.0.2.0090","high":4,"host":"Chris Dominguez Laptop","ip":"10.1.0.16","last_vuln_scan":1675748166,"low":1,"medium":8,"os_version":"Linux LUBUNTU 16.0.4","patch_status":0,"scan_status":"vulnerable","serverName":"evansr-fsm-lab-321.fortidemo.fortinet.com","serverIp":"10.11.11.11","total":14,"username":"ExampleUser","vblt_running":false}]]></testEvent>
+    <testEvent><![CDATA[[FortiEMS-Vuln-Scan] = {"category":"Applications","client_id":"1490","cve_list":"CVE-2016-7426","cvss":0.0,"device_id":"1353","dont_patch":true,"fct_version":"7.0.2.0090","host":"Haiden Fisher Desktop","ip":"10.200.1.12","last_scan_time":1676314038,"os_version":"Linux LUBUNTU 14.0.4","patch_status":0,"product_name":null,"reference_page":"http://support.ntp.org/bin/view/Main/NtpSec3071","serverName":"evansr-fsm-lab-321.fortidemo.fortinet.com","serverIp":"10.11.11.11","severity":"Medium","title":"Client rate limiting and server responses","vulnerability_id":38942}]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\[<eventType:gPatStrRightSB>\]\s*=\s*<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="extEventRecvProto">FORTIEMS_API</setEventAttribute>
+    <collectAndSetAttrByJSON src="$_body">
+      <attrKeyMap attr="phCustId" key="phCustId"/>
+      <attrKeyMap attr="reptDevIpAddr" key="serverIp"/>
+      <attrKeyMap attr="reptDevName" key="serverName"/>
+      <attrKeyMap attr="serverIpAddr" key="serverIp"/>
+      <attrKeyMap attr="serverName" key="serverName"/>
+      <attrKeyMap attr="deviceIdentification" key="device_id"/>
+      <attrKeyMap attr="clientAppId" key="client_id"/>
+      <attrKeyMap attr="userId" key="client_user_id"/>
+      <attrKeyMap attr="hostIpAddr" key="ip"/>
+      <attrKeyMap attr="hostName" key="host"/>
+      <attrKeyMap attr="hostModel" key="hostModel"/>
+      <attrKeyMap attr="hostVendor" key="hostVendor"/>
+      <attrKeyMap attr="_osVersion" key="os_version"/>
+      <attrKeyMap attr="version" key="fct_version"/>
+      <attrKeyMap attr="updateTime" key="last_vuln_scan"/>
+      <attrKeyMap attr="scanEnd" key="last_vuln_scan"/>
+      <attrKeyMap attr="threatCategory" key="category"/>
+      <attrKeyMap attr="vulnCVEId" key="cve_list"/>
+      <attrKeyMap attr="vulnCvssScore" key="cvss"/>
+      <attrKeyMap attr="product" key="product_name"/>
+      <attrKeyMap attr="exchMsgReference" key="reference_page"/>
+      <attrKeyMap attr="_severity" key="severity"/>
+      <attrKeyMap attr="vulnName" key="title"/>
+      <attrKeyMap attr="vulnId" key="vulnerability_id"/>
+      <attrKeyMap attr="scanStatus" key="scan_status"/>
+      <attrKeyMap attr="vulnCount" key="total"/>
+    </collectAndSetAttrByJSON>
+
+    <when test="exist _severity">
+      <setEventAttribute attr="_severity">toLower($_severity)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist _severity"/>
+      <when test="$_severity = 'low'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$_severity = 'medium'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_severity = 'high'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_severity = 'critical'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+    </choose>
+
+  </parsingInstructions>
+
+</eventParser>

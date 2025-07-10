@@ -1,0 +1,75 @@
+<eventParser name="FlowTraqParser">
+  <deviceType>
+    <Vendor>Riverbed</Vendor>
+    <Model>FlowTraq</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<134>Mar 15 09:11:38 10.17.107.196 1 2019-03-15T14:11:38.798033+00:00 example.com flowtraq 22743 ft_login0 [ft_login0@41180 username="john0850" from="::FFFF:127.0.0.1" result="ok" method="ldap"] user john0850 from ::FFFF:127.0.0.1 ldap login success]]></testEvent>
+    <testEvent><![CDATA[<131>Mar 15 12:20:42 10.17.107.196 1 2019-03-15T17:20:42.928016+00:00 example.com flowtraq 22743 ft_login0 [ft_login0@41180 username="" from="::FFFF:127.0.0.1" result="fail" method="local"] user from ::FFFF:127.0.0.1 local login failed]]></testEvent>
+    <testEvent><![CDATA[<132>Mar 15 10:08:44 10.17.107.196 1 2019-03-15T15:08:44.597578+00:00 example.com flowtraq 22743 ft_exp0 [ft_exp0@41180 type="exporter_2min" address="10.16.0.2" flowvers="any"] any exporter 10.16.0.2 quiet for 2 minutes.]]></testEvent>
+    <testEvent><![CDATA[<132>1 2019-04-05T16:42:10.516242+00:00 example.com flowtraq 31820 ftnbi_blacklisted_ip[ftnbi_blacklisted_ip@41180 SERVER_BL_NAME="ATO minexmr" ALERT_TYPE="blacklisted_ip" LATEST_UTC="1554482530.486065" SERVER_IP="37.59.54.205" PROTO="6" CID="3" EARLIEST_UTC="1554482530.486065" CLIENT_IP="104.130.167.22" CID_NAME="IAD Datacenter" CLIENT_TG_NAME="IAD Public" SERVER_PORT="443" CONNECTION_COUNT="1" ID="40752492" SEVERITY="10"] Blacklist alert: 104.130.167.22 -> 37.59.54.205 6/443]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patStrMin"><![CDATA[\S*?]]></pattern>
+    <pattern name="patStrRightParen"><![CDATA[[^)]*]]></pattern>
+    <pattern name="patStrAction"><![CDATA[[^,;.]*]]></pattern>
+    <pattern name="patStrQuote"><![CDATA[[^"]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatHostName>\s+flowtraq\s+\d+\s+ft\w+\s*\[]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>(?:<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatIpAddr>\s+\d+|\d+)\s+<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d{6}<_tz:gPatTimeZone>\s+<reptDevName:gPatHostName>\s+flowtraq\s+\d+\sft_?<_eventType:patStrMin>\d*\s*\[<_attr:gPatStrRightSB>\]<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    <setEventAttribute attr="eventType">FlowTraq-Generic</setEventAttribute>
+
+    <collectFieldsByKeyValuePair sep=" " src="$_attr">
+      <attrKeyMap attr="alertName" key="ALERT_TYPE"/>
+      <attrKeyMap attr="clientIpAddr" key="CLIENT_IP"/>
+      <attrKeyMap attr="connCounter" key="CONNECTION_COUNT"/>
+      <attrKeyMap attr="transactionId" key="ID"/>
+      <attrKeyMap attr="eventTime" key="LATEST_UTC"/>
+      <attrKeyMap attr="authenMethod" key="method"/>
+      <attrKeyMap attr="ipProto" key="PROTO"/>
+      <attrKeyMap attr="authResult" key="result"/>
+      <attrKeyMap attr="vulnName" key="SERVER_BL_NAME"/>
+      <attrKeyMap attr="serverIpAddr" key="SERVER_IP"/>
+      <attrKeyMap attr="srcIpPort" key="SERVER_PORT"/>
+      <attrKeyMap attr="eventSeverity" key="SEVERITY"/>
+      <attrKeyMap attr="_ftType" key="type"/>
+      <attrKeyMap attr="user" key="username"/>
+    </collectFieldsByKeyValuePair>
+
+    <choose>
+      <when test="exist _ftType">
+        <setEventAttribute attr="_ftType">replaceStringByRegex($_ftType, "[ _]+", "-")</setEventAttribute>
+        <setEventAttribute attr="eventType">combineMsgId("FlowTraq-", $_ftType)</setEventAttribute>
+      </when>
+
+      <when test="exist vulnName">
+        <setEventAttribute attr="_vulnName">replaceStringByRegex($vulnName, "\s+", "-")</setEventAttribute>
+        <setEventAttribute attr="eventType">combineMsgId("FlowTraq-", $_vulnName)</setEventAttribute>
+      </when>
+
+      <when test="$_eventType = 'login'">
+        <setEventAttribute attr="eventType">FlowTraq-login</setEventAttribute>
+        <choose>
+          <when test="not_exist authResult"/>
+          <when test="$authResult = 'fail'">
+            <setEventAttribute attr="eventType">FlowTraq-login-failed</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+          </when>
+          <when test="$authResult = 'ok'">
+            <setEventAttribute attr="eventType">FlowTraq-login-success</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

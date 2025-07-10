@@ -1,0 +1,202 @@
+<eventParser name="FortiGateTrapParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiOS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[SNMPv2-SMI::enterprises\.12356\.]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[2016-06-21 15:41:50 0.0.0.0TRAP2, SNMP v2c, community public	. Cold Start Trap (0) Uptime: 0:00:00.00	DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (93446245) 10 days, 19:34:22.45	SNMPv2-MIB::snmpTrapOID.0 = OID: SNMPv2-SMI::enterprises.12356.101.2.0.1201	SNMPv2-SMI::enterprises.12356.100.1.1.1.0 = STRING: "FWF60D4614026138"	SNMPv2-MIB::sysName.0 = STRING: FWF60D4614026138	IF-MIB::ifIndex.0 = INTEGER: 2	SNMPv2-SMI::enterprises.12356.101.3.2.1.1.1.0 = INTEGER: 1	SNMPv2-SMI::enterprises.12356.101.18.1.2.0 = Gauge32: 5	SNMPv2-SMI::enterprises.12356.101.18.1.3.0 = Gauge32: 5	SNMPv2-SMI::enterprises.12356.101.18.1.1.0 = STRING: "00:09:0f:99:42:9c"]]></testEvent>
+    <testEvent><![CDATA[2016-06-21 15:49:09 0.0.0.0TRAP2 SNMP v2c community public	. Cold Start Trap (0) Uptime: 0:00:00.00	DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (93490157) 10 days 19:41:41.57	SNMPv2-MIB::snmpTrapOID.0 = OID: SNMPv2-SMI::enterprises.12356.100.1.3.0.999	SNMPv2-SMI::enterprises.12356.100.1.1.1.0 = STRING: "FWF60D4614026138"	SNMPv2-MIB::sysName.0 = STRING: FWF60D4614026138]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<_reptIp:gPatIpAddr>|<hostName:gPatHostName>)<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventType">FortiGate-Generic</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">Snmp Trap</setEventAttribute>
+
+    <when test="$_reptIp != '127.0.0.1'">
+      <when test="$_reptIp != '0.0.0.0'">
+        <setEventAttribute attr="reptDevIpAddr">$_reptIp</setEventAttribute>
+      </when>
+    </when>
+
+    <collectAndSetAttrByKeyValuePair sep="\t\\| SNMP" src="$_body">
+      <attrKeyMap attr="_id" key="SNMPv2-MIB::snmpTrapOID.0 = OID: SNMPv2-SMI::enterprises.12356."/>
+      <attrKeyMap attr="serialNumber" key="SNMPv2-SMI::enterprises.12356.100.1.1.1.0 = STRING: "/>
+      <attrKeyMap attr="hostIpAddr" key="SNMPv2-SMI::enterprises.12356.101.6.2.1.0 = STRING: "/>
+      <attrKeyMap attr="dhcpSubnetMask" key="SNMPv2-SMI::enterprises.12356.101.6.2.2.0 = STRING: "/>
+      <attrKeyMap attr="virusName" key="SNMPv2-SMI::enterprises.12356.101.8.3.1.0 = STRING: "/>
+      <attrKeyMap attr="srcIpAddr" key="SNMPv2-SMI::enterprises.12356.101.9.3.2.0 = STRING: "/>
+      <attrKeyMap attr="ipsEventName" key="SNMPv2-SMI::enterprises.12356.101.9.3.3.0 = STRING: "/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <when test="not_exist hostIpAddr">
+      <setEventAttribute attr="hostIpAddr">$reptDevIpAddr</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist _id"/>
+      <when test="$_id = '101.6.0.1003'">
+        <setEventAttribute attr="eventType">FortiGate-fgFmTrapConfChange</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_id = '101.6.0.1000'">
+        <setEventAttribute attr="eventType">FortiGate-fgFmTrapDeployComplete</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_id = '101.6.0.1002'">
+        <setEventAttribute attr="eventType">FortiGate-fgFmTrapDeployInProgress</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_id = '101.6.0.1004'">
+        <setEventAttribute attr="eventType">FortiGate-fgFmTrapIfChange</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_id = '101.2.0.606'">
+        <setEventAttribute attr="eventType">FortiGate-fgTrapAvBypass</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$_id = '101.2.0.605'">
+        <setEventAttribute attr="eventType">FortiGate-fgTrapAvEnterConserve</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$_id = '101.2.0.604'">
+        <setEventAttribute attr="eventType">FortiGate-fgTrapAvFragmented</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$_id = '101.2.0.602'">
+        <setEventAttribute attr="eventType">FortiGate-fgTrapAvOversize</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$_id = '101.2.0.608'">
+        <setEventAttribute attr="eventType">FortiGate-fgTrapAvOversizeBlock</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$_id = '101.2.0.607'">
+        <setEventAttribute attr="eventType">FortiGate-fgTrapAvOversizePass</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$_id = '101.2.0.603'">
+        <setEventAttribute attr="eventType">FortiGate-fgTrapAvPattern</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$_id = '101.2.0.601'">
+        <setEventAttribute attr="eventType">FortiGate-fgTrapAvVirus</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_id = '101.2.0.701'">
+        <setEventAttribute attr="eventType">FortiGate-fgTrapFazDisconnect</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$_id = '101.2.0.902'">
+        <setEventAttribute attr="eventType">FortiGate-fgTrapFcSwDown</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_id = '101.2.0.901'">
+        <setEventAttribute attr="eventType">FortiGate-fgTrapFcSwUp</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_id = '101.2.0.403'">
+        <setEventAttribute attr="eventType">FortiGate-fgTrapHaHBFail</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_id = '101.2.0.404'">
+        <setEventAttribute attr="eventType">FortiGate-fgTrapHaMemberDown</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_id = '101.2.0.405'">
+        <setEventAttribute attr="eventType">FortiGate-fgTrapHaMemberUp</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_id = '101.2.0.402'">
+        <setEventAttribute attr="eventType">FortiGate-fgTrapHaStateChange</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_id = '101.2.0.401'">
+        <setEventAttribute attr="eventType">FortiGate-fgTrapHaSwitch</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_id = '101.2.0.504'">
+        <setEventAttribute attr="eventType">FortiGate-fgTrapIpsAnomaly</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$_id = '101.2.0.506'">
+        <setEventAttribute attr="eventType">FortiGate-fgTrapIpsFailOpen</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_id = '101.2.0.505'">
+        <setEventAttribute attr="eventType">FortiGate-fgTrapIpsPkgUpdate</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_id = '101.2.0.503'">
+        <setEventAttribute attr="eventType">FortiGate-fgTrapIpsSignature</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_id = '101.2.0.1101'">
+        <setEventAttribute attr="eventType">FortiGate-fgTrapServerLoadBalanceRealServerDown</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_id = '101.2.0.302'">
+        <setEventAttribute attr="eventType">FortiGate-fgTrapVpnTunDown</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_id = '101.2.0.301'">
+        <setEventAttribute attr="eventType">FortiGate-fgTrapVpnTunUp</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_id = '101.2.0.802'">
+        <setEventAttribute attr="eventType">FortiGate-fgTrapWcApDown</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_id = '101.2.0.801'">
+        <setEventAttribute attr="eventType">FortiGate-fgTrapWcApUp</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_id = '100.1.3.0.101'">
+        <setEventAttribute attr="eventType">FortiGate-fnTrapCpuThreshold</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_id = '100.1.3.0.201'">
+        <setEventAttribute attr="eventType">FortiGate-fnTrapIpChange</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_id = '100.1.3.0.103'">
+        <setEventAttribute attr="eventType">FortiGate-fnTrapLogDiskThreshold</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_id = '100.1.3.0.102'">
+        <setEventAttribute attr="eventType">FortiGate-fnTrapMemThreshold</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_id = '100.1.3.0.106'">
+        <setEventAttribute attr="eventType">FortiGate-fnTrapPowerSupplyFailure</setEventAttribute>
+        <setEventAttribute attr="hwComponentName">Power</setEventAttribute>
+        <setEventAttribute attr="hwComponentStatus">Failed</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_id = '100.1.3.0.104'">
+        <setEventAttribute attr="eventType">FortiGate-fnTrapTempHigh</setEventAttribute>
+        <setEventAttribute attr="hwComponentName">Temperature</setEventAttribute>
+        <setEventAttribute attr="hwComponentStatus">High</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_id = '100.1.3.0.999'">
+        <setEventAttribute attr="eventType">FortiGate-fnTrapTest</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_id = '100.1.3.0.105'">
+        <setEventAttribute attr="eventType">FortiGate-fnTrapVoltageOutOfRange</setEventAttribute>
+        <setEventAttribute attr="hwComponentName">Voltage</setEventAttribute>
+        <setEventAttribute attr="hwComponentStatus">Out of range</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

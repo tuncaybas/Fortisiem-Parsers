@@ -1,0 +1,104 @@
+<eventParser name="FortiCASBParser">
+
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiCASB</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[[FortiCASB-EVENT] = {"alertType":"customized","applicationId":"00D1I000001W2NqUAK","buId":84,"companyId":"62598","contextName":"predefined-specifc-location","createTime":1620959898472,"defineType":"Customized","displayOperation":"Post","eventId":"62598-Salesforce-851a199a74ae657bbfa116757ee26df2","eventIdList":["62598-Salesforce-851a199a74ae657bbfa116757ee26df2"],"geoLocationList":[{"city":"Taipei City","countryCode":"TW","countryName":"Taiwan","geonameId":"7796287","ip":"10.10.10.100"}],"id":"94c0c24fca61e822978ce0e31b5493d0","matches":0,"object":"Cucumber-JVM post 531146745\n772-10-2879\n377 84 0512\n031-86 9021\n587 66-9530\n608-223442\n19024-9018\n623 064066\n55334 3305\n293-86-1772\n410-96-3346\n271-04-6135\n174-42-4089\n016-56-0128\n624-72-2882\n224-66-8451\n537-29-1972\n359-38-2342\n520-38-7202\n547-40-1606\n553-34-3305\n001-03-1234 2021-05-14T02:28:18.775126Z","objectType":"DOCUMENT","phCustId":1,"policyId":"10787428","policyName":"predefined-specifc-location","resultDesc":"User activity triggered in the IP range -- all IPs\n Hit the activity matching rule: all user include\n Hit the activity matching rule: all events include\n User activty triggered in location restriction: Taipei City\n User did the activity violation rule: All days\n ","serverHostName":"www.forticasb.com","serverIp":"10.11.11.11","service":"Salesforce","severity":"Alert","timestampUUID":"94c0c24fca61e822978ce0e31b5493d0","updateTime":1620959898000,"user":"User1","userId":"0051I000000d158QAA","userName":"User1@example.com","violationActivity":"SALESFORCE_POST"}]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patAt"><![CDATA[[^@]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[^\[FortiCASB-EVENT\] = \{.*\}]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[^\[<:gPatStrRightSB>\]\s*=\s*<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">FortiCASB-Security-Generic</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">FORTICASB_API</setEventAttribute>
+
+    <collectAndSetAttrByJSON src="$_body">
+      <attrKeyMap attr="phCustId" key="phCustId"/>
+      <attrKeyMap attr="reptDevIpAddr" key="serverIp"/>
+      <attrKeyMap attr="reptDevName" key="serverHostName"/>
+      <attrKeyMap attr="unitId" key="buId"/>
+      <attrKeyMap attr="company" key="companyId"/>
+      <attrKeyMap attr="threadId" key="id"/>
+      <attrKeyMap attr="osObjName" key="object"/>
+      <attrKeyMap attr="objType" key="objectType"/>
+      <attrKeyMap attr="oid" key="objectId"/>
+      <attrKeyMap attr="user" key="user"/>
+      <attrKeyMap attr="emailId" key="userName"/>
+      <attrKeyMap attr="_severity" key="severity"/>
+      <attrKeyMap attr="applicationIdStr" key="applicationId"/>
+      <attrKeyMap attr="activityName" key="violationActivity"/>
+      <attrKeyMap attr="opName" key="displayOperation"/>
+      <attrKeyMap attr="_createTime" key="createTime"/>
+      <attrKeyMap attr="_updateTime" key="updateTime"/>
+      <attrKeyMap attr="policyName" key="policyName"/>
+      <attrKeyMap attr="policyId" key="policyId"/>
+      <attrKeyMap attr="policyDetails" key="contextName"/>
+      <attrKeyMap attr="userId" key="userId"/>
+      <attrKeyMap attr="msgId" key="eventId"/>
+      <attrKeyMap attr="serviceName" key="service"/>
+      <attrKeyMap attr="description" key="resultDesc"/>
+      <attrKeyMap attr="threatType" key="alertType"/>
+      <attrKeyMap attr="type" key="defineType"/>
+      <attrKeyMap attr="status" key="state"/>
+      <attrKeyMap attr="srcIpAddr" key="geoLocationList[0].ip"/>
+    </collectAndSetAttrByJSON>
+
+    <when test="exist _updateTime">
+      <setEventAttribute attr="updateTime">divide($_updateTime, 1000)</setEventAttribute>
+    </when>
+
+    <when test="exist _createTime">
+      <setEventAttribute attr="createTime">divide($_createTime,1000)</setEventAttribute>
+    </when>
+
+
+    <when test="exist emailId">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$emailId">
+            <regex><![CDATA[<_user:patAt>@<mailDomain:gPatMesgBody>]]></regex>
+          </collectFieldsByRegex>
+          <when test="not_exist user">
+            <setEventAttribute attr="user">$_user</setEventAttribute>
+          </when>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+
+    <when test="exist _severity">
+      <choose>
+        <when test="$_severity = 'Critical'">
+          <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        </when>
+        <when test="$_severity = 'Alert'">
+          <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        </when>
+        <when test="$_severity = 'Warning'">
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </when>
+        <when test="$_severity = 'Pass'">
+          <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist serviceName">
+      <setEventAttribute attr="_serviceName">replaceStringByRegex($serviceName, "\s+", "_")</setEventAttribute>
+      <setEventAttribute attr="eventType">combineMsgId("FortiCASB-", $_serviceName,"-Alert")</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>

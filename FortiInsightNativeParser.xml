@@ -1,0 +1,159 @@
+<eventParser name="FortiInsightNativeParser">
+  <deviceType>
+    <Vendor>Microsoft</Vendor>
+    <Model>Windows</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[2020-01-08T18:06:46Z US-YWANGTHT-PC 172.30.144.205 [phCustId]="2003" [customer]="org4" [monitorStatus]="Success" [Locale]="en-US" [MachineGuid]="11111111-1111-1111-1111-111111111111" [timeZone]="-0800" FortiInsight-Windows-Agent msg = {"ac":"new process created","ap":"chrome.exe","d":"2020-01-08T10:06:46.172-08:00","m":"JAv","meta":{"args":"\"c:\\program files (x86)\\google\\chrome\\application\\chrome.exe\" --type=renderer --field-trial-handle=1504,2504093926102215227,13515872725714322148,131072 --lang=en-us --extension-process --disable-oor-cors --enable-auto-reload --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --service-request-channel-token=550117719423232105 --renderer-client-id=71 --no-v8-untrusted-code-mitigations --mojo-platform-channel-handle=2656 /prefetch:1"},"r":"c:\\program files (x86)\\google\\chrome\\application\\chrome.exe","u":"fortinet-us__ywangtht"}]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patJson"><![CDATA[\{.*\}]]></pattern>
+    <pattern name="patNonDot"><![CDATA[[^.]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\s+FortiInsight-(?:Windows|macOS)-Agent msg = \{]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime><_tz:gPatTimeZone>\s+<hostName:gPatHostName>\s+(?:<reptDevIpAddr:gPatIpAddr>\s+)?<_body:gPatMesgBodyMin>FortiInsight-<_os:gPatWord>-Agent\s+msg\s*=\s+<msg:patJson>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">combineMsgId("FINS-", $_os, "-Generic")</setEventAttribute>
+    <setEventAttribute attr="reptDevName">$hostName</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">Windows Agent</setEventAttribute>
+
+    <choose>
+      <when test="$_os = 'Windows'">
+        <setEventAttribute attr="reptVendor">Microsoft</setEventAttribute>
+        <setEventAttribute attr="reptModel">Windows</setEventAttribute>
+        <collectAndSetAttrByKeyValuePair sep=" [" src="$_body">
+          <attrKeyMap attr="customer" key="[customer]="/>
+          <attrKeyMap attr="machineGUID" key="[MachineGuid]="/>
+          <attrKeyMap attr="machineGUID" key="[machineGUID]="/>
+          <attrKeyMap attr="monitorStatus" key="[monitorStatus]="/>
+          <attrKeyMap attr="phCustId" key="[phCustId]="/>
+        </collectAndSetAttrByKeyValuePair>
+      </when>
+      <when test="$_os = 'macOS'">
+        <setEventAttribute attr="reptVendor">Apple</setEventAttribute>
+        <setEventAttribute attr="reptModel">macOS</setEventAttribute>
+      </when>
+    </choose>
+
+    <collectAndSetAttrByJSON src="$msg">
+      <attrKeyMap attr="activityName" key="ac"/>
+      <attrKeyMap attr="appName" key="ap"/>
+      <attrKeyMap attr="procName" key="ap"/>
+      <attrKeyMap attr="_devicetime" key="d"/>
+      <attrKeyMap attr="swParam" key="meta.args"/>
+      <attrKeyMap attr="hashMD5" key="meta.md5"/>
+      <attrKeyMap attr="hashSHA1" key="meta.sha1"/>
+      <attrKeyMap attr="hashSHA256" key="meta.sha256"/>
+      <attrKeyMap attr="hashSHA512" key="meta.sha512"/>
+      <attrKeyMap attr="resourceName" key="r"/>
+      <attrKeyMap attr="user" key="u"/>
+    </collectAndSetAttrByJSON>
+
+    <when test="exist activityName">
+      <setEventAttribute attr="_ac">replaceStringByRegex($activityName, "\s+", "-")</setEventAttribute>
+      <setEventAttribute attr="eventType">combineMsgId("FINS-", $_os, "-", $_ac)</setEventAttribute>
+    </when>
+
+    <when test="exist user">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$user">
+            <regex><![CDATA[^<domain:gPatMesgBodyMin>__<user:gPatMesgBody>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist resourceName">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$resourceName">
+            <regex><![CDATA[^\s*<appTransportProto:gPatStrEndColon>://<srcName:gPatStrEndColon>(?::<srcIpPort:gPatInt>)?\s*-\>\s*<_destFilePath:gPatMesgBody>]]></regex>
+          </collectFieldsByRegex>
+
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_destFilePath">
+                <regex><![CDATA[<destFilePath:gPatMesgBody>[\\]+<destFileName:gPatMesgBody>$]]></regex>
+              </collectFieldsByRegex>
+              <collectFieldsByRegex src="$destFileName">
+                <regex><![CDATA[<:gPatMesgBody>\.<destFileExt:patNonDot>$]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default>
+              <setEventAttribute attr="destFilePath">$destFilePath</setEventAttribute>
+            </default>
+          </switch>
+        </case>
+
+        <case>
+          <collectFieldsByRegex src="$resourceName">
+            <regex><![CDATA[<_srcFilePath:gPatMesgBody>\s*-\>\s*<appTransportProto:gPatStrEndColon>://<destName:gPatStrEndColon>(?::<destIpPort:gPatInt>)?]]></regex>
+          </collectFieldsByRegex>
+
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_srcFilePath">
+                <regex><![CDATA[<srcFilePath:gPatMesgBody>[\\]+<srcFileName:gPatMesgBody>$]]></regex>
+              </collectFieldsByRegex>
+              <collectFieldsByRegex src="$srcFileName">
+                <regex><![CDATA[<:gPatMesgBody>\.<srcFileExt:patNonDot>$]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default>
+              <setEventAttribute attr="srcFilePath">$_srcFilePath</setEventAttribute>
+            </default>
+          </switch>
+        </case>
+
+        <case>
+          <collectFieldsByRegex src="$resourceName">
+            <regex><![CDATA[[\n]]]></regex>
+          </collectFieldsByRegex>
+        </case>
+
+        <default>
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$resourceName">
+                <regex><![CDATA[^\s*<srcFileName:gPatMesgBodyMin> -\> <fileName:gPatMesgBodyMin>\s*$]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default>
+              <setEventAttribute attr="fileName">$resourceName</setEventAttribute>
+            </default>
+          </switch>
+
+          <when test="exist fileName">
+            <switch>
+              <case>
+                <collectFieldsByRegex src="$fileName">
+                  <regex><![CDATA[^\s*(?:<filePath:gPatMesgBody>[/\\])?<fileName:gPatMesgBodyMin>\s*$]]></regex>
+                </collectFieldsByRegex>
+              </case>
+              <default/>
+            </switch>
+
+            <switch>
+              <case>
+                <collectFieldsByRegex src="$fileName">
+                  <regex><![CDATA[^<:gPatMesgBody>\.<fileExt:patNonDot>$]]></regex>
+                </collectFieldsByRegex>
+              </case>
+              <default/>
+            </switch>
+          </when>
+        </default>
+      </switch>
+    </when>
+  </parsingInstructions>
+</eventParser>

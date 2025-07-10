@@ -1,0 +1,650 @@
+<eventParser name="FortiMailParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiMail</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[date=2012-08-17 time=12:26:41 device_id=FE100C3909600504 log_id=0001001623 type=event subtype=admin pri=information user=admin ui=GUI(172.20.120.26) action=login status=success reason=none msg="User admin login successfully from GUI(172.20.120.26)"]]></testEvent>
+    <testEvent><![CDATA[date=2012-07-16 time=12:22:56 device_id=FE100C3909600504 log_id=0200001075 type=statistics pri=information session_id="q6GJMuPu003642-q6GJMuPv003642" client_name="[172.20.140.94]" dst_ip="172.20.140.92" endpoint="" from="user@external.lab" to="user5@external.lab" subject=""mailer="mta" resolved="OK" direction="in" virus="" disposition="Reject" classifier="Recipient Verification" message_length="188"]]></testEvent>
+    <testEvent><![CDATA[date=2012-08-09 time=12:42:48 device_id=FE100C3909600503 log_id=0000000920 type=event subtype=config pri=information user=admin ui=172.20.120.26 module=unknown submodule=unknown msg="changed settings for 'log setting local'"]]></testEvent>
+    <testEvent><![CDATA[date=2012-08-09 time=10:30:31 device_id=FE100C3909600505 log_id=0004001036 type=event subtype=ha pri=notice user=ha ui=ha action=none status=success msg="hahbd: heart beat status changed to primary-hearbeat-port1=FAILED;secondary-hearbeat-port2=OK"]]></testEvent>
+    <testEvent><![CDATA[date=2012-07-24 time=17:07:42 device_id=FE100C3909600504 log_id=0100000924 type=virus subtype=infected pri=information from="syntax@www.ca" to="user2@1.ca" src=172.20.140.94 session_id="q6OL7fsQ018870-q6OL7fsR018870" msg="The file inline-16-69.dat is infected with EICAR_TEST_FILE."]]></testEvent>
+    <testEvent><![CDATA[date=2012-07-20 time=14:33:26 device_id=FE100C3909600504 log_id=0300000924 type=spam pri=information session_id="q6KIXPZe008097-q6KIXPZf008097" client_name="[172.20.140.94]" dst_ip="172.20.140.92" endpoint="" from="syntax@www.ca" to="user1@1.ca" subject="Email with wd, excel, and rtf test" msg="Detected by BannedWord test"]]></testEvent>
+    <testEvent><![CDATA[date=2012-08-09 time=10:45:27 device_id=FE100C3909600504 log_id=0400005355 type=encrypt pri=information session_id="q79EiV8S007017-q79EiV8T0070170001474" msg="User user1@1.ca read secure message, id:'q79EiV8S007017-q79EiV8T0070170001474', sent from: 'user2@2.ca', subject: 'ppt file'"]]></testEvent>
+    <testEvent><![CDATA[<6>date=2017-03-17 time=18:58:37 device_id=FEVM040000087511 log_id=0008011961 type=event subtype=smtp pri=information user= ui= action=NONE status=N/A session_id="v2HNwZ2C011961-v2HNwZ2D011961" msg="SMTP authentication failure: authid=haley, authtype=LOGIN, detail=SASL(-1): generic failure: checkpass failed"]]></testEvent>
+    <testEvent><![CDATA[<6>Jan 17 14:32:14 time=12:19:52.036 device_id=FEVMSLTM21000030 log_id=0200013884 type=statistics pri=information session_id="20HBJqQ1013883-20HBJqQ1013883" client_name="" client_ip="10.10.10.11" client_cc="PK" dst_ip="10.10.10.10" from="" hfrom="" to="" polid="0:1:0:SYSTEM" domain="" mailer="mta" resolved="FAIL" src_type="unknown" direction="unknown" virus="" disposition="Reject" classifier="FortiGuard AntiSpam-IP" message_length="0" subject="" message_id="" recv_time="" notif_delay="0" scan_time="0.000000" xfer_time="0.000001" srcfolder="" read_status=""]]></testEvent>
+    <testEvent><![CDATA[<22>date=2023-09-25 time=03:18:56.589 device_id=FEVMSLTM10101010 log_id=0300011223 type=spam subtype=default pri=information  session_id="38P1Iswx123456-38P1Isx1014728" client_name="user1.example.lab.azure.com" client_ip="10.1.1.20" dst_ip="192.168.1.25" from="azure-noreply@microsoft.com" to="user2@fortinetdemo.com" subject="View your Microsoft 365 Business Basic invoice" msg="File name: spam.pdf(checksum:fasdvbgtyu1782jisk8394e552d7e3faf9ba6b4), scanned by Antivirus Scanner(clean), Content Filter(detected)"]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patRightParen"><![CDATA[[^\)]+]]></pattern>
+  </patternDefinitions>
+
+
+  <eventFormatRecognizer><![CDATA[\s+device_id="?(?:FE|LE|FEVM(?:SLTM|CLM|MSM|CLS)?)-?\d\w*"?\s+]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[^\s*<:gPatSyslogPRI>?(?:<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time1:gPatTime>\s+)?<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="_action" key="action"/>
+      <attrKeyMap attr="_date" key="date"/>
+      <attrKeyMap attr="deviceIdentification" key="device_id"/>
+      <attrKeyMap attr="_logId" key="log_id"/>
+      <attrKeyMap attr="usrMsg" key="msg"/>
+      <attrKeyMap attr="_severity" key="pri"/>
+      <attrKeyMap attr="errReason" key="reason"/>
+      <attrKeyMap attr="status" key="status"/>
+      <attrKeyMap attr="subtype" key="subtype"/>
+      <attrKeyMap attr="type" key="type"/>
+      <attrKeyMap attr="_user" key="user"/>
+      <attrKeyMap attr="_time" key="time"/>
+      <attrKeyMap attr="srcIpAddr" key="client_ip"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="sessionId" key="session_id"/>
+      <attrKeyMap attr="destName" key="client_name"/>
+      <attrKeyMap attr="deviceIdentification" key="endpoint"/>
+      <attrKeyMap attr="senderMailAddr" key="from"/>
+      <attrKeyMap attr="receiverMailAddr" key="to"/>
+      <attrKeyMap attr="destIpAddr" key="dst_ip"/>
+      <attrKeyMap attr="infoURL" key="ui"/>
+      <attrKeyMap attr="status" key="resolved"/>
+      <attrKeyMap attr="mailSubject" key="subject"/>
+      <attrKeyMap attr="virusName" key="virus"/>
+      <!-- Also map disposition to mail action -->
+      <attrKeyMap attr="mailAction" key="disposition"/>
+      <attrKeyMap attr="_action" key="disposition"/>
+      <attrKeyMap attr="domain" key="domain"/>
+      <attrKeyMap attr="classifier" key="classifier"/>
+      <attrKeyMap attr="msgLen" key="message_length"/>
+      <attrKeyMap attr="module" key="module"/>
+      <attrKeyMap attr="submodule" key="submodule"/>
+      <attrKeyMap attr="vdom" key="vd"/>
+      <attrKeyMap attr="policyName" key="polid"/>
+      <attrKeyMap attr="_url" key="url"/>
+    </collectFieldsByKeyValuePair>
+
+    <setEventAttribute attr="eventType">FortiMail-Generic</setEventAttribute>
+
+    <choose>
+      <when test="exist _date">
+        <collectFieldsByRegex src="$_date">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="_time">replaceStringByRegex($_time, "\.+$", "")</setEventAttribute>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </when>
+      <when test="exist _mon">
+        <setEventAttribute attr="_time1">replaceStringByRegex($_time1, "\.+$", "")</setEventAttribute>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time1)</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist type">
+      <choose>
+        <when test="$type = 'event'">
+          <setEventAttribute attr="type">Event</setEventAttribute>
+        </when>
+        <when test="$type = 'encrypt'">
+          <setEventAttribute attr="type">Encryption</setEventAttribute>
+        </when>
+        <when test="$type = 'spam'">
+          <setEventAttribute attr="type">Antispam</setEventAttribute>
+        </when>
+        <when test="$type = 'virus'">
+          <setEventAttribute attr="type">Antivirus</setEventAttribute>
+        </when>
+        <when test="$type = 'statistics'">
+          <setEventAttribute attr="type">History</setEventAttribute>
+        </when>
+        <when test="$type = 'kevent'">
+          <setEventAttribute attr="type">System</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+    <choose>
+      <when test="$type = 'Event'">
+        <choose>
+          <when test="$subtype IN 'config,system'">
+            <switch>
+              <case>
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[<_actionContent:gPatMesgBodyMin>\s+(?:has been|is)\s+<_action:gPatMesgBodyMin>\s+by\s+user\s+<_body:gPatMesgBody>]]></regex>
+                </collectFieldsByRegex>
+              </case>
+              <case>
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[<_actionContent:gPatMesgBodyMin>\s+(?:has been|is)\s+<_action:gPatMesgBodyMin>\s+to\s+<:gPatMesgBodyMin>\s+by\s+user\s+<_body:gPatMesgBody>]]></regex>
+                </collectFieldsByRegex>
+              </case>
+              <!--msg=“MTU has been {enabled | disabled} for interface {port1|port2|...} by user <user_name> via GUI(<ip_address>)”-->
+              <case>
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[<_actionContent:gPatMesgBodyMin>\s+has been\s+<_action:gPatMesgBodyMin>\s+for\s+interface\s+<appPort:gPatInt>\s+by\s+user\s+<_body:gPatMesgBody>]]></regex>
+                </collectFieldsByRegex>
+              </case>
+              <case>
+                <collectFieldsByRegex src="$usrMsg">
+                  <!--msg=“Mail server user <email_address> is added with information: displayname <display_name> by user <user_name> via CLI (console|telnet|ssh)” -->
+                  <regex><![CDATA[<_actionContent:gPatMesgBodyMin>\s+is\s+<_action:gPatMesgBodyMin>\s+with\s+information:\s+displayname\s+<:gPatMesgBodyMin>\s+by\s+user\s+<_body:gPatMesgBody>]]></regex>
+                </collectFieldsByRegex>
+              </case>
+              <case>
+                <collectFieldsByRegex src="$usrMsg">
+                  <!--msg=“Alertemail SMTP server has been changed to <server_name> and user has been changed to <user_name> by user <user_name> via GUI(<ip_address>)” -->
+                  <regex><![CDATA[<_actionContent:gPatMesgBodyMin>\s+has\s+been\s+<_action:gPatMesgBodyMin>\s+to\s+<:gPatMesgBodyMin>\s+and\s+user\s+has\s+been\s+<_action:gPatMesgBodyMin>\s+to\s+<:gPatStr>\s+by\s+user\s+<_body:gPatMesgBody>]]></regex>
+                </collectFieldsByRegex>
+              </case>
+              <case>
+                <!--msg=“GUI refresh interval set to <interval> by user <user_name> via CLI (console|telnet|ssh)”-->
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[GUI\s+refresh\s+interval\s+set\s+to\s+<:gPatInt>\s+by\s+user\s+<_body:gPatMesgBody>]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiMail-Event-GUI-Refresh-Interval-Set</setEventAttribute>
+              </case>
+              <case>
+                <collectFieldsByRegex src="$usrMsg">
+                  <!--interface {port1|port2|...} ip address changed by user <user_name> via CLI (console|telnet|ssh) -->
+                  <regex><![CDATA[<_actionContent:gPatMesgBodyMin>\s+by\s+user\s+<_body:gPatMesgBody>]]></regex>
+                </collectFieldsByRegex>
+              </case>
+              <!--system log-->
+              <case>
+                <collectFieldsByRegex src="$usrMsg">
+                  <!--msg=“Upgrade system firmware failed by user <user_name> via {console|SSH(<ip_address>) |telnet(<ip_address>)|GUI(<ip_address>)}”-->
+                  <regex><![CDATA[Upgrade\s+system\s+firmware\s+failed\s+by\s+user\s+<_body:gPatMesgBody>]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiMail-Event-Upgrade-System-Firmware-Failed</setEventAttribute>
+              </case>
+              <case>
+                <collectFieldsByRegex src="$usrMsg">
+                  <!--msg= “DNS: Connection timed out. No servers could be reached.”-->
+                  <regex><![CDATA[DNS:\s+Connection\s+timed\s+out\.\s+No\s+servers\s+could\s+be\s+reached\.]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiMail-Event-Connection-DNS-Servers-Failed</setEventAttribute>
+              </case>
+              <case>
+                <collectFieldsByRegex src="$usrMsg">
+                  <!-- FortiGuard - AntiSpam license is expired. -->
+                  <regex><![CDATA[license is expired]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiMail-Event-Licensed-Component-Expired</setEventAttribute>
+              </case>
+              <default/>
+            </switch>
+            <when test="exist _body">
+              <switch>
+                <case>
+                  <collectFieldsByRegex src="$_body">
+                    <!--msg=“Alertemail SMTP server has been changed to <server_name> and user has been changed to <user_name> by user <user_name> via GUI(<ip_address>)” -->
+                    <regex><![CDATA[^<user:gPatStr>\s+via\s+)]]></regex>
+                  </collectFieldsByRegex>
+                </case>
+                <default/>
+              </switch>
+            </when>
+            <when test="exist _actionContent">
+              <setEventAttribute attr="eventType">replaceStringByRegex($_actionContent, "FortiMail", " ")</setEventAttribute>
+              <setEventAttribute attr="eventType">combineMsgId("FortiMail-Event-",$_actionContent,"-",$_action)</setEventAttribute>
+              <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "\s+", "-")</setEventAttribute>
+            </when>
+          </when>
+          <when test="$subtype = 'update'">
+            <!--Event Update logs-->
+            <!--msg=”Update result: virusdb:<yes|no>, avengine:<yes|no>,spamdb:<yes|no>, asengine:<yes|no>-->
+            <switch>
+              <case>
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[Update\s+result:\s*virusdb:\s*(?:yes|no),\s*avengine:\s*(?:yes|no),\s*spamdb:\s*(?:yes|no),\s*asengine:\s*(?:yes|no)]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiMail-Event-Update-Result</setEventAttribute>
+              </case>
+              <!--Update result: virus db:yes, virus engine:no, spam db:no, spam engine:no-->
+              <case>
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[Update\s+result:\s*virus\s*db:\s*(?:yes|no),\s*virus\s*engine:\s*(?:yes|no),\s*spam\s*db:\s*(?:yes|no),\s*spam\s*engine:\s*(?:yes|no)]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiMail-Event-Update-Result</setEventAttribute>
+              </case>
+              <!--loaded avdb 45.193(03/06/2017 01:15) using av engine 5.234-->
+              <case>
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[loaded\s*avdb.*]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiMail-Event-Update-loaded</setEventAttribute>
+              </case>
+              <default/>
+            </switch>
+          </when>
+          <when test="$subtype = 'smtp'">
+            <!--Event SMTP logs-->
+            <switch>
+              <case>
+                <!--Starting flgrptd-->
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[Starting\s+flgrptd]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiMail-Event-Starting-Flgrptd</setEventAttribute>
+              </case>
+              <case>
+                <!--Successfully loaded virus db: /var/spool/etc/vir-->
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[Successfully\s+loaded\s+virus\s+db:\s*<servicePath:gPatStr>]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiMail-Event-Virus-DB-Loaded</setEventAttribute>
+              </case>
+              <case>
+                <!--Initializing FASR /var/spool/etc/antispam...-->
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[Initializing\s+FASR\s+<servicePath:gPatStr>\.\.\.]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiMail-Event-FSAR-Loading</setEventAttribute>
+              </case>
+              <case>
+                <!--msg= “Parsing FASR Readme /var/spool/etc/antispam/README…”-->
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[Parsing\s+FASR\s+Readme\s+<servicePath:gPatStr>]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiMail-Event-FSAR-Readme-Parsed</setEventAttribute>
+              </case>
+              <case>
+                <!--Initializing FASR /var/spool/etc/antispam done!”-->
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[Initializing\s+FASR\s+<servicePath:gPatStr>\s+done!]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiMail-Event-FSAR-Loaded</setEventAttribute>
+              </case>
+              <case>
+                <!--user=mail ui=mail action=unknown status=success msg=“*@*: alias database /var/spool/etc/mail/aliases has been rebuilt”-->
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[alias\s+database\s+<servicePath:gPatStr>\s+has\s+been\s+rebuilt]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiMail-Event-Mail-Aliases-Rebuilt</setEventAttribute>
+              </case>
+              <case>
+                <!--Restart the updated daemon to re-load default avengine and virusdb…-->
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[Restart\s+the\s+updated\s+daemon\s+to\s+<:gPatMesgBody>]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiMail-Event-Updated-Daemon-Restart</setEventAttribute>
+              </case>
+              <case>
+                <!--Loading virusdb: /var/spool/etc/vir...”-->
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[Loading\s+virusdb:\s*<servicePath:gPatMesgBody>]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiMail-Event-Virusdb-Loading</setEventAttribute>
+              </case>
+              <case>
+                <!--Bayesian Training user global bayesian-->
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[Bayesian\s+Training\s+<:gPatMesgBody>]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiMail-Event-Bayesian-DB-Training</setEventAttribute>
+              </case>
+              <case>
+                <!--Bayesian Training: <integer> messages finished-->
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[Bayesian\s+Training:\s*<:gPatInt>\s+messages\s+finished]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiMail-Event-Bayesian-DB-Training-Finished</setEventAttribute>
+              </case>
+              <default>
+                <setEventAttribute attr="eventType">FortiMail-Event-SMTP-Related</setEventAttribute>
+              </default>
+            </switch>
+          </when>
+          <when test="$subtype = 'admin'">
+            <switch>
+              <case>
+                <!--User <user_name> login successfully from {GUI(<ip_address>) |console|SSH(<ip_address>)|telnet(<ip_address>)}”-->
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[User\s+<user:gPatMesgBodyMin>\s+login\s+<_status:gPatStr>\s+from\s+<:gPatMesgBody>]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">combineMsgId("FortiMail-Event-User-Login-",$_status)</setEventAttribute>
+              </case>
+              <case>
+                <!--User <user_name> from <ip_address> logged in”-->
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[User\s+<user:gPatMesgBodyMin>\s+from\s+<hostIpAddr:gPatIpAddr>\s+logged\s+in]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiMail-Event-Webmail-Login</setEventAttribute>
+              </case>
+              <case>
+                <!--mailbox_get_header: failed-->
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[mailbox_get_[^:]+:\s*failed]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiMail-Event-Message-Retrieval-Failure</setEventAttribute>
+              </case>
+              <case>
+                <!--Could not get message part-->
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[Could\s+not\s+get\s+message\s+part]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiMail-Event-Message-Read-Failed</setEventAttribute>
+              </case>
+              <case>
+                <!--Could not save attachment-->
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[Could\s+not\s+save\s+attachment]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiMail-Event-Attachment-Save-Failed</setEventAttribute>
+              </case>
+              <case>
+                <!--Login from LCD successfully-->
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[Login\s+from\s+LCD\s+<_status:gPatStr>]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">combineMsgId("FortiMail-Event-LCD-Login-",$_status)</setEventAttribute>
+              </case>
+              <default>
+                <setEventAttribute attr="eventType">FortiMail-Event-Admin-Related</setEventAttribute>
+              </default>
+            </switch>
+          </when>
+          <when test="$subtype = 'pop3'">
+            <setEventAttribute attr="eventType">FortiMail-Event-POP3-Related</setEventAttribute>
+          </when>
+          <when test="$subtype = 'imap'">
+            <setEventAttribute attr="eventType">FortiMail-Event-IMAP-Related</setEventAttribute>
+          </when>
+          <when test="$subtype = 'webmail'">
+            <setEventAttribute attr="eventType">FortiMail-Event-Webmail-Related</setEventAttribute>
+          </when>
+          <when test="$subtype = 'ha'">
+            <switch>
+              <case>
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[main\s+loop\s+starting,\s*entering\s+<_mode:gPatStr>\s+mode]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">combineMsgId("FortiMail-Event-",$_mode,"-Startup")</setEventAttribute>
+              </case>
+              <case>
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[monitord:.*role]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiMail-Event-HA-Role-Change</setEventAttribute>
+              </case>
+              <case>
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[hahbd:\s*]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiMail-Event-Hearbeat-Check</setEventAttribute>
+              </case>
+              <case>
+                <collectFieldsByRegex src="$usrMsg">
+                  <regex><![CDATA[hasyncd:\s*]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">FortiMail-Event-Synchronization-Activities</setEventAttribute>
+              </case>
+              <default>
+                <setEventAttribute attr="eventType">FortiMail-Event-HA-Related</setEventAttribute>
+              </default>
+            </switch>
+          </when>
+          <otherwise/>
+        </choose>
+      </when>
+      <when test="$type = 'Antivirus'">
+        <!-- Properly map event type defaults based on subtype, more specific investigation later -->
+        <choose>
+          <when test="not_exist subtype"/>
+          <when test="$subtype = 'infected'">
+            <setEventAttribute attr="eventType">FortiMail-Antivirus-virus-infected</setEventAttribute>
+          </when>
+          <when test="$subtype = 'malware-outbreak'">
+            <setEventAttribute attr="eventType">FortiMail-Antivirus-malware-outbreak-generic</setEventAttribute>
+          </when>
+          <when test="$subtype = 'file-signature'">
+            <setEventAttribute attr="eventType">FortiMail-Antivirus-file-signature-generic</setEventAttribute>
+          </when>
+        </choose>
+
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$usrMsg">
+              <regex><![CDATA[The\s+file\s+<fileName:gPatMesgBodyMin>\s+is\s+infected\s+with\s+<virusName:gPatMesgBody>\.]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiMail-Antivirus-virus-infected</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$usrMsg">
+              <!-- File 09.zip (checksum: 5fb25763ac0fb000e18362f7e4b9efda65bdfa2b2a5890a3f5caa693d0086b50) has been sent to FortiSandbox -->
+              <regex><![CDATA[^File <fileName:gPatStrLeftParen>\(checksum:\s+<hashCode:patRightParen>\) has been sent to FortiSandbox]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="fileName">trimAttribute($fileName, " ")</setEventAttribute>
+            <setEventAttribute attr="eventType">FortiMail-Antivirus-Sandbox-File-Submission</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$usrMsg">
+              <!-- File 38RAAbE3011087-38RAAbE4011087.2023-09-27.03:10:38.2#hello_31903.exe (checksum: 2e92b31bb2adac59aa8145fa831a1452dbf4105a530054b961a4427173923a59) has been scanned by FortiSandbox. Scan result: rating=SUSPICIOUS_HIGH" -->
+              <regex><![CDATA[^File <fileName:gPatStrLeftParen>\(checksum:\s+<hashCode:patRightParen>\) has been scanned by FortiSandbox\. Scan result: rating=<scanStatus:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="fileName">trimAttribute($fileName, " ")</setEventAttribute>
+            <setEventAttribute attr="eventType">FortiMail-Antivirus-Sandbox-File-Scanned</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$usrMsg">
+              <!-- Email 38RAAbE3011087-38RAAbE4011087 has been processed by FortiSandbox, 1 suspicious is found, 69s used -->
+              <regex><![CDATA[^Email <:gPatStr> has been processed by FortiSandbox, <scanStatusDetail:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiMail-Antivirus-Sandbox-Email-Processed</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$usrMsg">
+              <!-- WebFilter detected a phishing URL in email. -->
+              <regex><![CDATA[^<module:gPatWord> detected a phishing URL in email]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiMail-Antivirus-Phishing-Email-Detected</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$type = 'Antispam'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$usrMsg">
+              <regex><![CDATA[ spam outbreak protection: message is deferred\b]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiMail-Antispam-spam-deferred</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$usrMsg">
+              <regex><![CDATA[ identified spam hash: <hashCode:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiMail-Antispam-spam-found-hash</setEventAttribute>
+            <setEventAttribute attr="spamType">file</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$usrMsg">
+              <regex><![CDATA[ identified (?:spam )?URI: <infoURL:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiMail-Antispam-spam-found-URI</setEventAttribute>
+            <setEventAttribute attr="spamType">URI</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$usrMsg">
+              <regex><![CDATA[ identified spam IP: <hostIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiMail-Antispam-spam-found-IP</setEventAttribute>
+            <setEventAttribute attr="spamType">IP</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$usrMsg">
+              <regex><![CDATA[ identified white IP: <hostIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiMail-Antispam-found-white-IP</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$usrMsg">
+              <regex><![CDATA[Detected\s+by\s+<ruleName:gPatMesgBodyMin>\s+test]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiMail-Antispam-spam-found</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$usrMsg">
+              <regex><![CDATA[File name:\s*<fileName:gPatStrLeftParen>\s*\(checksum:<hashCode:patRightParen>\),\s*scanned by Antivirus Scanner\(<status:patRightParen>\)]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiMail-Antispam-malicious-attachment-file</setEventAttribute>
+            <setEventAttribute attr="spamType">file</setEventAttribute>
+          </case>
+          <case>
+            <!-- File name: vir.exe(checksum:275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f), scanned by Antivirus Scanner(detected) -->
+            <collectFieldsByRegex src="$usrMsg">
+              <regex><![CDATA[File name:\s*<fileName:gPatStrLeftParen>\s*\(checksum:<hashCode:patRightParen>\),\s*<scanStatusDetail:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiMail-Antispam-malicious-attachment-file</setEventAttribute>
+            <setEventAttribute attr="spamType">file</setEventAttribute>
+          </case>
+          <case>
+            <!-- File name: hello_31903.exe, scanned by Antivirus Scanner(clean) -->
+            <collectFieldsByRegex src="$usrMsg">
+              <regex><![CDATA[File name:\s*<fileName:gPatStr>,\s*scanned by Antivirus Scanner\(<status:patRightParen>\)]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiMail-Antispam-spam-found</setEventAttribute>
+            <setEventAttribute attr="spamType">file</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">FortiMail-Antispam-spam-found</setEventAttribute>
+          </default>
+        </switch>
+
+        <choose>
+          <when test="not_exist subtype"/>
+          <when test="not_exist _url"/>
+          <when test="$subtype = 'url'">
+            <collectFieldsByRegex src="$_url">
+              <regex><![CDATA[^<downloadURL:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">FortiMail-Antispam-malicious-attachment-url</setEventAttribute>
+          </when>
+        </choose>
+
+      </when>
+      <when test="$type = 'History'">
+        <choose>
+          <when test="$_action = 'Reject'">
+            <choose>
+              <!-- Email related logs contain a session identification (ID) number -->
+              <when test="exist sessionId">
+                <setEventAttribute attr="eventType">FortiMail-History-Reject</setEventAttribute>
+                <when test="exist virusName">
+                  <!-- Reason for reject was due to virus -->
+                  <setEventAttribute attr="eventType">FortiMail-History-Virus-Reject</setEventAttribute>
+                </when>
+              </when>
+              <otherwise>
+                <setEventAttribute attr="eventType">FortiMail-History-Authentication-Failure</setEventAttribute>
+              </otherwise>
+            </choose>
+          </when>
+
+          <when test="$_action = 'System Quarantine'">
+            <setEventAttribute attr="eventType">FortiMail-History-Quarantined</setEventAttribute>
+          </when>
+
+          <otherwise>
+            <setEventAttribute attr="_action">replaceStringByRegex($_action, ";.*", "")</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+
+      <when test="$type = 'System'">
+        <choose>
+          <when test="$subtype = 'system'">
+            <setEventAttribute attr="eventType">FortiMail-System-Generic</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">combineMsgId("FortiMail-System-", $subtype)</setEventAttribute>
+          </otherwise>
+        </choose>
+
+        <when test="exist usrMsg">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$usrMsg">
+                <regex><![CDATA[FortiSandbox server is not available at the moment. Connection block time: <offlineDuration:gPatInt> seconds]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="eventType">FortiMail-System-FortiSandbox-Server-Unavailable</setEventAttribute>
+            </case>
+            <case>
+              <collectFieldsByRegex src="$usrMsg">
+                <regex><![CDATA[Failed to login to FortiSandbox,\s*cause:\s*<reason:gPatStr>]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="eventType">FortiMail-System-FortiSandbox-Login-Failed</setEventAttribute>
+            </case>
+            <default/>
+          </switch>
+        </when>
+
+        <when test="$_action != 'none'">
+          <setEventAttribute attr="eventType">combineMsgId($eventType, $_action)</setEventAttribute>
+        </when>
+      </when>
+
+    </choose>
+    <when test="$eventType = 'FortiMail-Generic'">
+      <setEventAttribute attr="_eventType">FortiMail</setEventAttribute>
+      <when test="exist type">
+        <setEventAttribute attr="_eventType">combineMsgId("FortiMail-", $type)</setEventAttribute>
+      </when>
+      <choose>
+        <when test="exist _action">
+          <setEventAttribute attr="eventType">combineMsgId($_eventType,"-",$_action)</setEventAttribute>
+          <when test="exist status">
+            <when test="$type != 'History'">
+              <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $status)</setEventAttribute>
+            </when>
+          </when>
+        </when>
+        <otherwise>
+          <setEventAttribute attr="eventType">combineMsgId($_eventType,"-Generic")</setEventAttribute>
+        </otherwise>
+      </choose>
+    </when>
+    <choose>
+      <when test="not_exist _user"/>
+      <when test="$_user = 'N/A'"/>
+      <otherwise>
+        <setEventAttribute attr="user">$_user</setEventAttribute>
+      </otherwise>
+    </choose>
+    <choose>
+      <when test="exist policyName">
+        <collectFieldsByRegex src="$policyName">
+          <regex><![CDATA[<accessCtlPolicyId:gPatStr>:<ipPolicyId:gPatStr>:<recipientPolicyId:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+      </when>
+      <otherwise/>
+    </choose>
+    <choose>
+      <when test="not_exist _severity"/>
+      <when test="$_severity = 'emergency'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_severity = 'notice'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_severity = 'information'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_severity = 'critical'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_severity = 'alert'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_severity = 'error'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_severity = 'warning'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

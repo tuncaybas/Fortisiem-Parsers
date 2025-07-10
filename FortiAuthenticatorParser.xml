@@ -1,0 +1,758 @@
+<eventParser name="FortiAuthenticatorParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiAuthenticator</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<14>Aug 14 22:32:52 db[16987]:  category="Event" subcategory="Authentication" typeid=20995 level="information" user="admin" nas="" action="Logout" status="" Administrator 'admin' logged out]]></testEvent>
+    <testEvent><![CDATA[<190>date=2019-04-10 time=23:23:47 timestamp=1554938627 devname="FortiCare-FAC" devid="FAC-VM0A17000418" vd="root" logid="20321" logdesc="AUTH_FAIL_USER_DISABLED" type="event" subtype="Authentication" level="information" user="user@gmail.com" nas="REST API" action="Authentication" status="Failed" msg="user authentication error: user disabled"]]></testEvent>
+    <testEvent><![CDATA[<190>date=2023-01-09 time=11:40:45 timestamp=1673253645 devname="FAC8HFT123456789" devid="FAC8HFT123456789" vd="root" itime=1673253645 faclogindex="55823" logid="20995" logdesc="AUTH_ADMIN_LOGOUT_GUI" type="event" subtype="Authentication" level="information" user="admin" nas="192.168.1.2" userip="1.1.1.1" action="Logout" status="" msg="Administrator 'admin' logged out" tz="+0300"]]></testEvent>
+    <testEvent><![CDATA[<14>Jan  9 11:42:54 FortiAuthenticator db[18304]:  category="Event" subcategory="Admin Configuration" typeid=10002 level="information" user="admin" nas="" action="Edit" status="" Edited Setting: log_remote_syslog_servers (changed fields: value)]]></testEvent>
+    <testEvent><![CDATA[<14>May 3 11:03:19 example.com db[23707]: category="Event" subcategory="Authentication" typeid=20995 level="information" user="user1" nas="" action="Logout" status="" Administrator 'user1' logged out]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patQuote"><![CDATA[[^"]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+(?:<:gPatHostName>\s+)?db\[\d+\]:\s+category="<:patQuote>"\s+subcategory="<:patQuote>"\s+typeid=<:patQuote>\s+level="<:patQuote>"\s+user="<:patQuote>"\s+nas="<:patQuote>"\s+|(?:devid|device_id)="?FAC-?\w+"?\s]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>\s+|<reptDevName:gPatHostName>\s+)?db\[\d+\]:\s+<_body:gPatMesgBodyMin>\s+status="<status:patQuote>"\s+<msg:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>?<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_body">
+      <attrKeyMap attr="_action" key="action"/>
+      <attrKeyMap attr="appCategory" key="category"/>
+      <attrKeyMap attr="_severity" key="level"/>
+      <attrKeyMap attr="serverIpAddr" key="nas"/>
+      <attrKeyMap attr="status" key="status"/>
+      <attrKeyMap attr="subtype" key="subcategory"/>
+      <attrKeyMap attr="_typeId" key="typeid"/>
+      <attrKeyMap attr="_typeId" key="logid"/>
+      <attrKeyMap attr="user" key="user"/>
+      <attrKeyMap attr="_date" key="date"/>
+      <attrKeyMap attr="_time" key="time"/>
+      <attrKeyMap attr="_timestamp" key="timestamp"/>
+      <attrKeyMap attr="_reptDevName" key="devname"/>
+      <attrKeyMap attr="vdom" key="vd"/>
+      <attrKeyMap attr="_type" key="type"/>
+      <attrKeyMap attr="srcIpAddr" key="userip"/>
+      <attrKeyMap attr="subtype" key="subtype"/>
+      <attrKeyMap attr="logLevel" key="level"/>
+      <attrKeyMap attr="msg" key="msg"/>
+    </collectFieldsByKeyValuePair>
+
+    <choose>
+      <when test="exist _timestamp">
+        <setEventAttribute attr="deviceTime">$_timestamp</setEventAttribute>
+      </when>
+      <when test="exist _time">
+        <when test="exist _date">
+          <collectFieldsByRegex src="$_date">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </when>
+      </when>
+    </choose>
+    <setEventAttribute attr="eventType">FortiAuthenticator-Generic</setEventAttribute>
+
+    <choose>
+      <when test="exist _reptDevName">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_reptDevName">
+              <regex><![CDATA[^<reptDevIpAddr:gPatIpAddr>$]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default>
+            <setEventAttribute attr="reptDevName">$_reptDevName</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _severity"/>
+      <when test="$_severity = 'notice'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$_severity = 'warning'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_severity = 'error'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_severity = 'critical'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_severity = 'alert'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+      <when test="$_severity = 'emergency'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="$_typeId = '10001'">
+        <setEventAttribute attr="_et">Entry_Addition</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10002'">
+        <setEventAttribute attr="_et">Entry_Change</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10003'">
+        <setEventAttribute attr="_et">Entry_Deletion</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10101'">
+        <setEventAttribute attr="_et">FortiToken_Seed_Activation</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10102'">
+        <setEventAttribute attr="_et">FortiToken_Import</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10103'">
+        <setEventAttribute attr="_et">FortiToken_Status_Change</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10104'">
+        <setEventAttribute attr="_et">FortiToken_Mobile_Activation</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10105'">
+        <setEventAttribute attr="_et">FortiToken_Cloud_Activation</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10106'">
+        <setEventAttribute attr="_et">FortiToken_Export</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10107'">
+        <setEventAttribute attr="_et">FortiToken_Synchronization</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10108'">
+        <setEventAttribute attr="_et">FortiToken_Request</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10109'">
+        <setEventAttribute attr="_et">FortiToken_Revoke</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10110'">
+        <setEventAttribute attr="_et">FortiToken_Transfer</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10111'">
+        <setEventAttribute attr="_et">FortiToken_Cloud_Synchronization</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10112'">
+        <setEventAttribute attr="_et">FortiToken_Cloud_Request</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10113'">
+        <setEventAttribute attr="_et">FortiToken_Cloud_Revoke</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10121'">
+        <setEventAttribute attr="_et">Certificate_Import</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10122'">
+        <setEventAttribute attr="_et">Certificate_Private_Key_Download</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10123'">
+        <setEventAttribute attr="_et">Certificate_Revocation_List_Import</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10124'">
+        <setEventAttribute attr="_et">PKCS12_Certificate_Export</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10125'">
+        <setEventAttribute attr="_et">Certificate_Signing</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10126'">
+        <setEventAttribute attr="_et">Certificate_Revocation</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10127'">
+        <setEventAttribute attr="_et">SCEP_Certificate_Enrollment</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10128'">
+        <setEventAttribute attr="_et">Publish_Certificate_Revocation_List</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10129'">
+        <setEventAttribute attr="_et">Certificate_Expiration</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10201'">
+        <setEventAttribute attr="_et">LDAP_Root_DN_Modification</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10202'">
+        <setEventAttribute attr="_et">LDAP_Browsing</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10203'">
+        <setEventAttribute attr="_et">LDAP_User_Import</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10204'">
+        <setEventAttribute attr="_et">LDAP_Group_Import</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10205'">
+        <setEventAttribute attr="_et">SSO_Group_Mapping</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10206'">
+        <setEventAttribute attr="_et">SSO_Services_Refresh</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10207'">
+        <setEventAttribute attr="_et">SSO_User_Logoff</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10208'">
+        <setEventAttribute attr="_et">SSO_User_Update</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10209'">
+        <setEventAttribute attr="_et">SAML_User_Import</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10250'">
+        <setEventAttribute attr="_et">HA_Setting</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10251'">
+        <setEventAttribute attr="_et">Password_Policy</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10301'">
+        <setEventAttribute attr="_et">User_Registration</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10302'">
+        <setEventAttribute attr="_et">Learned_User_Migration</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10303'">
+        <setEventAttribute attr="_et">RADIUS_User_Migration</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10500'">
+        <setEventAttribute attr="_et">Data_Backup</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10501'">
+        <setEventAttribute attr="_et">Data_Restore</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10502'">
+        <setEventAttribute attr="_et">Data_Backup_Failure</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10503'">
+        <setEventAttribute attr="_et">FortiGate_Objects_Import</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10504'">
+        <setEventAttribute attr="_et">Local_User_Import/Export</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10505'">
+        <setEventAttribute attr="_et">Authentication_Client_Import</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10506'">
+        <setEventAttribute attr="_et">Language_File_Import</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10507'">
+        <setEventAttribute attr="_et">Mac_Devices_Import</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10508'">
+        <setEventAttribute attr="_et">Guest_User_Export</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10610'">
+        <setEventAttribute attr="_et">License_Import</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10611'">
+        <setEventAttribute attr="_et">License_Expiration</setEventAttribute>
+      </when>
+      <when test="$_typeId = '10612'">
+        <setEventAttribute attr="_et">License_Status</setEventAttribute>
+      </when>
+      <when test="$_typeId IN '20000, 20003'">
+        <setEventAttribute attr="_et">Authentication_OK</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20001'">
+        <setEventAttribute attr="_et">Authentication_OK_No_FTK</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20002'">
+        <setEventAttribute attr="_et">Authentication_OK_With_FTK</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20005'">
+        <setEventAttribute attr="_et">Disable_Temporary_Email/SMS_Token</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20100'">
+        <setEventAttribute attr="_et">Authentication_Failed</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20101'">
+        <setEventAttribute attr="_et">Authentication_Failed_No_User</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20102'">
+        <setEventAttribute attr="_et">Authentication_Failed_Bad_Pass</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20103'">
+        <setEventAttribute attr="_et">Authentication_Failed_Bad_Token</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20104'">
+        <setEventAttribute attr="_et">Authentication_Failed_Replay</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20105'">
+        <setEventAttribute attr="_et">Authentication_Failed_Bad_Param</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20106'">
+        <setEventAttribute attr="_et">Authentication_Failed_Update_Token_Error</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20107'">
+        <setEventAttribute attr="_et">Authentication_Failed_Token_Out_Of_Sync_Error</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20108'">
+        <setEventAttribute attr="_et">Authentication_Failed_Need_Followup</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20150'">
+        <setEventAttribute attr="_et">Password_Expiration</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20151'">
+        <setEventAttribute attr="_et">Password_Change_Required</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20299'">
+        <setEventAttribute attr="_et">Authentication_Pending_Remote_RADIUS_Challenge</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20300'">
+        <setEventAttribute attr="_et">Authentication_Partially_OK</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[IP address\(es\):\s+"<newHostIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[for network interface <intfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_typeId = '20301'">
+        <setEventAttribute attr="_et">Authentication_Failed_Token_Timeout</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20302'">
+        <setEventAttribute attr="_et">Authentication_Failed_State_Mismatch</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20303'">
+        <setEventAttribute attr="_et">Authentication_Failed_Invalid_NAS</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20304'">
+        <setEventAttribute attr="_et">Authentication_Failed_No_SQL</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20305'">
+        <setEventAttribute attr="_et">Authentication_Failed_No_Clear_Token</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20306'">
+        <setEventAttribute attr="_et">Authentication_Failed_Unknown_Remote</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20307'">
+        <setEventAttribute attr="_et">Authentication_Failed_Pap_Only</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20310'">
+        <setEventAttribute attr="_et">Authentication_Failed_Remote_LDAP_Search</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20312'">
+        <setEventAttribute attr="_et">Authentication_Failed_Remote_Connect</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20320'">
+        <setEventAttribute attr="_et">Authentication_Failed_User_Not_Found</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20321'">
+        <setEventAttribute attr="_et">Authentication_Failed_User_Disabled</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20322'">
+        <setEventAttribute attr="_et">Authentication_Failed_Not_RADIUS_User</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20323'">
+        <setEventAttribute attr="_et">Authentication_Failed_User_Locked</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20324'">
+        <setEventAttribute attr="_et">Authentication_Failed_User_Not_Filtered</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20325'">
+        <setEventAttribute attr="_et">Authentication_Failed_FTK_Disabled</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20326'">
+        <setEventAttribute attr="_et">Authentication_Failed_FTK_Only</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20327'">
+        <setEventAttribute attr="_et">Authentication_Failed_No_Password</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20328'">
+        <setEventAttribute attr="_et">Authentication_Failed_No_Partial_Auth</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20329'">
+        <setEventAttribute attr="_et">Authentication_Failed_Not_Authorized</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20330'">
+        <setEventAttribute attr="_et">Authentication_Failed_User_Expired</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20331'">
+        <setEventAttribute attr="_et">Authentication_Failed_Lock_User</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20332'">
+        <setEventAttribute attr="_et">Authentication_Failed_User_FTK_Unassigned</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20333'">
+        <setEventAttribute attr="_et">Authentication_Failed_User_FTM_Pending</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20334'">
+        <setEventAttribute attr="_et">Authentication_Failed_User_AD_Auth_Error</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20335'">
+        <setEventAttribute attr="_et">Authentication_Failed_User_No_Cfgd_TACACS_Rule</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20350'">
+        <setEventAttribute attr="_et">Authentication_Failed_NAS_Not_Allowed</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20351'">
+        <setEventAttribute attr="_et">Authentication_Failed_NAS_Password_Only</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20352'">
+        <setEventAttribute attr="_et">Authentication_Failed_NAS_Need_Password</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20353'">
+        <setEventAttribute attr="_et">Authentication_Failed_NAS_FTK_Only</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20354'">
+        <setEventAttribute attr="_et">Authentication_Failed_NAS_Need_Token</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20355'">
+        <setEventAttribute attr="_et">Authentication_Failed_NAS_No_User_Realm</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20356'">
+        <setEventAttribute attr="_et">Authentication_Failed_NAS_Sub-Profile</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20360'">
+        <setEventAttribute attr="_et">Authentication_Failed_Remote_RADIUS_Reply_Timeout</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20361'">
+        <setEventAttribute attr="_et">Authentication_Failed_Remote_RADIUS_Reply_Unknown</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20362'">
+        <setEventAttribute attr="_et">Authentication_Failed_Remote_RADIUS_Wrong_Secret</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20363'">
+        <setEventAttribute attr="_et">Authentication_Failed_Remote_RADIUS_Timeout</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20364'">
+        <setEventAttribute attr="_et">Authentication_Failed_Remote_RADIUS_Reject</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20366'">
+        <setEventAttribute attr="_et">Authentication_Failed_Login_Attempts_IP_Locked</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20370'">
+        <setEventAttribute attr="_et">Authentication_Failed_Limited_Edition</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20371'">
+        <setEventAttribute attr="_et">Authentication_Failed_Queueing_Timeout</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20400'">
+        <setEventAttribute attr="_et">MAC_Authentication_OK</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20401'">
+        <setEventAttribute attr="_et">MAC_Authentication_Failed_No_MAC_address</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20402'">
+        <setEventAttribute attr="_et">MAC_Authentication_Failed_No_NAS_permission</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20403'">
+        <setEventAttribute attr="_et">MAC_Authentication_Failed_Not_Filtered</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20404'">
+        <setEventAttribute attr="_et">MAC_Authentication_Failed_User_Blocked</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20420'">
+        <setEventAttribute attr="_et">802.1x_Authentication_OK</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20421'">
+        <setEventAttribute attr="_et">802.1x_Authentication_Failed</setEventAttribute>
+      </when>
+      <when test="$_typeId IN '20430, 20431'">
+        <setEventAttribute attr="_et">combineMsgId("EAP_Login_",$status)</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20500'">
+        <setEventAttribute attr="_et">SAML_IdP_Authentication_OK</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20501'">
+        <setEventAttribute attr="_et">SAML_IdP_Authentication_Failed</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20502'">
+        <setEventAttribute attr="_et">SAML_IdP_SP_Request_OK</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20503'">
+        <setEventAttribute attr="_et">SAML_IdP_SP_Request_Failed</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20601'">
+        <setEventAttribute attr="_et">Guest_Portal_User_Credentials_Authentication</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20602'">
+        <setEventAttribute attr="_et">Guest_Portal_MAC_Only_Authentication</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20603'">
+        <setEventAttribute attr="_et">Guest_Portal_Authentication_Failed</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20604'">
+        <setEventAttribute attr="_et">Guest_Portal_Authentication_OK</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20605'">
+        <setEventAttribute attr="_et">Guest_Portal_Authorization_Failed</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20610'">
+        <setEventAttribute attr="_et">Guest_Portal_SmartConnect_OK</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20611'">
+        <setEventAttribute attr="_et">Guest_Portal_SmartConnect_Failed</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20994'">
+        <setEventAttribute attr="_et">Admin_GUI_Login</setEventAttribute>
+        <when test="$status = 'Failed'">
+          <setEventAttribute attr="_et">Admin_GUI_Login-Failed</setEventAttribute>
+        </when>
+      </when>
+      <when test="$_typeId = '20995'">
+        <setEventAttribute attr="_et">Admin_GUI_Logout</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20996'">
+        <setEventAttribute attr="_et">Access_Denied_to_Admin_Site</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20997'">
+        <setEventAttribute attr="_et">Failed_Admin_Login_Attempt</setEventAttribute>
+      </when>
+      <when test="$_typeId = '20998'">
+        <setEventAttribute attr="_et">Admin_CLI_Login</setEventAttribute>
+        <when test="$status = 'Failed'">
+          <setEventAttribute attr="_et">Admin_CLI_Login-Failed</setEventAttribute>
+        </when>
+      </when>
+      <when test="$_typeId = '20999'">
+        <setEventAttribute attr="_et">Admin_CLI_Logout</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30000'">
+        <setEventAttribute attr="_et">LDAP_Server_Manual_Restart</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30001'">
+        <setEventAttribute attr="_et">FSSO_Restart</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30002'">
+        <setEventAttribute attr="_et">Web_Server_Restart</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30003'">
+        <setEventAttribute attr="_et">TACACS+_Server_Restart</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30100'">
+        <setEventAttribute attr="_et">RADIUS_Server_Manual_Restart</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30101'">
+        <setEventAttribute attr="_et">RADIUS_Server_Running_Mode</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30150'">
+        <setEventAttribute attr="_et">RADIUS_Accounting_Server_Manual_Restart</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30200'">
+        <setEventAttribute attr="_et">Network_Interface_Configuration</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30201'">
+        <setEventAttribute attr="_et">DNS_Configuration</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30202'">
+        <setEventAttribute attr="_et">Default_Gateway_Configuration</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30203'">
+        <setEventAttribute attr="_et">Host_Name_Configuration</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30300'">
+        <setEventAttribute attr="_et">Log_Backup</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30301'">
+        <setEventAttribute attr="_et">Log_Auto-Deletion</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30302'">
+        <setEventAttribute attr="_et">User_Account_Maintenance</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30303'">
+        <setEventAttribute attr="_et">LDAP_User_Sync</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30304'">
+        <setEventAttribute attr="_et">Scheduled_Configuration_Backup</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30305'">
+        <setEventAttribute attr="_et">Configuration_Backup</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30306'">
+        <setEventAttribute attr="_et">SAML_User_Sync</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30350'">
+        <setEventAttribute attr="_et">Windows_AD_Domain_Join</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[network:\s+<domain:gPatHostName>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_typeId = '30400'">
+        <setEventAttribute attr="_et">Database_Table_Limit_Initialization_Failure</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30500'">
+        <setEventAttribute attr="_et">Remote_Server_Status</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30900'">
+        <setEventAttribute attr="_et">Firmware_Upgrade</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30901'">
+        <setEventAttribute attr="_et">System_Reboot</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30902'">
+        <setEventAttribute attr="_et">System_Shutdown</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30903'">
+        <setEventAttribute attr="_et">Factory_Reset</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30904'">
+        <setEventAttribute attr="_et">Shell_Debugging</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30905'">
+        <setEventAttribute attr="_et">Time_Change</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30906'">
+        <setEventAttribute attr="_et">FortiGuard_Messaging_Service_Registration_Update</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30907'">
+        <setEventAttribute attr="_et">FortiGuard_Messaging_Service_SMS</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30908'">
+        <setEventAttribute attr="_et">SMTP_Send_Mail_Service</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30909'">
+        <setEventAttribute attr="_et">FTM_Provisioning_Service</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30910'">
+        <setEventAttribute attr="_et">NTP_Server_is_unreachable</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30911'">
+        <setEventAttribute attr="_et">SMS_Service</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30912'">
+        <setEventAttribute attr="_et">FortiGuard_FTM_Push_Notification_Update</setEventAttribute>
+      </when>
+      <when test="$_typeId = '30913'">
+        <setEventAttribute attr="_et">Local_User_Secure_Password_Storage</setEventAttribute>
+      </when>
+      <when test="$_typeId = '31001'">
+        <setEventAttribute attr="_et">SNMP_Trap_Sent</setEventAttribute>
+      </when>
+      <when test="$_typeId = '40000'">
+        <setEventAttribute attr="_et">HA_Role_Change</setEventAttribute>
+      </when>
+      <when test="$_typeId = '40001'">
+        <setEventAttribute attr="_et">HA_Cluster_Member_Change</setEventAttribute>
+      </when>
+      <when test="$_typeId = '40002'">
+        <setEventAttribute attr="_et">HA_Cluster_Peering_Failure</setEventAttribute>
+      </when>
+      <when test="$_typeId = '40003'">
+        <setEventAttribute attr="_et">LB_Connection_Event</setEventAttribute>
+      </when>
+      <when test="$_typeId = '40004'">
+        <setEventAttribute attr="_et">LB_Connection_Failure</setEventAttribute>
+      </when>
+      <when test="$_typeId = '40005'">
+        <setEventAttribute attr="_et">Clock_Update_From_Primary</setEventAttribute>
+      </when>
+      <when test="$_typeId = '40006'">
+        <setEventAttribute attr="_et">HA_State_Change</setEventAttribute>
+      </when>
+      <when test="$_typeId = '50000'">
+        <setEventAttribute attr="_et">User_Portal_Login</setEventAttribute>
+      </when>
+      <when test="$_typeId = '50001'">
+        <setEventAttribute attr="_et">User_Portal_Logout</setEventAttribute>
+      </when>
+      <when test="$_typeId = '50002'">
+        <setEventAttribute attr="_et">User_Portal_Password_Change</setEventAttribute>
+      </when>
+      <when test="$_typeId = '50003'">
+        <setEventAttribute attr="_et">User_Portal_Password_Reset</setEventAttribute>
+      </when>
+      <when test="$_typeId = '50004'">
+        <setEventAttribute attr="_et">Device_Certificate_Self-Enrollment</setEventAttribute>
+      </when>
+      <when test="$_typeId = '50005'">
+        <setEventAttribute attr="_et">Kerberos_Portal_Login</setEventAttribute>
+      </when>
+      <when test="$_typeId = '50006'">
+        <setEventAttribute attr="_et">SAML_Portal_Login</setEventAttribute>
+      </when>
+      <when test="$_typeId = '50007'">
+        <setEventAttribute attr="_et">SAML_IdP_Portal_Login</setEventAttribute>
+      </when>
+      <when test="$_typeId = '50008'">
+        <setEventAttribute attr="_et">SAML_IdP_Portal_Logout</setEventAttribute>
+      </when>
+      <when test="$_typeId = '50500'">
+        <setEventAttribute attr="_et">Email_API_secret_key</setEventAttribute>
+      </when>
+      <when test="$_typeId = '50501'">
+        <setEventAttribute attr="_et">Web_Service_Access</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[SSO <_status:gPatWord> request sent for user "<user:gPatMesgBodyMin>" with IP <srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="_et">combineMsgId($_et, $_status)</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_typeId = '50502'">
+        <setEventAttribute attr="_et">SCEP_Request</setEventAttribute>
+      </when>
+      <when test="$_typeId = '50503'">
+        <setEventAttribute attr="_et">AWS_API_secret_key</setEventAttribute>
+      </when>
+      <when test="$_typeId = '60000'">
+        <setEventAttribute attr="_et">Power_Supply_Status_Change</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist msg">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$msg">
+            <regex><![CDATA[login attempts from <srcIpAddr:gPatIpAddr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$msg">
+            <regex><![CDATA[Remote LDAP <:gPatStr> authentication from <srcIpAddr:gPatIpAddr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$msg">
+            <regex><![CDATA[Windows AD user authentication from <srcIpAddr:gPatIpAddr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$msg">
+            <regex><![CDATA[login failed by <user:gPatStr> from <_srcMac:gPatStr>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="srcMACAddr">normalizeMAC($_srcMac)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <choose>
+      <when test="exist srcIpAddr"/>
+      <when test="exist serverIpAddr">
+        <setEventAttribute attr="srcIpAddr">$serverIpAddr</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _et">
+      <setEventAttribute attr="eventType">combineMsgId("FortiAuthenticator-", $_et)</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>

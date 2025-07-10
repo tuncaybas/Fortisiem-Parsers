@@ -1,0 +1,103 @@
+<eventParser name="FireEyeTrapParser">
+  <deviceType>
+    <Vendor>FireEye</Vendor>
+    <Model>MPS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[2016-11-11 12:48:37 0.0.0.0TRAP2, SNMP v2c, community 2hem0 . Cold Start Trap (0) Uptime: 0:00:00.00 DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (18022102) 2 days, 2:03:41.02 SNMPv2-MIB::snmpTrapOID.0 = OID: SNMPv2-SMI::enterprises.25597.3.0.1 SNMPv2-SMI::enterprises.25597.1.1.2.1.2.417081 = Gauge32: 417081 SNMPv2-SMI::enterprises.25597.1.1.2.1.3.417081 = STRING: "malware-object" SNMPv2-SMI::enterprises.25597.1.1.2.1.4.417081 = STRING: "2015-06-15" SNMPv2-SMI::enterprises.25597.1.1.2.1.5.417081 = STRING: "20:32:47+00" SNMPv2-SMI::enterprises.25597.1.1.2.1.6.417081 = Counter64: 4611686018427897856 SNMPv2-SMI::enterprises.25597.1.1.2.1.7.417081 = IpAddress: 0.0.0.0 SNMPv2-SMI::enterprises.25597.1.1.2.1.8.417081 = IpAddress: 0.0.0.0 SNMPv2-SMI::enterprises.25597.1.1.2.1.9.417081 = STRING: "00:00:00:00:00:00" SNMPv2-SMI::enterprises.25597.1.1.2.1.10.417081 = STRING: "00:00:00:00:00:00" SNMPv2-SMI::enterprises.25597.1.1.2.1.11.417081 = INTEGER: 0 SNMPv2-SMI::enterprises.25597.1.1.2.1.12.417081 = INTEGER: 0 SNMPv2-SMI::enterprises.25597.1.1.2.1.13.417081 = "" SNMPv2-SMI::enterprises.25597.1.1.2.1.14.417081 = Gauge32: 0 SNMPv2-SMI::enterprises.25597.1.1.2.1.15.417081 = STRING: "none" SNMPv2-SMI::enterprises.25597.1.1.2.1.16.417081 = STRING: "none" SNMPv2-SMI::enterprises.25597.1.1.2.1.17.417081 = STRING: "NA" SNMPv2-SMI::enterprises.25597.1.1.2.1.18.417081 = STRING: "FE.TESTFIRE_Trojan.Gozi" SNMPv2-SMI::enterprises.25597.1.1.2.1.19.417081 = STRING: "duplicate-md5sum" SNMPv2-SMI::enterprises.25597.1.1.2.1.20.417081 = STRING: "NA" SNMPv2-SMI::enterprises.25597.1.1.2.1.21.417081 = Gauge32: 0 SNMPv2-SMI::enterprises.25597.1.1.2.1.22.417081 = Gauge32: 499841 SNMPv2-SMI::enterprises.25597.1.1.2.1.23.417081 = STRING: "none" SNMPv2-SMI::enterprises.25597.1.1.2.1.24.417081 = INTEGER: 0 SNMPv2-SMI::enterprises.25597.1.1.2.1.25.417081 = STRING: "0128550dbe2caed2f4516310620b2f68" SNMPv2-SMI::enterprises.25597.1.1.2.1.26.417081 = STRING: "email" SNMPv2-SMI::enterprises.25597.1.1.2.1.27.417081 = STRING: "NA" SNMPv2-SMI::enterprises.25597.1.1.2.1.28.417081 = STRING: "notified" SNMPv2-SMI::enterprises.25597.1.1.2.1.29.417081 = STRING: "NA" SNMPv2-SMI::enterprises.25597.1.1.2.1.30.417081 = IpAddress: 10.99.200.161 SNMPv2-SMI::enterprises.25597.1.1.2.1.31.417081 = STRING: "KP-FireEye-CMS" SNMPv2-SMI::enterprises.25597.1.1.2.1.32.417081 = STRING: "eMPS" SNMPv2-SMI::enterprises.25597.1.1.2.1.33.417081 = STRING: "7.9.1.577926" SNMPv2-SMI::enterprises.25597.1.1.2.1.34.417081 = STRING: "https://example.com/emps/eanalysis?e_id=1" SNMPv2-SMI::enterprises.25597.1.1.2.1.35.417081 = INTEGER: 1 SNMPv2-SMI::enterprises.25597.1.1.2.1.36.417081 = STRING: "0.0.0.0" SNMPv2-SMI::enterprises.25597.1.1.2.1.37.417081 = INTEGER: 1 SNMPv2-SMI::enterprises.25597.1.1.2.1.38.417081 = STRING: "0.0.0.0" SNMPv2-SMI::enterprises.25597.1.1.2.1.39.417081 = INTEGER: 1 SNMPv2-SMI::enterprises.25597.1.1.2.1.40.417081 = STRING: "10.99.200.161" SNMPv2-SMI::enterprises.25597.1.1.2.1.51.417081 = INTEGER: 1]]></testEvent>
+    <testEvent><![CDATA[2016-05-26 07:50:28 0.0.0.0TRAP2, SNMP v2c, community R-OEnWinLog$            . Cold Start Trap (0) Uptime: 0:00:00.00            DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (610853754) 70 days, 16:48:57.54  SNMPv2-MIB::snmpTrapOID.0 = OID: SNMPv2-SMI::enterprises.25597.3.0.1            SNMPv2-SMI::enterprises.25597.1.1.2.1.2.1116 = Gauge32: 1116  SNMPv2-SMI::enterprises.25597.1.1.2.1.3.1116 = STRING: "malware-callback"         SNMPv2-SMI::enterprises.25597.1.1.2.1.4.1116 = STRING: "2016-05-26" SNMPv2-SMI::enterprises.25597.1.1.2.1.5.1116 = STRING: "11:46:48+00"  SNMPv2-SMI::enterprises.25597.1.1.2.1.6.1116 = Counter64: 0      SNMPv2-SMI::enterprises.25597.1.1.2.1.7.1116 = IpAddress: 10.1.201.82               SNMPv2-SMI::enterprises.25597.1.1.2.1.8.1116 = IpAddress: 1.1.1.1             SNMPv2-SMI::enterprises.25597.1.1.2.1.9.1116 = STRING: "70:38:ee:91:cc:80"       SNMPv2-SMI::enterprises.25597.1.1.2.1.10.1116 = STRING: "58:49:3b:2d:98:11"    SNMPv2-SMI::enterprises.25597.1.1.2.1.11.1116 = INTEGER: 80    SNMPv2-SMI::enterprises.25597.1.1.2.1.12.1116 = INTEGER: 0                SNMPv2-SMI::enterprises.25597.1.1.2.1.13.1116 = STRING: "tcp"               SNMPv2-SMI::enterprises.25597.1.1.2.1.14.1116 = Gauge32: 0      SNMPv2-SMI::enterprises.25597.1.1.2.1.15.1116 = STRING: "none" SNMPv2-SMI::enterprises.25597.1.1.2.1.16.1116 = STRING: "none"          SNMPv2-SMI::enterprises.25597.1.1.2.1.17.1116 = STRING: "ignore"          SNMPv2-SMI::enterprises.25597.1.1.2.1.18.1116 = STRING: "Trojan.Ransomware.Locky"      SNMPv2-SMI::enterprises.25597.1.1.2.1.19.1116 = STRING: "bot-command"                SNMPv2-SMI::enterprises.25597.1.1.2.1.20.1116 = STRING: "dbsmith.enwin.util"               SNMPv2-SMI::enterprises.25597.1.1.2.1.21.1116 = Gauge32: 0      SNMPv2-SMI::enterprises.25597.1.1.2.1.22.1116 = Gauge32: 86111359             SNMPv2-SMI::enterprises.25597.1.1.2.1.23.1116 = STRING: "1.1.1.2"          SNMPv2-SMI::enterprises.25597.1.1.2.1.24.1116 = INTEGER: 80    SNMPv2-SMI::enterprises.25597.1.1.2.1.25.1116 = STRING: "none" SNMPv2-SMI::enterprises.25597.1.1.2.1.26.1116 = STRING: "content"     SNMPv2-SMI::enterprises.25597.1.1.2.1.27.1116 = STRING: "NA" SNMPv2-SMI::enterprises.25597.1.1.2.1.28.1116 = STRING: "blocked"            SNMPv2-SMI::enterprises.25597.1.1.2.1.29.1116 = STRING: "NA"               SNMPv2-SMI::enterprises.25597.1.1.2.1.30.1116 = IpAddress: 10.1.209.103             SNMPv2-SMI::enterprises.25597.1.1.2.1.31.1116 = STRING: "RFWFE1"       SNMPv2-SMI::enterprises.25597.1.1.2.1.32.1116 = STRING: "Web MPS"       SNMPv2-SMI::enterprises.25597.1.1.2.1.33.1116 = STRING: "7.7.3.445979"            SNMPv2-SMI::enterprises.25597.1.1.2.1.34.1116 = STRING: "https://RFWFE1.enwin.util/event_stream/events_for_bot?ev_id=1116"       SNMPv2-SMI::enterprises.25597.1.1.2.1.35.1116 = INTEGER: 1    SNMPv2-SMI::enterprises.25597.1.1.2.1.36.1116 = STRING: "10.1.201.82"                 SNMPv2-SMI::enterprises.25597.1.1.2.1.37.1116 = INTEGER: 1       SNMPv2-SMI::enterprises.25597.1.1.2.1.38.1116 = STRING: "1.1.1.3"                 SNMPv2-SMI::enterprises.25597.1.1.2.1.39.1116 = INTEGER: 1    SNMPv2-SMI::enterprises.25597.1.1.2.1.40.1116 = STRING: "10.1.209.103"              SNMPv2-SMI::enterprises.25597.1.1.2.1.51.1116 = INTEGER: 1]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\s+SNMPv2-SMI::enterprises\.25597\.]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime><_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventType">FireEye-Generic</setEventAttribute>
+    <collectFieldsBySNMPTrap src="$_body">
+      <attrKeyMap attr="_id" key="SNMPv2-MIB::snmpTrapOID"/>
+      <attrKeyMap attr="srcMACAddr" key="SNMPv2-SMI::enterprises.25597.1.1.2.1.9"/>
+      <attrKeyMap attr="destMACAddr" key="SNMPv2-SMI::enterprises.25597.1.1.2.1.10"/>
+      <attrKeyMap attr="destIpPort" key="SNMPv2-SMI::enterprises.25597.1.1.2.1.11"/>
+      <attrKeyMap attr="hostVLAN" key="SNMPv2-SMI::enterprises.25597.1.1.2.1.12"/>
+      <attrKeyMap attr="srcName" key="SNMPv2-SMI::enterprises.25597.1.1.2.1.20"/>
+      <attrKeyMap attr="cncName" key="SNMPv2-SMI::enterprises.25597.1.1.2.1.23"/>
+      <attrKeyMap attr="cncPort" key="SNMPv2-SMI::enterprises.25597.1.1.2.1.24"/>
+      <attrKeyMap attr="alertCategory" key="SNMPv2-SMI::enterprises.25597.1.1.2.1.26"/>
+      <attrKeyMap attr="virusAction" key="SNMPv2-SMI::enterprises.25597.1.1.2.1.28"/>
+      <attrKeyMap attr="_type" key="SNMPv2-SMI::enterprises.25597.1.1.2.1.3"/>
+      <attrKeyMap attr="srcIpAddr" key="SNMPv2-SMI::enterprises.25597.1.1.2.1.36"/>
+      <attrKeyMap attr="destIpAddr" key="SNMPv2-SMI::enterprises.25597.1.1.2.1.38"/>
+      <attrKeyMap attr="infoURL" key="SNMPv2-SMI::enterprises.25597.1.1.2.1.34"/>
+      <attrKeyMap attr="reptDevIpAddr" key="SNMPv2-SMI::enterprises.25597.1.1.2.1.40"/>
+      <attrKeyMap attr="reptDevName" key="SNMPv2-SMI::enterprises.25597.1.1.2.1.31"/>
+      <attrKeyMap attr="ipPort" key="SNMPv2-SMI::enterprises.25597.1.1.2.1.11"/>
+      <attrKeyMap attr="_ipProto" key="SNMPv2-SMI::enterprises.25597.1.1.2.1.13"/>
+      <attrKeyMap attr="virusType" key="SNMPv2-SMI::enterprises.25597.1.1.2.1.18"/>
+      <attrKeyMap attr="virusAction" key="SNMPv2-SMI::enterprises.25597.1.1.2.1.17"/>
+      <attrKeyMap attr="_occurTime" key="SNMPv2-SMI::enterprises.25597.1.1.2.1.5"/>
+      <attrKeyMap attr="_occurDate" key="SNMPv2-SMI::enterprises.25597.1.1.2.1.4"/>
+      <attrKeyMap attr="hashAlgo" key="SNMPv2-SMI::enterprises.25597.1.1.2.1.19"/>
+      <attrKeyMap attr="hashCode" key="SNMPv2-SMI::enterprises.25597.1.1.2.1.25"/>
+    </collectFieldsBySNMPTrap>
+    <when test="exist _id">
+      <setEventAttribute attr="_id">replaceStringByRegex($_id, "SNMPv2-SMI::enterprises.25597.", "")</setEventAttribute>
+    </when>
+    <when test="exist _occurDate">
+      <when test="exist _occurTime">
+        <collectFieldsByRegex src="$_occurDate">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>]]></regex>
+        </collectFieldsByRegex>
+        <collectFieldsByRegex src="$_occurTime">
+          <regex><![CDATA[<_time:gPatTime>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </when>
+    </when>
+    <when test="exist _ipProto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_ipProto)</setEventAttribute>
+    </when>
+    <when test="exist infoURL">
+      <setEventAttribute attr="destName">extractHostFromURL($infoURL)</setEventAttribute>
+      <when test="not_private_ip destIpAddr">
+        <when test="exist destName">
+          <setEventAttribute attr="domainEntropy">calcDomainEntropy($destName)</setEventAttribute>
+        </when>
+      </when>
+    </when>
+    <choose>
+      <when test="exist _type">
+        <setEventAttribute attr="eventType">combineMsgId("FireEye-",$_type)</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="eventSeverityCat">HIGH</setEventAttribute>
+      </when>
+      <otherwise>
+        <choose>
+          <when test="not_exist _id">
+            <setEventAttribute attr="eventType">FireEye-Generic</setEventAttribute>
+          </when>
+          <when test="$_id = '3.0.1'">
+            <setEventAttribute attr="eventType">FireEye-Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+          </when>
+          <when test="$_id = '3.0.2'">
+            <setEventAttribute attr="eventType">FireEye-Execution-Anomaly-Detected</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+          </when>
+          <when test="$_id = '3.0.3'">
+            <setEventAttribute attr="eventType">FireEye-Network-Anomaly</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+          </when>
+          <when test="$_id = '3.0.7'">
+            <setEventAttribute attr="eventType">FireEye-OS-Change</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+          </when>
+        </choose>
+      </otherwise>
+    </choose>
+  </parsingInstructions>
+</eventParser>

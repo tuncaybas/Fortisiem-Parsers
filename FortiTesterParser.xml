@@ -1,0 +1,253 @@
+<eventParser name="FortiTesterParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiTester</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[CEF:0|Fortinet|FortiTester|3.8|Event|information|category=System deviceExternalId=FTS2KET618000005 msg=The system is started deviceCustomDate1=2019-11-05-15:12:30 cs1= cs1Label=Description]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patPipe"><![CDATA[[^|]*]]></pattern>
+    <pattern name="patDot"><![CDATA[[^\.]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[CEF:\d+\|Fortinet\|FortiTester]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[CEF:\d+\|Fortinet\|FortiTester\|<version:patPipe>\|<type:patPipe>\|<_sev:patPipe>\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">FortiTester-Generic</setEventAttribute>
+
+    <choose>
+      <when test="matches($_sev, '[D|b]ebug')">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="matches($_sev, '[I|i]nformation')">
+        <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+      </when>
+      <when test="matches($_sev, '[N|n]otice')">
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+      <when test="matches($_sev, '[W|w]arning')">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="matches($_sev, '[E|e]rror')">
+        <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+      </when>
+      <when test="matches($_sev, '[C|c]ritical')">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="matches($_sev, '[A|a]lert')">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="matches($_sev, '[E|e]mergency')">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+    </choose>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="categoryType" key="category"/>
+      <attrKeyMap attr="deviceIdentification" key="deviceExternalId"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="_date" key="deviceCustomDate1"/>
+      <attrKeyMap attr="_cs1" key="cs1"/>
+      <attrKeyMap attr="_cs1Label" key="cs1Label"/>
+      <attrKeyMap attr="_cs2" key="cs2"/>
+      <attrKeyMap attr="_cs2Label" key="cs2Label"/>
+      <attrKeyMap attr="_cs3" key="cs3"/>
+      <attrKeyMap attr="_cs3Label" key="cs3Label"/>
+      <attrKeyMap attr="_cs4" key="cs4"/>
+      <attrKeyMap attr="_cs4Label" key="cs4Label"/>
+      <attrKeyMap attr="_cs5" key="cs5"/>
+      <attrKeyMap attr="_cs5Label" key="cs5Label"/>
+      <attrKeyMap attr="_cs6" key="cs6"/>
+      <attrKeyMap attr="_cs6Label" key="cs6Label"/>
+      <attrKeyMap attr="_cs7" key="cs7"/>
+      <attrKeyMap attr="_cs7Label" key="cs7Label"/>
+      <attrKeyMap attr="_cs8" key="cs8"/>
+      <attrKeyMap attr="_cs8Label" key="cs8Label"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist type">
+      <setEventAttribute attr="eventType">combineMsgId("FortiTester-", $type)</setEventAttribute>
+    </when>
+
+    <when test="exist categoryType">
+      <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $categoryType)</setEventAttribute>
+    </when>
+
+    <collectFieldsByRegex src="$_date">
+      <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>-<_time:gPatTime>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+
+    <choose>
+      <when test="not_exist _cs1Label"/>
+      <when test="not_exist _cs1"/>
+      <when test="$_cs1Label = 'Description'">
+        <setEventAttribute attr="description">$_cs1</setEventAttribute>
+      </when>
+      <when test="$_cs1Label = 'TestCase'">
+        <setEventAttribute attr="testName">$_cs1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs2Label"/>
+      <when test="not_exist _cs2"/>
+      <when test="$_cs2Label = 'FileName'">
+        <setEventAttribute attr="fileName">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label = 'EvasionType'">
+        <setEventAttribute attr="attackType">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label = 'StepName'">
+        <setEventAttribute attr="attackContext">$_cs2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs3Label"/>
+      <when test="not_exist _cs3"/>
+      <when test="$_cs3Label = 'Application'">
+        <setEventAttribute attr="appName">$_cs3</setEventAttribute>
+      </when>
+      <when test="$_cs3Label = 'Status'">
+        <setEventAttribute attr="status">$_cs3</setEventAttribute>
+      </when>
+      <when test="$_cs3Label = 'CVE-ID'">
+        <setEventAttribute attr="vulnCVEId">$_cs3</setEventAttribute>
+      </when>
+      <when test="$_cs3Label = 'Platform'">
+        <setEventAttribute attr="osType">$_cs3</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs4Label"/>
+      <when test="not_exist _cs4"/>
+      <when test="$_cs4Label = 'Protocol'">
+        <setEventAttribute attr="appTransportProto">$_cs4</setEventAttribute>
+      </when>
+      <when test="$_cs4Label = 'Status'">
+        <setEventAttribute attr="status">$_cs4</setEventAttribute>
+      </when>
+      <when test="$_cs4Label = 'Tactic'">
+        <setEventAttribute attr="attackTactic">$_cs4</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs5Label"/>
+      <when test="not_exist _cs5"/>
+      <when test="$_cs5Label = 'Type'">
+        <setEventAttribute attr="attackType">$_cs5</setEventAttribute>
+      </when>
+      <when test="$_cs5Label = 'Technique'">
+        <setEventAttribute attr="attackTechnique">$_cs5</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs6Label"/>
+      <when test="not_exist _cs6"/>
+      <when test="$_cs6Label = 'OS'">
+        <setEventAttribute attr="osType">$_cs6</setEventAttribute>
+      </when>
+      <when test="$_cs6Label = 'Status'">
+        <setEventAttribute attr="status">$_cs6</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs7Label"/>
+      <when test="not_exist _cs7"/>
+      <when test="$_cs7Label = 'CVE-ID'">
+        <setEventAttribute attr="vulnCVEId">$_cs7</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs8Label"/>
+      <when test="not_exist _cs8"/>
+      <when test="$_cs8Label = 'Status'">
+        <setEventAttribute attr="status">$_cs8</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="$type = 'Event'">
+      <choose>
+        <when test="matches($categoryType,'User')">
+          <switch>
+            <case>
+              <!-- CEF:0|Fortinet|FortiTester|3.8|Event|information|category=User deviceExternalId=FTSV020000196924 msg=User admin logged in successfully from 192.168.1.16 deviceCustomDate1=2020-02-05-01:19:06 cs1= cs1Label=Description -->
+              <collectFieldsByRegex src="$msg">
+                <regex><![CDATA[User <user:gPatStr> logged in successfully from <srcIpAddr:gPatIpV4Dot>]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="eventType">combineMsgId($eventType, "-Logon-Success")</setEventAttribute>
+            </case>
+
+            <case>
+              <!-- CEF:0|Fortinet|FortiTester|3.8|Event|alert|category=User deviceExternalId=FTSV020000196924 msg=User sam logged in failure from 192.168.1.16. deviceCustomDate1=2020-02-05-02:59:19 cs1=User name or password error cs1Label=Description -->
+              <collectFieldsByRegex src="$msg">
+                <regex><![CDATA[User <user:gPatStr> logged in failure from <srcIpAddr:gPatIpV4Dot>]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="eventType">combineMsgId($eventType, "-Logon-Failure")</setEventAttribute>
+            </case>
+
+            <case>
+              <!-- CEF:0|Fortinet|FortiTester|3.8|Event|information|category=User deviceExternalId=FTSV020000196924 msg=User admin logout successfully from 192.168.1.16 deviceCustomDate1=2020-02-05-02:58:59 cs1= cs1Label=Description -->
+              <collectFieldsByRegex src="$msg">
+                <regex><![CDATA[User <user:gPatStr> logout successfully from <srcIpAddr:gPatIpV4Dot>]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="eventType">combineMsgId($eventType, "-Logout")</setEventAttribute>
+            </case>
+          </switch>
+        </when>
+
+        <when test="matches($categoryType,'Case')">
+          <switch>
+            <case>
+              <!-- CEF:0|Fortinet|FortiTester|3.8|Event|information|category=Case deviceExternalId=FTSV020000196924 msg=The case [SinglePacketFlood_TP_admin_20200205-01:25:47] is started by admin. deviceCustomDate1=2020-02-05-01:25:51 cs1= cs1Label=Description -->
+              <collectFieldsByRegex src="$msg">
+                <regex><![CDATA[The case \[<opName:gPatStrRightSB>\] is started by <user:patDot>\.]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="eventType">combineMsgId($eventType, "-Started")</setEventAttribute>
+            </case>
+
+            <case>
+              <!-- CEF:0|Fortinet|FortiTester|3.8|Event|information|category=Case deviceExternalId=FTSV020000196924 msg=The case [AttackReplay_TP_admin_20200205-01:27:22] is fail created by admin. deviceCustomDate1=2020-02-05-01:28:37 cs1=The client 1st subnet IP Address(192.168.1.100) on port1 of localhost and server 1st subnet IP Address(192.168.2.100) on port2 of localhost must be in the same network cs1Label=Description -->
+              <collectFieldsByRegex src="$msg">
+                <regex><![CDATA[The case \[<opName:gPatStrRightSB>\] is fail created by <user:patDot>\.]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="eventType">combineMsgId($eventType, "-Creation-Failure")</setEventAttribute>
+            </case>
+
+            <case>
+              <!-- CEF:0|Fortinet|FortiTester|3.8|Event|information|category=Case deviceExternalId=FTSV020000196924 msg=The case [SinglePacketFlood_TP_admin_20200205-01:25:47] is successfully created by admin. deviceCustomDate1=2020-02-05-01:25:50 cs1= cs1Label=Description -->
+              <collectFieldsByRegex src="$msg">
+                <regex><![CDATA[The case \[<opName:gPatStrRightSB>\] is successfully created by <user:patDot>\.]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="eventType">combineMsgId($eventType, "-Creation-Success")</setEventAttribute>
+            </case>
+
+            <case>
+              <!-- CEF:0|Fortinet|FortiTester|3.8|Event|information|category=Case deviceExternalId=FTSV020000196924 msg=Test case [AttackReplay_TP_admin_20200205-01:27:22] run failed. deviceCustomDate1=2020-02-05-01:28:55 cs1=List of User Intrusion Group is empty. cs1Label=Description -->
+              <collectFieldsByRegex src="$msg">
+                <regex><![CDATA[case \[<opName:gPatStrRightSB>\] run failed]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="eventType">combineMsgId($eventType, "-Run-Failed")</setEventAttribute>
+            </case>
+          </switch>
+        </when>
+
+      </choose>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

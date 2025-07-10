@@ -1,0 +1,146 @@
+<eventParser name="EpicSecuritySIEMParser">
+  <deviceType>
+    <Vendor>Epic</Vendor>
+    <Model>Security-SIEM</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[000Oct 19 05:32:16 10.25.8.111 CEF:0|Epic|Security-SIEM|8.3.0|LOGIN|LOGIN|4|cnt=1 suser=3227^DOE, JOHN L^JOHN-DOE shost=PRD workstationID=WS7946 act=Query end=Oct 19 00:30:00 flag=^^Workflow Logging CLIENTNAME=dom1/WS7946 DEP=100000010^RMC ICU MAIN IP=10.25.6.59/10.170.10.66 LOGINLDAPID=JOHN-DOE LOGINREASON= OSUSR=WS7946 ROLE=MODEL IP NURSE SOURCE=1-Hyperspace USERJOB=304401^RMC INPATIENT NURSE TEMPLATE#011]]></testEvent>
+    <testEvent><![CDATA[000Oct 19 05:32:16 10.25.8.111 CEF:0|Epic|Security-SIEM|8.3.0|AUTHENTICATION|AUTHENTICATION|4|cnt=1 suser=3055^DOE, JOHN^JOHN-DOE shost=PRD workstationID=WS7610 act=Query end=Oct 19 00:30:00 flag=Access History^^Workflow Logging LOGINCONTEXT=0-Login LOGINDEVICE=10001-ImprivataAuthMultiApp LOGINLDAPID=JOHN-DOE LOGINREVAL= 011]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patStrEndSep"><![CDATA[[^|]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\s*CEF\s*:\d+\|Epic\|Security-SIEM\|]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>?\s*<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<:gPatStr>\s+)?CEF\s*:<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </case>
+      <default>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^CEF\s*:<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </default>
+    </switch>
+
+    <when test="matches($_body, '\\\|')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "\|", "::TEMP::")</setEventAttribute>
+    </when>
+    <setEventAttribute attr="_body">replaceStrInStr($_body, "|", "::SEP::")</setEventAttribute>
+    <when test="matches($_body, '::TEMP::')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "::TEMP::", "|")</setEventAttribute>
+    </when>
+
+    <collectAndSetAttrByPos sep="::SEP::" src="$_body">
+      <attrPosMap attr="version" pos="1"/>
+      <attrPosMap attr="appVersion" pos="4"/>
+      <attrPosMap attr="_sigId" pos="5"/>
+      <attrPosMap attr="categoryType" pos="6"/>
+      <attrPosMap attr="_severity" pos="7"/>
+      <attrPosMap attr="_extension" pos="8"/>
+    </collectAndSetAttrByPos>
+
+    <setEventAttribute attr="_extension">replaceStrInStr($_extension, "\=", "=")</setEventAttribute>
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_extension">
+      <attrKeyMap attr="srcAction" key="act"/>
+      <attrKeyMap attr="computer" key="workstationID"/>
+      <attrKeyMap attr="hostName" key="workstationID"/>
+      <attrKeyMap attr="_endTime" key="end"/>
+      <attrKeyMap attr="serviceName" key="sourceServiceName"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="_groupName" key="DEP"/>
+      <attrKeyMap attr="_clientIpAddr" key="IP"/>
+      <attrKeyMap attr="destName" key="LOGINDEVICE"/>
+      <attrKeyMap attr="srcUser" key="LOGINLDAPID"/>
+      <attrKeyMap attr="srcUser" key="suser"/>
+      <attrKeyMap attr="user" key="LOGINLDAPID"/>
+      <attrKeyMap attr="role" key="ROLE"/>
+      <attrKeyMap attr="srcApp" key="SOURCE"/>
+      <attrKeyMap attr="_jobDetail" key="USERJOB"/>
+      <attrKeyMap attr="srcName" key="shost"/>
+    </collectFieldsByKeyValuePair>
+
+    <choose>
+      <when test="exist srcAction">
+        <setEventAttribute attr="eventType">combineMsgId("Epic-SecuritySIEM-", $categoryType, "-", $srcAction)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">Epic-SecuritySIEM-Generic</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist _endTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_endTime">
+            <regex><![CDATA[<_mon1:gPatMon>\s+<_day1:gPatDay>\s+<_time1:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="endTime">toDateTime($_mon1, $_day1, $_time1)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _clientIpAddr">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_clientIpAddr">
+            <regex><![CDATA[<srcIpAddr:gPatIpAddr>/<clientIpAddr:gPatIpAddr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist srcUser">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$srcUser">
+            <regex><![CDATA[<srcUser:gPatInt>\^<srcUserFullName:gPatMesgBody>\^]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _groupName">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_groupName">
+            <regex><![CDATA[<groupID:gPatInt>\^<groupName:gPatSentence>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _jobDetail">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_jobDetail">
+            <regex><![CDATA[<jobId:gPatInt>\^<jobName:gPatSentence>TEMPLATE\#<templateName:gPatInt>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <choose>
+      <when test="$_severity = '0'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventSeverity">$_severity</setEventAttribute>
+      </otherwise>
+    </choose>
+
+  </parsingInstructions>
+</eventParser>

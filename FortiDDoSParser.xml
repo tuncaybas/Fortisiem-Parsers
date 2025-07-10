@@ -1,0 +1,881 @@
+<eventParser name="FortiDDoSParser">
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiDDoS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[Jan 10 16:01:50 172.30.84.114 devid=FI400B3913000032 date=2015-01-23 time=17:42:00 type=attack SPP=1 evecode=1 evesubcode=8 dir=0 protocol=1 sIP=0.0.0.0 dIP=0.0.0.0 dropCount=312]]></testEvent>
+    <testEvent><![CDATA[devid=FI800B3913000055 date=2017-01-27 time=18:24:00 tz=PST type=attack spp=0 evecode=2 evesubcode=61 description="Excessive Concurrent Connections Per Source flood" dir=1 sip=1.1.1.1 dip=1.1.1.2 subnet_name=default dropcount=40249 facility=Local0 level=Notice]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\bdevid="?(?:FI|FIVM)-?\d\w*"?\s+date=\d{4}-\d{2}-\d{2}\s+time=<:gPatTime>\s]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default>
+        <setEventAttribute attr="_body">$_rawmsg</setEventAttribute>
+      </default>
+    </switch>
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="_date" key="date"/>
+      <attrKeyMap attr="_time" key="time"/>
+      <attrKeyMap attr="type" key="type"/>
+      <attrKeyMap attr="subtype" key="subtype"/>
+      <attrKeyMap attr="sppNum" key="SPP"/>
+      <attrKeyMap attr="sppNum" key="spp"/>
+      <attrKeyMap attr="_eveCode" key="evecode"/>
+      <attrKeyMap attr="_eveSubCode" key="evesubcode"/>
+      <attrKeyMap attr="direction" key="dir"/>
+      <attrKeyMap attr="ipProto" key="protocol"/>
+      <attrKeyMap attr="srcIpAddr" key="sIP"/>
+      <attrKeyMap attr="srcIpAddr" key="sip"/>
+      <attrKeyMap attr="srcIpPort" key="sPort"/>
+      <attrKeyMap attr="destIpAddr" key="dIP"/>
+      <attrKeyMap attr="destIpAddr" key="dip"/>
+      <attrKeyMap attr="destIpPort" key="dPort"/>
+      <attrKeyMap attr="icmpType" key="icmpType"/>
+      <attrKeyMap attr="icmpCode" key="icmpCode"/>
+      <attrKeyMap attr="totPktDrop" key="dropCount"/>
+      <attrKeyMap attr="totPktDrop" key="dropcount"/>
+      <attrKeyMap attr="logID" key="log_id"/>
+      <attrKeyMap attr="_severity" key="pri"/>
+      <!-- <attrKeyMap attr="" key="msg_id"/>-->
+      <attrKeyMap attr="_user" key="user"/>
+      <attrKeyMap attr="infoURL" key="ui"/>
+      <attrKeyMap attr="opName" key="action"/>
+      <attrKeyMap attr="status" key="status"/>
+      <attrKeyMap attr="errReason" key="reason"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="details" key="detail"/>
+      <attrKeyMap attr="eventDesc" key="description"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist infoURL">
+      <setEventAttribute attr="destName">extractHostFromURL($infoURL)</setEventAttribute>
+    </when>
+
+    <setEventAttribute attr="eventType">FortiDDoS-Generic</setEventAttribute>
+    <collectFieldsByRegex src="$_date">
+      <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <choose>
+      <when test="not_exist _user"/>
+      <when test="$_user = 'N/A'"/>
+      <otherwise>
+        <setEventAttribute attr="user">$_user</setEventAttribute>
+      </otherwise>
+    </choose>
+    <choose>
+      <when test="not_exist _severity"/>
+      <when test="$_severity = 'emergency'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_severity = 'notice'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_severity = 'information'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_severity = 'critical'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_severity = 'alert'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_severity = 'error'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_severity = 'warning'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+    </choose>
+    <when test="exist _eveCode">
+      <when test="exist _eveSubCode">
+        <setEventAttribute attr="_eveTypeCode">combineMsgId($_eveCode,"_",$_eveSubCode)</setEventAttribute>
+      </when>
+    </when>
+    <when test="exist _eveTypeCode">
+      <choose>
+        <when test="$_eveTypeCode = '1_0'">
+          <setEventAttribute attr="eventType">FortiDDoS-Protocol-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_1'">
+          <setEventAttribute attr="eventType">FortiDDoS-Fragment-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_2'">
+          <setEventAttribute attr="eventType">FortiDDoS-TOS-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_3'">
+          <setEventAttribute attr="eventType">FortiDDoS-IPV4-Option-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_4'">
+          <setEventAttribute attr="eventType">FortiDDoS-IP-Header-Anomaly</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_5'">
+          <setEventAttribute attr="eventType">FortiDDoS-Source-Flood-Start</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_6'">
+          <setEventAttribute attr="eventType">FortiDDoS-ST-Hash-Attack</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_7'">
+          <setEventAttribute attr="eventType">FortiDDoS-ST-Out-Of-Memory</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_8'">
+          <setEventAttribute attr="eventType">FortiDDoS-Source-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_9'">
+          <setEventAttribute attr="eventType">FortiDDoS-Destination-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_10'">
+          <setEventAttribute attr="eventType">FortiDDoS-DT-Hash-Attack</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_11'">
+          <setEventAttribute attr="eventType">FortiDDoS-DT-Out-Of-Memory</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_12'">
+          <setEventAttribute attr="eventType">FortiDDoS-Destination-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_13'">
+          <setEventAttribute attr="eventType">FortiDDoS-Distributed-Source-Attack</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_14'">
+          <setEventAttribute attr="eventType">FortiDDoS-IP-Header-Checksum-Error</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_15'">
+          <setEventAttribute attr="eventType">FortiDDoS-SourceIP-Equal-DestIP</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_16'">
+          <setEventAttribute attr="eventType">FortiDDoS-SourceIP/DestIP-Equal-Localhost</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_17'">
+          <setEventAttribute attr="eventType">FortiDDoS-L3-Anomalies</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_21'">
+          <setEventAttribute attr="eventType">FortiDDoS-Network-Scan</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_22'">
+          <setEventAttribute attr="eventType">FortiDDoS-Dark-Address-Scan</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_23'">
+          <setEventAttribute attr="eventType">FortiDDoS-Network-Scan-Start</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_24'">
+          <setEventAttribute attr="eventType">FortiDDoS-Dark-Address-Scan-Start</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_25'">
+          <setEventAttribute attr="eventType">FortiDDoS-Dark-Address-Blocked</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_50'">
+          <setEventAttribute attr="eventType">FortiDDoS-Protocol-Denied</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_51'">
+          <setEventAttribute attr="eventType">FortiDDoS-TOS-Denied</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_52'">
+          <setEventAttribute attr="eventType">FortiDDoS-IPV4-Option-Denied</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_53'">
+          <setEventAttribute attr="eventType">FortiDDoS-IPV6-Option-Denied</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_54'">
+          <setEventAttribute attr="eventType">FortiDDoS-Fragment-Denied</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_55'">
+          <setEventAttribute attr="eventType">FortiDDoS-Source-Denied</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_56'">
+          <setEventAttribute attr="eventType">FortiDDoS-Destination-Denied</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_57'">
+          <setEventAttribute attr="eventType">FortiDDoS-Most-Active-Source</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_58'">
+          <setEventAttribute attr="eventType">FortiDDoS-Most-Active-Destination</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_59'">
+          <setEventAttribute attr="eventType">FortiDDoS-Geo-Location-Denied</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_60'">
+          <setEventAttribute attr="eventType">FortiDDoS-IP-Address-Denied</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_61'">
+          <setEventAttribute attr="eventType">FortiDDoS-IP-Reputation-Denied</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_62'">
+          <setEventAttribute attr="eventType">FortiDDoS-Local-Address-Anti-Spoof-Denied</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '1_70'">
+          <setEventAttribute attr="eventType">FortiDDoS-L3-Various-Drops</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_0'">
+          <setEventAttribute attr="eventType">FortiDDoS-SYN-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_1'">
+          <setEventAttribute attr="eventType">FortiDDoS-TCP-Option-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_2'">
+          <setEventAttribute attr="eventType">FortiDDoS-Reserved</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_3'">
+          <setEventAttribute attr="eventType">FortiDDoS-Reserved</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_4'">
+          <setEventAttribute attr="eventType">FortiDDoS-TCP-Connection-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_5'">
+          <setEventAttribute attr="eventType">FortiDDoS-No-Legitimate-IP</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_6'">
+          <setEventAttribute attr="eventType">FortiDDoS-Foreign-Packet-Anomalies</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_7'">
+          <setEventAttribute attr="eventType">FortiDDoS-Outside-Window-Anomalies</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_8'">
+          <setEventAttribute attr="eventType">FortiDDoS-Outside-Window-Anomalies</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_9'">
+          <setEventAttribute attr="eventType">FortiDDoS-TCP-Connection-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_10'">
+          <setEventAttribute attr="eventType">FortiDDoS-TCP-SM-Hash-Attack</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_11'">
+          <setEventAttribute attr="eventType">FortiDDoS-TCP-SM-Out-Of-Memory</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_12'">
+          <setEventAttribute attr="eventType">FortiDDoS-State-Transition-Error</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_13'">
+          <setEventAttribute attr="eventType">FortiDDoS-TCP-Connection-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_14'">
+          <setEventAttribute attr="eventType">FortiDDoS-Legitimate-IP-Out-Of-Memory</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_15'">
+          <setEventAttribute attr="eventType">FortiDDoS-TCP-Zombie-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_16'">
+          <setEventAttribute attr="eventType">FortiDDoS-UDP-Zombie-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_17'">
+          <setEventAttribute attr="eventType">FortiDDoS-TCP-Port-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_18'">
+          <setEventAttribute attr="eventType">FortiDDoS-UDP-Port-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_19'">
+          <setEventAttribute attr="eventType">FortiDDoS-ICMP-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_20'">
+          <setEventAttribute attr="eventType">FortiDDoS-Slow-Connection-Aggressive-Aging</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_21'">
+          <setEventAttribute attr="eventType">FortiDDoS-Slow-Connection-Source-Flood-Start</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_22'">
+          <setEventAttribute attr="eventType">FortiDDoS-Slow-Connection-Source-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_23'">
+          <setEventAttribute attr="eventType">FortiDDoS-Reserved</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_24'">
+          <setEventAttribute attr="eventType">FortiDDoS-TCP-Checksum-Error</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_25'">
+          <setEventAttribute attr="eventType">FortiDDoS-UDP-Checksum-Error</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_26'">
+          <setEventAttribute attr="eventType">FortiDDoS-ICMP-Checksum-Error</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_27'">
+          <setEventAttribute attr="eventType">FortiDDoS-TCP-Invalid-Flag-Combination</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_28'">
+          <setEventAttribute attr="eventType">FortiDDoS-L4-Anomalies</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_29'">
+          <setEventAttribute attr="eventType">FortiDDoS-Excessive-Open-TCP-Sessions</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_50'">
+          <setEventAttribute attr="eventType">FortiDDoS-TCP-Options-Denied</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_51'">
+          <setEventAttribute attr="eventType">FortiDDoS-TCP-SYN-Denied</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_52'">
+          <setEventAttribute attr="eventType">FortiDDoS-TCP-Port-Denied</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_53'">
+          <setEventAttribute attr="eventType">FortiDDoS-UDP-Port-Denied</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_54'">
+          <setEventAttribute attr="eventType">FortiDDoS-ICMP-Port-Denied</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_55'">
+          <setEventAttribute attr="eventType">FortiDDoS-SYN-Flood-From-Source-Start</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_56'">
+          <setEventAttribute attr="eventType">FortiDDoS-SYN-Flood-From-Source</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_57'">
+          <setEventAttribute attr="eventType">FortiDDoS-Most-Active-SYN-Source</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_58'">
+          <setEventAttribute attr="eventType">FortiDDoS-Excessive-Concurrent-Connections-Per-Source</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_59'">
+          <setEventAttribute attr="eventType">FortiDDoS-Excessive-Concurrent-Connections-Per-Destination</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_60'">
+          <setEventAttribute attr="eventType">FortiDDoS-Excessive-Concurrent-Connections-Per-Source-Start</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_61'">
+          <setEventAttribute attr="eventType">FortiDDoS-Excessive-Concurrent-Connections-Per-Source-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_62'">
+          <setEventAttribute attr="eventType">FortiDDoS-Excessive-TCP-Packets-Per-Destination-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_70'">
+          <setEventAttribute attr="eventType">FortiDDoS-Protocol-Checksum-Error</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_71'">
+          <setEventAttribute attr="eventType">FortiDDoS-Port/Type/Code-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_72'">
+          <setEventAttribute attr="eventType">FortiDDoS-Port/Type/Code-Denied</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_73'">
+          <setEventAttribute attr="eventType">FortiDDoS-Source-Flood</setEventAttribute>
+          <setEventAttribute attr="errReason">Associated Resource Accesses</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_74'">
+          <setEventAttribute attr="eventType">FortiDDoS-Source-Flood</setEventAttribute>
+          <setEventAttribute attr="errReason">URL Access with No Cookies</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_75'">
+          <setEventAttribute attr="eventType">FortiDDoS-Source-Flood</setEventAttribute>
+          <setEventAttribute attr="errReason">URL Access without Mandatory HTTP Headers</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_76'">
+          <setEventAttribute attr="eventType">FortiDDoS-Source-Flood</setEventAttribute>
+          <setEventAttribute attr="errReason">Sequential Accesses</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_77'">
+          <setEventAttribute attr="eventType">FortiDDoS-URL-Per-Source-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_78'">
+          <setEventAttribute attr="eventType">FortiDDoS-Source-Flood</setEventAttribute>
+          <setEventAttribute attr="errReason">URL Access With No Cache</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_79'">
+          <setEventAttribute attr="eventType">FortiDDoS-Source-Flood</setEventAttribute>
+          <setEventAttribute attr="errReason">Multiple Offending Accesses</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_80'">
+          <setEventAttribute attr="eventType">FortiDDoS-URL-Source-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_81'">
+          <setEventAttribute attr="eventType">FortiDDoS-SPP-Switching</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_82'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Query-Flood-From-Source</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_83'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Packet-Track-Flood-From-Source</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_84'">
+          <setEventAttribute attr="eventType">FortiDDoS-Most-Active-DNS-Query-Source</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_85'">
+          <setEventAttribute attr="eventType">FortiDDoS-Most-Active-DNS-Packet-Track-Source</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_86'">
+          <setEventAttribute attr="eventType">FortiDDoS-Invalid-ICMP-Type/Code</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '2_87'">
+          <setEventAttribute attr="eventType">FortiDDoS-HTTP-Method-Flood-From-Source</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '3_1'">
+          <setEventAttribute attr="eventType">FortiDDoS-Disk-Is-Not-OK</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '3_2'">
+          <setEventAttribute attr="eventType">FortiDDoS-RAID-Array-Failure</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '3_3'">
+          <setEventAttribute attr="eventType">FortiDDoS-Software-Failure</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '3_4'">
+          <setEventAttribute attr="eventType">FortiDDoS-Disk-OK</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '3_5'">
+          <setEventAttribute attr="eventType">FortiDDoS-RAID-Array-Failure</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '3_6'">
+          <setEventAttribute attr="eventType">FortiDDoS-RAID-Array-OK</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '3_7'">
+          <setEventAttribute attr="eventType">FortiDDoS-Excessive-Events</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '3_8'">
+          <setEventAttribute attr="eventType">FortiDDoS-SPP-Switched-To-Alternative-SPP</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '3_9'">
+          <setEventAttribute attr="eventType">FortiDDoS-SPP-Switched-Back-To-Original-SPP</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '3_10'">
+          <setEventAttribute attr="eventType">FortiDDoS-Cannot-Send-Attack-Signal</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '3_12'">
+          <setEventAttribute attr="eventType">FortiDDoS-Receive-Attack-Signal</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '3_13'">
+          <setEventAttribute attr="eventType">FortiDDoS-Cannot-Create-Policy-On-Attack-Signal</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '3_14'">
+          <setEventAttribute attr="eventType">FortiDDoS-Send-Out-Attack-Signal</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_0'">
+          <setEventAttribute attr="eventType">FortiDDoS-HTTP-Method-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_1'">
+          <setEventAttribute attr="eventType">FortiDDoS-Undefined-HTTP-Method-Anomaly</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_2'">
+          <setEventAttribute attr="eventType">FortiDDoS-HTTP-Version-Anomaly</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_3'">
+          <setEventAttribute attr="eventType">FortiDDoS-URL-Denied</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_4'">
+          <setEventAttribute attr="eventType">FortiDDoS-URL-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_5'">
+          <setEventAttribute attr="eventType">FortiDDoS-Invalid-HTTP-Method-Anomaly</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_6'">
+          <setEventAttribute attr="eventType">FortiDDoS-HTTP-L7-Host-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_7'">
+          <setEventAttribute attr="eventType">FortiDDoS-HTTP-L7-Host-Deny</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_8'">
+          <setEventAttribute attr="eventType">FortiDDoS-HTTP-L7-Referer-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_9'">
+          <setEventAttribute attr="eventType">FortiDDoS-HTTP-L7-Referer-Deny</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_10'">
+          <setEventAttribute attr="eventType">FortiDDoS-HTTP-L7-Cookie-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_11'">
+          <setEventAttribute attr="eventType">FortiDDoS-HTTP-L7-Cookie-Deny</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_12'">
+          <setEventAttribute attr="eventType">FortiDDoS-HTTP-L7-User-Agent-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_13'">
+          <setEventAttribute attr="eventType">FortiDDoS-HTTP-L7-User-Agent-Deny</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_14'">
+          <setEventAttribute attr="eventType">FortiDDoS-URL-Scan-Start</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_15'">
+          <setEventAttribute attr="eventType">FortiDDoS-SIP-Method-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_16'">
+          <setEventAttribute attr="eventType">FortiDDoS-SIP-Header-Anomaly</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_17'">
+          <setEventAttribute attr="eventType">FortiDDoS-SIP-Method-Not-Allowed-Anomaly</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_18'">
+          <setEventAttribute attr="eventType">FortiDDoS-SIP-Min-Header-Anomaly</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_19'">
+          <setEventAttribute attr="eventType">FortiDDoS-SIP-CSEQ-Header-Anomaly</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_20'">
+          <setEventAttribute attr="eventType">FortiDDoS-SIP-Max-Fwds-Header-Anomaly</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_21'">
+          <setEventAttribute attr="eventType">FortiDDoS-SIP-CSEQ-Method-No-Match-Anomaly</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_22'">
+          <setEventAttribute attr="eventType">FortiDDoS-SIP-User-Agent-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_23'">
+          <setEventAttribute attr="eventType">FortiDDoS-SIP-User-Agent-Deny</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_24'">
+          <setEventAttribute attr="eventType">FortiDDoS-SIP-CSEQ-Drop-Anomaly</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_25'">
+          <setEventAttribute attr="eventType">FortiDDoS-SIP-Duplicate-Packet-Drop-Anomaly</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_26'">
+          <setEventAttribute attr="eventType">FortiDDoS-SIP-Invite-Scan-Drop-Anomaly</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_27'">
+          <setEventAttribute attr="eventType">FortiDDoS-SIP-State-Transition-Drop-Anomaly</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_28'">
+          <setEventAttribute attr="eventType">FortiDDoS-SIP-Cancel-Request-Drop-Anomaly</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_29'">
+          <setEventAttribute attr="eventType">FortiDDoS-SIP-Foreign-Packet-Drop-Anomaly</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_30'">
+          <setEventAttribute attr="eventType">FortiDDoS-SIP-Horizontal-Link-Limit</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_31'">
+          <setEventAttribute attr="eventType">FortiDDoS-SIP-Out-Of-Memory</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_32'">
+          <setEventAttribute attr="eventType">FortiDDoS-SIP-URL-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_33'">
+          <setEventAttribute attr="eventType">FortiDDoS-SIP-URL-Denied</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_34'">
+          <setEventAttribute attr="eventType">FortiDDoS-SIP-Invite-Per-Src</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_35'">
+          <setEventAttribute attr="eventType">FortiDDoS-SIP-Register-Per-Src</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_36'">
+          <setEventAttribute attr="eventType">FortiDDoS-SIP-Concurrent-Invite-Per-Src</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_37'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Fragment-Deny</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_38'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-MX-Deny</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_39'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-All-Deny</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_40'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Zone-Transfer-Deny</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_41'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Rcode-Deny</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_42'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Header-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">Invalid Opcode</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_43'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Header-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">Illegal Flag Combination</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_44'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Header-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">Same Source/Destination Port</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_45'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Query-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">Query Bit Set</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_46'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Query-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">RA Bit Set</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_47'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Query-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">NULL Query</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_48'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Query-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">QD Count Not 1 In Query</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_49'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Query-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">RD bit set</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_50'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Reply-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">Qclass in reply</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_51'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Reply-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">Qtype in reply</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_52'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Reply-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">Query bit not set</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_53'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Reply-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">QD count not 1 in response</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_54'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Buffer-Overflow-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">Message too long</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_55'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Buffer-Overflow-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">Name too long</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_56'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Buffer-Overflow-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">Label length too large</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_57'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Exploit-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">Pointer loop</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_58'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Exploit-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">Zone transfer</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_59'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Exploit-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">Class is not IN</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_60'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Exploit-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">Empty UDP message</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_61'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Exploit-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">Message ends prematurely</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_62'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Exploit-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">TCP buffer underflow</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_63'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Info-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">DNS type all used</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_64'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Data-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">Invalid type class</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_65'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Data-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">Extraneous data</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_66'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Data-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">TTL too long</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_67'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Data-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">Name length too short</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_68'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-UDP-Unsolicited-Response</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_69'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-TCP-Unsolicited-Response</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_70'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-DQRM-Horizontal-Link-Limit-Crossed</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_71'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-DQRM-Out-Of-Memory</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_72'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-UDP-Response-Same-Direction</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_73'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-TCP-Response-Same-Direction</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_74'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-LQ-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Query flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_75'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-LQ-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Question flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_76'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-LQ-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Qtype All flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_77'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-LQ-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Qtype Zone Transfer flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_78'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-LQ-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Qtype MX flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_79'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-LQ-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Fragment flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_80'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-LQ-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Query flood due to Negative Response</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_81'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-TTL-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Query flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_82'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-TTL-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Question flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_83'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-TTL-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Qtype All flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_84'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-TTL-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Qtype Zone Transfer flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_85'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-TTL-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Qtype MX flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_86'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-TTL-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Fragment flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_87'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Spoofed-IP-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Query Flood drop during TC=1 check</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_88'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Spoofed-IP-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Question Flood drop during TC=1</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_89'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Spoofed-IP-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Qtype All Flood drop during TC=1 check</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_90'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Spoofed-IP-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Qtype Zone Transfer Flood drop during TC=1 check</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_91'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Spoofed-IP-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Qtype MX Flood drop during TC=1 check</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_92'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Spoofed-IP-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Fragment Flood drop during TC=1 check</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_93'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Spoofed-IP-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Query Flood Drop during Retransmission Check</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_94'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Spoofed-IP-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Question Flood Drop during Retransmission Check</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_95'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Spoofed-IP-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Qtype All Flood Drop during Retransmission Check</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_96'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Spoofed-IP-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Qtype Zone Transfer Flood Drop during Retransmission Check</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_97'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Spoofed-IP-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Qtype MX Flood Drop during Retransmission Check</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_98'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Spoofed-IP-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Fragment Flood Drop during Retransmission Check</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_99'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Cache-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Query Flood Drop Due To Response From Cache</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_100'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Cache-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Question Flood Drop Due To Response From Cache</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_101'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Cache-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Qtype All Flood Drop Due To Response From Cache</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_102'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Cache-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Qtype Zone Transfer Flood Drop Due To Response From Cache</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_103'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Cache-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Qtype MX Flood Drop Due To Response From Cache</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_104'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Cache-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Fragment Flood Drop Due To Response From Cache</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_105'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Cache-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Query Flood Drop Due To No Response From Cache</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_106'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Cache-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Question Flood Drop Due To No Response From Cache</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_107'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Cache-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Qtype All Flood Drop Due To No Response From Cache</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_108'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Cache-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Qtype Zone Transfer Flood Drop Due To No Response From Cache</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_109'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Cache-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Qtype MX Flood Drop Due To No Response From Cache</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_110'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Cache-Anomaly</setEventAttribute>
+          <setEventAttribute attr="errReason">UDP Fragment Flood Drop Due To No Response From Cache</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_111'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-TCP-Query-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_112'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-TCP-Question-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_113'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-TCP-Fragment-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_114'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-TCP-Zone-Transfer-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_115'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-TCP-MX-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_116'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-TCP-All-Flood</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_117'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-UDP-Unexpected-Query-Before-Response</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_118'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-TCP-Unexpected-Query-Before-Response</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_119'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Query-Restricted-To-Specific-Subnet</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_120'">
+          <setEventAttribute attr="eventType">FortiDDoS-DNS-Query-Drop-Due-To-ACL</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_201'">
+          <setEventAttribute attr="eventType">FortiDDoS-HTTP-Header-Range-Present-Anomaly</setEventAttribute>
+        </when>
+        <when test="$_eveTypeCode = '4_202'">
+          <setEventAttribute attr="eventType">FortiDDoS-HTTP-Header-Range-Count-Anomaly</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+  </parsingInstructions>
+</eventParser>

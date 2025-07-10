@@ -1,0 +1,74 @@
+<eventParser name="ESETNode32Parser">
+
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>ESET</Vendor>
+    <Model>Nod32</Model>
+    <Version>ANY</Version>
+    <Name>ESET Nod32</Name>
+  </appType>
+
+  <eventFormatRecognizer><![CDATA[ERA Server:\s+\[<:gPatYear>-<:gPatMonNum>-<:gPatDay>\s+<:gPatTimeMSec>\]]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<35313912>Jul 26 18:06:12 LMHCAPEAV01 ERA Server: [2011-07-26 13:06:12.784] V5 [4e2f02148110] [00000e9c] <SESSION_INFO> Kernel connection from 10.0.52.25:48071 accepted]]></testEvent>
+    <testEvent><![CDATA[<35313864>Jul 26 18:06:13 LMHCAPEAV01 ERA Server: [2011-07-26 13:06:13.221] V5 [4e2f02148110] [00000e9c] <SESSION_INFO> Kernel connection from 10.0.52.25:48071 closed (code 0,took 438ms, name 'Lmhathnsmt01', mac '00-1E-4F-E8-49-03', product 'ESET NOD32 Antivirus BUSINESS EDITION', product version '04.00002.00071', virus signature db version '63(20110726)')]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<reptDevIpAddr:gPatIpAddr>\s+ERA Server:\s+\[<:gPatYear>-<:gPatMonNum>-<:gPatDay>\s+<:gPatTimeMSec>\]\s+<:gPatStr>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<hostName:gPatStr>\s+ERA Server:\s+\[<:gPatYear>-<:gPatMonNum>-<:gPatDay>\s+<:gPatTimeMSec>\]\s+<:gPatStr>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventType">ESET-Generic</setEventAttribute>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[.*\<SESSION_INFO\> Kernel connection from <srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt> accepted]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">ESET-Kernel connection-accepted</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[.*\<SESSION_INFO\> Kernel connection from <srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt> closed \(<_body:gPatMesgBody>\)]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">ESET-Kernel connection-closed</setEventAttribute>
+        <collectAndSetAttrByKeyValuePair sep="," src="$_body">
+          <attrKeyMap attr="_duration" key="took "/>
+          <attrKeyMap attr="hostName" key="name "/>
+          <attrKeyMap attr="hostMACAddr" key="mac "/>
+          <attrKeyMap attr="appName" key="product "/>
+          <attrKeyMap attr="appVersion" key="product version "/>
+          <attrKeyMap attr="virdbVer" key="virus signature db version "/>
+        </collectAndSetAttrByKeyValuePair>
+        <when test="exist _duration">
+          <collectFieldsByRegex src="$_duration">
+            <regex><![CDATA[<durationMSec:gPatInt>ms]]></regex>
+          </collectFieldsByRegex>
+        </when>
+        <when test="exist hostMACAddr">
+          <setEventAttribute attr="hostMACAddr">replaceStrInStr($hostMACAddr, "-", ":")</setEventAttribute>
+        </when>
+      </case>
+    </switch>
+
+  </parsingInstructions>
+
+</eventParser>

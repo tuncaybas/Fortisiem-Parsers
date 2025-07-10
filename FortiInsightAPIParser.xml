@@ -1,0 +1,366 @@
+<eventParser name="FortiInsightAPIParser">
+
+  <deviceType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiInsight</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[\[(?:FORTIINSIGHT_POLICY_ALERT|FORTIINSIGHT_AI_ALERT)\] = \s*]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[[FORTIINSIGHT_POLICY_ALERT] = {"description":"","events":[{"act":"file downloaded","app":"chrome.exe","childId":null,"d":"2019-03-18T13:22:24.344+00:00","id":null,"m":"uqP","mn":{"dh":"tcp://server-10-230-2-153.lhr5.r.cloudfront.net","dip":"10.1.1.76","dp":61024,"ext":".mkv","fp":"c:\\users\\Administrator\\documents\\secret\\prototypedemo1.mkv","fs":2307792448,"loc":{"altCode":null,"city":"Augsburg","code":"DE","country":"Germany","latitude":"48.3718","longitude":"10.8925"},"p":"tcp-ip-4","sip":"10.47.38.226","sp":443,"ts":1460},"r":"c:\\users\\Administrator\\documents\\secret\\prototypedemo1.mkv-> tcp://server-10-230-2-153.lhr5.r.cloudfront.net:443","u":"acmeltd__engineer2"}],"extendedEvents":[{"act":"file downloaded","app":"chrome.exe","childId":null,"d":"2019-03-18T13:22:24.344+00:00","id":null,"latestHostname":"mimas","latestIp":"10.10.0.1","m":"uqP","mn":{"dh":"tcp://server-10-230-2-153.lhr5.r.cloudfront.net","dip":"10.1.1.76","dp":61024,"ext":".mkv","fp":"c:\\users\\Administrator\\documents\\secret\\prototypedemo1.mkv","fs":2307792448,"loc":{"altCode":null,"city":"Augsburg","code":"DE","country":"Germany","latitude":"48.3718","longitude":"10.8925"},"p":"tcp-ip-4","sip":"78.47.38.226","sp":443,"ts":1460},"r":"c:\\users\\Administrator\\documents\\secret\\prototypedemo1.mkv-> tcp://server-10-230-2-153.lhr5.r.cloudfront.net:443","resolvedUsername":"","u":"acmeltd__engineer2"}],"id":"AWmQ98PYg7b_-i6_5Rvg","labels":[""],"policyId":"default_6COnUMjTCB8N","policyName":"Browser Download","regimes":["ZoneFox"],"serverIp":"10.209.49.52","serverName":"fortisiemtest.dev.fortiinsight.cloud","severity":10,"status":"New","time":"2019-03-18T13:22:29.473715+00:00"}]]></testEvent>
+    <testEvent><![CDATA[[FORTIINSIGHT_AI_ALERT] = {"alertTime":"2019-04-04T09:13:38+00:00","confidence":0.20000000000000001,"context":"","events":[{"activity":"file downloaded","agentId":"uqP","application":"chrome.exe","id":null,"resource":"c:\\users\\Administrator\\documents\\secret\\prototypedemo5.mkv-> tcp://server-54-230-2-153.lhr5.r.cloudfront.net:443","time":"2019-04-04T09:13:38+00:00","userName":"acmeltd__engineer2"}],"explanation":"Why isn't this NORMAL? ","extendedEvents":[{"activity":"file downloaded","agentId":"uqP","application":"chrome.exe","id":null,"latestHostname":"mimas","latestIp":"10.10.0.1","resolvedUsername":"","resource":"c:\\users\\Administrator\\documents\\secret\\prototypedemo5.mkv-> tcp://server-54-230-2-153.lhr5.r.cloudfront.net:443","time":"2019-04-04T09:13:38+00:00","userName":"acmeltd__engineer2"}],"fact":"","ftr":"","id":"AWnnodwxX4nqZLDIZpVS","phCustId":1,"reaction":3,"serverIp":"54.76.227.168","serverName":"ec2-54-76-227-168.eu-west-1.compute.amazonaws.com","tags":[],"triggerTime":"2019-04-04T09:15:38+00:00"}]]></testEvent>
+  </testEvents>
+
+
+  <patternDefinitions>
+    <pattern name="patUnderline"><![CDATA[[^_]*]]></pattern>
+    <pattern name="patConfidence"><![CDATA[\d+(?:\.\d{1,2})?]]></pattern>
+  </patternDefinitions>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\[<_type:gPatStrRightSB>\] = <_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">FortiInsight-Alert-Generic</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">FORTIINSIGHT_API</setEventAttribute>
+
+    <collectAndSetAttrByJSON src="$_body">
+      <attrKeyMap attr="phCustId" key="phCustId"/>
+      <attrKeyMap attr="reptDevName" key="serverName"/>
+      <attrKeyMap attr="reptDevIpAddr" key="serverIp"/>
+      <attrKeyMap attr="description" key="description"/>
+      <attrKeyMap attr="uuid" key="id"/>
+      <attrKeyMap attr="policyName" key="policyName"/>
+      <attrKeyMap attr="_sev" key="severity"/>
+      <attrKeyMap attr="status" key="status"/>
+      <attrKeyMap attr="_deviceTime" key="time"/>
+      <attrKeyMap attr="_extendedEvents" key="events[0]"/>
+      <attrKeyMap attr="_extendedEvents" key="extendedEvents[0]"/>
+      <attrKeyMap attr="_deviceTime" key="alertTime"/>
+      <attrKeyMap attr="lineContent" key="context"/>
+      <attrKeyMap attr="_confidence" key="confidence"/>
+      <attrKeyMap attr="msg" key="explanation"/>
+      <attrKeyMap attr="_tags" key="tags"/>
+    </collectAndSetAttrByJSON>
+
+    <when test="exist _extendedEvents">
+      <collectAndSetAttrByJSON src="$_extendedEvents">
+        <attrKeyMap attr="activityName" key="act"/>
+        <attrKeyMap attr="procName" key="app"/>
+        <attrKeyMap attr="_user" key="u"/>
+        <attrKeyMap attr="resourceName" key="r"/>
+        <attrKeyMap attr="_dh" key="mn.dh"/>
+        <attrKeyMap attr="_dip" key="mn.dip"/>
+        <attrKeyMap attr="_dp" key="mn.dp"/>
+        <attrKeyMap attr="fileExt" key="mn.ext"/>
+        <attrKeyMap attr="_fileName" key="mn.fp"/>
+        <attrKeyMap attr="fileSize64" key="mn.fs"/>
+        <attrKeyMap attr="appTransportProto" key="mn.p"/>
+        <attrKeyMap attr="_sip" key="mn.sip"/>
+        <attrKeyMap attr="_sp" key="mn.sp"/>
+        <attrKeyMap attr="durationMSec" key="mn.ts"/>
+        <attrKeyMap attr="_geoCity" key="mn.loc.city"/>
+        <attrKeyMap attr="_geoCountry" key="mn.loc.country"/>
+        <attrKeyMap attr="_geoLatitude" key="mn.loc.latitude"/>
+        <attrKeyMap attr="_geoLongitude" key="mn.loc.longitude"/>
+        <attrKeyMap attr="hostName" key="latestHostname"/>
+        <attrKeyMap attr="hostIpAddr" key="latestIp"/>
+        <!--AI-->
+        <attrKeyMap attr="activityName" key="activity"/>
+        <attrKeyMap attr="_agentId" key="agentId"/>
+        <attrKeyMap attr="procName" key="application"/>
+        <attrKeyMap attr="_user" key="userName"/>
+        <attrKeyMap attr="_latestIp" key="latestIp"/>
+        <attrKeyMap attr="_LastestHostName" key="latestHostname"/>
+        <attrKeyMap attr="resourceName" key="resource"/>
+      </collectAndSetAttrByJSON>
+    </when>
+
+    <when test="exist _agentId">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_agentId">
+            <regex><![CDATA[^\s*<phCustId:gPatInt>:<hostName:gPatHostName>:<reptDevIpAddr:gPatIpAddr>\s*$]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="reptDevName">$hostName</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_agentId">
+            <regex><![CDATA[^<phCustId:gPatInt>_<hostName:gPatHostName>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="reptDevName">$hostName</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_agentId">
+            <regex><![CDATA[<hostName:gPatHostName>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="reptDevName">$hostName</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _tags">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_tags">
+            <regex><![CDATA[^\[\s*\]$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_tags">
+            <regex><![CDATA[^\[\s*<_tagName:gPatMesgBodyMin>\s*\]$]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="tagName">replaceStringByRegex($_tagName, "\s*,\s*", ";")</setEventAttribute>
+          <setEventAttribute attr="tagName">replaceStringByRegex($tagName, "\"", "")</setEventAttribute>
+        </case>
+        <default>
+          <setEventAttribute attr="tagName">trimAttribute($_tags, " \t\r\n")</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+    <when test="exist _confidence">
+      <setEventAttribute attr="confidence">scale($_confidence, 100)</setEventAttribute>
+      <setEventAttribute attr="confidence">add($confidence, 0.005)</setEventAttribute>
+      <collectFieldsByRegex src="$confidence">
+        <regex><![CDATA[<confidence:patConfidence>]]></regex>
+      </collectFieldsByRegex>
+    </when>
+
+    <when test="exist _user">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_user">
+            <regex><![CDATA[<domain:patUnderline>_+<user:gPatMesgBody>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="user">$_user</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+    <when test="exist resourceName">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$resourceName">
+            <regex><![CDATA[<appTransportProto:gPatStrEndColon>://<srcName:gPatStrEndColon>(?::<srcIpPort:gPatInt>)?\s*-\>\s*<_destFilePath:gPatMesgBody>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$resourceName">
+            <regex><![CDATA[<_srcFilePath:gPatMesgBody>\s*-\>\s*<appTransportProto:gPatStrEndColon>://<destName:gPatStrEndColon>(?::<destIpPort:gPatInt>)?]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$resourceName">
+            <regex><![CDATA[[\n]]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="_fileName1">$resourceName</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+    <when test="not_exist _fileName">
+      <when test="exist _fileName1">
+        <setEventAttribute attr="_fileName">$_fileName1</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _fileName">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_fileName">
+            <regex><![CDATA[[/\\]$]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="filePath">$_fileName</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_fileName">
+            <regex><![CDATA[<filePath:gPatMesgBody>[/\\]<fileName:gPatMesgBody>$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="fileName">$_fileName</setEventAttribute>
+        </default>
+      </switch>
+
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$fileName">
+            <regex><![CDATA[<:gPatMesgBody>\.<fileExt:gPatStr>$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _destFilePath">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_destFilePath">
+            <regex><![CDATA[<destFilePath:gPatMesgBody>[\\]+<destFileName:gPatMesgBody>$]]></regex>
+          </collectFieldsByRegex>
+          <collectFieldsByRegex src="$destFileName">
+            <regex><![CDATA[<:gPatMesgBody>\.<destFileExt:gPatStr>$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="destFilePath">$destFilePath</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+    <when test="exist _srcFilePath">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_srcFilePath">
+            <regex><![CDATA[<srcFilePath:gPatMesgBody>[\\]+<srcFileName:gPatMesgBody>$]]></regex>
+          </collectFieldsByRegex>
+          <collectFieldsByRegex src="$srcFileName">
+            <regex><![CDATA[<:gPatMesgBody>\.<srcFileExt:gPatStr>$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="srcFilePath">$_srcFilePath</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+
+    <when test="exist _dh">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_dh">
+            <regex><![CDATA[[^:]+://<_devName:gPatStr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="_devName">$_dh</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+    <when test="$_type = 'FORTIINSIGHT_AI_ALERT'">
+      <choose>
+        <when test="not_exist activityName"/>
+        <when test="$activityName IN 'file downloaded, file uploaded'">
+          <when test="exist _latestIp">
+            <setEventAttribute attr="srcIpAddr">$_latestIp</setEventAttribute>
+          </when>
+          <when test="exist _LastestHostName">
+            <setEventAttribute attr="srcName">$_LastestHostName</setEventAttribute>
+          </when>
+        </when>
+      </choose>
+    </when>
+
+    <choose>
+      <when test="not_exist policyName"/>
+      <when test="$policyName =  'Browser Download'">
+        <when test="exist _devName">
+          <setEventAttribute attr="srcName">$_devName</setEventAttribute>
+        </when>
+        <when test="exist _dip">
+          <setEventAttribute attr="srcIpAddr">$_dip</setEventAttribute>
+        </when>
+        <when test="exist _dp">
+          <setEventAttribute attr="srcIpPort">$_dp</setEventAttribute>
+        </when>
+        <when test="exist _sip">
+          <setEventAttribute attr="destIpAddr">$_sip</setEventAttribute>
+        </when>
+        <when test="exist _sp">
+          <setEventAttribute attr="destIpPort">$_sp</setEventAttribute>
+        </when>
+        <when test="exist _geoCity">
+          <setEventAttribute attr="srcGeoCity">$_geoCity</setEventAttribute>
+        </when>
+        <when test="exist _geoCountry">
+          <setEventAttribute attr="srcGeoCountry">$_geoCountry</setEventAttribute>
+        </when>
+        <when test="exist _geoLatitude">
+          <setEventAttribute attr="srcGeoLatitude">$_geoLatitude</setEventAttribute>
+        </when>
+        <when test="exist _geoLongitude">
+          <setEventAttribute attr="srcGeoLongitude">$_geoLongitude</setEventAttribute>
+        </when>
+      </when>
+      <otherwise>
+        <when test="exist _devName">
+          <setEventAttribute attr="destName">$_devName</setEventAttribute>
+        </when>
+        <when test="exist _dip">
+          <setEventAttribute attr="destIpAddr">$_dip</setEventAttribute>
+        </when>
+        <when test="exist _dp">
+          <setEventAttribute attr="destIpPort">$_dp</setEventAttribute>
+        </when>
+        <when test="exist _sip">
+          <setEventAttribute attr="srcIpAddr">$_sip</setEventAttribute>
+        </when>
+        <when test="exist _sp">
+          <setEventAttribute attr="srcIpPort">$_sp</setEventAttribute>
+        </when>
+        <when test="exist _geoCity">
+          <setEventAttribute attr="destGeoCity">$_geoCity</setEventAttribute>
+        </when>
+        <when test="exist _geoCountry">
+          <setEventAttribute attr="destGeoCountry">$_geoCountry</setEventAttribute>
+        </when>
+        <when test="exist _geoLatitude">
+          <setEventAttribute attr="destGeoLatitude">$_geoLatitude</setEventAttribute>
+        </when>
+        <when test="exist _geoLongitude">
+          <setEventAttribute attr="destGeoLongitude">$_geoLongitude</setEventAttribute>
+        </when>
+      </otherwise>
+    </choose>
+
+    <!--"2019-03-18T13:22:29.473715+00:00"-->
+    <when test="exist _deviceTime">
+      <collectFieldsByRegex src="$_deviceTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>(?:\.\d+)?<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+    <choose>
+      <when test="exist policyName">
+        <setEventAttribute attr="eventType">combineMsgId("FortiInsight-PolicyAlert-", $policyName)</setEventAttribute>
+        <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "\s+", "")</setEventAttribute>
+      </when>
+      <when test="exist activityName">
+        <setEventAttribute attr="eventType">combineMsgId("FortiInsight-AiAlert-", $activityName)</setEventAttribute>
+        <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "\s+", "")</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _sev">
+      <when test="matches($_sev, '^\d+$')">
+        <setEventAttribute attr="eventSeverity">$_sev</setEventAttribute>
+      </when>
+    </when>
+
+    <!-- confidence: >66 high; >33 med -->
+    <when test="exist confidence">
+      <setEventAttribute attr="_result">compare($confidence, 66)</setEventAttribute>
+      <choose>
+        <when test="$_result = 'GREATER'">
+          <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        </when>
+        <otherwise>
+          <setEventAttribute attr="_result">compare($confidence, 33)</setEventAttribute>
+          <when test="$_result = 'GREATER'">
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+          </when>
+        </otherwise>
+      </choose>
+    </when>
+  </parsingInstructions>
+</eventParser>
