@@ -1,0 +1,80 @@
+<eventParser name="ZyxelUSGParser">
+
+  <deviceType>
+    <Vendor>Zyxel</Vendor>
+    <Model>Security Gateway</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatYear>\s+<:gPatStr>\s+<:gPatMesgBody>\s+devID="<:gPatWord>"\s+cat="]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<142>Aug 26 18:02:19 2019 usg60 src="10.0.1.1:49547" dst="192.168.1.10:443" msg="Traffic Log" note="Traffic Log" user="unknown" devID="5ce28c5d0d25" cat="Traffic Log" duration=156 sent=4636 rcvd=6058 dir="lan1:wan1" protoID=6 proto="https" client_mac="70:85:C2:42:F8:6D"]]></testEvent>
+    <testEvent><![CDATA[<141>Aug 26 18:02:25 2019 usg60 src="0.0.0.0:0" dst="0.0.0.0:0" msg="name=lan2,status=Down,TxPkts=1,RxPkts=0,Colli.=0,TxB/s=0,RxB/s=0" note="INTERFACE STATISTICS" user="unknown" devID="5ce28c5d0d25" cat="INTERFACE STATISTICS"]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>\s+<hostName:gPatStr>\s+src="<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatIpPort>"\s+dst="<destIpAddr:gPatIpAddr>:<destIpPort:gPatIpPort>"<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventType">Zyxel_Generic_Log</setEventAttribute>
+
+    <collectAndSetAttrByKeyValuePair sep=" " src="$_body">
+      <attrKeyMap attr="msg" key="msg="/>
+      <attrKeyMap attr="_details" key="note="/>
+      <attrKeyMap attr="user" key="user="/>
+      <attrKeyMap attr="deviceIdentification" key="devID="/>
+      <attrKeyMap attr="categoryType" key="cat="/>
+      <attrKeyMap attr="durationMSec" key="duration="/>
+      <attrKeyMap attr="sentPkts" key="sent="/>
+      <attrKeyMap attr="recvPkts" key="rcvd="/>
+      <attrKeyMap attr="direction" key="dir="/>
+      <attrKeyMap attr="ipProto" key="protoID="/>
+      <attrKeyMap attr="appTransportProto" key="proto="/>
+      <attrKeyMap attr="machineGUID" key="client_mac="/>
+      <attrKeyMap attr="classifier" key="class="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <when test="exist msg">
+      <collectFieldsByKeyValuePair kvsep="=" sep="," src="$msg">
+        <attrKeyMap attr="devPort" key="name"/>
+        <attrKeyMap attr="status" key="status"/>
+        <attrKeyMap attr="sentPkts" key="TxPkts"/>
+        <attrKeyMap attr="recvPkts" key="RxPkts"/>
+        <attrKeyMap attr="sentBytesPerSec" key="TxB/s"/>
+        <attrKeyMap attr="recvBytesPerSec" key="RxB/s"/>
+        <attrKeyMap attr="cpuCore" key="cpu"/>
+        <attrKeyMap attr="memUtil" key="memory"/>
+        <attrKeyMap attr="sessionInboundCont" key="sessions"/>
+      </collectFieldsByKeyValuePair>
+    </when>
+
+    <choose>
+      <when test="$_details = 'Traffic Log'">
+        <setEventAttribute attr="eventType">Zyxel_Traffic_Log</setEventAttribute>
+      </when>
+      <when test="$_details = 'INTERFACE STATISTICS'">
+        <setEventAttribute attr="eventType">Zyxel_Interface_Statistics</setEventAttribute>
+      </when>
+      <when test="$_details = 'SYSTEM STATUS'">
+        <setEventAttribute attr="eventType">Zyxel_System_Status</setEventAttribute>
+      </when>
+      <when test="$_details = 'ACCESS BLOCK'">
+        <setEventAttribute attr="eventType">Zyxel_Access_Blocked</setEventAttribute>
+      </when>
+      <when test="$_details = 'IKE_LOG'">
+        <setEventAttribute attr="eventType">Zyxel_IKE_Log</setEventAttribute>
+      </when>
+      <when test="matches($_details, 'Account:')">
+        <when test="matches($msg, 'logged in')">
+          <setEventAttribute attr="eventType">Zyxel_User_Logged_In</setEventAttribute>
+        </when>
+        <when test="matches($msg, 'logged out')">
+          <setEventAttribute attr="eventType">Zyxel_User_Logged_Out</setEventAttribute>
+        </when>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,284 @@
+<eventParser name="Sourcefire2Parser">
+  <deviceType>
+    <Vendor>Cisco</Vendor>
+    <Model>FirePOWER</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patSlash"><![CDATA[[^/]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+(?:SFIMS:\s+(?:\[Primary Detection Engine|\<\*-)|\w+:.+\s+DE:\s+Primary Detection Engine)\s]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<44>Apr  2 15:52:15 ABC SFIMS: [Primary Detection Engine (11111111-1111-1111-1111-111111111111)][IPS_com][119:2:1] Snort Alert [Classification: Not Suspicious Traffic] User: Unknown, Application: Unknown, Client: Unknown, App Protocol: Unknown, Interface Ingress: s2p3, Interface Egress: s2p4, Security Zone Ingress: External-Corp1, Security Zone Egress: Internal-Corp1, [Priority: 3] {TCP} 1.1.1.1:10540 -> 2.2.2.2:80]]></testEvent>
+    <testEvent><![CDATA[<44>Feb 13 17:36:23 ABC SFIMS: [Primary Detection Engine (11111111-1111-1111-1111-111111111111)][Default Access Control] Connection Type: Start, User: Unknown, Client: Web browser, Application Protocol: HTTP, Web App: Unknown, Access Control Rule Name: IPS & Malware File Inspection, Access Control Rule Action: Allow, Access Control Rule Reasons: Unknown, URL Category: Unknown, URL Reputation: Risk unknown, URL: Unknown, Interface Ingress: inside, Interface Egress: outside, Security Zone Ingress: N/A, Security Zone Egress: N/A, Security Intelligence Matching IP: None, Security Intelligence Category: None, Client Version: (null), Number of File Events: 0, Number of IPS Events: 0, TCP Flags: 0x0, NetBIOS Domain: (null), Initiator Packets: 4, Responder Packets: 2, Initiator Bytes: 240, Responder Bytes: 299, Context: unknown {TCP} 1.1.1.1:63583 -> 2.2.2.2:80]]></testEvent>
+    <testEvent><![CDATA[<113>Nov 23 16:51:08 ABC NetelligentTest: Protocol: TCP, SrcIP: 10.3.21.65, DstIP: 1.1.1.1, SrcPort: 37225, DstPort: 443, TCPFlags: 0x0, IngressInterface: eth1, EgressInterface: eth2, IngressZone: Internal, EgressZone: External, DE: Primary Detection Engine (11111111-1111-1111-1111-111111111111), Policy: Test-Policy, ConnectType: Start, AccessControlRuleName: Block Apps, AccessControlRuleAction: Block, UserName: No Authentication Required, Client: SSL client, ApplicationProtocol: HTTPS, WebApplication: Facebook, InitiatorPackets: 3, ResponderPackets: 1, InitiatorBytes: 589, ResponderBytes: 74, NAPPolicy: Balanced Security and Connectivity, DNSResponseType: No Error, Sinkhole: Unknown, URLCategory: Social Network, URLReputation: Well known, URL: https://www.foo.com]]></testEvent>
+    <testEvent><![CDATA[<191>Sep 24 20:31:37 Sourcefire3D SFIMS: <*- Additional MAC Detected for Host From "10.201.201.202" at Thu Sep 24 20:31:39 2015 UTC -*>   IP Address: 10.200.200.82 MAC: 5C:FF:35:06:A2:27 TTL 127]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<hostName:gPatHostName>\s+<_type:gPatWord>:\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^\[[^]]*\]\[<_et:gPatStrRightSB>\]<_body:gPatMesgBody>\s+\{<_proto:gPatStr>\}\s+<_srcIp:gPatStr> -\> <_destIp:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+
+        <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[<_id:gPatInt>:\d+:\d+\]\s+"?<msg:gPatMesgBodyMin>"?\s+\[Classification:\s+[^]]*\]\s+<_body:gPatMesgBody>\[Priority: \d+\]]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Snort-", $_id)</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="_et">replaceStringByRegex($_et, "\s+", "-")</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId("Sourcefire-", $_et)</setEventAttribute>
+          </default>
+        </switch>
+
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_srcIp">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr>(?::<srcIpPort:gPatInt>)?]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_destIp">
+              <regex><![CDATA[<destIpAddr:gPatIpAddr>(?::<destIpPort:gPatInt>)?]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+
+        <collectAndSetAttrByKeyValuePair sep=", " src="$_body">
+          <attrKeyMap attr="appName" key="Application: "/>
+          <attrKeyMap attr="appTransportProto" key="App Protocol: "/>
+          <attrKeyMap attr="appTransportProto" key="Application Protocol: "/>
+          <attrKeyMap attr="srcAppVersion" key="Client Version: "/>
+          <attrKeyMap attr="destFwZone" key="Security Zone Egress: "/>
+          <attrKeyMap attr="destIntfName" key="Interface Egress: "/>
+          <attrKeyMap attr="infoURL" key="URL: "/>
+          <attrKeyMap attr="httpStatusCode" key="HTTPResponse: "/>
+          <attrKeyMap attr="recvBytes64" key="Responder Bytes: "/>
+          <attrKeyMap attr="recvPkts64" key="Responder Packets: "/>
+          <attrKeyMap attr="reputation" key="URL Reputation: "/>
+          <attrKeyMap attr="sentBytes64" key="Initiator Bytes: "/>
+          <attrKeyMap attr="sentPkts64" key="Initiator Packets: "/>
+          <attrKeyMap attr="srcApp" key="Client: "/>
+          <attrKeyMap attr="srcFwZone" key="Security Zone Ingress: "/>
+          <attrKeyMap attr="srcIntfName" key="Interface Ingress: "/>
+          <attrKeyMap attr="tcpFlags" key="TCP Flags: "/>
+          <attrKeyMap attr="webAppName" key="Web App: "/>
+          <attrKeyMap attr="webCategory" key="URL Category: "/>
+          <attrKeyMap attr="_action" key="Access Control Rule Action: "/>
+          <attrKeyMap attr="fwRule" key="Access Control Rule Name: "/>
+        </collectAndSetAttrByKeyValuePair>
+
+        <when test="exist tcpFlags">
+          <when test="matches($tcpFlags, '^0[xX]')">
+            <setEventAttribute attr="tcpFlags">convertHexStrToInt($tcpFlags)</setEventAttribute>
+          </when>
+        </when>
+
+        <choose>
+          <when test="not_exist _action"/>
+          <when test="$_action = 'Allow'">
+            <setEventAttribute attr="eventAction">0</setEventAttribute>
+          </when>
+          <when test="$_action = 'Block'">
+            <setEventAttribute attr="eventAction">1</setEventAttribute>
+          </when>
+        </choose>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^\<\*-\s+<_detail:gPatMesgBody> at \w+ <_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>\s+<_tz:gPatWord>\s+-\*\>\s+<_info:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_detail">
+              <regex><![CDATA[^Additional MAC Detected for Host From "<srcIpAddr:gPatIpAddr>"]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sourcefire-Additional-MAC</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_detail">
+              <regex><![CDATA[^Client Timeout From ]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sourcefire-Client-Timeout</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_detail">
+              <regex><![CDATA[^Client Update From "<srcIpAddr:gPatIpAddr>"]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sourcefire-Client-Update</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_detail">
+              <regex><![CDATA[^Identity Timeout From ]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sourcefire-Identity-Timeout</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_detail">
+              <regex><![CDATA[^MAC Information Change From "<srcIpAddr:gPatIpAddr>"]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sourcefire-MAC-Change</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_detail">
+              <regex><![CDATA[^New Client From "<srcIpAddr:gPatIpAddr>"]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sourcefire-New-Client</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_detail">
+              <regex><![CDATA[^New OS From "<srcIpAddr:gPatIpAddr>"]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sourcefire-New-OS</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_detail">
+              <regex><![CDATA[^New UDP Port From "<srcIpAddr:gPatIpAddr>"]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sourcefire-New-UDP-Port</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_detail">
+              <regex><![CDATA[^TCP Port Timeout From ]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sourcefire-TCP-Port-Timeout</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_detail">
+              <regex><![CDATA[^UDP Server Information Update From "<srcIpAddr:gPatIpAddr>"]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sourcefire-UDP-Server-Update</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_detail">
+              <regex><![CDATA[^Network Based Malware From "(?:<srcIpAddr:gPatIpAddr>|<srcName:gPatStr>)"]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sourcefire-Network-Based-Malware</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_detail">
+              <regex><![CDATA[^Network Based Retrospective(?: From "(?:<srcIpAddr:gPatIpAddr>|<srcName:gPatStr>)")?]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sourcefire-Network-Based-Retrospective</setEventAttribute>
+          </case>
+
+          <default>
+            <setEventAttribute attr="eventType">Sourcefire-Generic</setEventAttribute>
+          </default>
+        </switch>
+
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_info">
+              <regex><![CDATA[^IP Address:\s+<hostIpAddr:gPatIpAddr>\s+MAC:\s+<hostMACAddr:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_info">
+              <regex><![CDATA[^IP Address:\s+<hostIpAddr:gPatIpAddr>(?:\s+Port:\s+<ipPort:gPatInt>(?:\s+Service:\s+<appTransportProto:gPatStr>)?)?]]></regex>
+            </collectFieldsByRegex>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_info">
+              <regex><![CDATA[^MAC Address:\s+<hostMACAddr:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_info">
+              <regex><![CDATA[^Sha256:\s+<hashCode:gPatStr>.* Threat name: <virusName:gPatMesgBodyMin>IP Addresses:\s+<destIpAddr:gPatIpAddr>\<-<srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+
+          <default/>
+        </switch>
+
+      </case>
+
+      <default>
+        <collectAndSetAttrByKeyValuePair sep="," src="$_body">
+          <attrKeyMap attr="fwAction" key="AccessControlRuleAction: "/>
+          <attrKeyMap attr="fwRule" key="AccessControlRuleName: "/>
+          <attrKeyMap attr="appTransportProto" key="ApplicationProtocol: "/>
+          <attrKeyMap attr="_desc" key="Classification: "/>
+          <attrKeyMap attr="destIpAddr" key="DstIP: "/>
+          <attrKeyMap attr="destIpPort" key="DstPort: "/>
+          <attrKeyMap attr="destIntfName" key="EgressInterface: "/>
+          <attrKeyMap attr="destFwZone" key="EgressZone: "/>
+          <attrKeyMap attr="httpStatusCode" key="HTTPResponse: "/>
+          <attrKeyMap attr="srcIntfName" key="IngressInterface: "/>
+          <attrKeyMap attr="srcFwZone" key="IngressZone: "/>
+          <attrKeyMap attr="sentBytes64" key="InitiatorBytes: "/>
+          <attrKeyMap attr="sentPkts64" key="InitiatorPackets: "/>
+          <attrKeyMap attr="msg" key="Message: "/>
+          <attrKeyMap attr="policyName" key="Policy: "/>
+          <attrKeyMap attr="_ipProto" key="Protocol: "/>
+          <attrKeyMap attr="recvBytes64" key="ResponderBytes: "/>
+          <attrKeyMap attr="recvPkts64" key="ResponderPackets: "/>
+          <attrKeyMap attr="srcIpAddr" key="SrcIP: "/>
+          <attrKeyMap attr="srcIpPort" key="SrcPort: "/>
+          <attrKeyMap attr="tcpFlags" key="TCPFlags: "/>
+          <attrKeyMap attr="infoURL" key="URL: "/>
+          <attrKeyMap attr="webAppName" key="WebApplication: "/>
+          <attrKeyMap attr="webCategory" key="URLCategory: "/>
+        </collectAndSetAttrByKeyValuePair>
+
+        <choose>
+          <when test="not_exist fwAction">
+            <setEventAttribute attr="eventType">Sourcefire-AccessControl-Generic</setEventAttribute>
+            <when test="exist _desc">
+              <when test="matches($_desc, '^A Network Trojan was Detected\b')">
+                <setEventAttribute attr="eventType">Sourcefire-AccessControl-Malware-Detected</setEventAttribute>
+              </when>
+            </when>
+          </when>
+          <when test="$fwAction = 'Block with reset'">
+            <setEventAttribute attr="eventType">Sourcefire-AccessControl-Block</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">combineMsgId("Sourcefire-AccessControl-", $fwAction)</setEventAttribute>
+          </otherwise>
+        </choose>
+
+        <when test="exist infoURL">
+          <setEventAttribute attr="destName">extractHostFromURL($infoURL)</setEventAttribute>
+        </when>
+      </default>
+    </switch>
+  </parsingInstructions>
+</eventParser>

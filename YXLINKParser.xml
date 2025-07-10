@@ -1,0 +1,44 @@
+<eventParser name="YXLINKParser">
+  <deviceType>
+    <Vendor>YXLink</Vendor>
+    <Model>Vuln Scanner</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[AccelOps-YXLINK]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[Wed Jul  9 15:10:24 2014 AccelOps-YXLINK-HOSTVUL [eventType]=YXLINK-HOSTVUL [Vul_name]=name]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">YXLink-Generic</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">YX_API</setEventAttribute>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatStr>\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>\s+AccelOps-YXLINK-<:gPatStr>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+    </switch>
+
+    <collectAndSetAttrByKeyValuePair sep=" [" src="$_body">
+      <attrKeyMap attr="_eventType" key="[eventType]="/>
+      <attrKeyMap attr="reptDevIpAddr" key="[reptDevIpAddr]="/>
+      <attrKeyMap attr="hostIpAddr" key="[ip]="/>
+      <attrKeyMap attr="domain" key="[domain]="/>
+      <attrKeyMap attr="vulnName" key="[Vul_name]="/>
+      <attrKeyMap attr="_vulnScore" key="[Level]="/>
+      <attrKeyMap attr="ipProto" key="[Proto]="/>
+      <attrKeyMap attr="ipPort" key="[Port]="/>
+      <attrKeyMap attr="description" key="[Desc]="/>
+      <attrKeyMap attr="vulnSolution" key="[Solu]="/>
+      <attrKeyMap attr="_ref" key="[Ref]="/>
+      <attrKeyMap attr="type" key="[Family]="/>
+      <attrKeyMap attr="infoURL" key="[Url]="/>
+      <attrKeyMap attr="details" key="[Detail]="/>
+    </collectAndSetAttrByKeyValuePair>
+    <setEventAttribute attr="eventType">$_eventType</setEventAttribute>
+  </parsingInstructions>
+</eventParser>

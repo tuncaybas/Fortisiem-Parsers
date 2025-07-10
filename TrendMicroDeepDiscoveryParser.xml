@@ -1,0 +1,281 @@
+<eventParser name="TrendMicroDeepDiscoveryParser">
+
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>TrendMicro</Vendor>
+    <Model>Deep Discovery</Model>
+    <Version>ANY</Version>
+    <Name>TrendMicro Deep Discovery Inspector</Name>
+  </appType>
+
+  <testEvents>
+    <testEvent><![CDATA[<123>CEF:0|Trend Micro|Deep Discovery Inspector|3.8.1175|20|Malware URL requested - Type 1|6|dvc=10.0.1.50 dvcmac=00:0C:29:A6:53:0C dvchost=ddi38-143 deviceExternalId=6B593E17AFB7-40FBBB28-A4CE-0462-A536 rt=Mar 09 2015 11:58:25 GMT+08:00 app=HTTP deviceDirection=1 dhost=www.example.com dst=10.10.11.99 dpt=80 dmac=00:1b:21:35:8b:98 shost=10.1.1.97 src=10.1.1.197 spt=12121 smac=fe:ed:be:ef:5a:c6 cs3Label=HostName_Ext cs3=www.example.com fname=setting.doc fileType=0 fsize=0 act=not blocked cn3Label=Threat Type cn3=1 destinationTranslatedAddress=10.1.1.2 sourceTranslatedAddress=10.1.1.197 cnt=1 cs5Label=CCCA_DetectionSource cs5=GLOBAL_INTELLIGENCE cn1Label=CCCA_Detection cn1=1 cat=Callback cs6Label=pAttackPhase cs6=Command and Control Communication]]></testEvent>
+    <testEvent><![CDATA[<123>CEF:0|Trend Micro|Deep Discovery Analyzer|5.5.0.1202|200126|URL sandbox analysis is finished|3|rt=Feb 27 2015 09:36:26 GMT+00:00 dvc=10.4.1.249 dvchost=DDAN dvcmac=EC:F4:BB:C6:F1:D0 deviceExternalId=11111111-1111-1111-1111-111111111111 request=http://www.abc.com:80/ fileHash=ACB5175554463DD2ADBDFF78AD82C7D6BB8C8B6B cs1Label=SandboxImageType cs1=win8 cn2Label=ROZRating cn2=0 cn3Label=PcapReady cn3=1]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patTMRole"><![CDATA[Deep Discovery Inspector|Deep Discovery Analyzer]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>CEF:\d+\|Trend Micro\|<:patTMRole>\|]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>CEF:\d+\|Trend Micro\|<_role:patTMRole>\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <collectAndSetAttrByPos src="$_body" sep="|">
+      <attrPosMap attr="_version" pos="1"/>
+      <attrPosMap attr="_sigId" pos="2"/>
+      <attrPosMap attr="_name" pos="3"/>
+      <attrPosMap attr="eventSeverity" pos="4"/>
+      <attrPosMap attr="_body" pos="5"/>
+    </collectAndSetAttrByPos>
+
+    <setEventAttribute attr="_name">replaceStringByRegex($_name, "\s", "_")</setEventAttribute>
+    <setEventAttribute attr="_role">replaceStringByRegex($_role, "\s+", "")</setEventAttribute>
+    <setEventAttribute attr="eventType">combineMsgId("Trend-", $_role, "-", $_name)</setEventAttribute>
+
+    <choose>
+      <when test="$_role = 'Deep Discovery Inspector'">
+        <choose>
+          <when test="$_sigId = '100101'">
+            <setEventAttribute attr="_identifier">Web-Reputation</setEventAttribute>
+          </when>
+          <when test="$_sigId = '100120'">
+            <setEventAttribute attr="_identifier">Disruptive-Application</setEventAttribute>
+          </when>
+          <when test="$_sigId = '200119'">
+            <setEventAttribute attr="_identifier">Virtual-Analyzer-File-Analysis</setEventAttribute>
+          </when>
+          <when test="$_sigId = '200120'">
+            <setEventAttribute attr="_identifier">Virtual-Analyzer-Deny-List-Transaction</setEventAttribute>
+          </when>
+          <when test="$_sigId = '200127'">
+            <setEventAttribute attr="_identifier">Virtual-Analyzer-Notable-Characteristics</setEventAttribute>
+          </when>
+          <when test="$_sigId IN '300102, 300999'">
+            <setEventAttribute attr="_identifier">System</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="_identifier">Threat</setEventAttribute>
+          </otherwise>
+        </choose>
+
+        <setEventAttribute attr="eventType">combineMsgId("Trend-", $_role, "-", $_identifier, "-", $_sigId)</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="$eventSeverity = '0'">
+      <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+    </when>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_body">
+      <attrKeyMap attr="appTransportProto" key="app"/>
+      <attrKeyMap attr="hostIpAddr" key="dvc"/>
+      <attrKeyMap attr="hostMACAddr" key="dvcmac"/>
+      <attrKeyMap attr="hostName" key="dvchost"/>
+      <attrKeyMap attr="uuid" key="deviceExternalId"/>
+      <attrKeyMap attr="_rt" key="rt"/>
+      <attrKeyMap attr="direction" key="deviceDirection"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="destName" key="dhost"/>
+      <attrKeyMap attr="destMACAddr" key="dmac"/>
+      <attrKeyMap attr="destIpPort" key="dpt"/>
+      <attrKeyMap attr="srcName" key="shost"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="srcIpPort" key="spt"/>
+      <attrKeyMap attr="srcMACAddr" key="smac"/>
+      <attrKeyMap attr="fileName" key="fname"/>
+      <attrKeyMap attr="fileType" key="fileType"/>
+      <attrKeyMap attr="fileSize" key="fsize"/>
+      <attrKeyMap attr="hashCode" key="fileHash"/>
+      <attrKeyMap attr="count" key="cnt"/>
+      <attrKeyMap attr="srcAction" key="act"/>
+      <attrKeyMap attr="infoURL" key="request"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="_cs1Label" key="cs1Label"/>
+      <attrKeyMap attr="_cs1" key="cs1"/>
+      <attrKeyMap attr="_cs2Label" key="cs2Label"/>
+      <attrKeyMap attr="_cs2" key="cs2"/>
+      <attrKeyMap attr="_cs3Label" key="cs3Label"/>
+      <attrKeyMap attr="_cs3" key="cs3"/>
+      <attrKeyMap attr="_cs4Label" key="cs4Label"/>
+      <attrKeyMap attr="_cs4" key="cs4"/>
+      <attrKeyMap attr="_cs5Label" key="cs5Label"/>
+      <attrKeyMap attr="_cs5" key="cs5"/>
+      <attrKeyMap attr="_cs6Label" key="cs6Label"/>
+      <attrKeyMap attr="_cs6" key="cs6"/>
+      <attrKeyMap attr="_cn1Label" key="cn1Label"/>
+      <attrKeyMap attr="_cn1" key="cn1"/>
+      <attrKeyMap attr="_cn2Label" key="cn2Label"/>
+      <attrKeyMap attr="_cn2" key="cn2"/>
+      <attrKeyMap attr="_cn3Label" key="cn3Label"/>
+      <attrKeyMap attr="_cn3" key="cn3"/>
+    </collectFieldsByKeyValuePair>
+
+    <!--MMM dd yyyy HH:mm:ss or milliseconds since epoch (Jan 1st 1970).-->
+    <when test="exist _rt">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_rt">
+            <regex><![CDATA[<_mon1:gPatMon>\s+<_day1:gPatDay>\s+<_year1:gPatYear>\s+<_time1:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventTime">toDateTime($_mon1, $_day1, $_year1, $_time1)</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_rt">
+            <regex><![CDATA[^<eventTime:gPatInt>\d{3}$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <choose>
+      <when test="not_exist _cs1Label"/>
+      <when test="not_exist _cs1"/>
+      <when test="$_cs1Label = 'MailSubject'">
+        <setEventAttribute attr="mailSubject">$_cs1</setEventAttribute>
+      </when>
+      <when test="$_cs1Label = 'SandboxImageType'">
+        <setEventAttribute attr="osType">$_cs1</setEventAttribute>
+      </when>
+      <when test="$_cs1Label = 'PolicyCategory'">
+        <setEventAttribute attr="policyDetails">$_cs1</setEventAttribute>
+      </when>
+      <when test="$_cs1Label = 'type'">
+        <setEventAttribute attr="threatType">$_cs1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs2Label"/>
+      <when test="not_exist _cs2"/>
+      <when test="$_cs2Label = 'DetectionName'">
+        <setEventAttribute attr="virusName">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label = 'URLCategory'">
+        <setEventAttribute attr="webCategory">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label = 'MalwareName'">
+        <setEventAttribute attr="virusName">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label = 'PolicyName'">
+        <setEventAttribute attr="policyName">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label = 'RiskLevel'">
+        <setEventAttribute attr="appRisk">$_cs2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs3Label"/>
+      <when test="not_exist _cs3"/>
+      <when test="$_cs3Label = 'HostName_Ext'">
+        <setEventAttribute attr="hostName">$_cs3</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs4Label"/>
+      <when test="not_exist _cs4"/>
+      <when test="$_cs4Label = 'pAttackPhase'">
+        <setEventAttribute attr="attackInfo">$_cs4</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs5Label"/>
+      <when test="not_exist _cs5"/>
+      <when test="$_cs5Label = 'CCCA_DetectionSource'">
+        <setEventAttribute attr="threatSource">$_cs5</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs6Label"/>
+      <when test="not_exist _cs6"/>
+      <when test="$_cs6Label = 'pAttackPhase'">
+        <setEventAttribute attr="attackInfo">$_cs6</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cn1Label"/>
+      <when test="not_exist _cn1"/>
+      <when test="$_cn1Label = 'CCCA_Detection'">
+        <setEventAttribute attr="scannedDetections">$_cn1</setEventAttribute>
+      </when>
+      <when test="$_cn1Label = 'GRIDIsKnownGood'">
+        <choose>
+          <when test="$_cn1 = '-1'">
+            <setEventAttribute attr="fileTrustLevel">GRID is unknown</setEventAttribute>
+          </when>
+          <when test="$_cn1 = '0'">
+            <setEventAttribute attr="fileTrustLevel">GRID is not known good</setEventAttribute>
+          </when>
+          <when test="$_cn1 = '1'">
+            <setEventAttribute attr="fileTrustLevel">GRID is known good</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cn2Label"/>
+      <when test="not_exist _cn2"/>
+      <when test="$_cn2Label = 'WRSScore'">
+        <setEventAttribute attr="threatScore">$_cn2</setEventAttribute>
+      </when>
+      <when test="$_cn2Label = 'ROZRating'">
+        <choose>
+          <when test="$_cn2 = '-1'">
+            <setEventAttribute attr="appRisk">Unsupported file type in ROZ</setEventAttribute>
+          </when>
+          <when test="$_cn2 = '0'">
+            <setEventAttribute attr="appRisk">No risk found</setEventAttribute>
+          </when>
+          <when test="$_cn2 = '1'">
+            <setEventAttribute attr="appRisk">Low risk</setEventAttribute>
+          </when>
+          <when test="$_cn2 = '2'">
+            <setEventAttribute attr="appRisk">Medium risk</setEventAttribute>
+          </when>
+          <when test="$_cn2 = '3'">
+            <setEventAttribute attr="appRisk">High risk</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cn3Label"/>
+      <when test="not_exist _cn3"/>
+      <when test="$_cn3Label = 'Threat Type'">
+        <choose>
+          <when test="$_cn3 = '0'">
+            <setEventAttribute attr="threatType">Malicious content</setEventAttribute>
+          </when>
+          <when test="$_cn3 = '1'">
+            <setEventAttribute attr="threatType">Malicious behavior</setEventAttribute>
+          </when>
+          <when test="$_cn3 = '2'">
+            <setEventAttribute attr="threatType">Suspicious behavior</setEventAttribute>
+          </when>
+          <when test="$_cn3 = '3'">
+            <setEventAttribute attr="threatType">Exploit</setEventAttribute>
+          </when>
+          <when test="$_cn3 = '4'">
+            <setEventAttribute attr="threatType">Grayware</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,2221 @@
+<eventParser name="UnixParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Unix</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patGeneric_UnixMod" list="begin"><![CDATA[sshd|login|syslog|passwd|useradd|userdel|crond|root|snmpd|cron|rshd|in\.rshd|groupadd|groupdel|ftpd|syslogd|vmunix|vasd|automount|inetd|]]></pattern>
+    <pattern name="patGeneric_UnixMod" list="continue"><![CDATA[gnome-screensaver-dialog|gdm-binary|shutdown|smartd|CROND|cf3|kernel|aaa|winbindd|systemd-timesyncd|uwsgi|firewall|nat|telegraf|]]></pattern>
+    <pattern name="patGeneric_UnixMod" list="continue"><![CDATA[xinetd|authdaemond|usermod|gpasswd|ntpd|yum|groupdel|NetworkManager|dhclient|postfix/postfix-script|lsass|newrelic-infra-service|]]></pattern>
+    <pattern name="patGeneric_UnixMod" list="continue"><![CDATA[acpid|auditd|audit|chfn|CRON|dbus|lxcfs|nrpe|nscd|pam_unix|rhnsd|run-parts|runuser|sftp-server|internal-sftp|sh|snap|snapd|syslog-ng|unix_chkpwd|]]></pattern>
+    <pattern name="patGeneric_UnixMod" list="continue"><![CDATA[su|sudo|PC-NFS|saslauthd|vgptool|ipop3d|rsyslogd|postgres|ikauditmgrd|sssd_be|systemd|puppet-agent|ns-slapd|systemd-logind|crontab|]]></pattern>
+    <pattern name="patGeneric_UnixMod" list="continue"><![CDATA[stunnel|realmd|docker|multipathd|netdata|mariadbd|vpxd(?:[-_]\w+)?|fctsched|pdns-recursor|python3|filebeat|healthd|nslcd|ldap_child|fortiedr_service_scriptpdns_server|]]></pattern>
+    <pattern name="patGeneric_UnixMod" list="continue"><![CDATA[adinfo|salt-minion|routinator|svn-log|vdtc|salt-syndic|nbmdb|pdns_server|pedClient|dockerd|landscape-client|prometheus-node-exporter|]]></pattern>
+    <pattern name="patGeneric_UnixMod" list="continue"><![CDATA[chronyd|dcbd|nsx-opsagent|Keepalived_vrrp|Keepalived_healthcheckers|Keepalived|sedispatch|netstatpan|containerd|adclient|promtail|50-motd-news|dbus-daemon|]]></pattern>
+    <pattern name="patGeneric_UnixMod" list="continue"><![CDATA[journal|backup-check|crx-cli|salt-master|nagios|microk8s.daemon-\w+|avahi-daemon|FortiEDRCollector|rtkit-daemoni|grafana-server|networkd-dispatcher|]]></pattern>
+    <pattern name="patGeneric_UnixMod" list="end"><![CDATA[apt.systemd.daily|systemd-resolved|crx-cli|fortisiem-linux-agent|rpc.mountd|rtkit-daemon]]></pattern>
+    <pattern name="patGeneric_UnixModWithPID"><![CDATA[admin|rpd]]></pattern>
+    <pattern name="patYear"><![CDATA[\d{4}]]></pattern>
+    <pattern name="patBetPar"><![CDATA[\(.+\)]]></pattern>
+    <pattern name="patQueryNum"><![CDATA[#\d+:]]></pattern>
+    <pattern name="patStrEndDash"><![CDATA[[^-]*]]></pattern>
+    <pattern name="patStrLeftSB"><![CDATA[[^\[]*]]></pattern>
+    <pattern name="patNoUnderScore"><![CDATA[[^_\[\]/]*]]></pattern>
+    <pattern name="patStrRightAngle"><![CDATA[[^\>]*]]></pattern>
+    <pattern name="patJson"><![CDATA[\{.*\}]]></pattern>
+    <pattern name="patSessionAction"><![CDATA[opened|closed]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\b<:patGeneric_UnixModWithPID>\[\d+\]:\s|(?:<:patGeneric_UnixMod>(?:\[\d+\])?:\s+<:gPatStrLeftParen>\(<:gPatStrEndColon>:<:gPatStr>\):)|(?:<:patGeneric_UnixMod>(?:\[\d+\])?:\s+<:patNoUnderScore>\s+<:patNoUnderScore>)|(?:<:patGeneric_UnixMod>(?:\[\d+\])?:\s+<:patNoUnderScore>:\s+<:patNoUnderScore>)|(?:<:patGeneric_UnixMod>\(<:gPatStr>\)\[)|(?:<:patGeneric_UnixMod>:<:gPatStrEndColon>:)|(?:<:patGeneric_UnixMod>\[\d+\]:\s+)|\b<:patGeneric_UnixMod>:\s+\[\s*\d+\.\d+\]\s|(?:<:gPatYear>-<:gPatMonNum>-<:gPatDay>T<:gPatTime>\.\d{6}[+-]\d{2}:\d{2}\s+<:gPatHostName>\s+<:patGeneric_UnixMod>:?\s)|(?:<:gPatYear>-<:gPatMonNum>-<:gPatDay>T<:gPatTime>[+-]\d{2}:\d{2}\s+<:gPatHostName>\s+<:patGeneric_UnixMod>:?\s)|(?:<:gPatSyslogPRI>?<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+(?:<:gPatHostName>\s+)?"?<:patGeneric_UnixMod>"?(?:\[\d*\])?:?\s)|(?:<:gPatSyslogPRI>?<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+(?:<:patGeneric_UnixMod>:\s+)?Fortinet Endpoint Detection and Response:\s)]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<86>Dec 14 16:53:39 abc-desktop sshd[14666]: pam_unix(sshd:session): session opened for user joeUser by (uid=0)]]></testEvent>
+    <testEvent><![CDATA[<86>Oct 21 16:40:12 suse1 useradd[4675]: account added to group - account=joeUser, group=video, gid=33, by=0]]></testEvent>
+    <testEvent><![CDATA[<85>Oct 17 16:38:44 DNS-Pri sudo:   joeUser : TTY=pts/1 ; PWD=/home/joeUser ; USER=root ; COMMAND=/bin/vi /var/log/messages]]></testEvent>
+    <testEvent><![CDATA[<86>Oct 23 11:28:45 suse1 passwd[11584]: password change failed, pam error 11 - account=joeUser, uid=1003, by=1003]]></testEvent>
+    <testEvent><![CDATA[<86>Oct 17 16:38:44 DNS-Pri su: pam_unix(su-l:session): session opened for user joeUser by joeUser(uid=500)]]></testEvent>
+    <testEvent><![CDATA[<86>Dec 20 17:44:55 abc-desktop login: FAILED LOGIN 2 FROM 192.168.20.45 FOR 123 User not known to the underlying authentication module]]></testEvent>
+    <testEvent><![CDATA[<85>Dec 20 12:17:11 abc-desktop gnome-screensaver-dialog: pam_unix(gnome-screensaver:auth): authentication failure; logname= uid=500 euid=500 tty=:0.0 ruser= rhost=  user=joeUser]]></testEvent>
+    <testEvent><![CDATA[<86>Apr 9 13:20:49 1.2.3.4 sshd[11204]: pam_unix(sshd:session): session opened for user root by (uid=0)]]></testEvent>
+    <testEvent><![CDATA[<86>Jan 8 03:53:26 centos-2 useradd[15496]: new user: name=devil, UID=666, GID=666, home=/home/devil, shell=/bin/bash]]></testEvent>
+    <testEvent><![CDATA[<86>Jan 8 03:53:29 centos-2 userdel[15501]: delete user 'devil']]></testEvent>
+    <testEvent><![CDATA[<86>Jan 8 03:53:29 centos-2 userdel[15501]: removed group 'devil' owned by 'devil']]></testEvent>
+    <testEvent><![CDATA[<13>1 2016-02-04T13:08:59.614697-05:00 host1 cf3 - - CFEngine 3.7.2, env=ecmcfe/branch/master, policyhosts=host1, host1]]></testEvent>
+    <testEvent><![CDATA[<-1>Jun 14 18:10:13 HKG1SDWAN02 aaa[3599]: <125022> <3599> Authentication failed for User test, Logged in from 162.243.165.39 port 22, Connecting to 120.136.34.69 port 35178 connection type SSH]]></testEvent>
+    <testEvent><![CDATA[<140>Jul 16 16:47:28 2020 192.168.250.82 <192.168.250.82 94:B4:0F:C6:89:CA> syslog: ntpclient(rfc1305print:301): set time from 1594932448.597121 to 1594932448.610959(reference: 3803920817.1281064840, originate: 3803921248.2560118329, receive: 3803921248.2623645197, transmit: 3803921248.2623735391, our-recv: 3803921248.2564469131).]]></testEvent>
+    <testEvent><![CDATA[<38>1 2018-10-29T08:26:38+01:00 linsec sshd 15699 - - Failed password for root from 1.2.3.4 port 2334 ssh2]]></testEvent>
+    <testEvent><![CDATA[<37>1 2018-10-29T08:26:58+01:00 linsec audit 15710 - - USER_LOGIN pid=15710 uid=0 auid=0 ses=7856 msg='op=login id=0 exe="/usr/sbin/sshd" hostname=1.2.3.4 addr=1.2.3.4 terminal=/dev/pts/0 res=success']]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^\s*<:gPatSyslogPRI>?<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:patYear>\s+<_reptDevHost:gPatHostName>\s+<_body:gPatMesgBody>$]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^\s*<:gPatSyslogPRI>?\s*<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_reptDevHost:gPatHostName>\s+<_body:gPatMesgBody>$]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <!--<29>2016-03-22T11:41:08.784208+01:00 syslog01-mgm puppet-agent[15316]: Finished catalog run in 9.71 seconds-->
+          <regex><![CDATA[<:gPatSyslogPRI><_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>\.\d{6}[+-]\d{2}:\d{2}\s+<_reptDevHost:gPatHostName>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+[+-]\d+:\d+\s+<_reptDevHost:gPatHostName>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>[+-]\d+:\d+\s+<_reptDevHost:gPatHostName>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>(?:.\d+)?\s+<_body:gPatMesgBody>$]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_body:gPatMesgBody>$]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <when test="exist _reptDevHost">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_reptDevHost">
+            <regex><![CDATA[<reptDevIpAddr:gPatIpAddr>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="destIpAddr">$reptDevIpAddr</setEventAttribute>
+        </case>
+        <default>
+          <when test="not_exist reptDevName">
+            <setEventAttribute attr="reptDevName">$_reptDevHost</setEventAttribute>
+          </when>
+          <setEventAttribute attr="destName">$reptDevName</setEventAttribute>
+          <setEventAttribute attr="destIpAddr">resolveDNSName($destName)</setEventAttribute>
+          <when test="exist destIpAddr">
+            <setEventAttribute attr="reptDevIpAddr">$destIpAddr</setEventAttribute>
+          </when>
+        </default>
+      </switch>
+    </when>
+
+    <setEventAttribute attr="eventAction">0</setEventAttribute>
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<procName:patGeneric_UnixMod>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<procName:patGeneric_UnixModWithPID>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+
+    <choose>
+      <when test="exist procName">
+        <setEventAttribute attr="eventType">combineMsgId("Generic_Unix_", $procName, "_Generic")</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">Generic_Unix_Generic</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <switch>
+
+      <case>
+        <!-- message specific parsing
+             SSH Session start
+             <86>Dec 14 16:53:39 abc-desktop sshd[14666]: pam_unix(sshd:session): session opened for user joeUser by (uid=0)
+             <86>sshd[14666]: pam_unix(sshd:session): session opened for user joeUser by (uid=0)
+        -->
+
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[sshd\[\d+\]: pam_unix\(sshd:session\): session opened for user <user:gPatStr> by \(uid=\d+\)]]></regex>
+            </collectAndSetAttrByRegex>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[sshd\(pam_unix\)\[\d+\]: session opened for user <user:gPatStr> by \(uid=\d+\)]]></regex>
+            </collectAndSetAttrByRegex>
+          </case>
+        </switch>
+        <setEventAttribute attr="eventType">"Generic_Unix_Successful_SSH_Start"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+
+      <case>
+        <!-- message specific parsing
+             SSH session end
+             <86>Dec 14 16:54:22 abc-desktop sshd[14666]: pam_unix(sshd:session): session closed for user joeUser
+        -->
+
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[sshd\[\d+\]: pam_unix\(sshd:session\): session closed for user <user:gPatStr>]]></regex>
+            </collectAndSetAttrByRegex>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[sshd\(pam_unix\)\[\d+\]: session closed for user <user:gPatStr>]]></regex>
+            </collectAndSetAttrByRegex>
+          </case>
+        </switch>
+
+        <setEventAttribute attr="eventType">"Generic_Unix_Successful_SSH_End"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+      <case>
+        <!--<85>Jan  8 20:01:53 gwprod1 rshd[14015]: pam_rhosts(rsh:auth): allowed access to root@example.com as root-->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[rshd\[\d+\]: pam_rhosts\(rsh:auth\): allowed access to <:gPatStr> as <user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Successful_RSH</setEventAttribute>
+      </case>
+      <case>
+        <!--<38>Jan  9 03:37:58 gwprod1 rshd[30923]: root@example.com as root: cmd='nice -19 /var/tmp/audit13519 example.com gwprod1 ; rm /var/tmp/audit13519'-->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[rshd\[\d+\]: <:gPatStr> as <user:gPatStr>: cmd='<command:gPatMesgBody>']]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Command_Executed_RSH</setEventAttribute>
+      </case>
+      <case>
+        <!--<86>Jan  8 20:01:53 gwprod1 in.rshd[14015]: connect from 10.90.198.118 (10.90.198.118) - done-->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[in\.rshd\[\d+\]: connect from <srcIpAddr:gPatIpAddr> \(<:gPatIpAddr>\) - done]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Successful_RSH</setEventAttribute>
+      </case>
+      <case>
+        <!-- USER ADD to Group Existing
+             <86>Oct 21 16:40:12 suse1 useradd[4675]: account added to group - account=joeUser, group=video, gid=33, by=0
+             <86>Oct 21 16:40:12 suse1 useradd[4675]: account added to group - account=joeUser, group=dialout, gid=16, by=0
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[useradd\[\d+\]:\s+account\s+added\s+to\s+group\s+-\s+account=<targetUser:gPatStr>,\s+group=<targetUserGrp:gPatStr>,\s+gid=\d+,\s+by=<user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_User_Add"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <when test="matches($user, '^0')">
+          <setEventAttribute attr="user">root</setEventAttribute>
+        </when>
+
+      </case>
+
+
+      <case>
+        <!-- USER ADD to Group Existing
+             <86>Aug 18 16:21:07 SANITIZED usermod[493]: add `sanitized' to group `sanitized'
+             -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[^usermod\[\d+\]:\s+add\s+[`']<user:gPatStr>'\s+to\s+(?:shadow\s+)?group\s+[`']<targetUserGrp:gPatStr>']]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_User_Add_Group</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <86>Nov 15 16:20:11 ubuntu14 gpasswd[9353]: user test2a removed by root from group sudo -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[^gpasswd\[\d+\]:\s+user\s+<targetUser:gPatStr>\s+removed by <user:gPatStr> from group <targetUserGrp:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_User_Del_Group</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <86>Nov 15 15:57:47 ubuntu14 usermod[8726]: change 'test2' to 'test2a' in shadow group 'sudo'
+             <86>Nov 15 15:57:47 ubuntu14 usermod[8726]: change 'test2' to 'test2a' in group 'sudo'
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[^usermod\[\d+\]:\s+change\s+'<user:gPatStr>'\s+to\s+'<targetUser:gPatStr>'\s+in\s+(?:shadow\s+)?group\s+'<targetUserGrp:gPatStr>']]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_User_Change_Name</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <86>Nov 15 12:59:28 ubuntu18 usermod[29052]: change user 'test2' password -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^usermod\[\d+\]:\s+change user '<user:gPatStr>' password]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_User_Password_Change</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <86>Nov 15 15:57:47 ubuntu14 usermod[8726]: change user name 'test2' to 'test2a' -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^usermod\[\d+\]:\s+change user name '<user:gPatStr>' to '<targetUser:gPatStr>']]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_User_Change_Name</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <86>Nov 15 15:53:33 ubuntu14 usermod[8606]: change user 'test2' home from '/home/test2' to '/home/testaa' -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^usermod\[\d+\]:\s+change user '<user:gPatStr>' home from ]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_User_Change_Home</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <86>Nov 15 16:02:00 ubuntu14 usermod[8825]: lock user 'test2a' password
+             <86>Nov 15 16:03:21 ubuntu14 usermod[8863]: unlock user 'test2a' password
+        -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^usermod\[\d+\]:\s+<_action:gPatWord> user '<user:gPatStr>' password\s*$]]></regex>
+        </collectFieldsByRegex>
+        <choose>
+          <when test="$_action = 'lock'">
+            <setEventAttribute attr="eventType">Generic_Unix_User_Account_Locked</setEventAttribute>
+          </when>
+          <when test="$_action = 'unlock'">
+            <setEventAttribute attr="eventType">Generic_Unix_User_Account_Unlocked</setEventAttribute>
+          </when>
+        </choose>
+      </case>
+
+      <case>
+        <!-- <86>Nov 15 16:04:40 ubuntu14 usermod[8941]: change user 'test2a' shell from '' to '/bin/sh'
+             <86>Nov 15 16:06:02 ubuntu14 usermod[8979]: change user 'test2a' UID from '1004' to '1999'
+             <86>Nov 15 16:07:55 ubuntu14 usermod[9028]: change user 'test2a' GID from '1004' to '1000'
+             <86>Nov 15 16:10:09 ubuntu14 usermod[9081]: change user 'test2a' expiration from 'never' to '2018-12-11'
+             <86>Nov 15 16:11:44 ubuntu14 usermod[9119]: change user 'test2a' inactive from '-1' to '3'
+        -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^usermod\[\d+\]:\s+change user '<user:gPatStr>' <_obj:gPatWord> from '<:gPatStr>' to '<_value:gPatStr>']]></regex>
+        </collectFieldsByRegex>
+        <choose>
+          <when test="$_obj = 'shell'">
+            <setEventAttribute attr="eventType">Generic_Unix_User_Change_Shell</setEventAttribute>
+          </when>
+          <when test="$_obj = 'UID'">
+            <setEventAttribute attr="eventType">Generic_Unix_User_Change_UID</setEventAttribute>
+            <setEventAttribute attr="userId">$_value</setEventAttribute>
+          </when>
+          <when test="$_obj = 'GID'">
+            <setEventAttribute attr="eventType">Generic_Unix_User_Change_GID</setEventAttribute>
+            <setEventAttribute attr="groupID">$_value</setEventAttribute>
+          </when>
+          <when test="$_obj IN 'expiration, inactive'">
+            <setEventAttribute attr="eventType">Generic_Unix_User_Change_Expiry</setEventAttribute>
+          </when>
+        </choose>
+      </case>
+
+      <case>
+        <!-- USER ADD to Group NEW
+             <86>Oct 21 16:40:12 suse1 useradd[4675]: new account added - account=joeUser, uid=1003, gid=100, home=/home/joeUser, shell=/bin/bash, by=0
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[useradd\[\d+\]:\s+new\s+account\s+added\s+-\s+account=<targetUser:gPatStr>,\s+uid=\d+,\s+gid=\d+,\s+home=<:gPatStr>,\s+shell=<:gPatStr>,\s+by=<user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_User_Add"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <when test="matches($user, '^0')">
+          <setEventAttribute attr="user">root</setEventAttribute>
+        </when>
+
+      </case>
+
+      <case>
+        <!-- USER ADD to Group
+             <86>Oct 21 16:40:12 suse1 useradd[4675]: running USERADD_CMD command - script=/usr/sbin/useradd.local, account=joeUser, uid=1003, gid=100, home=/home/joeUser, by=0
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[useradd\[\d+\]:\s+running\s+USERADD_CMD\s+command\s+-\s+script=<command:gPatStr>,\s+account=<targetUser:gPatStr>,\s+uid=\d+,\s+gid=\d+,\s+home=<:gPatStr>,\s+by=<user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_User_Add"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <when test="matches($user, '^0')">
+          <setEventAttribute attr="user">root</setEventAttribute>
+        </when>
+
+      </case>
+
+      <case>
+        <!-- <86>Jan 8 03:53:26 centos-2 useradd[15496]: new user: name=devil, UID=666, GID=666, home=/home/devil, shell=/bin/bash -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[useradd\[\d+\]:\s+new user:\s+name=<user:gPatStr>,\s+UID=<userId:gPatInt>,\s+GID=<groupID:gPatInt>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_User_Add"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <86>Jan 8 03:53:29 centos-2 userdel[15501]: delete user 'devil' -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[userdel\[\d+\]:\s+delete user '<user:gPatStr>']]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_User_Del"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <86>Jan 8 03:53:29 centos-2 userdel[15501]: removed group 'devil' owned by 'devil' -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[userdel\[\d+\]:\s+removed group '<userGrp:gPatStr>' owned by '<user:gPatStr>']]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Group_Del"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!--
+<86>Jun 11 15:42:38 localhost groupdel[27420]: group 'my_new_group' removed from /etc/gshadow
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[groupdel\[\d+\]:\s+group '<userGrp:gPatStr>' removed from\s+<targetUserGrp:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Group_Del</setEventAttribute>
+      </case>
+
+      <case>
+        <!--
+<86>Jun 11 15:42:38 localhost groupdel[27420]: group 'my_new_group' removed
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[groupdel\[\d+\]:\s+group '<userGrp:gPatStr>' removed]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Group_Del</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <86>Jan 8 03:53:26 centos-2 useradd[15496]: new group: name=devil, GID=666 -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[useradd\[\d+\]:\s+new group:\s+name=<user:gPatStr>,\s+GID=<groupID:gPatInt>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_User_Add</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- ADD New  Group
+             <86>Aug 18 16:21:07 SANITIZED groupadd[492]: new group: name=sanitized, gid=00000
+             -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[groupadd\[\d+\]:\s+new group:\s+name=<userGrp:gPatStr>,\s+gid=\d+]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Group_Add"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!--
+<86>Jun 11 15:41:56 localhost groupadd[27401]: group added to /etc/group: name=my_new_group, GID=502
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[groupadd\[\d+\]:\s+group added to <targetUserGrp:gPatStr>:\s+name=<userGrp:gPatStr>,\s+GID=<groupID:gPatInt>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Group_Add</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- message specific parsing
+             SUCCESSFUL SUDO EXEC (redhat)
+<85>Oct 17 16:38:44 DNS-Pri sudo:   joeUser : TTY=pts/1 ; PWD=/home/joeUser ; USER=root ; COMMAND=/bin/vi /var/log/messages
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sudo:\s+<user:gPatStr>\s+:\s+TTY=<:gPatStr>\s+;\s+PWD=<:gPatStr>\s+;\s+USER=<targetUser:gPatStr>\s+;\s+COMMAND=<command:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Successful_SUDO_Exec"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- message specific parsing
+             SUCCESSFUL SUDO EXEC (fedora)
+             <85>Dec 20 13:58:12 abc-desktop sudo:   joeUser : TTY=pts/1 ; PWD=/home/joeUser ; USER=root ; COMMAND=/bin/vi /var/log/messages
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sudo:\s+<user:gPatStr> : TTY=<:gPatStr> ; PWD=<:gPatStr> ; USER=<targetUser:gPatStr> ; COMMAND=<command:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Successful_SUDO_Exec"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </case>
+
+
+      <case>
+        <!-- message specific parsing
+             SUCCESSFUL SUDO EXEC
+             <37>Oct 21 17:16:16 suse1 sudo:  joeUser : TTY=pts/4 ; PWD=/ ; USER=root ; COMMAND=/usr/sbin/tcpdump
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sudo:\s+<user:gPatStr>\s+:\s+TTY=<:gPatStr>\s+;\s+PWD=<:gPatStr>\s+;\s+USER=<targetUser:gPatStr>\s+;\s+COMMAND=<command:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Successful_SUDO_Exec"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </case>
+
+
+      <case>
+        <!-- message specific parsing
+             FAILED SUDO EXEC
+             <33>Oct 21 17:22:11 suse1 sudo:  joeUser : 1 incorrect password attempt ; TTY=pts/4 ; PWD=/ ; USER=root ; COMMAND=tcpdump
+             <33>Oct 21 17:22:27 suse1 sudo:  joeUser : 2 incorrect password attempts ; TTY=pts/4 ; PWD=/ ; USER=root ; COMMAND=tcpdump
+             <33>Oct 21 17:22:33 suse1 sudo:  joeUser : 3 incorrect password attempts ; TTY=pts/4 ; PWD=/ ; USER=root ; COMMAND=tcpdump
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sudo:\s+<user:gPatStr>\s+:\s+<:gPatInt>\s+incorrect\s+password\s+<:gPatStr>\s+;\s+TTY=<:gPatStr>\s+;\s+PWD=<:gPatStr>\s+;\s+USER=<targetUser:gPatStr>\s+;\s+COMMAND=<command:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_SUDO_Exec"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- message specific parsing
+             FAILED SUDO EXEC
+             <33>Oct 21 17:46:12 suse1 sudo:   joeUser : user NOT in sudoers ; TTY=pts/3 ; PWD=/root ; USER=root ; COMMAND=tcpdump
+             <33>Oct 21 17:22:27 suse1 sudo:  joeUser : 2 incorrect password attempts ; TTY=pts/4 ; PWD=/ ; USER=root ; COMMAND=tcpdump
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sudo:\s+<user:gPatStr>\s+:\s+user\s+NOT\s+in\s+sudoers\s+;\s+TTY=<:gPatStr>\s+;\s+PWD=<:gPatStr>\s+;\s+USER=<targetUser:gPatStr>\s+;\s+COMMAND=<command:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_SUDO_Exec"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- message specific parsing
+             FAILED SUDO EXEC (redhat)
+<81>Oct 17 16:38:44 DNS-Pri sudo:  joeUser : user NOT in sudoers ; TTY=pts/3 ; PWD=/home/joeUser ; USER=root ; COMMAND=/usr/sbin/tcpdump
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sudo:\s+<user:gPatStr>\s+:\s+user\s+NOT\s+in\s+sudoers\s+;\s+TTY=<:gPatStr>\s+;\s+PWD=<:gPatStr>\s+;\s+USER=<targetUser:gPatStr>\s+;\s+COMMAND=<command:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_SUDO_Exec"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <86>Nov 4 19:54:40 ndcvascopr01 sudo: pam_unix(sudo:session): session closed for user root -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[^sudo:\s+pam_unix\([^)]*\): session closed for user <user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Successful_SSH_End</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- PASSWORD CHANGE
+             <34>Jul 23 12:59:44 freescale auth.info passwd[1821]: password for `igotre' changed by user `igotre'
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[passwd\[\d+\]:\s+password\s+for\s+<targetUser:gPatStr>\s+changed\s+by\s+user\s+<user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Password_Change"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- PASSWORD CHANGE
+             <37>Aug 18 17:17:08 SANITIZED passwd(pam_unix)[5644]: password changed for sanitized
+             -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[passwd<:patStrLeftSB>\[\d+\]:\s+password\s+changed\s+for\s+<targetUser:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Password_Change"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- PASSWORD CHANGE
+             <86>Oct 23 11:28:45 suse1 passwd[11584]: password change failed, pam error 11 - account=joeUser, uid=1003, by=1003
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[passwd\[\d+\]:\s+password\s+change\s+failed,\s+pam\s+error\s+\d+\s+-\s+account=<targetUser:gPatStr>,\s+uid=\d+,\s+by=<user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_Password_Change"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <when test="matches($user, '^0')">
+          <setEventAttribute attr="user">root</setEventAttribute>
+        </when>
+      </case>
+
+      <case>
+        <!-- PASSWORD CHANGE
+             <86>Oct 21 16:40:25 suse1 passwd[4677]: password changed - account=joeUser, uid=1003, by=0
+             <86>Oct 23 11:29:16 suse1 passwd[11585]: password changed - account=joeUser, uid=1003, by=1003
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[passwd\[\d+\]:\s+password\s+changed\s+-\s+account=<targetUser:gPatStr>,\s+uid=\d+,\s+by=<user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Successful_Password_Change"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <when test="matches($user, '^0')">
+          <setEventAttribute attr="user">root</setEventAttribute>
+        </when>
+
+      </case>
+
+      <case>
+        <!-- KEEPALIVED EVENTS
+	     <30>Dec 20 11:32:01 Collector123 Keepalived_vrrp[1721]: Printing VRRP data for process(1721) on signal
+	     <30>Dec 20 11:32:01 Collector123 Keepalived_healthcheckers[1720]: Printing checker data for process(1720) on signal
+	     <30>Dec 20 11:32:01 Collector123 Keepalived[1719]: Printing parent data for process(1719) on signal
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Keepalived(?:_<:gPatStr>)?\[<procId:gPatInt>\]:\s*<msg:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Keepalived_Generic</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$msg">
+              <regex><![CDATA[\s*Printing\s+<:gPatMesgBody>]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Generic_Unix_Keepalived_PrintInfo</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </case>
+
+      <case>
+        <!--
+          <86>Oct 17 16:38:44 DNS-Pri su: pam_unix(su-l:session): session opened for user joeUser by joeUser(uid=500)
+          <86>Dec 14 15:57:26 abc-desktop su: pam_unix(su:session): session opened for user root by joeUser(uid=500)
+          <86>Nov  1 08:32:57 wk2095 su: pam_unix(su-l:session): session opened for user admin by (uid=0)
+          Apr  11 11:01:01 hostname su(pam_unix)[17345]: session opened for user sys by (uid=0)
+          <86>Oct 31 08:02:11 wk2079 su: pam_unix(su-l:session): session closed for user admin
+          Apr  11 10:51:36 hostname su(pam_unix)[24243]: session closed for user joeUser
+        -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^su(?:: pam_unix\(\S*?\)|\(pam_unix\)\[\d+\]):\s+session <_action:patSessionAction> for user <_user:gPatStr>(?: by <user:gPatStr>\(uid=<_uid:gPatInt>)?]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Successful_Switch_User"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+        <choose>
+          <when test="$_action = 'opened'">
+            <setEventAttribute attr="targetUser">$_user</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="user">$_user</setEventAttribute>
+          </otherwise>
+        </choose>
+        <when test="not_exist user">
+          <when test="exist _uid">
+            <when test="$_uid = '0'">
+              <setEventAttribute attr="user">root</setEventAttribute>
+            </when>
+          </when>
+        </when>
+      </case>
+
+      <case>
+
+        <!-- message specific parsing
+             SUCCESSFUL SU
+             <18>Apr 17 17:27:29 devdhq4 su: from joeUser to root at /dev/pts/13
+             <19>Apr 18 12:21:56 devdhq4 su: from joeUser to rels at /dev/pts/0
+             <20>Apr 18 17:11:54 devdhq4 su: from joeUser to root at /dev/pts/18
+             <21>Apr 18 17:13:18 devdhq4 su: from joeUser to root at /dev/pts/21
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[su:\s+from\s+<user:gPatStr>\s+to\s+<targetUser:gPatStr>\s+at\s+<:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Successful_Switch_User"</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- message specific parsing
+             SUCCESSFUL SU
+             <37>Oct 21 17:04:21 suse1 su: (to joeUser) joeUser on /dev/pts/4
+             <37>Oct 21 17:02:54 suse1 su: (to joeUser) joeUser on /dev/pts/4
+             <37>Oct 21 17:42:32 suse1 su: (to joeUser) joeUser on /dev/pts/3
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[su:\s+\(to <targetUser:gPatStr>\)\s+<user:gPatStr>.*]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Successful_Switch_User"</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </case>
+
+
+      <case>
+        <!-- message specific parsing
+             FAILED SU
+             <16>Apr 18 12:21:50 devdhq4 su: BAD SU from joeUser to rels at /dev/pts/0
+             <17>Apr 18 17:11:50 devdhq4 su: BAD SU from joeUser to root at /dev/pts/18
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[su:\s+BAD\s+SU\s+from\s+<user:gPatIpAddr>\s+to\s+<targetUser:gPatStr>\s+at\s+<:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_Switch_User"</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+
+      </case>
+
+      <case>
+        <!-- message specific parsing
+             FAILED SU
+             <35>Mar  2 15:14:36 WebServer1 su: BAD SU from 1.2.3.4 to root at /dev/pts/1
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[su:\s+BAD\s+SU\s+from\s+<user:gPatStr>\s+to\s+<targetUser:gPatStr>\s+at\s+<:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_Switch_User"</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+
+      </case>
+
+      <case>
+        <!-- message specific parsing
+             FAILED SU
+             <37>Oct 21 16:41:58 suse1 su: FAILED SU (to joeUser) joeUser on /dev/pts/4
+             <37>Oct 21 17:02:35 suse1 su: FAILED SU (to joeUser) joeUser on /dev/pts/4
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[su:\s+FAILED\s+SU\s+\(to <targetUser:gPatStr>\)\s+<user:gPatStr>.*]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_Switch_User"</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </case>
+
+
+      <case>
+        <!-- message specific parsing
+             FAILED SU (redhat)
+             <85>Oct 17 16:38:44 DNS-Pri su: pam_unix(su-l:auth): authentication failure; logname=joeUser uid=500 euid=0 tty=pts/3 ruser=joeUser rhost=  user=joeUser
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[su: pam_unix\(su-l:auth\): authentication failure; logname=<user:gPatStr> uid=<:gPatStr> euid=<:gPatStr> tty=<:gPatStr> ruser=<:gPatStr> rhost=<:gPatStr>\s+user=<targetUser:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_Switch_User"</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- message specific parsing
+             FAILED SU (fedora)
+             <85>Dec 14 16:52:31 abc-desktop su: pam_unix(su:auth): authentication failure; logname=joeUser uid=500 euid=0 tty=pts/2 ruser=joeUser rhost=  user=root
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[su: pam_unix\(su:auth\): authentication failure; logname=<user:gPatStr> uid=<:gPatStr> euid=<:gPatStr> tty=<:gPatStr> ruser=<:gPatStr> rhost=<:gPatStr>\s+user=<targetUser:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_Switch_User"</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- su failure: HP-UX
+             <38>Dec  4 22:28:00 172.16.20.161 su: - 2 sfmdb-root
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[su: - <:gPatInt> <user:patStrEndDash>-<targetUser:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_Switch_User"</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- SU success: HP-UX
+             <38>Dec  4 17:26:54 172.16.20.161 su: + 2 sfmdb-root
+             <38>Feb 10 10:29:31 su: + tty?? root-oracle
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[su: \+\s+[\w?]+\s+<user:patStrEndDash>-<targetUser:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Successful_Switch_User"</setEventAttribute>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <!--
+            <38>Feb 29 09:52:57 sshd[24758]: Accepted keyboard-interactive/pam for lastf001 from 10.8.244.132 port 58858 ssh2
+            <38>Feb 29 09:29:52 sshd[22030]: Accepted publickey for root from 10.4.66.57 port 62168 ssh2
+          -->
+          <regex><![CDATA[sshd\[\d+\]:\s+Accepted\s+<:gPatStr>\s+for\s+<user:gPatStr>\s+from\s+<srcIpAddr:gPatIpAddr>\s+port\s+<srcIpPort:gPatIpPort>\s+<appTransportProto:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Successful_SSH_Login</setEventAttribute>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <!--
+            <38>1 2018-10-29T08:26:58+01:00 linsec sshd 15704 - - Accepted password for root from 172.30.37.155 port 2338 ssh2
+          -->
+          <regex><![CDATA[sshd\s+\d+\s+-\s+-\s+Accepted\s+<:gPatStr>\s+for\s+<user:gPatStr>\s+from\s+<srcIpAddr:gPatIpAddr>\s+port\s+<srcIpPort:gPatIpPort>\s+<appTransportProto:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Successful_SSH_Login</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <86>Jul 26 01:07:00 SYD03-MD-SFTP01 sshd[119871]: pam_sss(sshd:auth): authentication success; logname= uid=0 euid=0 tty=ssh ruser= rhost=170.44.136.202.sta.dodo.net.au user=md.sftp-primus -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]: pam_(?:unix|sss)\(sshd:auth\): authentication success; .* rhost=<srcIpAddr:gPatIpAddr>.*\s+user=<user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Successful_SSH_Login</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <86>Jul 26 01:07:00 SYD03-MD-SFTP01 sshd[119871]: pam_sss(sshd:auth): authentication success; logname= uid=0 euid=0 tty=ssh ruser= rhost=170.44.136.202.sta.dodo.net.au user=md.sftp-primus -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]: pam_sss\(sshd:auth\):\s+authentication\s+success; (?:.*) user=<user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Successful_SSH_Login</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <86>Jul 26 01:07:00 SYD03-MD-SFTP01 sshd[119871]: pam_sss(sshd:auth): authentication success; logname= uid=0 euid=0 tty=ssh ruser= rhost=170.44.136.202.sta.dodo.net.au user=md.sftp-primus -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]: pam_sss\(sshd:auth\):\s+authentication\s+success; (?:.*) user=<user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Successful_SSH_Login</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </case>
+
+      <case>
+        <!--
+          <38>Feb 29 00:07:01 sshd[9715]: Disconnecting: Too many authentication failures for patelh [preauth]
+      -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]:\s+Disconnecting:\s+Too\s+many\s+authentication\s+failures\s+for\s+<user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Failed_SSH_Connect</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <!--
+               <38>Feb 27 17:35:55 sshd[26125]: SSH: Server;LType: Throughput;Remote: 10.4.203.101-50971;IN: 18916;OUT: 3224;Duration: 697.2;tPut_in: 27.1;tPut_out: 4.6
+               <38>Feb 29 09:40:13 sshd[16587]: SSH: Server;Ltype: Kex;Remote: 10.1.217.104-51709;Enc: aes256-cbc;MAC: hmac-sha1;Comp: none [preauth]
+               <38>Feb 29 09:29:52 sshd[22030]: SSH: Server;Ltype: Version;Remote: 10.4.66.57-62168;Protocol: 2.0;Client: OpenSSH_6.0
+               <38>Feb 29 09:40:13 sshd[16587]: SSH: Server;Ltype: Version;Remote: 10.1.217.104-51709;Protocol: 2.0;Client: PuTTY-Release-0.57
+               <38>Feb 29 09:51:51 sshd[24501]: SSH: Server;Ltype: Authname;Remote: 10.8.244.132-53611;Name: lastf001 [preauth]
+            -->
+          <regex><![CDATA[sshd\[\d+\]:\s+SSH:\s+[^;]+;([^:]+:\s+[^;]+;)*[^:]+:\s+[^;]+\s*]]></regex>
+        </collectAndSetAttrByRegex>
+        <collectAndSetAttrByKeyValuePair sep=";" src="$_body">
+          <attrKeyMap attr="recvBytes64" key="IN:"/>
+          <attrKeyMap attr="sentBytes64" key="OUT:"/>
+          <attrKeyMap attr="user" key="Name:"/>
+          <attrKeyMap attr="_destIpAddr" key="Remote:"/>
+          <attrKeyMap attr="ipProto" key="Protocol:"/>
+          <attrKeyMap attr="durationMSec" key="Duration:"/>
+          <attrKeyMap attr="hostMACAddr" key="MAC:"/>
+          <attrKeyMap attr="hostName" key="Comp:"/>
+          <attrKeyMap attr="appClientVersion" key="Client:"/>
+          <attrKeyMap attr="encryptAlgo" key="Enc:"/>
+        </collectAndSetAttrByKeyValuePair>
+        <when test="exist _destIpAddr">
+          <collectAndSetAttrByRegex src="$_destIpAddr">
+            <regex><![CDATA[<destIpAddr:gPatIpAddr>-<destIpPort:gPatIpPort>]]></regex>
+          </collectAndSetAttrByRegex>
+        </when>
+        <setEventAttribute attr="eventType">Generic_Unix_Successful_SSH_Login</setEventAttribute>
+      </case>
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[^sshd\[\d+\]:\s+Received disconnect from <srcIpAddr:gPatIpAddr>: \d+: disconnected by <_user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <when test="$_user != 'user'">
+          <setEventAttribute attr="user">$_user</setEventAttribute>
+        </when>
+        <setEventAttribute attr="eventType">Generic_Unix_Successful_SSH_End</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- message specific parsing
+             FAILED TELNET LOGIN
+             <86>Dec 20 17:44:55 abc-desktop login: FAILED LOGIN 2 FROM 192.168.20.45 FOR 123, User not known to the underlying authentication module
+             <86>Dec 20 17:45:16 abc-desktop login: FAILED LOGIN 1 FROM 192.168.20.45 FOR root, Authentication failure
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[login: FAILED LOGIN \d+ FROM <srcIpAddr:gPatIpAddr> FOR <user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_Telnet_Login"</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </case>
+
+
+      <case>
+        <!-- message specific parsing
+             FAILED CONSOLE LOGIN
+             <85>Dec 20 12:17:11 abc-desktop gnome-screensaver-dialog: pam_unix(gnome-screensaver:auth): authentication failure; logname= uid=500 euid=500 tty=:0.0 ruser= rhost=  user=joeUser
+             <85>Dec 20 12:19:05 abc-desktop gdm-binary[2494]: pam_unix(gdm:auth): authentication failure; logname= uid=0 euid=0 tty=:0 ruser= rhost=  user=root
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[(?:gnome-screensaver-dialog|(?:gdm-binary|login)\[\d+\]): pam_unix<:gPatStr> authentication failure; logname=<:gPatStr> uid=<:gPatStr> euid=<:gPatStr> tty=<:gPatStr> ruser=<:gPatStr> rhost=<:gPatStr>\s+user=<user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_Console_Login"</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </case>
+
+
+      <case>
+        <!-- message specific parsing
+             Failed SSH LOGIN
+             <85>Mar 17 17:49:45 abc-desktop sshd[14335]: PAM 4 more authentication failures; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.168.20.33 user=joeUser 192.168.20.45
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]: PAM <count:gPatInt> (?:.* )rhost=<_srcIp:gPatHostName>(?: user=<user:gPatStr>\s+<srcIpAddr:gPatIpAddr>)?]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_SSH_Login"</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+        <choose>
+          <when test="exist srcIpAddr"/>
+          <when test="not_exist _srcIp"/>
+          <otherwise>
+            <switch>
+              <case>
+                <collectFieldsByRegex src="$_srcIp">
+                  <regex><![CDATA[^<srcIpAddr:gPatIpAddr>$]]></regex>
+                </collectFieldsByRegex>
+              </case>
+              <default>
+                <setEventAttribute attr="srcName">$_srcIp</setEventAttribute>
+                <setEventAttribute attr="srcIpAddr">resolveDNSName($srcName)</setEventAttribute>
+              </default>
+            </switch>
+          </otherwise>
+        </choose>
+      </case>
+
+      <case>
+        <!-- message specific parsing
+             Failed SSH LOGIN
+             <85>Mar 17 17:50:04 abc-desktop sshd[14340]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.168.20.33 user=joeUser  192.168.20.45
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]: pam_unix\(sshd:auth\): (?:.*) user=<user:gPatStr>\s+<srcIpAddr:gPatIpAddr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_SSH_Login"</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </case>
+
+      <case>
+        <!--
+<85>Jun 11 16:40:39 localhost sshd[1926]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.168.20.195  user=root
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]: pam_unix\(sshd:auth\): authentication failure; .* rhost=(?:<srcIpAddr:gPatIpAddr>|<srcName:gPatHostName>)\s+user=<user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_SSH_Login"</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- message specific parsing
+             FAILED SSH LOGIN
+             <38>Feb 29 00:08:02 sshd[10158]: Failed none for patelh from 10.4.3.2 port 50751 ssh2
+             <38>Feb 29 00:07:01 sshd[9715]: Postponed keyboard-interactive for patelh from 10.4.3.2 port 49357 ssh2 [preauth]
+             <86>Dec 20 14:53:08 abc-desktop sshd[656]: Failed password for joeUser from 192.168.20.47 port 3838 ssh2
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]:\s+(?:Failed|Postponed)\s+<:gPatStr>\s+for\s+<user:gPatStr>\s+from\s+<srcIpAddr:gPatIpAddr>\s+port\s+<srcIpPort:gPatIpPort>\s+ssh2]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_SSH_Login"</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- FAILED SSH LOGIN
+             <14>Apr 12 15:19:47 lpar1auth|security:info sshd[774360]: Failed password for root from 10.1.5.20 port 54748 ssh2
+             <37>Apr  6 08:12:54 <host> sshd[6318]: Failed password for <host> from <host> port 59083 ssh2
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]:\s+Failed\s+password\s+for\s+<user:gPatStr>\s+from\s+(?:<srcIpAddr:gPatIpAddr>|<srcName:gPatHostName>)\s+port\s+<srcIpPort:gPatIpPort>\s+ssh2]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_SSH_Login"</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- FAILED SSH LOGIN
+             <38>1 2018-10-29T08:26:38+01:00 linsec sshd 15699 - - Failed password for root from 172.30.37.155 port 2334 ssh2
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\s+\d+\s+-\s+-\s+Failed\s+password\s+for\s+<user:gPatStr>\s+from\s+<srcIpAddr:gPatStr>\s+port\s+<srcIpPort:gPatIpPort>\s+ssh2]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_SSH_Login"</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]:\s+Login\s+restricted\s+for\s+<user:gPatStr>\s+(<:gPatStr>\s)*]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_SSH_Login"</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]:\s+Failed\s+<:gPatStr>\s+for\s+invalid\s+user\s+<user:gPatStr>\s+from\s+<srcIpAddr:gPatIpAddr>\s+port\s+<srcIpPort:gPatIpPort>\s+ssh2]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_SSH_Login"</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </case>
+
+      <case>
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]:\s+Failed\s+password\s+for\s+<user:gPatStr>\s+from\s+<srcIpAddr:gPatIpAddr>\s+port\s+<srcIpPort:gPatIpPort>\s+ssh2]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_SSH_Login"</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </case>
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[syslog:\s+PC-NFS:\s+failed\s+login\s+attempt\s+for\s+<user:gPatStr>\s+from\s+(?:<srcIpAddr:gPatIpAddr>|<srcName:gPatStr>)]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_SSH_Login"</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </case>
+
+      <case>
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[syslog:\s+ssh:\s+failed\s+login\s+attempt\s+for\s+<user:gPatStr>\s+from\s+(?:<srcIpAddr:gPatIpAddr>|<srcName:gPatStr>)]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_SSH_Login"</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]:\s+User\s+<user:gPatStr>\s+(<:gPatStr>\s)*]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_SSH_Login"</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </case>
+
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]:\s+Invalid\s+user\s+<user:gPatStr>\s+from\s+<srcIpAddr:gPatIpAddr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_SSH_Login"</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </case>
+
+      <case>
+        <!--
+            <34>Dec  4 17:17:56 172.16.20.161 sshd[11273]: fatal: Timeout before authentication for 192.168.20.30
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]:\s+fatal:\s+Timeout before authentication for\s+<_src:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <choose>
+          <when test="matches($_src, gPatIpAddr)">
+            <setEventAttribute attr="srcIpAddr">$_src</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="srcName">$_src</setEventAttribute>
+          </otherwise>
+        </choose>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_SSH_Login"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- Failed SSH Login
+             <38>Dec  4 17:16:58 172.16.20.161 sshd[11273]: Failed keyboard-interactive/pam for root from 192.168.20.30 port 51421 ssh2
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]:\s+Failed\s+keyboard-interactive/pam\s+for\s+<user:gPatStr>\s+from\s+<_src:gPatStr>\s+port\s+<srcIpPort:gPatIpPort>.*]]></regex>
+        </collectAndSetAttrByRegex>
+        <choose>
+          <when test="matches($_src, gPatIpAddr)">
+            <setEventAttribute attr="srcIpAddr">$_src</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="srcName">$_src</setEventAttribute>
+          </otherwise>
+        </choose>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_SSH_Login"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- FAILED SSH LOGIN
+             <35>Oct 21 16:39:42 suse1 sshd[4667]: error: PAM: Authentication failure for root from 192.168.20.113
+             <35>Oct 21 16:40:59 suse1 sshd[4712]: error: PAM: Authentication failure for joeUser from 192.168.20.113
+             <35>Dec  4 17:16:35 172.16.20.161 sshd[11273]: error: PAM: Authentication failed for root from abc-laptop.example.com
+             <35>Feb 29 00:07:01 sshd[9715]: error: PAM: Conversation failure for patelh from server.domain.com
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]:\s+error:\s+PAM:\s+<:gPatWord>\s+fail<:gPatStr>\s+for\s+<user:gPatStr>\s+from\s+<_src:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <choose>
+          <when test="matches($_src, gPatIpAddr)">
+            <setEventAttribute attr="srcIpAddr">$_src</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="srcName">$_src</setEventAttribute>
+          </otherwise>
+        </choose>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_SSH_Login"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- sftp
+             <86>May 27 11:29:32 va200 sshd[19112]: subsystem request for sftp
+             <38>Feb 27 17:30:44 sshd[26636]: subsystem request for sftp
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]:\s+subsystem\s+request\s+for\s+sftp]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_SFTP_Request"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </case>
+
+      <case>
+        <!--
+<86>Jun 11 16:41:00 localhost sshd[1524]: Received signal 15; terminating.
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]: .* terminating]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Process_Exit</setEventAttribute>
+        <setEventAttribute attr="procName">sshd</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- Apr  11 10:40:01 hostname crond(pam_unix)[23417]: session opened for user root by (uid=0)
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[crond\(pam_unix\)\[\d+\]:\s+session opened for user <user:gPatStr> by\s+\(uid=\d+\)]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Cron_Login"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <37>Aug 22 20:05:06 SANITIZED ipop3d[8942]: Login failed user=sanitized auth=sanitized host=sanitized.abc.com [123.123.123.123]
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[ipop3d\[\d+\]:\s+Login failed user=<user:gPatStr>\s+auth=<:gPatStr>\s+host=<hostName:gPatStr>\s+\[<hostIpAddr:gPatIpAddr>\]]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Failed_IPOP_Login"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- Apr  11 10:40:01 hostname crond(pam_unix)[23417]: session closed for user root
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[crond\(pam_unix\)\[\d+\]:\s+session closed for user <user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Cron_Logout"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- Apr  11 10:45:03 hostname xinetd[7255]: START: process pid=1234 from=127.0.0.1
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[xinetd\[\d+\]:\s+START:\s+process pid=<:gPatInt> from=<:gPatIpAddr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Process_Start"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <86>Aug 18 10:45:04 SANITIZED xinetd[6946]: START: vnetd pid=1935 from=123.123.123.123
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[xinetd\[\d+\]:\s+START:\s+<procName:gPatStr> pid=<:gPatInt> from=<srcIpAddr:gPatIpAddr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Process_Start"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <86>Aug 18 23:00:03 SANITIZED xinetd[1586]: EXIT: imaps pid=19146 duration=0(sec)
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[xinetd\[\d+\]:\s+EXIT:\s+<procName:gPatStr> pid=<:gPatInt> duration=<:gPatInt>\(sec\)]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_Process_Exit"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- Apr  12 10:17:40 hostname authdaemond: pam_vas: Authentication <succeeded> for <Active Directory> user: <joeUser> account: <joeUser@abc.com> service: <pop3> reason: <N/A>
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[authdaemond: <:gPatStrEndColon>: Authentication \<succeeded\> for \<<:patStrRightAngle>\> user: \<<user:gPatStr>\> account: \<<:gPatStr>\> service: \<<appName:gPatStr>\> reason: \<<:patStrRightAngle>\>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_AD_Successful_Logon"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </case>
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <!--
+          <38>Feb 29 00:08:02 sshd[10158]: pam_vas: Authentication <succeeded passwordless> for <Active Directory> user: <patelh> account: <domain\PatelH> service: <sshd> reason: <>
+          <38>Feb 29 09:51:54 sshd[24501]: pam_vas: Authentication <succeeded> for <Active Directory> user: <lastf001> account: <lastf@domain.COM> service: <sshd> reason: <N/A> Access Control Identifier(NT Name):<domain\lastf001>
+        -->
+          <regex><![CDATA[sshd\[\d+\]:\s+<:gPatStrEndColon>:\s+Authentication\s+\<succeeded<:patStrRightAngle>\>\s+for\s+\<<:patStrRightAngle>\>\s+user:\s+\<<user:gPatStr>\>\s+account:\s+\<<:gPatStr>\>\s+service:\s+\<<appName:gPatStr>\>\s+reason:\s+\<<:patStrRightAngle>\>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_AD_Successful_Logon</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </case>
+      <case>
+        <!-- <86>Aug 18 19:47:28 SANITIZED saslauthd[2797]: pam_vas: Authentication <succeeded> for <Active Directory> user: <joeUser> account: <joeUser@abc.com> service: <smtp> reason: <N/A>
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[saslauthd\[\d+\]: <:gPatStrEndColon>: Authentication \<succeeded\> for \<<:patStrRightAngle>\> user: \<<user:gPatStr>\> account: \<<:gPatStr>\> service: \<<appName:gPatStr>\> reason: \<<:patStrRightAngle>\>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_AD_Successful_Logon"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </case>
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <!--
+            <38>Feb 29 00:08:02 sshd[10158]: pam_vas: pam conversation error, enable debug for more information
+	  -->
+          <regex><![CDATA[sshd\[\d+\]:\s+<:gPatStrEndColon>:\s+<:gPatStr>\s+conversation\s+error,\s+enable\s+debug\s+for\s+more\s+information]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_AD_Failed_Logon</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </case>
+      <case>
+        <!-- <86>Aug 18 10:56:00 SANITIZED authdaemond: pam_vas: Authentication <failed> for <Active Directory> user: <joeUser> account: <joeUser@abc.com> service: <imap> reason: <invalid password>
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[authdaemond: <:gPatStrEndColon>: Authentication \<failed\> for \<<:patStrRightAngle>\> user: \<<user:gPatStr>\> account: \<<:gPatStr>\> service: \<<appName:gPatStr>\> reason: \<<:patStrRightAngle>\>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_AD_Failed_Logon"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <38>Aug 19 13:20:01 SANITIZED cron[23701]: [ID 516830 auth.info] pam_vas: Authentication <succeeded passwordless> for <Active Directory> user: <joeUser> account: <joeUser@abc.com> service: <cron> reason: <N/A> Access Control Identifier(UPN):<joeUser@abc.com>
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[<:gPatStr>\[\d+\]: <:gPatStrEndColon>: Authentication \<succeeded passwordless\> for \<<:patStrRightAngle>\> user: \<<user:gPatStr>\> account: \<<:gPatStr>\> service: \<<appName:gPatStr>\> reason: \<<:patStrRightAngle>\> Access Control Identifier\(<:gPatStr>\):\s*\<<:gPatStr>\>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_AD_Successful_Logon"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <38>Aug 18 11:04:00 SANITIZED cron[27353]: [ID 516830 auth.info] pam_vas: Authentication <failed passwordless> for <Active Directory> user: <joeUser> account: <joeUser@abc.com> service: <cron> reason: <Account is disabled.> Access Control Identifier(UPN):<joeUser@abc.com>
+        -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[<:gPatStr>\[\d+\]: <:gPatStrEndColon>: Authentication \<failed passwordless\> for \<<:patStrRightAngle>\> user: \<<user:gPatStr>\> account: \<<:gPatStr>\> service: \<<appName:gPatStr>\> reason: \<<:patStrRightAngle>\> Access Control Identifier\(<:gPatStr>\):\s*\<<:gPatStr>\>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_AD_Failed_Logon"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <30>Aug 19 07:10:07 SANITIZED ntpd[2717]: synchronized to 123.123.123.123, stratum 2 -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[ntpd\[\d+\]:\s+synchronized to <:gPatIpAddr>, stratum <:gPatInt>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">"Generic_Unix_NTPD_Synchronized"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </case>
+
+      <case>
+        <!--
+<29>Jun 11 15:58:28 localhost ntpd[1559]: ntpd exiting on signal 15
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[ntpd\[\d+\]:\s+ntpd exiting]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Process_Exit</setEventAttribute>
+        <setEventAttribute attr="procName">ntpd</setEventAttribute>
+      </case>
+
+      <!-- Chronyd notable events -->
+      <case>
+        <!--
+	  <30>May 1.1:1.1 fsm chronyd[3306078]: Selected source 216.155.152.156 (2.pool.ntp.org)
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[chronyd\[\d+\]:\s+Selected source <srcIpAddr:gPatIpAddr>\s+\(<srcName:gPatStr>\)]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_chronyd_SourceSelected</setEventAttribute>
+        <setEventAttribute attr="procName">chronyd</setEventAttribute>
+      </case>
+
+      <!-- Chronyd notable events -->
+      <case>
+        <!--
+	  <30>May 1.1:1.1 fsm chronyd[3306078]: Can't synchronise: no majority
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[chronyd\[\d+\]:\s+Can't synchronise:\s+<reason:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_chronyd_CannotSyncTime</setEventAttribute>
+        <setEventAttribute attr="procName">chronyd</setEventAttribute>
+      </case>
+
+      <case>
+        <!--
+	  <28>May 1.1:1.1 fsm chronyd[3306078]: System clock wrong by 13298.207754 seconds
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[chronyd\[\d+\]:\s+System clock wrong by <timeSkewSec:gPatInt>\.<_microSecs:gPatInt> seconds]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_chronyd_ClockWrongOffset</setEventAttribute>
+        <setEventAttribute attr="procName">chronyd</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <46>Aug 19 01:00:02 SANITIZED rsyslogd: [origin software="rsyslogd" swVersion="0.0.0" x-pid="2591"][x-configInfo udpReception="Yes" udpPort="0" tcpReception="No" tcpPort="0"] restart  -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[rsyslogd:\s+.*]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_syslog_Generic</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </case>
+
+      <case>
+        <!--
+<27>Jun 11 16:17:53 localhost dhclient[1814]: receive_packet failed on eth1: Network is down
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[dhclient\[\d+\]:\s+receive_packet failed on <intfName:gPatStrEndColon>:]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Intf_Down</setEventAttribute>
+      </case>
+
+      <case>
+        <!--
+<6>May 2 14:51:29 localhost smartd[2883]: smartd received signal 15: Terminated
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[smartd\[\d+\]: .* Terminated]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Power_Failure</setEventAttribute>
+      </case>
+
+      <case>
+        <!--
+<30>Jun 11 16:21:53 localhost NetworkManager[1300]: <info> dhclient started with pid 1872
+<30>Jun 11 15:58:30 localhost NetworkManager[1330]: <info> (eth1): taking down device.
+<30>Jun 11 15:58:30 localhost NetworkManager[1330]: <info> caught signal 15, shutting down normally.
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[NetworkManager\[\d+\]: \<<:gPatWord>\> <_body1:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_body1">
+              <regex><![CDATA[<procName:gPatStr> started with pid \d+]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Generic_Unix_Process_Start</setEventAttribute>
+          </case>
+
+          <case>
+            <collectAndSetAttrByRegex src="$_body1">
+              <regex><![CDATA[\(<intfName:gPatStr>\): taking down device]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Generic_Unix_Intf_Down</setEventAttribute>
+          </case>
+
+          <case>
+            <collectAndSetAttrByRegex src="$_body1">
+              <regex><![CDATA[shutting down normally]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Generic_Unix_Intf_Down</setEventAttribute>
+          </case>
+
+          <default/>
+        </switch>
+      </case>
+
+      <case>
+        <!--
+<6>May 2 14:51:27 localhost shutdown[26562]: shutting down for system halt
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[shutdown\[\d+\]: shutting down]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_System_Shutdown</setEventAttribute>
+      </case>
+
+      <case>
+        <!--
+<14>Jun 11 15:56:03 localhost yum[27426]: Updated: 1:perl-Package-Constants-0.02-136.el6.x86_64
+<14>Jun 11 15:54:19 localhost yum[27426]: Updated: glibc-2.12-1.132.el6_5.2.x86_64
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[yum\[\d+\]: <opName:gPatWord>: (?:\d+:)?<appName:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">combineMsgId("Generic_Unix_Software_", $opName)</setEventAttribute>
+        <setEventAttribute attr="procName">yum</setEventAttribute>
+      </case>
+
+      <case>
+        <!--
+<22>Jun 11 16:41:00 localhost postfix/postfix-script[2021]: stopping the Postfix mail system
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[postfix/postfix-script\[\d+\]: stopping ]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Process_Exit</setEventAttribute>
+        <setEventAttribute attr="procName">Postfix mail system</setEventAttribute>
+      </case>
+
+      <case>
+        <!--
+<6>Jun 11 16:41:05 localhost kernel: Kernel logging (proc) stopped.
+<6>Dec 9 05:08:53 localhost kernel: Kernel log daemon terminating.
+<6>Oct 5 12:03:34 localhost kernel: [55640.427116] Critical temperature reached (128 C), shutting down.
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[kernel: .*(?:stopped|terminating|shutting down)]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_System_Shutdown</setEventAttribute>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[kernel: IPTables-Outgoing: <_body1:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+
+        <setEventAttribute attr="eventType">Generic_Unix_Outbound_Permit</setEventAttribute>
+
+        <collectAndSetAttrByKeyValuePair sep=" " src="$_body">
+          <attrKeyMap attr="srcIntfName" key="IN="/>
+          <attrKeyMap attr="destIntfName" key="OUT="/>
+          <attrKeyMap attr="srcIpAddr" key="SRC="/>
+          <attrKeyMap attr="destIpAddr" key="DST="/>
+          <attrKeyMap attr="_proto" key="PROTO="/>
+          <attrKeyMap attr="srcIpPort" key="SPT="/>
+          <attrKeyMap attr="destIpPort" key="DPT="/>
+        </collectAndSetAttrByKeyValuePair>
+      </case>
+
+      <case>
+        <!-- <141>Nov 4 19:54:40 ndcvascopr01 postgres[4297]: [26099-1] WARNING: Audit DB rotation: Maybe an open audit viewer? -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[^postgres\[\d+\]: ]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_DB_Rotation</setEventAttribute>
+      </case>
+
+      <case>
+        <!--
+Oct 26 03:46:54 vascoservername ikauditmgrd[6372]: cdcvascopr21: FATAL:  no pg_hba.conf entry for host "10.9.8.7", user "auditor", database "auditing", SSL off  ./auditconn.rb:32:in `initialize'./auditconn.rb:32:in `new'./auditconn.rb:32:in `connect'./auditconn.rb:44:in `dbexec'./auditconn.rb:82:in `srcsys'./ikauditmgrdaemon.rb:246:in `process_am'./ikauditmgrdaemon.rb:232:in `routine'./ikauditmgrdaemon.rb:231:in `each'./ikauditmgrdaemon.rb:231:in `routine'./ikauditmgrdaemon.rb:39:in `start'/pkg/sbin/ikauditmgrd:14
+        -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^ikauditmgrd\[\d+\]:\s+(?:<:gPatStrEndColon>:\s+<:gPatWord>:\s+no \S+ entry for host "<hostIpAddr:gPatIpAddr>",\s+user "<user:gPatStr>",\s+database "<dbName:gPatStr>")?]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_ikauditmgrd</setEventAttribute>
+      </case>
+      <case>
+        <!--
+<14>Mar 29 06:58:48 forescout1 audispd: node=forescout1 type=USER_AUTH msg=audit(1458135933.719:675623): user pid=35006 uid=0 auid=4294967295 ses=4294967295 subj=kernel msg='op=PAM:authentication acct="fsuser" exe="/bin/su" hostname=? addr=? terminal=? res=success'
+        -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^audispd:\s+<_body1:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <collectAndSetAttrByKeyValuePair sep=" " src="$_body">
+          <attrKeyMap attr="hostName" key="node="/>
+          <attrKeyMap attr="osObjAccessType" key="type="/>
+          <attrKeyMap attr="msg" key="msg="/>
+          <attrKeyMap attr="procId" key="user pid="/>
+          <attrKeyMap attr="userId" key="uid="/>
+          <attrKeyMap attr="seqNum" key="auid="/>
+          <attrKeyMap attr="sessionId" key="ses="/>
+          <attrKeyMap attr="procOwner" key="subj="/>
+          <attrKeyMap attr="opName" key="op="/>
+          <attrKeyMap attr="targetUser" key="acct="/>
+          <attrKeyMap attr="command" key="exe="/>
+          <attrKeyMap attr="destName" key="hostname="/>
+          <attrKeyMap attr="destIpAddr" key="addr="/>
+          <attrKeyMap attr="srcTerminal" key="terminal="/>
+          <attrKeyMap attr="authResult" key="res="/>
+          <attrKeyMap attr="hashAlgo" key="hashAlgo="/>
+          <attrKeyMap attr="hashCode" key="hashCode="/>
+          <attrKeyMap attr="parentProcName" key="parentProc="/>
+          <attrKeyMap attr="user" key="user="/>
+        </collectAndSetAttrByKeyValuePair>
+        <setEventAttribute attr="eventType">Generic_Unix_audisp</setEventAttribute>
+      </case>
+      <case>
+        <!--<29>2016-03-22T11:41:08.784208+01:00 syslog01-mgm puppet-agent[15316]: Finished catalog run in 9.71 seconds-->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^puppet-agent\[\d+\]:\s+<msg:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_puppet</setEventAttribute>
+      </case>
+      <!--<39>2016-03-22T11:42:01.691996+01:00 idm01-mgm ns-slapd: GSSAPI server step 3-->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^ns-slapd:\s+<msg:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_ns-slapd</setEventAttribute>
+      </case>
+      <case>
+        <!--<38>2016-03-22T11:42:00.670171+01:00 ftfe01-prod systemd-logind: New session 48683 of user accelops.-->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^systemd-logind:\s+New session <sessionId:gPatStr> of user <user:gPatStr>\.]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_systemd-logind_New_Session</setEventAttribute>
+      </case>
+      <case>
+        <!--<38>2016-03-22T11:42:13.215600+01:00 odb03-prod systemd-logind: Removed session 89114.-->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^systemd-logind:\s+Removed session <sessionId:gPatStr>\.]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_systemd-logind_Removed_Session</setEventAttribute>
+      </case>
+      <!--<78>2016-03-22T11:43:06.946983+01:00 cau02-test crontab[42111]: (root) LIST (root) -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^crontab\[\d+\]:\s+\(<user:gPatWord>\)\s+<opName:gPatWord>\s+\(<targetUser:gPatWord>\)]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_crontab</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <!--
+              <46>Feb 10 10:17:37 syslogd: restart
+          -->
+          <regex><![CDATA[^\s*syslogd: restart]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_syslogd_restart</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <!--
+              <38>Feb 27 16:08:43 ftpd[22502]: FTP session closed
+         -->
+          <regex><![CDATA[^\s*ftpd\[\d+\]:\s+FTP\s+session\s+closed]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_FTP_End</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <!--
+              <38>Feb 27 17:53:37 ftpd[27591]: PAM_TEXT_INFO: Last unsuccessful login for atsftp: Tue Feb  9 12:03:38 EST5EDT 2010 on tty .
+          -->
+          <regex><![CDATA[^\s*ftpd\[\d+\]:\s+<:gPatStrEndColon>:\s+Last\s+unsuccessful\s+login\s+for\s+<:gPatStr>:\s+<:gPatWeekday>\s+<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+\w+\s+<:gPatYear>\s+on\s+tty]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Failed_FTP_Login</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <!--
+              <38>Feb 27 17:53:37 ftpd[27591]:  PAM_TEXT_INFO: Last successful login for atsftp: Sat Feb 27 17:00:14 EST5EDT 2016 on tty .
+         -->
+          <regex><![CDATA[^\s*ftpd\[\d+\]:\s+<:gPatStrEndColon>:\s+Last\s+successful\s+login\s+for\s+<:gPatStr>:\s+<:gPatWeekday>\s+<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+\w+\s+<:gPatYear>\s+on\s+tty]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Successful_FTP_Login</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <!--
+               <38>Feb 27 16:08:42 ftpd[22502]: FTP LOGIN FROM server.domain.com [10.1.2.3], atsftp
+        -->
+          <regex><![CDATA[^\s*ftpd\[\d+\]:\s+FTP\s+LOGIN\s+FROM\s+<srcName:gPatStr>\s+\[<srcIpAddr:gPatIpAddr>\],\s+<:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Successful_FTP_Login</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <!--
+             <30>Feb 28 10:39:43 inetd[25655]: registrar/tcp: Connection from dpspdb01 (10.11.27.20) at Sun Feb 28 10:39:43 2016
+        -->
+          <regex><![CDATA[^\s*inetd\[\d+\]:\s+<:gPatStrEndColon>:\s+Connection\s+from\s+<srcName:gPatStr>\s+\(<srcIpAddr:gPatIpAddr>\)\s+at\s+<:gPatWeekday>\s+<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatYear>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Successful_INET_Connection</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <!--
+            <30>Feb 28 10:41:28 snmpd[5889]: Received SNMP packet(s) from UDP: [10.4.171.20]:47145->[0.0.0.0]
+         -->
+          <regex><![CDATA[^\s*snmpd\[\d+\]:\s+Received\s+SNMP\s+packet\(s\)\s+from\s+<ipProto:gPatProto>:\s+\[<srcIpAddr:gPatIpAddr>\]:<srcIpPort:gPatIpPort>->\[<_destIpAddr:gPatIpAddr>\]]]></regex>
+        </collectFieldsByRegex>
+        <when test="$_destIpAddr != 0.0.0.0">
+          <setEventAttribute attr="destIpAddr">$_destIpAddr</setEventAttribute>
+        </when>
+        <setEventAttribute attr="eventType">Generic_Unix_Successful_SNMP_Receive</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <77>Jan  2 12:01:01 SYD03-MD-SFTP01 run-parts(/etc/cron.hourly)[1285 starting 0anacron -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[run-parts\(<destFilePath:gPatStr>\)\[<command:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Run_Parts</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <31>Jan  2 12:30:16 SYD03-MD-SFTP01 nrpe[128913]: Running command: /usr/lib64/nagios/plugins/check_disk -w 20% -c 10% -p / -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[nrpe\[\d+\]:\s+Running\s+command:\s+<command:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Command_Execute</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <31>Jan  2 12:34:57 SYD03-MD-SFTP01 nrpe[128991]: Connection from 172.18.29.125 port 52392 -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[nrpe\[\d+\]:\s+Connection from\s+<srcIpAddr:gPatIpAddr>\s+port\s+<srcIpPort:gPatIpPort>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Connection_Established_To_Nagios</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <31>Jan  2 12:34:58 SYD03-MD-SFTP01 nrpe[128996]: Host address is in allowed_hosts -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[nrpe\[\d+\]:\s+<msg:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_NRPE_Generic</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <85>Dec  5 16:47:33 SYD03-MD-SFTP01-DEV unix_chkpwd[104041]: password check failed for user (root) -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[unix_chkpwd\[\d+\]:\s+password check failed for user \(<user:gPatStr>\)]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_User_Logon</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <86>Nov 17 14:36:03 servername groupadd[1569]: new group: name=jamie, GID=100 -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[groupadd\[\d+\]:\s+new group:\s+name=<targetUserGrp:gPatStr>,\s+GID=<groupID:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Group_Add</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <86>Oct 10 10:40:58 server sudo: pam_unix(sudo:session): session opened for user root by admin.paulb(uid=0) -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[^sudo:\s+pam_unix\([^)]*\): session opened for user <targetUser:gPatStr> by <user:gPatStr>\(uid=\d+\)]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Successful_Session_Open</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <85>Oct 10 10:40:58 server sudo: pam_unix(sudo:auth): authentication failure; logname=admin.xxx uid=170009 euid=0 tty=/dev/pts/0 ruser=admin.xxx rhost=  user=admin.xxx -->
+        <!-- <86>Oct 10 10:40:58 server sudo: pam_sss(sudo:auth): authentication success; logname=admin.xxx uid=170009 euid=0 tty=/dev/pts/0 ruser=admin.xxx rhost= user=admin.xxx -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[^sudo: pam_\w+\(sudo:auth\): authentication <_result:gPatWord>;\s+logname=<user:gPatStr>\s+uid=\d+\s+euid=\d+\s+tty=\S*\s+ruser=<targetUser:gPatStr>\s+rhost=\S*\s+user=<:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <choose>
+          <when test="$_result = 'failure'">
+            <setEventAttribute attr="eventType">Generic_Unix_Sudo_Auth_Failure</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+          </when>
+          <when test="$_result = 'success'">
+            <setEventAttribute attr="eventType">Generic_Unix_Sudo_Auth_Success</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+          </when>
+        </choose>
+      </case>
+
+      <case>
+        <!-- <83>Oct 10 11:00:02 server sudo: PAM unable to dlopen(/lib64/security/pam_fprintd.so): /lib64/security/pam_fprintd.so: cannot open shared object file: No such file or directory -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[^sudo: PAM unable to dlopen\(<module:gPatStr>\):\s+<:gPatStr>: cannot open shared object file: No such file or directory]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Sudo_Shared_Object_File_Error</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <83>Oct 10 11:00:02 SYD01-MD-SFTP01 sudo: PAM adding faulty module: /lib64/security/pam_fprintd.so -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[^sudo: PAM adding faulty module: <module:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Sudo_Adding_Faulty_Module</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <83>Oct 10 20:01:27 server sudo: pam_unix(sudo:auth): conversation failed -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[^sudo: pam_unix\(sudo:auth\): conversation failed]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Sudo_Conversation_Failed</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <85>Nov 17 14:32:56 servername login[1132]: FAILED LOGIN (1) on '/dev/tty1' FOR 'root', Authentication failure -->
+
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[login\[\d+\]: FAILED LOGIN \(\d+\) on \'<requestSource:gPatStr>\' FOR\s+\'<user:gPatStr>\']]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Failed_Console_Login</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <85>Jul 26 01:06:59 SYD03-MD-SFTP01 sshd[119871]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=170.44.136.202.sta.dodo.net.au  user=md.sftp-primus -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]: pam_(?:unix|sss)\(sshd:auth\): authentication failure; .* rhost=<srcIpAddr:gPatIpAddr>.*\s+user=<user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Failed_SSH_Login</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <85>Oct 12 19:11:51 syd03psiem04 sshd[106308]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=vau-nb-13089.vocus.local -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]: pam_unix\(sshd:auth\): authentication failure; logname=\S*\s+uid=\d+\s+euid=\d+\s+tty=\w+\s+ruser=\S*\s+rhost=<srcName:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Failed_SSH_Login</setEventAttribute>
+        <setEventAttribute attr="srcIpAddr">resolveDNSName($srcName)</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <85>Jul 26 01:06:59 SYD03-MD-SFTP01 sshd[119871]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=170.44.136.202.sta.dodo.net.au  user=md.sftp-primus -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]: pam_unix\(sshd:auth\): (?:.*) user=<user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Failed_SSH_Login</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <38>Oct 12 11:35:35 server sshd[65381]: Connection closed by 1.1.1.1 port 43617 [preauth] -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]: Connection closed by <srcIpAddr:gPatIpAddr> port <:gPatInt>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_SSH_Connection_Closed</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <85>Oct 12 12:25:11 server sshd[73287]: pam_sss(sshd:auth): received for user usersample: 9 (Authentication service cannot retrieve authentication info) -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]: pam_sss\(sshd:auth\): received for user <user:gPatStr>: \d+ \(<errReason:gPatMesgBody>\)]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_SSH_Failure_Error</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <86>Oct 12 19:11:49 server sshd[106309]: input_userauth_request: invalid user usersample -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]: input_userauth_request: invalid user <user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_SSH_Invalid_User</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <82>Oct 12 19:11:51 server sshd[106308]: pam_succeed_if(sshd:auth): error retrieving information about user usersample -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]: pam_succeed_if\(sshd:auth\): error retrieving information about user <user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_SSH_Failure_No_User_Info</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <81>Oct 12 19:12:05 server sshd[106308]: PAM service(sshd) ignoring max retries; 5 > 3 -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]: PAM service\(sshd\) ignoring max retries; \d+ \> \d+]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_SSH_Ignore_Max_Retries</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <84>Oct 12 19:11:51 server sshd[106308]: pam_unix(sshd:auth): check pass; user unknown -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]: pam_unix\(sshd:auth\): check pass; user unknown]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_SSH_Failure_Unknown_User</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- Mar 12 10:43:44.373 10.0.1.1 sshd[66030]: (pam_sm_authenticate): DEBUG: PAM_USER: abc -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sshd\[\d+\]:\s+\(pam_sm_<:gPatWord>\):\s+<:gPatWord>:\s+<:gPatMesgBodyMin>(?:PAM_USER|user):\s+<user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_SSH_User_Authentication</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <86>Oct 12 20:35:01 xxxxx CRON[4834]: pam_unix(cron:session): session opened for user root by (uid=0) -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[CRON\[\d+\]: pam_unix\(cron:session\):\s+session opened for user <user:gPatStr> by\s+\(uid=\d+\)]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Cron_Login</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <86>Oct 12 20:35:01 xxxx CRON[30197]: pam_unix(cron:session): session closed for user root -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[CRON\[\d+\]:\s+pam_unix\(cron:session\):\s+session closed for user <user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Cron_Logout</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <85>Nov 17 14:37:47 servername passwd[1653]: pam_unix(passwd:bob): password changed for bob
+           <85>Jan  3 10:00:25 SLB-UATT24AP-5 passwd: pam_unix(passwd:chauthtok): password changed for admin-->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[passwd(?:\[\d+\])?:\s+pam_unix\(passwd:<:gPatStr>\):\s+password changed for\s+<user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Password_Change</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <86>Nov 17 14:36:21 servername chfn[1581]: changed user 'jamie' information -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[chfn\[\d+\]:\schanged user\s+<user:gPatStr>\s+<:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Password_Change</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <86>Nov 17 14:36:35 servername login[1592]: pam_unix(login:session): session opened for user jamie by LOGIN(uid=0) -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[login\[\d+\]:\s+pam_unix\(login:<:gPatStr>\):\s+session opened for user\s+<user:gPatStr>\s+by ]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Failed_Console_Login</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <85>Nov 17 14:32:53 servername login[1132]: pam_unix(login:auth): authentication failure; logname=LOGIN uid=0 euid=0 tty=/dev/tty1 ruser= rhost=  user=root -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[login\[\d+\]:\s+pam_unix\(login:auth\): authentication failure;.* tty=<requestSource:gPatStr>.*? rhost=<srcIpAddr:gPatIpAddr>.*? user=<user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Failed_SSH_Login</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <86>Nov 17 14:36:30 servername login[1132]: pam_unix(login:session): session closed for user user1 -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[login\[\d+\]:\s+pam_unix\(login:<:gPatStr>\):\s+session closed for user\s+<user:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_User_Logoff</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <86>Nov 17 14:36:35 servername systemd: pam_unix(systemd-user:session): session opened for user jamie by (uid=0) -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[systemd:\s+pam_unix\(systemd-user:<:gPatStr>\):\s+session opened for user\s+<user:gPatStr>\s+by \(uid=0\)]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_User_Logon</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <30>Oct 30 21:33:27 ip-10-0-0-22 systemd: Starting Session 14 of user centos.
+             <30>Oct 30 21:31:21 ip-10-0-0-22 systemd: Started Session 11 of user centos.
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[^systemd:\s+Start\w* Session \d+ of user <user:gPatStr>\.]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_User_Logon</setEventAttribute>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <78>Oct 10 14:16:26 server crontab[2460]: (sampleuser) BEGIN EDIT (sampleuser) -->
+        <!-- <78>Oct 10 14:18:06 server crontab[2460]: (sampleuser) END EDIT (sampleuser) -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[crontab\[\d+\]: \(<user:gPatStr>\) <_action:gPatWord> EDIT ]]></regex>
+        </collectAndSetAttrByRegex>
+        <choose>
+          <when test="$_action = 'BEGIN'">
+            <setEventAttribute attr="eventType">Generic_Unix_Cron_Begin_Edit</setEventAttribute>
+          </when>
+          <when test="$_action = 'END'">
+            <setEventAttribute attr="eventType">Generic_Unix_Cron_End_Edit</setEventAttribute>
+          </when>
+        </choose>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <78>Oct 10 12:17:01 server CRON[1804]: (root) CMD (   cd / && run-parts \-\-report /etc/cron.hourly) -->
+        <!-- <78>Oct 12 12:30:01 server CROND[73426]: (svc.md.sftp-scripts) CMD (/home/svc.md.sftp-scripts/scripts/daily_ETL.sh) -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[CROND?\[\d+\]:\s+\(<user:gPatStr>\)\s+CMD\s+\(<command:gPatMesgBody>\)]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Cron_Command</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <5>Oct 12 13:13:25 server kernel: [11733857.148488] audit: type=1400 audit(1507774405.023:7839): apparmor="ALLOWED" operation="open" profile="/usr/sbin/sssd" name="/sys/devices/pci0000:00/0000:00:03.0/0000:01:00.1/net/em2/type" pid=121663 comm="sssd" requested_mask="r" denied_mask="r" fsuid=0 ouid=0 -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[kernel:\s+\[\d+(?:\.\d+)?\] audit: type=\d+ audit\([^\)]+\):\s+<_auditbody:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Kernel_Audit</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+
+        <collectAndSetAttrByKeyValuePair sep=" " src="$_auditbody">
+          <attrKeyMap attr="_apparmor" key="apparmor="/>
+          <attrKeyMap attr="opName" key="operation="/>
+          <attrKeyMap attr="_profile" key="profile="/>
+          <attrKeyMap attr="_name" key="name="/>
+          <attrKeyMap attr="procId" key="pid="/>
+          <attrKeyMap attr="_comm" key="comm="/>
+          <attrKeyMap attr="_req_mask" key="requested_mask="/>
+          <attrKeyMap attr="_denied_mask" key="denied_mask="/>
+          <attrKeyMap attr="_fsuid" key="fsuid="/>
+          <attrKeyMap attr="_ouid" key="ouid="/>
+        </collectAndSetAttrByKeyValuePair>
+      </case>
+
+      <case>
+        <!-- <37>1 2018-10-29T08:25:01+01:00 linsec audit 15691 - - CRED_ACQ pid=15691 uid=0 auid=4294967295 ses=4294967295 msg='op=PAM:setcred acct="root" exe="/usr/sbin/cron" hostname=? addr=? terminal=cron res=success' -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[audit\s+\d+\s+-\s+-\s+<type:gPatWord>\s+<_auditbody:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Audit</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+
+        <collectAndSetAttrByKeyValuePair sep=" " src="$_auditbody">
+          <attrKeyMap attr="procId" key="pid="/>
+          <attrKeyMap attr="userId" key="uid="/>
+          <attrKeyMap attr="sessionId" key="ses="/>
+          <attrKeyMap attr="msg" key="msg="/>
+          <attrKeyMap attr="appName" key="exe="/>
+          <attrKeyMap attr="hostName" key="hostname="/>
+          <attrKeyMap attr="hostIpAddr" key="addr="/>
+          <attrKeyMap attr="srcTerminal" key="terminal="/>
+          <attrKeyMap attr="isSuccess" key="res="/>
+          <attrKeyMap attr="accountName" key="acct="/>
+          <attrKeyMap attr="opName" key="op="/>
+        </collectAndSetAttrByKeyValuePair>
+      </case>
+
+      <case>
+        <!-- <5>Dec  5 09:54:17 servername kernel: [    0.941958] Key type encrypted registered -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[kernel:\s+\[\s*\d+\.\d+\]\s+<msg:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Kernel</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <30>May 19 15:45:39 cdhpro-dn04 snmpd[78630]: Connection from UDP: [10.248.6.67]:41948->[10.143.2.21]:161 -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^\s*snmpd\[\d+\]:\s+Connection\s+from\s+<_proto:gPatStr>:\s+\[<srcIpAddr:gPatIpAddr>\]:<srcIpPort:gPatIpPort>-\>\[<_destIpAddr:gPatIpAddr>\]:<destIpPort:gPatIpPort>]]></regex>
+        </collectFieldsByRegex>
+        <when test="$_destIpAddr != 0.0.0.0">
+          <setEventAttribute attr="destIpAddr">$_destIpAddr</setEventAttribute>
+        </when>
+        <setEventAttribute attr="eventType">Generic_Unix_Connection_Inbound_UDP</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <30>Jul 25 08:34:10 cdhdev-dn02 snmpd[1776]: message repeated 2 times: [ Connection from UDP: [10.248.6.67]:55311->[10.143.8.19]:161] -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[snmpd\[\d+\]:\s+\w+\s+\w+\s+\w+\s+\w+:\s+\[\s+Connection\s+from\s+<_proto:gPatProto>:\s+\[<srcIpAddr:gPatIpAddr>\]:<srcIpPort:gPatIpPort>->\[<_destIpAddr:gPatIpAddr>\]:<destIpPort:gPatIpPort>\]]]></regex>
+        </collectFieldsByRegex>
+        <when test="$_destIpAddr != 0.0.0.0">
+          <setEventAttribute attr="destIpAddr">$_destIpAddr</setEventAttribute>
+        </when>
+        <setEventAttribute attr="eventType">Generic_Unix_Connection_Inbound_UDP</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <38>Oct 10 12:26:57 server sftp-server[2158]: session opened for local user user1 from [10.144.17.23] -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^(?:sftp-server|internal-sftp)\[\d+\]: session opened for local user <user:gPatStr> from \[<srcIpAddr:gPatIpAddr>\]]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_SFTP_Session_Open</setEventAttribute>
+      </case>
+      <case>
+        <!-- <38>Oct 10 12:26:57 server sftp-server[2158]: opendir "/home/user1" -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^(?:sftp-server|internal-sftp)\[\d+\]: opendir "<dirName:gPatMesgBody>"]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_SFTP_Open_Dir</setEventAttribute>
+      </case>
+      <case>
+        <!-- <38>Oct 10 12:26:57 server sftp-server[2158]: closedir "/home/user1" -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^(?:sftp-server|internal-sftp)\[\d+\]: closedir "<dirName:gPatMesgBody>"]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_SFTP_Close_Dir</setEventAttribute>
+      </case>
+      <case>
+        <!-- <38>Oct 10 12:27:04 server sftp-server[2158]: open "/home/user1/sensitive.txt" flags READ mode 0666 -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^(?:sftp-server|internal-sftp)\[\d+\]: open "<fileName:gPatMesgBody>" flags <:gPatStr> mode <:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_SFTP_Open_File</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <38>Oct 10 12:27:05 server sftp-server[2158]: close "<dirName:gPatMesgBody>" bytes read 14 written 0 -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^(?:sftp-server|internal-sftp)\[\d+\]: close "<fileName:gPatMesgBody>" bytes read ]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_SFTP_Close_File</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <38>Oct 11 12:54:32 server sftp-server[1443]: sent status No such file -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^(?:sftp-server|internal-sftp)\[\d+\]: sent status No such file]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_SFTP_No_Such_File</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <38>Oct 11 12:55:02 server sftp-server[1475]: sent status Permission denied -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^(?:sftp-server|internal-sftp)\[\d+\]: sent status Permission denied]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_SFTP_Permission_Denied</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <45>Oct 10 11:21:30 server syslog-ng[836]: syslog-ng starting up; version='3.5.6' -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^syslog-ng\[\d+\]: syslog-ng starting up; version='<version:gPatStr>']]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Syslog_NG_Starting_Up</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <45>Oct 11 10:35:28 server syslog-ng[836]: syslog-ng shutting down; version='3.5.6' -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^syslog-ng\[\d+\]: syslog-ng shutting down; version='<version:gPatStr>']]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Syslog_NG_Shutting_Down</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <45>Oct 11 16:00:10.72 server syslog-ng[864]: Configuration reload request received, reloading configuration; -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^syslog-ng\[\d+\]: Configuration reload request received, reloading configuration;]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Syslog_NG_Config_Reload_Request</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <29>May 7 16:16:01 server auditd[1490]: Audit daemon rotating log files -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^auditd\[\d+\]: Audit daemon rotating log files]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Audit_Daemon_Rotate_Logs</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <29>May 7 10:29:20 server nscd: 2621 checking for monitored file `/etc/netgroup': No such file or directory -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^nscd:\s\d+ checking for monitored file\s+`<fileName:gPatStr>':\sNo such file or directory]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Nscd_File_Monitor_Error</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <27>Oct 9 08:23:23 litoocirte1-01 lsass: [lsass] Failed to authenticate user (name = 't116006') -> error = 40022, symbol = LW_ERROR_PASSWORD_MISMATCH, client pid = 29464 -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^lsass:\s+\[.*?\]\s+<description:gPatMesgBodyMin>\s+\(]]></regex>
+        </collectFieldsByRegex>
+
+        <choose>
+          <when test="$description = 'Failed to authenticate user'">
+            <setEventAttribute attr="eventType">Generic_Unix_Lsass_Auth_Failure</setEventAttribute>
+          </when>
+        </choose>
+      </case>
+
+      <case>
+        <!--
+          <4> Jan 13 14:28:10 host1 firewall[]: [default]: DROP_135238IN= OUT=vNic_0 SRC=1.1.1.1 DST=1.1.1.2 LEN=40 TOS=0x00 PREC=0x20 TTL=244 ID=12034 PROTO=TCP SPT=52048 DPT=16799 WINDOW=1024 RES=0x00 SYN URGP=0
+          <4> Jan 13 14:28:09 host1 nat[]: [default]: DNAT_IN=vNic_0 OUT= MAC=00:50:56:ae:47:73:00:de:fb:42:96:c2:08:00 SRC=1.1.1.1 DST=1.1.1.2 LEN=60 TOS=0x00 PREC=0x00 TTL=53 ID=41012 DF PROTO=TCP SPT=49344 DPT=443 WINDOW=29200 RES=0x00 SYN URGP=0
+        -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^(?:firewall|nat)\[\]:\s+<_body1:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <collectAndSetAttrByKeyValuePair sep=" " src="$_body1">
+          <attrKeyMap attr="destIpPort" key="DPT="/>
+          <attrKeyMap attr="destIpAddr" key="DST="/>
+          <attrKeyMap attr="srcIntfName" key="IN="/>
+          <attrKeyMap attr="hostMACAddr" key="MAC="/>
+          <attrKeyMap attr="destIntfName" key="OUT="/>
+          <attrKeyMap attr="_proto" key="PROTO="/>
+          <attrKeyMap attr="srcIpPort" key="SPT="/>
+          <attrKeyMap attr="srcIpAddr" key="SRC="/>
+        </collectAndSetAttrByKeyValuePair>
+      </case>
+
+      <case>
+        <!-- <30>Jul 7 19:51:00 ip-10-117-8-112 newrelic-infra-service[1191]: {"context":{"ProcessID":869,"component":"Metrics Process","displayName":"systemd-resolve","serviceName":"systemd-resolved"},"level":"debug","msg":"Using service name as display name.","timestamp":"2021-07-07T19:51:00Z"} -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^newrelic-infra-service\[\d+\]:\s+<_json:patJson>]]></regex>
+        </collectFieldsByRegex>
+        <collectAndSetAttrByJSON src="$_json">
+          <attrKeyMap attr="componentName" key="context.component"/>
+          <attrKeyMap attr="msg" key="msg"/>
+          <attrKeyMap attr="procId" key="context.ProcessID"/>
+          <attrKeyMap attr="serviceName" key="context.serviceName"/>
+        </collectAndSetAttrByJSON>
+      </case>
+
+      <case>
+        <!-- FortiEDR Connection Log
+             <14>Jul 17 00:00:02 TEST-HOST Fortinet Endpoint Detection and Response: Connection blocked for process  (pid : 1485250) - local ip: 192.168.1.2, remote ip: 192.168.2.3
+             -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Fortinet Endpoint Detection and Response: Connection blocked for process\s+\(pid : <procId:gPatInt>\) - local ip: <srcIpAddr:gPatIpAddr>, remote ip: <destIpAddr:gPatIpAddr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_FEDR_Connection_Blocked</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <28>Jul 15 19:26:03 nfs rpc.mountd[1780500]: refused mount request from 10.20.1.1 for /opt/test/abc-data (/): not exported -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[^rpc.mountd\[\d+\]: refused mount request from <srcIpAddr:gPatIpAddr> for <filePath:gPatStr>.*]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Generic_Unix_Mount_Request_Refused</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </case>
+
+      <default/>
+    </switch>
+
+    <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "[\.-]", "_")</setEventAttribute>
+
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>

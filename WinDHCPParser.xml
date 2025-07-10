@@ -1,0 +1,138 @@
+<eventParser name="WinDHCPParser">
+
+  <deviceType>
+    <Vendor>Microsoft</Vendor>
+    <Model>Windows</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Microsoft</Vendor>
+    <Model>DHCP</Model>
+    <Version>ANY</Version>
+    <Name>DHCP Server</Name>
+  </appType>
+
+  <patternDefinitions>
+    <pattern name="patStrDot"><![CDATA[[^.]*]]></pattern>
+  </patternDefinitions>
+
+  <!--
+      <15>May 27 17:22:43 ADS-Pri.example.com WinDHCPLog	0	11,05/27/08,17:22:43,Renew,192.168.20.46,joeUser-XPS.example.com,009096F27636,
+      <15>Jun 20 12:20:58 ADS-Pri.example.com WinDHCPLog	0	10,06/20/08,12:20:58,Assign,192.168.20.35,mission.,000D5639076C,
+      <13>Mar 29 10:25:28 192.168.0.10 WinDHCPLog 0      30,03/29/10,10:25:27,DNS Update Request,2.2.2.2,joeUser-lap.example.com,,
+      <13>Mar 29 10:25:05 192.168.0.10 WinDHCPLog 0      32,03/29/10,10:25:01,DNS Update Successful,192.168.20.32,joeUser-laptop.example.com,,
+      <13>Jun  1 14:24:08 192.168.0.10 WinDHCPLog	0	31,06/01/10,14:24:08,DNS Update Failed,192.168.26.31,joeUser-LAPTOP.example.com,-1,
+      <13>Jun  1 14:24:08 192.168.0.10 WinDHCPLog	0	25,06/01/10,14:24:07,0 leases expired and 1 leases deleted,,,,
+  -->
+
+  <eventFormatRecognizer><![CDATA[\s+(?:WinDHCPLog|WinDHCPlog)\s+]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<15>Jun 20 12:20:58 ADS-Pri.example.com WinDHCPLog	0	10,06/20/08,12:20:58,Assign,192.168.20.35,mission.,000D5639076C,]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <!-- basic attributes -->
+    <setEventAttribute attr="eventAction">0</setEventAttribute>
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+    <setEventAttribute attr="eventType">WIN-DHCP-Generic</setEventAttribute>
+
+    <!-- get the body of the message -->
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<_sender:gPatStr>\s+(?:WinDHCPLog|WinDHCPlog)\s+<:gPatInt>\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_sender">
+          <regex><![CDATA[^<reptDevIpAddr:gPatIpAddr>$]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+
+    <!-- parse the body -->
+    <collectAndSetAttrByPos src="$_body" sep=",">
+      <attrPosMap attr="_date" pos="2"/>
+      <attrPosMap attr="_time" pos="3"/>
+      <attrPosMap attr="_evtSig" pos="4"/>
+      <attrPosMap attr="hostIpAddr" pos="5"/>
+      <attrPosMap attr="_fqdn" pos="6"/>
+      <attrPosMap attr="_mac" pos="7"/>
+    </collectAndSetAttrByPos>
+
+    <!--extract host from host.domain-->
+    <when test="exist _fqdn">
+      <when test="$_fqdn != ''">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_fqdn">
+              <regex><![CDATA[^<_fqdn:patStrDot>\.]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+
+        <choose>
+          <when test="exist _mac">
+            <when test="$_mac != ''">
+              <collectFieldsByRegex src="$_mac">
+                <regex><![CDATA[<_mac:gPatStr>\s*]]></regex>
+              </collectFieldsByRegex>
+
+              <when test="$_fqdn != $_mac">
+                <setEventAttribute attr="hostName">$_fqdn</setEventAttribute>
+              </when>
+            </when>
+          </when>
+
+          <otherwise>
+            <setEventAttribute attr="hostName">$_fqdn</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+    </when>
+
+    <!--set event type-->
+    <choose>
+      <when test="$_evtSig = 'Assign'">
+        <setEventAttribute attr="eventType">WIN-DHCP-IP-ASSIGN</setEventAttribute>
+        <!--normalize MAC address: 12 hex symbols with space after two nibbles such as 001C231DD394 to 00:1C:23:1D:D3:94-->
+        <setEventAttribute attr="hostMACAddr">normalizeMAC($_mac)</setEventAttribute>
+      </when>
+      <when test="$_evtSig = 'Renew'">
+        <setEventAttribute attr="eventType">WIN-DHCP-IP-LEASE-RENEW</setEventAttribute>
+        <!--normalize MAC address: 12 hex symbols with space after two nibbles such as 001C231DD394 to 00:1C:23:1D:D3:94-->
+        <setEventAttribute attr="hostMACAddr">normalizeMAC($_mac)</setEventAttribute>
+      </when>
+      <when test="$_evtSig = 'DNS Update Successful'">
+        <setEventAttribute attr="eventType">WIN-DHCP-DNS-UPDATE-success</setEventAttribute>
+      </when>
+      <when test="$_evtSig = 'DNS Update Request'">
+        <setEventAttribute attr="eventType">WIN-DHCP-DNS-UPDATE-request</setEventAttribute>
+      </when>
+      <when test="$_evtSig = 'DNS Update Failed'">
+        <setEventAttribute attr="eventType">WIN-DHCP-DNS-UPDATE-failure</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+
+      <when test="$_evtSig = 'NACK'">
+        <setEventAttribute attr="eventType">WIN-DHCP-DNS-LEASE-DENY</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+        <setEventAttribute attr="hostMACAddr">normalizeMAC($_mac)</setEventAttribute>
+      </when>
+
+    </choose>
+
+    <!--set device time -->
+    <collectFieldsByRegex src="$_date">
+      <regex><![CDATA[<_mon:gPatMonNum>/<_day:gPatDay>/<_year:gPatYear>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+  </parsingInstructions>
+</eventParser>

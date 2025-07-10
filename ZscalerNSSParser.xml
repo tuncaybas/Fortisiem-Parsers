@@ -1,0 +1,245 @@
+<eventParser name="ZscalerNSSParser">
+  <deviceType>
+    <Vendor>Zscaler</Vendor>
+    <Model>Cloud Firewall</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[{ "sourcetype" : "zscalernss-fw", "event" :{"datetime":"Thu Nov 10 17:18:15 2022","user":"user1@example.com","department":"US%20-%20Central","locationname":"My%20Location","cdport":"443","csport":"61050","sdport":"0","ssport":"0","csip":"192.168.1.105","cdip":"192.168.1.106","ssip":"0.0.0.0","sdip":"0.0.0.0","tsip":"10.0.0.1","tunsport":"0","tuntype":"ZscalerClientConnector","action":"Drop","dnat":"No","stateful":"Yes","aggregate":"No","nwsvc":"QUIC","nwapp":"udp","proto":"UDP","ipcat":"Miscellaneous or Unknown","destcountry":"United States","avgduration":"7038","rulelabel":"Block%20QUIC","inbytes":"0","outbytes":"720","duration":"7","durationms":"7038","numsessions":"1","ipsrulelabel":"None","threatcat":"None","threatname":"None","deviceowner":"user1","devicehostname":"DESKTOP-example"}}]]></testEvent>
+    <testEvent><![CDATA[{ "sourcetype" : "zscalernss-web", "event" :{"action":"Allowed","appclass":"General Browsing","appname":"General Browsing","bwclassname":"None","bwrulename":"None","bwthrottle":"NO","ClientIP":"192.168.0.52","clientpublicIP":"10.0.0.1","clientsslcipher":"TLS1_3_CK_AES_256_GCM_SHA384","clientsslsessreuse":"NO","clienttlsversion":"TLS1_3","clienttranstime":"5","contenttype":"Other","contenttype__1":"Other","department":"Dept - 1","dept":"Dept - 1","deviceappversion":"3.8.0.102","devicemodel":"Model 1100","devicename":"example123","devicename__1":"example234","deviceostype":"Windows OS","deviceostype__1":"Windows OS","deviceosversion":"Microsoft Windows 10 Enterprise;64 bit;amd64","deviceplatform":"","dlpdicthitcount":"None","dlpdictionaries":"None","dlpengine":"None","dlpidentifier":"0","dlpmd5":"None","ehost":"sample1.asset.example.com","epochtime":"1668549438","ereferer":"www.channel4.com/","event_id":"7166365268691451907","fileclass":"None","filename":"None","filesubtype":"None","filetype":"None","hostname":"sample1.asset.example.com","location":"My Location","md5":"None","mobappcat":"None","mobappname":"None","mobdevtype":"None","module":"General Browsing","login":"user2@example.com","pagerisk":"0","product":"NSS","productversion":"6.1r.465.334691","protocol":"HTTPS","reason":"Allowed","refererURL":"www.channel4.com/","reqdatasize":"0","reqhdrsize":"641","requestmethod":"GET","requestsize":"641","respdatasize":"65965","resphdrsize":"469","responsesize":"66434","respsize":"66434","respversion":"1.1","rulelabel":"None","ruletype":"None","serverip":"10.0.0.2","serversslsessreuse":"NO","servertranstime":"4","srvcertchainvalpass":"PASS","srvcertvalidationtype":"OV","srvcertvalidityperiod":"MEDIUM","srvocspresult":"GOOD","srvsslcipher":"TLS1_3_CK_AES_256_GCM_SHA384","srvtlsversion":"TLS1_3","srvwildcardcert":"NO","status":"200","threatcategory":"None","threatclass":"None","threatname":"None","throttlereqsize":"0","throttlerespsize":"0","trafficredirectmethod":"ZscalerClientConnector","transactionsize":"67075","tz":"America/New York","ua_token":"Google Chrome (unknown version)","uaclass":"None","url":"sample1.asset.example.com/dash_iso_mp_tl/live/channel(f4)/111111item-1.m4a","urlcategory":"Internet Services","urlclass":"Business Use","urlsupercategory":"Internet Communication","user":"user2@example.com"}}]]></testEvent>
+
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\{\s*"sourcetype"\s*:\s*"zscalernss-<:gPatWord>"]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+
+    <!-- Grab Source Type -->
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[{\s*"sourcetype"\s*:\s*"<_sourcetype:gPatStrDQ>"]]></regex>
+    </collectFieldsByRegex>
+
+    <!-- Write JSON variable -->
+    <setEventAttribute attr="_json">$_rawmsg</setEventAttribute>
+
+    <choose>
+      <!-- Firewall Logs -->
+      <when test="matches($_sourcetype, 'zscalernss-fw')">
+        <collectAndSetAttrByJSON src="$_json">
+          <attrKeyMap attr="srcType" key="sourcetype"/>
+          <attrKeyMap attr="fwAction" key="event.action"/>
+          <attrKeyMap attr="_aggregate" key="event.aggregate"/>
+          <attrKeyMap attr="_avgduration" key="event.avgduration"/>
+          <attrKeyMap attr="destIpPort" key="event.cdport"/>
+          <attrKeyMap attr="destIpAddr" key="event.cdip"/>
+          <attrKeyMap attr="srcIpAddr" key="event.csip"/>
+          <attrKeyMap attr="srcIpPort" key="event.csport"/>
+          <attrKeyMap attr="_datetime" key="event.datetime"/>
+          <attrKeyMap attr="orgUnit" key="event.department"/>
+          <attrKeyMap attr="_destcountry" key="event.destcountry"/>
+          <attrKeyMap attr="_deviceOwner" key="event.deviceowner"/>
+          <attrKeyMap attr="deviceIdentification" key="event.devicehostname"/>
+          <attrKeyMap attr="preNATDestIpAddr" key="event.dnat"/>
+          <attrKeyMap attr="_duration" key="event.duration"/>
+          <attrKeyMap attr="durationMSec" key="event.durationms"/>
+          <attrKeyMap attr="recvBytes" key="event.inbytes"/>
+          <attrKeyMap attr="webCategory" key="event.ipcat"/>
+          <attrKeyMap attr="ipsProtectionName" key="event.ipsrulelabel"/>
+          <attrKeyMap attr="hostLocation" key="event.locationname"/>
+          <attrKeyMap attr="activeSessionTotal" key="event.numsessions"/>
+          <attrKeyMap attr="serviceName" key="event.nwsvc"/>
+          <attrKeyMap attr="appName" key="event.nwapp"/>
+          <attrKeyMap attr="sentBytes" key="event.outbytes"/>
+          <attrKeyMap attr="_proto" key="event.proto"/>
+          <attrKeyMap attr="ruleName" key="event.rulelabel"/>
+          <attrKeyMap attr="_sdip" key="event.sdip"/>
+          <attrKeyMap attr="_sdport" key="event.sdport"/>
+          <attrKeyMap attr="_ssip" key="event.ssip"/>
+          <attrKeyMap attr="_ssport" key="event.ssport"/>
+          <attrKeyMap attr="-stateful" key="event.stateful"/>
+          <attrKeyMap attr="_srcTunIpAddr" key="event.tsip"/>
+          <attrKeyMap attr="_tunsport" key="event.tunsport"/>
+          <attrKeyMap attr="_tuntype" key="event.tuntype"/>
+          <attrKeyMap attr="threatCategory" key="event.threatcat"/>
+          <attrKeyMap attr="threatType" key="event.threatname"/>
+          <attrKeyMap attr="user" key="event.user"/>
+        </collectAndSetAttrByJSON>
+        <setEventAttribute attr="eventType">combineMsgId("Zscaler-Fw-", $fwAction)</setEventAttribute>
+      </when>
+
+      <!-- Web Logs -->
+      <when test="matches($_sourcetype, 'zscalernss-web')">
+
+        <collectAndSetAttrByJSON src="$_json">
+          <attrKeyMap attr="srcType" key="sourcetype"/>
+          <attrKeyMap attr="fwAction" key="event.action"/>
+          <attrKeyMap attr="_appclass" key="event.appclass"/>
+          <attrKeyMap attr="appName" key="event.appname"/>
+          <attrKeyMap attr="_bandClassName " key="event.bwclassname"/>
+          <attrKeyMap attr="_bandRuleName" key="event.bwrulename"/>
+          <attrKeyMap attr="_bwthrottle" key="event.bwthrottle"/>
+          <attrKeyMap attr="srcIpAddr" key="event.ClientIP"/>
+          <attrKeyMap attr="postNATSrcIpAddr" key="event.clientpublicIP"/>
+          <attrKeyMap attr="tlsCipher" key="event.clientsslcipher"/>
+          <attrKeyMap attr="_clientsslsessreuse" key="event.clientsslsessreuse"/>
+          <attrKeyMap attr="tlsVersion" key="event.clienttlsversion"/>
+          <attrKeyMap attr="_clienttranstime" key="event.clienttranstime"/>
+          <attrKeyMap attr="httpContentType" key="event.contenttype"/>
+          <attrKeyMap attr="_datetime" key="event.datetime"/>
+          <attrKeyMap attr="orgUnit" key="event.department"/>
+          <attrKeyMap attr="_dept" key="event.dept"/>
+          <attrKeyMap attr="srcAppVersion" key="event.deviceappversion"/>
+          <attrKeyMap attr="hostModel" key="event.devicemodel"/>
+          <attrKeyMap attr="clientName" key="event.devicename"/>
+          <attrKeyMap attr="osType" key="event.deviceostype"/>
+          <attrKeyMap attr="osVersion" key="event.deviceosversion"/>
+          <attrKeyMap attr="_deviceplatform" key="event.deviceplatform"/>
+          <attrKeyMap attr="_dlpdicthitcount" key="event.dlpdicthitcount"/>
+          <attrKeyMap attr="dlpCategory" key="event.dlpdictionaries"/>
+          <attrKeyMap attr="dlpEngineVer" key="event.dlpengine"/>
+          <attrKeyMap attr="_dlpidentifier" key="event.dlpidentifier"/>
+          <attrKeyMap attr="_dlpmd5" key="event.dlpmd5"/>
+          <attrKeyMap attr="destName" key="event.ehost"/>
+          <attrKeyMap attr="_epochtime" key="event.epochtime"/>
+          <attrKeyMap attr="_event_id" key="event.event_id"/>
+          <attrKeyMap attr="classifier" key="event.fileclass"/>
+          <attrKeyMap attr="fileName" key="event.filename"/>
+          <attrKeyMap attr="fileExt" key="event.filesubtype"/>
+          <attrKeyMap attr="fileType" key="event.filetype"/>
+          <attrKeyMap attr="_hostname" key="event.hostname"/>
+          <attrKeyMap attr="hostLocation" key="event.location"/>
+          <attrKeyMap attr="hashMD5" key="event.md5"/>
+          <attrKeyMap attr="_mobAppCat" key="event.mobappcat"/>
+          <attrKeyMap attr="_mobAppName" key="event.mobappname"/>
+          <attrKeyMap attr="_mobDevType" key="event.mobdevtype"/>
+          <attrKeyMap attr="module" key="event.module"/>
+          <attrKeyMap attr="emailId" key="event.login"/>
+          <attrKeyMap attr="_pagerisk" key="event.pagerisk"/>
+          <attrKeyMap attr="appVersion" key="event.productversion"/>
+          <attrKeyMap attr="_proto" key="event.protocol"/>
+          <attrKeyMap attr="reason" key="event.reason"/>
+          <attrKeyMap attr="_reqdatasize" key="event.reqdatasize"/>
+          <attrKeyMap attr="_reqhdrsize" key="event.reqhdrsize"/>
+          <attrKeyMap attr="httpMethod" key="event.requestmethod"/>
+          <attrKeyMap attr="sentBytes" key="event.requestsize"/>
+          <attrKeyMap attr="_respdatasize" key="event.respdatasize"/>
+          <attrKeyMap attr="_resphdrsize" key="event.resphdrsize"/>
+          <attrKeyMap attr="recvBytes" key="event.responsesize"/>
+          <attrKeyMap attr="_respsize" key="event.respsize"/>
+          <attrKeyMap attr="_respversion" key="event.respversion"/>
+          <attrKeyMap attr="ruleName" key="event.rulelabel"/>
+          <attrKeyMap attr="policyName" key="event.ruletype"/>
+          <attrKeyMap attr="destIpAddr" key="event.serverip"/>
+          <attrKeyMap attr="_serversslsessreuse" key="event.serversslsessreuse"/>
+          <attrKeyMap attr="_servertranstime" key="event.servertranstime"/>
+          <attrKeyMap attr="_srvcertchainvalpass" key="event.srvcertchainvalpass"/>
+          <attrKeyMap attr="_srvcertvalidationtype" key="event.srvcertvalidationtype"/>
+          <attrKeyMap attr="_srvcertvalidityperiod" key="event.srvcertvalidityperiod"/>
+          <attrKeyMap attr="_certRevResult" key="event.srvocspresult"/>
+          <attrKeyMap attr="_srvsslcipher" key="event.srvsslcipher"/>
+          <attrKeyMap attr="_srvtlsversion" key="event.srvtlsversion"/>
+          <attrKeyMap attr="_srvwildcardcert" key="event.srvwildcardcert"/>
+          <attrKeyMap attr="httpStatusCode" key="event.status"/>
+          <attrKeyMap attr="threatCategory" key="event.threatcategory"/>
+          <attrKeyMap attr="virusFamily" key="event.threatclass"/>
+          <attrKeyMap attr="virusName" key="event.threatname"/>
+          <attrKeyMap attr="_throttlereqsize" key="event.throttlereqsize"/>
+          <attrKeyMap attr="_throttlerespsize" key="event.throttlerespsize"/>
+          <attrKeyMap attr="lbHttpRedirectConn" key="event.trafficredirectmethod"/>
+          <attrKeyMap attr="totBytes" key="event.transactionsize"/>
+          <attrKeyMap attr="_ua_token" key="event.ua_token"/>
+          <attrKeyMap attr="_uaclass" key="event.uaclass"/>
+          <attrKeyMap attr="httpUserAgent" key="event.ua_agent"/>
+          <attrKeyMap attr="httpReferrer" key="event.ereferer"/>
+          <attrKeyMap attr="infoURL" key="event.url"/>
+          <attrKeyMap attr="webCategory" key="event.urlcategory"/>
+          <attrKeyMap attr="categoryType" key="event.urlclass"/>
+          <attrKeyMap attr="_urlSuperCategory" key="event.urlsupercategory"/>
+          <attrKeyMap attr="user" key="event.user"/>
+        </collectAndSetAttrByJSON>
+        <setEventAttribute attr="eventType">combineMsgId("Zscaler-Web-", $fwAction)</setEventAttribute>
+      </when>
+
+      <!-- Tunnel Logs , Need Samples-->
+      <when test="matches($_sourcetype, 'zscalernss-tunnel')">
+        <collectAndSetAttrByJSON src="$_json">
+          <attrKeyMap attr="hostKeyAlgo" key="event.algo"/>
+          <attrKeyMap attr="_authentication" key="event.authentication"/>
+          <attrKeyMap attr="_authType" key="event.authtype"/>
+          <attrKeyMap attr="destIpAddr" key="event.destinationip"/>
+          <attrKeyMap attr="destIpPort" key="event.destinationport"/>
+          <attrKeyMap attr="version" key="event.ikeversion"/>
+          <attrKeyMap attr="hostLocation" key="event.location"/>
+          <attrKeyMap attr="logID" key="event.recordid"/>
+          <attrKeyMap attr="srcIpAddr" key="event.sourceip"/>
+          <attrKeyMap attr="srcIpPort" key="event.sourceport"/>
+          <attrKeyMap attr="user" key="event.user"/>
+        </collectAndSetAttrByJSON>
+        <setEventAttribute attr="eventType">combineMsgId("Zscaler-Tunnel-IKE-Phase-", $version)</setEventAttribute>
+      </when>
+
+      <!-- DNS Logs , Need Samples -->
+      <when test="matches($_sourcetype, 'zscalernss-dns')">
+        <collectAndSetAttrByJSON src="$_json">
+          <attrKeyMap attr="company" key="event.company"/>
+          <attrKeyMap attr="orgUnit" key="event.department"/>
+          <attrKeyMap attr="hostName" key="event.devicehostname"/>
+          <attrKeyMap attr="deviceOwner" key="event.deviceowner"/>
+          <attrKeyMap attr="errorCode" key="event.error"/>
+          <attrKeyMap attr="httpStatusCode" key="event.http_code"/>
+          <attrKeyMap attr="hostLocation" key="event.location"/>
+          <attrKeyMap attr="_proto" key="event.protocol"/>
+          <attrKeyMap attr="logID" key="event.recordid"/>
+          <attrKeyMap attr="hostName" key="event.devicehostname"/>
+          <attrKeyMap attr="deviceOwner" key="event.deviceowner"/>
+          <attrKeyMap attr="responseBody" key="event.res"/>
+          <attrKeyMap attr="_responseType" key="event.restype"/>
+          <attrKeyMap attr="_responseType" key="event.restype"/>
+          <attrKeyMap attr="requestBody" key="event.req"/>
+          <attrKeyMap attr="action" key="event.reqaction"/>
+          <attrKeyMap attr="requestType" key="event.reqtype"/>
+          <attrKeyMap attr="user" key="event.user"/>
+        </collectAndSetAttrByJSON>
+        <setEventAttribute attr="eventType">combineMsgId("Zscaler-Dns-", $action)</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _datetime">
+      <switch>
+        <case>
+          <collectAndSetAttrByRegex src="$_datetime">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay> <_time:gPatTime>]]></regex>
+          </collectAndSetAttrByRegex>
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </case>
+        <case>
+          <collectAndSetAttrByRegex src="$_datetime">
+            <regex><![CDATA[<_day:gPatWeekday>\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>]]></regex>
+          </collectAndSetAttrByRegex>
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+
+    <!-- %20 Clean Up -->
+    <when test="exist orgUnit">
+      <setEventAttribute attr="orgUnit">URLDecode($orgUnit)</setEventAttribute>
+    </when>
+
+    <when test="exist hostLocation">
+      <setEventAttribute attr="hostLocation">URLDecode($hostLocation)</setEventAttribute>
+    </when>
+
+    <when test="exist ruleName">
+      <setEventAttribute attr="ruleName">URLDecode($ruleName)</setEventAttribute>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

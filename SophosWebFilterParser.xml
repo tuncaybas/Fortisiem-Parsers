@@ -1,0 +1,222 @@
+<eventParser name="SophosWebFilterParser">
+  <deviceType>
+    <Vendor>Sophos</Vendor>
+    <Model>Web Filter</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patBackSlash"><![CDATA[[^\\]+]]></pattern>
+    <pattern name="patOneDigit"><![CDATA[\d]]></pattern>
+  </patternDefinitions>
+
+  <testEvents>
+    <testEvent><![CDATA[<30>Mar 11 15:06:41 na.local ep=1: sxl=n h=10.4.42.213 u="na\\dchoma" s=200 X=+ t=1457707885 T=- Ts=- act=1 cat="0x0300000000" app="-" rsn=- threat="-" type="-" ctype="-" sav-ev=- sav-dv=- uri-dv=- cache=- in=0 out=0 meth=CONNECT ref="-" ua="-" req="CONNECT https://ssl.gstatic.com HTTP/1.1" dom="gstatic.com" filetype="-" rule="-" filesize=- axtime=- fttime=- scantime=- src_cat="-" labs_cat="-" dcat_prox="-" target_ip="1.1.1.1" labs_rule_id="-" reqtime=- adtime=- ftbypass=- os=- authn=- auth_by=- dnstime=- quotatime=- sandbox=-]]></testEvent>
+    <testEvent><![CDATA[<30>Nov 25 20:36:26 na.local h=10.253.129.38: u="NFSB\\walker" s=200 X=+ t=1574714185 T=80698 Ts=0 act=1 cat="0x2200000008" app="-" rsn=- threat="-" type="text/html" ctype="text/html" sav-ev=5.67 sav-dv=2019.11.25.5670002 uri-dv=- cache=- in=822 out=7066 meth=HTTPS-SCAN ref="-" ua="Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko" req="GET https://example.com/ HTTP/1.1" dom="example.com" filetype="-" rule="6684119" filesize=6755 axtime=0.000610 fttime=0.000160 scantime=0.011 src_cat="0x2200000008" labs_cat="0x2200000008" dcat_prox="-" target_ip="1.1.1.2" labs_rule_id="6684119" reqtime=0.011 adtime=0.000063 ftbypass=- os=Windows authn=1 auth_by=ntlm dnstime=0.000006 quotatime=- sandbox=-]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+(?:ep=[^=:]+:\s+sxl=.+?\s+)?h=.+?\s+u=.+?\s+s=.+?\s]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<reptDevName:gPatHostName>\s+(?:ep=[^=:]+:\s+)?<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">Sophos-Generic</setEventAttribute>
+
+    <!-- http://wsa.sophos.com/swa_docs/ws1000/concepts/AppInterpretingASophosLog.html -->
+    <collectAndSetAttrByKeyValuePair sep=" " src="$_body">
+      <attrKeyMap attr="_act" key="act="/>
+      <attrKeyMap attr="_category" key="cat="/>
+      <attrKeyMap attr="fileSize" key="filesize="/>
+      <attrKeyMap attr="fileType" key="filetype="/>
+      <attrKeyMap attr="srcIpAddr" key="h="/>
+      <attrKeyMap attr="recvBytes64" key="in="/>
+      <attrKeyMap attr="httpMethod" key="meth="/>
+      <attrKeyMap attr="osType" key="os="/>
+      <attrKeyMap attr="sentBytes64" key="out="/>
+      <attrKeyMap attr="httpReferrer" key="ref="/>
+      <attrKeyMap attr="httpFullRequest" key="req="/>
+      <attrKeyMap attr="_reason" key="rsn="/>
+      <attrKeyMap attr="ruleName" key="rule="/>
+      <attrKeyMap attr="httpStatusCode" key="s="/>
+      <attrKeyMap attr="eventTime" key="t="/>
+      <attrKeyMap attr="destIpAddr" key="target_ip="/>
+      <attrKeyMap attr="virusName" key="threat="/>
+      <attrKeyMap attr="httpContentType" key="type="/>
+      <attrKeyMap attr="user" key="u="/>
+      <attrKeyMap attr="httpUserAgent" key="ua="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <choose>
+      <when test="not_exist _act"/>
+
+      <when test="$_act = '3'">
+        <setEventAttribute attr="eventType">Sophos-User-Proceeded</setEventAttribute>
+      </when>
+
+      <when test="$_act = '2'">
+        <setEventAttribute attr="eventType">Sophos-Request-Warn-User-Proceeded</setEventAttribute>
+      </when>
+
+      <when test="$_act = '1'">
+        <setEventAttribute attr="eventType">Sophos-Request-Allow</setEventAttribute>
+      </when>
+
+      <when test="$_act = '-1'">
+        <setEventAttribute attr="eventType">Sophos-Request-Block</setEventAttribute>
+      </when>
+
+      <when test="$_act = '-2'">
+        <setEventAttribute attr="eventType">Sophos-Request-Warn</setEventAttribute>
+      </when>
+
+      <when test="$_act = '-3'">
+        <setEventAttribute attr="eventType">Sophos-User-Proceeded-Request-Block</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _reason"/>
+
+      <when test="$_reason = '1401'">
+        <setEventAttribute attr="errReason">Blocked because request contains a virus</setEventAttribute>
+      </when>
+
+      <when test="$_reason = '1402'">
+        <setEventAttribute attr="errReason">Blocked by Local or Sophos URI list</setEventAttribute>
+      </when>
+
+      <when test="$_reason = '1403'">
+        <setEventAttribute attr="errReason">Blocked by file type</setEventAttribute>
+      </when>
+
+      <when test="$_reason = '1404'">
+        <setEventAttribute attr="errReason">Blocked because the request is encrypted and could not be scanned</setEventAttribute>
+      </when>
+
+      <when test="$_reason = '1405'">
+        <setEventAttribute attr="errReason">Blocked because the virus scanner timed out when trying to scan the request</setEventAttribute>
+      </when>
+
+      <when test="$_reason = '1406'">
+        <setEventAttribute attr="errReason">Blocked by policy</setEventAttribute>
+      </when>
+
+      <when test="$_reason = '1407'">
+        <setEventAttribute attr="errReason">Blocked because the originating server failed SSL certificate validation</setEventAttribute>
+      </when>
+
+      <when test="$_reason = '1408'">
+        <setEventAttribute attr="errReason">Blocked 'Range' requests</setEventAttribute>
+      </when>
+
+      <when test="$_reason = '1409'">
+        <setEventAttribute attr="errReason">Blocked by tag</setEventAttribute>
+      </when>
+
+      <when test="$_reason = '1410'">
+        <setEventAttribute attr="errReason">Blocked - Lookup failed</setEventAttribute>
+      </when>
+    </choose>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$user">
+          <regex><![CDATA[<domain:patBackSlash>[\\]{1,2}<user:patBackSlash>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+
+    <when test="exist _category">
+      <collectFieldsByRegex src="$_category">
+        <regex><![CDATA[^0x<_first:patOneDigit><_level:patOneDigit>0*<_category:gPatWord>$]]></regex>
+      </collectFieldsByRegex>
+
+      <choose>
+        <when test="$_level = '4'">
+          <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        </when>
+
+        <when test="$_level = '3'">
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </when>
+
+        <otherwise>
+          <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        </otherwise>
+      </choose>
+
+      <choose>
+        <when test="$_first != '2'">
+          <setEventAttribute attr="webCategory">Uncategorized</setEventAttribute>
+        </when>
+
+        <when test="$_category = '1'">
+          <setEventAttribute attr="webCategory">Adult/Sexually Explicit</setEventAttribute>
+        </when>
+
+        <when test="$_category = '2'">
+          <setEventAttribute attr="webCategory">Advertisements &amp; Pop-Ups</setEventAttribute>
+        </when>
+
+        <when test="$_category = '3'">
+          <setEventAttribute attr="webCategory">Alcohol &amp; Tobacco</setEventAttribute>
+        </when>
+
+        <when test="$_category = '4'">
+          <setEventAttribute attr="webCategory">Arts</setEventAttribute>
+        </when>
+
+        <when test="$_category = '5'">
+          <setEventAttribute attr="webCategory">Blogs &amp; Forums</setEventAttribute>
+        </when>
+
+        <when test="$_category = '6'">
+          <setEventAttribute attr="webCategory">Business</setEventAttribute>
+        </when>
+
+        <when test="$_category = '7'">
+          <setEventAttribute attr="webCategory">Chat</setEventAttribute>
+        </when>
+
+        <when test="$_category = '8'">
+          <setEventAttribute attr="webCategory">Computing &amp; Internet</setEventAttribute>
+        </when>
+
+        <when test="$_category = '1C'">
+          <setEventAttribute attr="webCategory">Kid's Sites</setEventAttribute>
+        </when>
+
+        <when test="$_category = '1D'">
+          <setEventAttribute attr="webCategory">Motor Vehicles</setEventAttribute>
+        </when>
+
+        <when test="$_category = '1E'">
+          <setEventAttribute attr="webCategory">News</setEventAttribute>
+        </when>
+
+        <when test="$_category = '1F'">
+          <setEventAttribute attr="webCategory">Peer-to-Peer</setEventAttribute>
+        </when>
+
+        <when test="$_category = '20'">
+          <setEventAttribute attr="webCategory">Personals and Dating</setEventAttribute>
+        </when>
+
+        <when test="$_category = '21'">
+          <setEventAttribute attr="webCategory">Philanthropic &amp; Professional Orgs.</setEventAttribute>
+        </when>
+
+        <when test="$_category = '22'">
+          <setEventAttribute attr="webCategory">Phishing &amp; Fraud</setEventAttribute>
+        </when>
+
+        <when test="$_category = '23'">
+          <setEventAttribute attr="webCategory">Photo Searches</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+  </parsingInstructions>
+</eventParser>

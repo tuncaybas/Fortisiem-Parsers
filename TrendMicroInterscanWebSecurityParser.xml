@@ -1,0 +1,205 @@
+<eventParser name="TrendMicroInterscanWebSecurityParser">
+  <deviceType>
+    <Vendor>TrendMicro</Vendor>
+    <Model>Interscan Web Security</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patStrSpaceAndEndColon"><![CDATA[[^ :]*]]></pattern>
+    <pattern name="patStrOr"><![CDATA[[^|]*]]></pattern>
+    <pattern name="patStrLeftSB"><![CDATA[[^\[]*]]></pattern>
+  </patternDefinitions>
+
+  <testEvents>
+    <testEvent><![CDATA[<130>abc.com: <Mon, 18 Sep 2017 10:00:48,IST> [EVT_URL_BLOCKING|LOG_CRIT] Blocked URL log tk_username=1.1.1.1,tk_date_field=2017-09-18 10:00:48+0530,tk_protocol=https,tk_url=https://google.com:443/,tk_malicious_entity=,tk_file_name=,tk_entity_name=,tk_action=,tk_scan_type=user defined,tk_blocked_by=rule,tk_rule_name=google.com,tk_opp_id=0,tk_group_name=None,tk_category=URL Blocking,tk_uid=0099253425-0ecd0076872a9d0ace16,tk_filter_action=0]]></testEvent>
+    <testEvent><![CDATA[<134>abc.com: <Mon, 18 Sep 2017 10:00:48,IST> [EVT_URL_ACCESS_TRACKING|LOG_INFO] Access tracking log tk_username=1.1.1.1,tk_url=http://aaa.com/pc/SHAREitSubscription.xml,tk_size=0,tk_date_field=2017-09-18 10:00:48+0530,tk_protocol=http,tk_mime_content=unknown/unknown,tk_server=abc.com,tk_client_ip=1.1.1.1,tk_server_ip=2.2.2.2,tk_domain=aaa.com,tk_path=pc/SHAREitSubscription.xml,tk_file_name=SHAREitSubscription.xml,tk_operation=GET,tk_uid=0099253421-bdd7d4ce063b924a2342,tk_category=56,tk_category_type=0]]></testEvent>
+    <testEvent><![CDATA[<134>abc.com: <Mon, 18 Sep 2017 10:00:59,IST> [EVT_PERFORMANCE|LOG_INFO] Performance log tk_server=abc.com,tk_date_field=2017-09-18 10:00:59+0530,tk_metric_id=Number of FTP Processes,tk_metric_value=6,]]></testEvent>
+  </testEvents>
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:patStrSpaceAndEndColon>:\s*\<<:gPatWeekday>,\s*<:gPatDay>\s+<:gPatMon>\s+<:gPatYear>\s+<:gPatTime>,[^>]+\>\s+\[EVT_<:patStrOr>\|LOG_<:gPatStrRightSB>\]\s*]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><serverName:patStrSpaceAndEndColon>:\s*\<<:gPatWeekday>,\s*<_day:gPatDay>\s+<_mon:gPatMon>\s+<_year:gPatYear>\s+<_time:gPatTime>,[^>]+\>\s+\[<type:gPatStrRightSB>\]\s*<actionName:gPatMesgBodyMin>log\s*<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+
+    <collectFieldsByRegex src="$type">
+      <regex><![CDATA[<_type:patStrOr>\|.*]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="eventType">combineMsgId("TrendMicro-InterScanWeb-", $_type)</setEventAttribute>
+
+    <collectFieldsByKeyValuePair sep="," kvsep="=" src="$_body">
+      <attrKeyMap attr="_userName" key="tk_username"/>
+      <attrKeyMap attr="infoURL" key="tk_url"/>
+      <attrKeyMap attr="_srcProto" key="tk_protocol"/>
+      <attrKeyMap attr="fileName" key="tk_file_name"/>
+      <attrKeyMap attr="filePath" key="tk_path"/>
+      <attrKeyMap attr="fileSize" key="tk_size"/>
+      <attrKeyMap attr="srcIpAddr" key="tk_client_ip"/>
+      <attrKeyMap attr="serverIpAddr" key="tk_server_ip"/>
+      <attrKeyMap attr="serverName" key="tk_server"/>
+      <attrKeyMap attr="domain" key="tk_domain"/>
+      <attrKeyMap attr="user" key="tk_user"/>
+      <attrKeyMap attr="actionName" key="tk_action"/>
+      <attrKeyMap attr="targetType" key="tk_scan_type"/>
+      <attrKeyMap attr="errReason" key="tk_blocked_by"/>
+      <attrKeyMap attr="ruleName" key="tk_rule_name"/>
+      <attrKeyMap attr="groupName" key="tk_group_name"/>
+      <attrKeyMap attr="uuid" key="tk_uid"/>
+      <attrKeyMap attr="httpMethod" key="tk_operation"/>
+      <attrKeyMap attr="description" key="tk_description"/>
+      <attrKeyMap attr="targetType" key="tk_source"/>
+      <attrKeyMap attr="destIpPort" key="tk_destination_port"/>
+      <attrKeyMap attr="ruleName" key="tk_metric_id"/>
+      <attrKeyMap attr="ruleId" key="tk_metric_value"/>
+      <attrKeyMap attr="hostName" key="tk_device_name"/>
+      <attrKeyMap attr="mimeType" key="tk_mime_content"/>
+      <attrKeyMap attr="_virusType" key="tk_malicious_entity"/>
+      <attrKeyMap attr="_webFilterAction" key="tk_filter_action"/>
+      <attrKeyMap attr="_threatLevel" key="tk_risk_level"/>
+      <attrKeyMap attr="_resourceName" key="tk_ccca_source"/>
+      <attrKeyMap attr="appCategory" key="tk_category"/>
+      <attrKeyMap attr="_categoryType" key="tk_category_type"/>
+      <attrKeyMap attr="_resource" key="tk_entity_name"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist serverIpAddr">
+      <setEventAttribute attr="destIpAddr">$serverIpAddr</setEventAttribute>
+    </when>
+
+    <when test="exist serverName">
+      <setEventAttribute attr="destName">$serverName</setEventAttribute>
+    </when>
+
+    <when test="exist _srcProto">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_srcProto">
+            <regex><![CDATA[^\s*<ipProto:gPatInt>\s*$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="srcProto">$_srcProto</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+    <when test="exist _userName">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_userName">
+            <regex><![CDATA[^\s*<srcIpAddr:gPatIpAddr>\s*$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="user">$_userName</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+    <when test="exist _webFilterAction">
+      <choose>
+        <when test="$type = 'EVT_URL_BLOCKING|LOG_CRIT'">
+          <choose>
+            <when test="$_webFilterAction = '0'">
+              <setEventAttribute attr="webFilterAction">Block except for HTTP inspection, URL filter</setEventAttribute>
+            </when>
+            <when test="$_webFilterAction = '1'">
+              <setEventAttribute attr="webFilterAction">HTTP inspection, blocked with URL filter</setEventAttribute>
+            </when>
+            <when test="$_webFilterAction = '2'">
+              <setEventAttribute attr="webFilterAction">monitoring</setEventAttribute>
+            </when>
+            <when test="$_webFilterAction = '3'">
+              <setEventAttribute attr="webFilterAction">Warning</setEventAttribute>
+            </when>
+            <when test="$_webFilterAction = '4'">
+              <setEventAttribute attr="webFilterAction">Warning and Continue</setEventAttribute>
+            </when>
+          </choose>
+        </when>
+        <otherwise>
+          <!--test="$type = 'EVT_C&C_CALLBACK_FOUND|LOG_CRIT'"-->
+          <choose>
+            <when test="$_webFilterAction = '0'">
+              <setEventAttribute attr="webFilterAction">Authorization</setEventAttribute>
+            </when>
+            <when test="$_webFilterAction = '1'">
+              <setEventAttribute attr="webFilterAction">Block</setEventAttribute>
+            </when>
+            <when test="$_webFilterAction = '2'">
+              <setEventAttribute attr="webFilterAction">monitoring</setEventAttribute>
+            </when>
+          </choose>
+        </otherwise>
+      </choose>
+    </when>
+    <when test="exist _virusType">
+      <choose>
+        <when test="$type = 'EVT_VIRUS_FOUND|LOG_CRIT'">
+          <setEventAttribute attr="virusType">$_virusType</setEventAttribute>
+        </when>
+        <when test="$type = 'EVT_DLP_FOUND|LOG_CRIT'">
+          <setEventAttribute attr="details">$_virusType</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+    <when test="exist _threatLevel">
+      <!--
+       Risk level
+      0: Unknown
+      1: low
+      2: Medium
+      3: High
+     -->
+      <choose>
+        <when test="$_threatLevel = '0'">
+          <setEventAttribute attr="threatLevel">Unknown</setEventAttribute>
+        </when>
+        <when test="$_threatLevel = '1'">
+          <setEventAttribute attr="threatLevel">low</setEventAttribute>
+        </when>
+        <when test="$_threatLevel = '2'">
+          <setEventAttribute attr="threatLevel">Medium</setEventAttribute>
+        </when>
+        <when test="$_threatLevel = '3'">
+          <setEventAttribute attr="threatLevel">High</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+    <when test="exist _resourceName">
+      <choose>
+        <when test="$_resourceName = '0'">
+          <setEventAttribute attr="resourceName">Web reputation</setEventAttribute>
+        </when>
+        <when test="$_resourceName = '1'">
+          <setEventAttribute attr="resourceName">Virtual analyzer</setEventAttribute>
+        </when>
+        <when test="$_resourceName = '2'">
+          <setEventAttribute attr="resourceName">Other than virtual analyzer</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+    <when test="exist _categoryType">
+      <choose>
+        <when test="$_categoryType = '0'">
+          <setEventAttribute attr="categoryType">Initial category</setEventAttribute>
+        </when>
+        <when test="$_categoryType = '1'">
+          <setEventAttribute attr="categoryType">Custom category</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+    <when test="exist _resource">
+      <choose>
+        <when test="$type = 'EVT_VIRUS_FOUND|LOG_CRIT'">
+          <setEventAttribute attr="resourceName">$_resource</setEventAttribute>
+        </when>
+        <when test="$type = 'EVT_DLP_FOUND|LOG_CRIT'">
+          <setEventAttribute attr="templateName">$_resource</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,407 @@
+<eventParser name="TrendMicroApexCentralParser">
+  <deviceType>
+    <Vendor>TrendMicro</Vendor>
+    <Model>Apex Central</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patStrSpaceAndEndColon"><![CDATA[[^ :]*]]></pattern>
+    <pattern name="patStrOr"><![CDATA[[^|]*]]></pattern>
+    <pattern name="patStrLeftSB"><![CDATA[[^\[]*]]></pattern>
+    <pattern name="patStrSAP"><![CDATA[php|ruleEngine|gaugefs]]></pattern>
+    <pattern name="patStrEndQuote"><![CDATA[[^']+]]></pattern>
+  </patternDefinitions>
+
+  <testEvents>
+    <testEvent><![CDATA[<133>Apr 24 2019 20:59:54 example.trendmicro.com CEF:0|Trend Micro|Apex Central|7.0SP1|800101|Pattern Update Status|3|rt=Apr 17 2019 10:06:12 GMT+00:00 shost=05TX-LSB03 cs1Label=Operating_System cs1=Windows 10 cs2Label=Product/Endpoint_IP cs2=10.5.40.114 cs3Label=Update_Agent cs3=0 cs4Label=Domain cs4=Castle cn1Label=Connection_Status cn1=100 cn2Label=Pattern/Rule cn2=1207959584 cs5Label=Pattern/Rule_Version cs5=1.247.00 cn3Label=Pattern/Rule_Status cn3=1 cs6Label=AUComponent_Type cs6=2 deviceFacility=Apex One]]></testEvent>
+  </testEvents>
+  <eventFormatRecognizer><![CDATA[\sCEF:\d+\|Trend Micro\|Apex Central\|]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>\s+<hostName:gPatStr>\s+CEF:<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <setEventAttribute attr="logLevel">"CEF"</setEventAttribute>
+    <setEventAttribute attr="eventType">TrendMicro-ApexCentral-Generic"</setEventAttribute>
+
+    <when test="matches($_body, '\\\|')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "\|", "::TEMP::")</setEventAttribute>
+    </when>
+
+    <setEventAttribute attr="_body">replaceStrInStr($_body, "|", "::SEP::")</setEventAttribute>
+
+    <when test="matches($_body, '::TEMP::')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "::TEMP::", "|")</setEventAttribute>
+    </when>
+
+    <collectAndSetAttrByPos sep="::SEP::" src="$_body">
+      <attrPosMap attr="appVersion" pos="4"/>
+      <attrPosMap attr="uuid" pos="5"/>
+      <attrPosMap attr="_eventName" pos="6"/>
+      <attrPosMap attr="eventSeverity" pos="7"/>
+      <attrPosMap attr="_extension" pos="8"/>
+    </collectAndSetAttrByPos>
+
+    <choose>
+      <when test="matches($uuid, '^AV')">
+        <setEventAttribute attr="eventType">TrendMicro-ApexCentral-Virus-Found</setEventAttribute>
+        <setEventAttribute attr="virusName">$_eventName</setEventAttribute>
+      </when>
+      <when test="exist _eventName">
+        <setEventAttribute attr="eventType">combineMsgId("TrendMicro-ApexCentral-", $_eventName)</setEventAttribute>
+        <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "\s+", "-")</setEventAttribute>
+      </when>
+    </choose>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_extension">
+      <attrKeyMap attr="_rt" key="rt"/>
+      <attrKeyMap attr="destName" key="dhost"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="destUser" key="duser"/>
+      <attrKeyMap attr="destinationServiceName" key="duser"/>
+      <attrKeyMap attr="destIpPort" key="dpt"/>
+      <attrKeyMap attr="extEventId" key="customerExternalID"/>
+      <attrKeyMap attr="appCategory" key="cat"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="srcMACAddr" key="smac"/>
+      <attrKeyMap attr="srcIpPort" key="spt"/>
+      <attrKeyMap attr="srcName" key="shost"/>
+      <attrKeyMap attr="srcUser" key="suser"/>
+      <attrKeyMap attr="srcUser" key="sourceServiceName"/>
+      <attrKeyMap attr="infoURL" key="request"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="filePath" key="filepath"/>
+      <attrKeyMap attr="fileName" key="fname"/>
+      <attrKeyMap attr="fileSize" key="fsize"/>
+      <attrKeyMap attr="serverName" key="dvchost"/>
+      <attrKeyMap attr="product" key="deviceFacility"/>
+      <attrKeyMap attr="procName" key="sproc"/>
+      <attrKeyMap attr="fwAction" key="act"/>
+      <attrKeyMap attr="_createTime" key="deviceCustomDate1"/>
+      <attrKeyMap attr="appName" key="app"/>
+      <attrKeyMap attr="hashCode" key="filehash"/>
+      <attrKeyMap attr="seqNum" key="deviceExternalId"/>
+      <attrKeyMap attr="seqNum" key="cnt"/>
+      <attrKeyMap attr="direction" key="deviceDirection"/>
+      <attrKeyMap attr="procName" key="deviceProcessName"/>
+      <attrKeyMap attr="_cs1Label" key="cs1Label"/>
+      <attrKeyMap attr="_cs1" key="cs1"/>
+      <attrKeyMap attr="_cs2Label" key="cs2Label"/>
+      <attrKeyMap attr="_cs2" key="cs2"/>
+      <attrKeyMap attr="_cs3Label" key="cs3Label"/>
+      <attrKeyMap attr="_cs3" key="cs3"/>
+      <attrKeyMap attr="_cs4Label" key="cs4Label"/>
+      <attrKeyMap attr="_cs4" key="cs4"/>
+      <attrKeyMap attr="_cs5Label" key="cs5Label"/>
+      <attrKeyMap attr="_cs5" key="cs5"/>
+      <attrKeyMap attr="_cs6Label" key="cs6Label"/>
+      <attrKeyMap attr="_cs6" key="cs6"/>
+      <attrKeyMap attr="_cn1Label" key="cn1Label"/>
+      <attrKeyMap attr="_cn1" key="cn1"/>
+      <attrKeyMap attr="_cn2Label" key="cn2Label"/>
+      <attrKeyMap attr="_cn2" key="cn2"/>
+      <attrKeyMap attr="_cn3Label" key="cn3Label"/>
+      <attrKeyMap attr="_cn3" key="cn3"/>
+      <attrKeyMap attr="_cn4Label" key="cn4Label"/>
+      <attrKeyMap attr="_cn4" key="cn4"/>
+      <attrKeyMap attr="_cn5Label" key="cn5Label"/>
+      <attrKeyMap attr="_cn5" key="cn5"/>
+    </collectFieldsByKeyValuePair>
+
+
+    <when test="exist _rt">
+      <collectFieldsByRegex src="$_rt">
+        <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>\s+GMT<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <!--Nov 03 2016 08:58:03 GMT+00:00-->
+    <when test="exist _createTime">
+      <collectFieldsByRegex src="$_createTime">
+        <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>\s+GMT<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="createTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist _cs1Label"/>
+      <when test="not_exist _cs1"/>
+      <when test="$_cs1Label = 'Policy GUID'">
+        <setEventAttribute attr="policyDetails">$_cs1</setEventAttribute>
+      </when>
+      <when test="$_cs1Label = 'Target'">
+        <setEventAttribute attr="targetName">$_cs1</setEventAttribute>
+      </when>
+      <when test="$_cs1Label = 'Product Entity/Endpoint'">
+        <setEventAttribute attr="destName">$_cs1</setEventAttribute>
+      </when>
+      <when test="$_cs1Label = 'Operating System'">
+        <setEventAttribute attr="osType">$_cs1</setEventAttribute>
+      </when>
+      <when test="$_cs1Label = 'SL_PolicyContent”'">
+        <setEventAttribute attr="policyDetails">$_cs1</setEventAttribute>
+      </when>
+      <when test="$_cs1Label = 'VirusName'">
+        <setEventAttribute attr="virusName">$_cs1</setEventAttribute>
+      </when>
+      <when test="$_cs1Label = 'VLF_FunctionCode'">
+        <setEventAttribute attr="scanEngine">$_cs1</setEventAttribute>
+      </when>
+      <when test="$_cs1Label = 'SLF_PolicyName'">
+        <setEventAttribute attr="policyName">$_cs1</setEventAttribute>
+      </when>
+      <when test="$_cs1Label = 'Product_Version'">
+        <setEventAttribute attr="appVersion">$_cs1</setEventAttribute>
+      </when>
+      <when test="$_cs1Label = 'SLF_RuleID'">
+        <setEventAttribute attr="ruleName">$_cs1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs2Label"/>
+      <when test="not_exist _cs2"/>
+      <when test="$_cs2Label = 'SLF_ADEObjectGroup_Info_1'">
+        <setEventAttribute attr="details">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label IN 'Policy, Policy ID, Policy_ID'">
+        <setEventAttribute attr="policyName">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label IN 'Product/Endpoint_IP, Product/Endpoint IP'">
+        <setEventAttribute attr="destIpAddr">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label IN 'Security Threat, NCIE_ThreatName'">
+        <setEventAttribute attr="threatType">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label IN 'CLF_ProductVersion,El_ProductVersion'">
+        <setEventAttribute attr="appVersion">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label IN 'VLF_EngineVersion,EngineVersion'">
+        <setEventAttribute attr="scanEngineVer">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label = 'Blocking_Rule'">
+        <setEventAttribute attr="ruleName">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label = 'SLF_TrueFileType'">
+        <setEventAttribute attr="fileType">$_cs2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs3Label"/>
+      <when test="not_exist _cs3"/>
+      <when test="$_cs3Label = 'SLF_ADEObjectGroup_Info_2'">
+        <setEventAttribute attr="details">$_cs3</setEventAttribute>
+      </when>
+      <when test="$_cs3Label = 'Product_Entity/Endpoint”'">
+        <setEventAttribute attr="destName">$_cs3</setEventAttribute>
+      </when>
+      <when test="$_cs3Label IN 'Infection Source, InfectionLocation'">
+        <setEventAttribute attr="threatSource">$_cs3</setEventAttribute>
+      </when>
+      <when test="$_cs3Label = 'SL_FilterType'">
+        <setEventAttribute attr="filter">$_cs3</setEventAttribute>
+      </when>
+      <when test="$_cs3Label = 'CLF_ProductVersion'">
+        <setEventAttribute attr="appVersion">$_cs3</setEventAttribute>
+      </when>
+      <when test="$_cs3Label = 'SLF_DomainName'">
+        <setEventAttribute attr="domain">$_cs3</setEventAttribute>
+      </when>
+      <when test="$_cs3Label = 'SLF_FileSource'">
+        <setEventAttribute attr="filePath">$_cs3</setEventAttribute>
+      </when>
+      <when test="$_cs3Label = 'Command'">
+        <setEventAttribute attr="command">$_cs3</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs4Label"/>
+      <when test="not_exist _cs4"/>
+      <when test="$_cs4Label = 'SLF_ADEObjectGroup_Info_3'">
+        <setEventAttribute attr="details">$_cs4</setEventAttribute>
+      </when>
+      <when test="matches($_cs4Label, 'Incident_Source_')">
+        <setEventAttribute attr="user">$_cs4</setEventAttribute>
+      </when>
+      <when test="$_cs4Label = 'ProcessCommandLine'">
+        <setEventAttribute attr="command">$_cs4</setEventAttribute>
+      </when>
+      <when test="$_cs4Label = 'Domain'">
+        <setEventAttribute attr="domain">$_cs4</setEventAttribute>
+      </when>
+      <when test="$_cs4Label = 'CLF_ReasonCode'">
+        <setEventAttribute attr="errReason">$_cs4</setEventAttribute>
+      </when>
+      <when test="$_cs4Label = 'SLF_PolicyName'">
+        <setEventAttribute attr="policyName">$_cs4</setEventAttribute>
+      </when>
+      <when test="$_cs4Label = 'Rule'">
+        <setEventAttribute attr="ruleName">$_cs4</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs5Label"/>
+      <when test="not_exist _cs5"/>
+      <when test="$_cs5Label = 'SLF_ADEObjectGroup_Info_4'">
+        <setEventAttribute attr="details">$_cs5</setEventAttribute>
+      </when>
+      <when test="$_cs5Label = 'Rule'">
+        <setEventAttribute attr="ruleName">$_cs5</setEventAttribute>
+      </when>
+      <when test="$_cs5Label = 'Engine_Version'">
+        <setEventAttribute attr="scanEngineVer">$_cs5</setEventAttribute>
+      </when>
+      <when test="$_cs5Label IN 'Pattern/Rule Version, Pattern/Rule_Version'">
+        <setEventAttribute attr="patternRuleVer">$_cs5</setEventAttribute>
+      </when>
+      <when test="$_cs5Label IN 'ActionResult, VLF_FirstActionResult'">
+        <setEventAttribute attr="actionResult">$_cs5</setEventAttribute>
+      </when>
+      <when test="$_cs5Label = 'CnCDestination'">
+        <setEventAttribute attr="hxDirectURL">$_cs5</setEventAttribute>
+      </when>
+      <when test="$_cs5Label = 'Policy'">
+        <setEventAttribute attr="policyName">$_cs5</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs6Label"/>
+      <when test="not_exist _cs6"/>
+      <when test="$_cs6Label = 'Template'">
+        <setEventAttribute attr="templateName">$_cs6</setEventAttribute>
+      </when>
+      <when test="$_cs6Label = 'AUComponent_Type'">
+        <setEventAttribute attr="componentName">$_cs6</setEventAttribute>
+      </when>
+      <when test="$_cs6Label = 'SL_MessageAction'">
+        <setEventAttribute attr="actionName">$_cs6</setEventAttribute>
+      </when>
+      <when test="$_cs6Label = 'PatternVersion'">
+        <setEventAttribute attr="patternRuleVer">$_cs6</setEventAttribute>
+      </when>
+      <when test="$_cs6Label = 'VLF_SecondActionResult'">
+        <setEventAttribute attr="actionResult">$_cs6</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cn1Label"/>
+      <when test="not_exist _cn1"/>
+      <when test="$_cn1Label = 'SLF_RiskLevel'">
+        <setEventAttribute attr="threatLevel">$_cn1</setEventAttribute>
+      </when>
+      <when test="$_cn1Label = 'Product'">
+        <setEventAttribute attr="product">$_cn1</setEventAttribute>
+      </when>
+      <when test="$_cn1Label = 'Risk_Level'">
+        <setEventAttribute attr="threatLevel">$_cn1</setEventAttribute>
+      </when>
+      <when test="$_cn1Label = 'Connection_Status'">
+        <setEventAttribute attr="sessionStatus">$_cn1</setEventAttribute>
+      </when>
+      <when test="$_cn1Label = 'SLF_ProductVersion'">
+        <setEventAttribute attr="appVersion">$_cn1</setEventAttribute>
+      </when>
+      <when test="$_cn1Label = 'VLF_PatternNumber'">
+        <setEventAttribute attr="patternRuleVer">$_cn1</setEventAttribute>
+      </when>
+      <when test="$_cn1Label = 'SLF_CCCA_RiskLevel'">
+        <setEventAttribute attr="threatLevel">$_cn1</setEventAttribute>
+      </when>
+      <when test="$_cn1Label = 'Command_Status'">
+        <setEventAttribute attr="exitValue">$_cn1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cn2Label"/>
+      <when test="not_exist _cn2"/>
+      <when test="$_cn2Label = 'SLF_PatternNumber'">
+        <setEventAttribute attr="patternRuleVer">$_cn2</setEventAttribute>
+      </when>
+      <when test="$_cn2Label = 'Action'">
+        <setEventAttribute attr="actionName">$_cn2</setEventAttribute>
+      </when>
+      <when test="$_cn2Label = 'Event_Type'">
+        <setEventAttribute attr="actionName">$_cn2</setEventAttribute>
+      </when>
+      <when test="$_cn2Label = 'Device_Type'">
+        <setEventAttribute attr="deviceType">$_cn2</setEventAttribute>
+      </when>
+      <when test="$_cn2Label = 'Engine'">
+        <setEventAttribute attr="Engine">$_cn2</setEventAttribute>
+      </when>
+      <when test="$_cn2Label IN 'Type, DetectionType'">
+        <setEventAttribute attr="fileType">$_cn2</setEventAttribute>
+      </when>
+      <when test="$_cn2Label = 'Pattern/Rule'">
+        <setEventAttribute attr="ruleName">$_cn2</setEventAttribute>
+      </when>
+      <when test="$_cn2Label = 'Scan_Type'">
+        <setEventAttribute attr="scanEngine">$_cn2</setEventAttribute>
+      </when>
+      <when test="$_cn2Label = 'VLF_SecondAction'">
+        <setEventAttribute attr="actionName">$_cn2</setEventAttribute>
+      </when>
+      <when test="$_cn2Label = 'Pattern/Rule'">
+        <setEventAttribute attr="ruleName">$_cn2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cn3Label"/>
+      <when test="not_exist _cn3"/>
+      <when test="$_cn3Label = 'Channel'">
+        <setEventAttribute attr="wlanSuppChannels">$_cn3</setEventAttribute>
+      </when>
+      <when test="$_cn3Label IN 'TranslatedAegisOperation, Operation'">
+        <setEventAttribute attr="eventAction">$_cn3</setEventAttribute>
+      </when>
+      <when test="$_cn3Label = 'Permission'">
+        <setEventAttribute attr="personalPermissions">$_cn3</setEventAttribute>
+      </when>
+      <when test="$_cn3Label = 'Engine_Status'">
+        <setEventAttribute attr="engineStatus">$_cn3</setEventAttribute>
+      </when>
+      <when test="$_cn3Label IN 'Confidence,Threat Probability'">
+        <setEventAttribute attr="confidence">$_cn3</setEventAttribute>
+      </when>
+      <when test="$_cn3Label = 'Pattern/Rule_Status'">
+        <setEventAttribute attr="patternRuleStatus">$_cn3</setEventAttribute>
+      </when>
+      <when test="$_cn3Label = 'CLF_SeverityCode'">
+        <setEventAttribute attr="threatType">$_cn3</setEventAttribute>
+      </when>
+      <when test="$_cn3Label = 'ReputationScore'">
+        <setEventAttribute attr="clientReputationScore">$_cn3</setEventAttribute>
+      </when>
+      <when test="$_cn3Label = 'SLF_ScanType'">
+        <setEventAttribute attr="scanStatus">$_cn3</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cn4Label"/>
+      <when test="not_exist _cn4"/>
+      <when test="$_cn4Label IN 'Process Command, Process_Command, ProcessCommand'">
+        <setEventAttribute attr="command">$_cn4</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cn5Label"/>
+      <when test="not_exist _cn5"/>
+      <when test="$_cn5Label IN 'Engine Version, Engine_Version'">
+        <setEventAttribute attr="scanEngineVer">$_cn5</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

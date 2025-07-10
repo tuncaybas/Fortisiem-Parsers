@@ -1,0 +1,90 @@
+<eventParser name="VeeamBackupParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Veeam</Vendor>
+    <Model>Backup and Replication</Model>
+    <Version>ANY</Version>
+    <Name>Veeam Backup and Replication</Name>
+  </appType>
+
+  <eventFormatRecognizer><![CDATA[\s+SNMPv2-SMI::enterprises\.31023\.1\.1\.1\b]]></eventFormatRecognizer>
+  <testEvents>
+    <testEvent><![CDATA[2013-06-27 19:14:46 10.60.253.8(via UDP: [10.60.253.8]:59321) TRAP, SNMP v1, community B35412-RO    SNMPv2-SMI::enterprises.31023.1.1.1 Enterprise Specific Trap (1) Uptime: 4 days, 3:33:22.40		SNMPv2-SMI::enterprises.31023.1.1.101 = STRING: "11111111-1111-1111-1111-111111111111"     SNMPv2-SMI::enterprises.31023.1.1.102 = STRING: "WS-SVR-VIE01"          SNMPv2-SMI::enterprises.31023.1.1.103 = STRING: "Success"            SNMPv2-SMI::enterprises.31023.1.1.104 = ""]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patStrRightParenthesis"><![CDATA[[^\)]*]]></pattern>
+    <pattern name="patStrColon"><![CDATA[[^:]*]]></pattern>
+  </patternDefinitions>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatIpAddr>\(via <_reptIp:patStrRightParenthesis>\)<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+<hostName:gPatStr> <:gPatStr> \(via <_reptIp:patStrRightParenthesis>\)<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <collectFieldsByRegex src="$_reptIp">
+      <regex><![CDATA[<:patStrColon>:\s+\[<reptDevIpAddr:gPatIpAddr>\]:<srcIpPort:gPatInt>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="eventType">VEEAM-Generic</setEventAttribute>
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+    <collectAndSetAttrByKeyValuePair sep="\t\\| SNMP" src="$_body">
+      <attrKeyMap attr="jobId" key="SNMPv2-SMI::enterprises.31023.1.1.101 = STRING: "/>
+      <attrKeyMap attr="jobName" key="SNMPv2-SMI::enterprises.31023.1.1.102 = STRING: "/>
+      <attrKeyMap attr="_jobBackupStatus" key="SNMPv2-SMI::enterprises.31023.1.1.103 = STRING: "/>
+      <attrKeyMap attr="_jobComment" key="SNMPv2-SMI::enterprises.31023.1.1.104 = STRING: "/>
+      <attrKeyMap attr="vmName" key="SNMPv2-SMI::enterprises.31023.1.1.105 = STRING: "/>
+      <attrKeyMap attr="_vmHostName" key="SNMPv2-SMI::enterprises.31023.1.1.106 = STRING: "/>
+      <attrKeyMap attr="_vmBackupStatus" key="SNMPv2-SMI::enterprises.31023.1.1.107 = STRING: "/>
+      <attrKeyMap attr="_vmComment" key="SNMPv2-SMI::enterprises.31023.1.1.108 = STRING: "/>
+    </collectAndSetAttrByKeyValuePair>
+    <when test="exist _vmHostName">
+      <setEventAttribute attr="hostName">$_vmHostName</setEventAttribute>
+    </when>
+    <choose>
+      <when test="exist _vmComment">
+        <setEventAttribute attr="comment">$_vmComment</setEventAttribute>
+      </when>
+      <when test="exist _jobComment">
+        <setEventAttribute attr="comment">$_jobComment</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="exist _vmBackupStatus">
+        <setEventAttribute attr="_eventTypeTemp">VEEAM-VM-Backup-</setEventAttribute>
+        <setEventAttribute attr="backupStatus">$_vmBackupStatus</setEventAttribute>
+      </when>
+      <when test="exist _jobBackupStatus">
+        <setEventAttribute attr="_eventTypeTemp">VEEAM-Backup-</setEventAttribute>
+        <setEventAttribute attr="backupStatus">$_jobBackupStatus</setEventAttribute>
+      </when>
+    </choose>
+    <when test=" exist _eventTypeTemp">
+      <setEventAttribute attr="eventType">combineMsgId($_eventTypeTemp,$backupStatus)</setEventAttribute>
+      <choose>
+        <when test="$backupStatus = 'Success'">
+          <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        </when>
+        <when test="$backupStatus = 'Warning'">
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </when>
+        <when test="$backupStatus = 'Failure'">
+          <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+  </parsingInstructions>
+</eventParser>

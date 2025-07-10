@@ -1,0 +1,305 @@
+A user account was locked out,
+Access Request Information,
+Accesses,
+Account Domain,帳戶網域
+Account Expires,帳戶有效期
+Account For Which Logon Failed,登入失敗的帳戶
+Account Information,帳戶資訊
+Account Name,帳戶名稱
+Account Session Identifier,帳戶工作階段識別元
+Account Session Identifier,帳戶工作階段識別碼
+Account That Was Locked Out,鎖定的帳戶
+Account Whose Credentials Were Used,使用其認證的帳戶
+Additional Information,其他資訊
+Advanced Options,進階選項
+Allowed To Delegate To,允許委派於
+AllowedToDelegateTo,允許委派於
+Application Correlation ID,應用程式相互關聯識別碼
+Application Information,應用程式資訊
+Application Name,應用程式名稱
+Attribute,屬性
+Attributes,屬性
+Audit Failure,審核失敗
+Audit Success,審核成功
+Auditing Settings,稽核設定
+Authentication Details,驗證詳細資料
+Authentication Package Name,驗證封裝
+Authentication Package,驗證封裝
+Authentication Provider,驗證提供者
+Authentication Server,驗證伺服器
+Authentication Type,驗證類型
+Called Station Identifier,呼叫的工作站識別元
+Called Station Identifier,呼叫的工作站識別碼
+Called Station Identifier,被呼叫的工作站識別碼
+Caller Computer Name,呼叫者電腦名稱
+Caller Domain,呼叫者網域
+Caller Logon ID,呼叫者登入識別碼
+Caller Logon ID,呼叫者登入識别碼
+Caller Process ID,呼叫者處理程序識別碼
+Caller Process Name,呼叫者處理程序名稱
+Caller User Name,
+Calling Station Identifier,發出呼叫的工作站識別元
+Calling Station Identifier,發出呼叫的工作站識別碼
+Certificate Information,憑證資訊
+Certificate Issuer Name,憑證簽發者名稱
+Certificate Serial Number,憑證序號
+Certificate Thumbprint,憑證指紋
+Change Type,變更類型
+Changed Attributes,變更的屬性
+Class ID,類別識別碼
+Class Name,類別名稱
+Class,類別
+Client Address,用戶端位址
+Client Domain,
+Client Friendly Name,用戶端易記名稱
+Client IP Address,用戶端 IP 位址
+Client Logon ID,
+Client Machine,用戶端電腦
+Client Name,
+Client Port,用戶端連接埠
+Client User Name,
+Compatible IDs,相容識別碼
+Computer Account That Was Changed,變更的電腦帳戶
+Configuration Access Policy,設定存取原則
+Configured Names,設定的名稱
+Connection Request Policy Name,連線要求原則名稱
+Correlation ID,相互關聯識別碼
+Creator Process ID,建立者處理程序識別碼
+Creator Process Name,建立者處理程序名稱
+Creator Subject,建立者主體
+Deleted Group,刪除的群組
+Destination Address,目的地位址
+Destination Port,目的地連接埠
+Detailed Authentication Information,詳細的驗證資訊
+Detailed Authentication Information,詳細驗證資訊
+Device ID,裝置識別碼
+Device Name,裝置名稱
+Direction,方向
+Directory Service,目錄服務
+Disable Integrity Checks,停用完整性檢查
+Disabled Privileges,已停用的權限
+Display Name,顯示名稱
+DNS Host Name,DNS 主機名稱
+Domain Behavior Version,網域行為版本
+Domain ID,網域識別碼
+Domain Name,網域名稱
+Domain,網域
+EAP Type,EAP 類型
+Elevated Token,提高權限的權杖
+Enabled Privileges,已啟用的權限
+Error Code,錯誤碼
+Event in sequence,順序中的事件
+Expiration time,到期時間
+Extended-Result,延伸結果
+Failed test code,失敗的測試代碼
+Failure Code,錯誤碼
+Failure Information,失敗資訊
+Failure Reason,失敗原因
+Filter Information,篩選器資訊
+Filter Run-Time ID,篩選器執行階段識別碼
+Flight Signing,快速簽署
+Force Logoff,強制登出
+Fully Qualified Account Name,完整帳戶名稱
+General Settings,一般設定
+Group Domain,群組網域
+Group Membership,群組成員資格
+Group Name,群組名稱
+Group,群組
+Handle ID,控制代碼識別碼
+Hardware IDs,硬體識別碼
+Help URL,說明 URL
+Home Directory,主目錄
+Home Drive,主磁碟
+HyperVisor Debugging,HyperVisor 偵錯
+HyperVisor Launch Type,HyperVisor 啟動類型
+HyperVisor Load Options,HyperVisor 載入選項
+HyperVisor Settings,HyperVisor 設定
+Image File Name,
+Image File,
+Impersonation Level,模擬層級
+Impersonation Level,模擬等級
+IP Addresses,IP 位址
+Kernel Debugging,核心偵錯
+Key Length,金鑰長度
+Layer Name,階層名稱
+Layer Run-Time ID,階層執行階段識別碼
+LDAP Display Name,LDAP 顯示名稱
+Linked Logon ID,連結的登入識別碼
+Load Options,載入選項
+Location Information,位置資訊
+Lockout Duration,鎖定期間
+Lockout Observation Window,鎖定觀察視窗
+Lockout Threshold,鎖定閾值
+Logging Results,記錄結果
+Logon Account,登入帳戶
+Logon GUID,登入 GUID
+Logon Hours,登入時段
+Logon ID,登入識別碼
+Logon ID,登入識别碼
+Logon Information,登入資訊
+Logon Process Name,登入程序
+Logon Process Name,登入處理程序
+Logon Process,登入程序
+Logon Process,登入處理程序
+Logon Type,登入類型
+Machine Account Quota,電腦帳戶配額
+Mandatory Label,必要標籤
+Max. Password Age,最長密碼壽命
+Member,成員
+Min. Password Age,最短密碼壽命
+Min. Password Length,密碼最短長度
+Mixed Domain Mode,混合網域模式
+Name,名稱
+NAS Identifier,NAS 識別元
+NAS Identifier,NAS 識別碼
+NAS IPv4 Address,NAS IPv4 位址
+NAS IPv6 Address,NAS IPv6 位址
+NAS Port,NAS 連接埠
+NAS Port-Type,NAS 連接埠類型
+Network Account Domain,網路帳戶網域
+Network Account Name,網路帳戶名稱
+Network Address,網絡位址
+Network Address,網路位址
+Network Information,網路資訊
+Network Policy Name,網路原則名稱
+New Account Name,新帳戶名稱
+New Account,新帳戶
+New Computer Account,新電腦帳戶
+New DN,新 DN
+New Group,新群組
+New Handle ID,
+New Logon,新登入
+New Logon,新的登入
+New Maxusers,新的 Maxusers
+New Process ID,新處理程序識別碼
+New Process Name,新處理程序名稱
+New Remark,新的備註
+New SD,新的 SD
+New Security Descriptor,新安全性描述元
+New ShareFlags,新的 ShareFlags
+New State,新狀態
+New Time,新時間
+New Token Information,新權杖資訊
+New UAC Value,新的 UAC 數值
+Object Handle,
+Object Name,物件名稱
+Object Server,物件伺服器
+Object Type,物件類型
+Object,物件
+OEM Information,OEM 資訊
+Old Account Name,舊帳戶名稱
+Old DN,舊 DN
+Old MaxUsers,舊的 MaxUsers
+Old Remark,舊的備註
+Old SD,舊的 SD
+Old ShareFlags,舊的 ShareFlags
+Old UAC Value,舊的 UAC 數值
+Operation,作業
+Operation,操作
+Original Security Descriptor,原始安全性描述元
+OS-Version,作業系統版本
+Package Name (NTLM only),封裝名稱 (僅 NTLM)
+Package Name (NTLM only),封裝名稱 (僅限 NTLM)
+Password History Length,密碼歷程記錄長度
+Password Last Set,最近的密碼設定
+Password Properties,密碼內容
+Permissions Change,權限變更
+Port,連接埠
+Pre-Authentication Type,預先驗證類型
+Previous Time,之前的時間
+Primary Domain,
+Primary Group ID,主要群組識別碼
+Primary Logon ID,
+Primary User Name,
+Privileges,權限
+Privileges,特殊權限
+Process Command Line,處理程序命令列
+Process ID,處理程序識別碼
+Process Information,處理程序資訊
+Process Name,處理程序名稱
+Process,處理程序
+Profile Path,設定檔路徑
+Protocol,通訊協定
+Proxy Policy Name,Proxy 原則名稱
+Quarantine Grace Time,隔離寬限期
+Quarantine Information,隔離資訊
+RADIUS Client,RADIUS 用戶端
+Read Operation,讀取作業
+Reason Code,原因碼
+Reason Code,理由代碼
+Reason,原因
+Reason,理由
+Resource Manager,資源管理員
+Restricted Admin Mode,受限制的系統管理模式
+Result Code,結果碼
+Result,結果
+RM Transaction ID,RM 交易識別碼
+SAM Account Name,SAM 帳戶名稱
+Script Path,指令檔路徑
+Security ID,安全性識別碼
+Server Information,伺服器資訊
+Server Names,伺服器名稱
+Service ID,服務識別碼
+Service Information,服務資訊
+Service Name,服務名稱
+Service Principal Names,服務主體名稱
+Session ID,工作階段識別碼
+Session Identifier,工作階段識別元
+Share Information,共用資訊
+Share Name,共用名稱
+Share Path,共用路徑
+SID History,SID 歷程記錄
+SID List,SID 清單
+Signature Settings,簽章設定
+Source Address,來源位址
+Source Address,來源網絡位址
+Source Network Address,來源工作站
+Source Network Address,來源網路位址
+Source Port,來源連接埠
+Source Workstation,來源工作站
+SPN Name,SPN 名稱
+Status,狀態
+Sub Status,子狀態
+Subject,主旨
+Subject,主體
+Supplied Realm Name,支援領域名稱
+Syntax (OID),語法 (OID)
+System Event Logging,系統事件記錄
+System Health Validator Result(s),系統健康情況驗證程式結果
+Target Account ID,
+Target Account Name,
+Target Account,目標帳戶
+Target Computer,目標電腦
+Target Domain,
+Target Process ID,目標處理程序識別碼
+Target Process Name,目標處理程序名稱
+Target Process,目標處理程序
+Target Server Name,目標伺服器名稱
+Target Server,目標伺服器
+Target Subject,目標主體
+Target User Name,
+Test Signing,測試簽署
+The domain controller attempted to validate the credentials for an account,
+The workstation was locked,
+The workstation was unlocked,
+Ticket Encryption Type,票證加密類型
+Ticket Options,票證選項
+Token Elevation Type,權杖權限提高類型
+Transaction ID,交易識別碼
+Transaction Information,交易資訊
+Transited Services,轉送的服務
+Tree Delete,目錄刪除
+Type,類型
+User Account Control,使用者帳戶控制
+User Domain,
+User ID,使用者識別碼
+User Name,使用者名稱
+User Parameters,使用者參數
+User Principal Name,使用者主體名稱
+User Workstations,使用者工作站
+User,使用者
+Value,值
+Vendor IDs,廠商識別碼
+Virtual Account,虛擬帳戶
+VSM Launch Type,VSM 啟動類型
+Workstation Name,工作站名稱

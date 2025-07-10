@@ -1,0 +1,188 @@
+<eventParser name="UserGateUTMParser">
+  <deviceType>
+    <Vendor>UserGate</Vendor>
+    <Model>UTM Firewall</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<190>1 2020-04-13T20:34:36Z utm@device1 utm-loganalyzer webaccess - - CEF:0|Usergate|UTM|5|webaccess|log|1|rt=1586810071746 deviceExternalId=utm@device1 act=pass reason= suser=l2tpuser cs1Label=Rule cs1=Decrypt all for unknown users src=172.16.30.1 spt=56324 cs2Label=Source Zone cs2=Management cs3Label=Source Country cs3= dst=54.70.126.22 dpt=443 cs4Label=Destination Zone cs4=Unknown cs5Label=Destination Country cs5=RU cs6Label=Decrypted cs6=true app= requestMethod= request=https://cdn22.img.ria.ru requestContext= requestClientApplication= cn3Label=Response cn3=0 flexString1Label=Media type flexString1= flexString2Label=URL Categories flexString2=News in=0 out=0 cn1Label=Packets sent cn1=0 cn2Label=Packets received cn2=0]]></testEvent>
+    <testEvent><![CDATA[<190>1 2020-04-14T16:15:45Z utm@device1 utm-loganalyzer events - - CEF:0|Usergate|UTM|5|events|vpn_server|info|rt=1586880940060 deviceExternalId=utm@device1 suser=l2tpuser cat=vpn act=user_login_success src=192.168.1.25 cs1Label=Attributes cs1={"login":"l2tpuser"}]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patEndPipe"><![CDATA[[^\|]+]]></pattern>
+  </patternDefinitions>
+
+  <!-- UserGate LogAnalyzer Forwarded logs header format  -->
+  <eventFormatRecognizer><![CDATA[\s+CEF:\d+\|Usergate\|UTM\|]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>\d+\s+<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime><_tz:gPatTimeZone>?\s+<:gPatStr>\s+<:gPatStr>\s+<:gPatWord>\s+-\s+-\s+CEF:\d+\|Usergate\|UTM\|\d+\|<type:patEndPipe>\|<subtype:patEndPipe>\|<:patEndPipe>\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">UserGate-UTM-Generic</setEventAttribute>
+
+    <!-- Set Date Time -->
+    <choose>
+      <when test="exist _tz">
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist type">
+      <choose>
+        <when test="exist subtype">
+          <setEventAttribute attr="subtype">replaceStringByRegex($subtype, "\s+", "_")</setEventAttribute>
+          <setEventAttribute attr="eventType">combineMsgId("UserGate-UTM-"", $type, "-",$subtype)</setEventAttribute>
+        </when>
+        <otherwise>
+          <setEventAttribute attr="eventType">combineMsgId("UserGate-UTM-"", $type)</setEventAttribute>
+        </otherwise>
+      </choose>
+    </when>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="fwAction" key="act"/>
+      <attrKeyMap attr="appName" key="app"/>
+      <attrKeyMap attr="alertCategory" key="cat"/>
+      <attrKeyMap attr="postNATDestIpAddr" key="destinationTranslatedAddress"/>
+      <attrKeyMap attr="postNATDestIpPort" key="destinationTranslatedPort"/>
+      <attrKeyMap attr="deviceIdentification" key="deviceExternalId"/>
+      <attrKeyMap attr="destIpPort" key="dpt"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="recvBytes" key="in"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="sentBytes" key="out"/>
+      <attrKeyMap attr="_proto" key="proto"/>
+      <attrKeyMap attr="reason" key="reason"/>
+      <attrKeyMap attr="uriStem" key="request"/>
+      <attrKeyMap attr="srcApp" key="requestClientApplication"/>
+      <attrKeyMap attr="requestContext" key="requestContext"/>
+      <attrKeyMap attr="httpMethod" key="requestMethod"/>
+      <attrKeyMap attr="postNATSrcIpAddr" key="sourceTranslatedAddress"/>
+      <attrKeyMap attr="postNATSrcIpPort" key="sourceTranslatedPort"/>
+      <attrKeyMap attr="srcIpPort" key="spt"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="srcUser" key="suser"/>
+      <!-- Event Dependent Labels -->
+      <attrKeyMap attr="_cs1Label" key="cs1Label"/>
+      <attrKeyMap attr="_cs1" key="cs1"/>
+      <attrKeyMap attr="_cn1Label" key="cn1Label"/>
+      <attrKeyMap attr="_cn1" key="cn1"/>
+      <attrKeyMap attr="_cs2Label" key="cs2Label"/>
+      <attrKeyMap attr="_cs2" key="cs2"/>
+      <attrKeyMap attr="_cn2Label" key="cn2Label"/>
+      <attrKeyMap attr="_cn2" key="cn2"/>
+      <attrKeyMap attr="_cs3Label" key="cs3Label"/>
+      <attrKeyMap attr="_cs3" key="cs3"/>
+      <attrKeyMap attr="_cn3Label" key="cn3Label"/>
+      <attrKeyMap attr="_cn3" key="cn3"/>
+      <attrKeyMap attr="_cs4Label" key="cs4Label"/>
+      <attrKeyMap attr="_cs4" key="cs4"/>
+      <attrKeyMap attr="_cn4Label" key="cn4Label"/>
+      <attrKeyMap attr="_cn4" key="cn4"/>
+      <attrKeyMap attr="_cs5Label" key="cs5Label"/>
+      <attrKeyMap attr="_cs5" key="cs5"/>
+      <attrKeyMap attr="_cn5Label" key="cn5Label"/>
+      <attrKeyMap attr="_cn5" key="cn5"/>
+      <attrKeyMap attr="_cs6Label" key="cs6Label"/>
+      <attrKeyMap attr="_cs6" key="cs6"/>
+      <attrKeyMap attr="_cn6Label" key="cn6Label"/>
+      <attrKeyMap attr="_cn6" key="cn6"/>
+    </collectFieldsByKeyValuePair>
+
+    <!-- append fwAction if exists to event type -->
+    <when test="exist fwAction">
+      <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $fwAction)</setEventAttribute>
+    </when>
+
+    <!-- extract reporting dev name from deviceId -->
+    <when test="exist deviceIdentification">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$deviceIdentification">
+            <regex><![CDATA[<:gPatWord>@<reptDevName:gPatHostName>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <!-- sometimes proto is int, sometimes str -->
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+
+    <!-- csX handling -->
+    <when test="exist _cs1Label">
+      <choose>
+        <when test="not_exist _cs1"/>
+        <when test="$_cs1Label = 'Rule'">
+          <setEventAttribute attr="ruleName">$_cs1</setEventAttribute>
+        </when>
+        <when test="$_cs1Label = 'Signature Id'">
+          <setEventAttribute attr="ipsSignatureId">$_cs1</setEventAttribute>
+        </when>
+        <when test="$_cs1Label = 'Attributes'">
+          <setEventAttribute attr="_attributes">$_cs1</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist _cs2Label">
+      <choose>
+        <when test="not_exist _cs2"/>
+        <when test="$_cs2Label = 'Source Zone'">
+          <setEventAttribute attr="srcFwZone">$_cs2</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist _cs4Label">
+      <choose>
+        <when test="not_exist _cs4"/>
+        <when test="$_cs4Label = 'Destination Zone'">
+          <setEventAttribute attr="destFwZone">$_cs4</setEventAttribute>
+        </when>
+        <when test="$_cs4Label = 'Details'">
+          <setEventAttribute attr="details">$_cs4</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <!-- cnX handling -->
+    <when test="exist _cn1Label">
+      <choose>
+        <when test="not_exist _cn1"/>
+        <when test="$_cn1Label = 'Packets sent'">
+          <setEventAttribute attr="sentPkts">$_cn1</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist _cn2Label">
+      <choose>
+        <when test="not_exist _cn2"/>
+        <when test="$_cn2Label = 'Packets received'">
+          <setEventAttribute attr="recvPkts">$_cn2</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist _attributes">
+      <collectAndSetAttrByJSON src="$_attributes">
+        <attrKeyMap attr="errReason" key="error_text"/>
+        <attrKeyMap attr="user" key="login"/>
+        <attrKeyMap attr="ruleName" key="rule.name"/>
+        <attrKeyMap attr="status" key="rule.enabled"/>
+        <attrKeyMap attr="msg" key="rule.description"/>
+      </collectAndSetAttrByJSON>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

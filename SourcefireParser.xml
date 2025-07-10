@@ -1,0 +1,81 @@
+<eventParser name="SourcefireParser">
+
+  <deviceType>
+    <Vendor>Sourcefire</Vendor>
+    <Model>Sourcefire3D IPS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patQuote"><![CDATA[[^"]*]]></pattern>
+    <pattern name="patRightParen"><![CDATA[[^)]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+(?:Snort|SFAppliance|SFIMS):\s+\[<:gPatInt>:<:gPatInt>:<:gPatInt>\]]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<188>Jul  4 15:07:01 Sourcefire3D Snort: [119:15:1] http_inspect: OVERSIZE REQUEST-URI DIRECTORY [Impact: Unknown] From DetectionEngine_IPS_DMZ2/SourcefireIPS at Thu Jul  4 15:07:01 2013 UTC [Classification: Potentially Bad Traffic] [Priority: 2] {tcp} 10.20.1.12:57689->1.1.1.1]]></testEvent>
+    <testEvent><![CDATA[<188>Jul  4 14:49:15 Sourcefire3D Snort: [1:1000044:4] INDICATOR-COMPROMISE Suspicious .cn dns query - Chamado 49642 [Impact: Unknown] From DetectionEngine_IPS_DMZ2/SourcefireIPS at Thu Jul  4 14:49:14 2013 UTC [Classification: A Network Trojan was Detected] [Priority: 1] {udp} 1.1.1.1:3320->10.20.1.131:53]]></testEvent>
+    <testEvent><![CDATA[<188>Jul  4 15:07:46 Sourcefire3D Snort: [139:1:1] sensitive_data: sensitive data global threshold exceeded [Impact: Unknown] From DetectionEngine_IPS_DMZ2/SourcefireIPS at Thu Jul  4 14:07:44 2013 UTC [Classification: Sensitive Data] [Priority: 2] {divert} 10.20.1.92->1.1.1.1]]></testEvent>
+    <testEvent><![CDATA[<188>Jul  4 15:20:30 Sourcefire3D Snort: [1:385:8] PROTOCOL-ICMP traceroute [Impact: Unknown] From DetectionEngine_IPS_DMZ1/SourcefireIPS at Thu Jul  4 15:20:30 2013 UTC [Classification: Attempted Information Leak] [Priority: 2] {icmp} 1.1.1.1->10.20.1.155]]></testEvent>
+    <testEvent><![CDATA[<46>Jul 17 16:01:54 DefenseCenter SFAppliance: [1:7070:14] "POLICY-OTHER script tag in URI - likely cross-site scripting attempt" [Impact: Potentially Vulnerable] From "10.134.96.172" at Wed Jul 17 16:01:52 2013 UTC [Classification: Web Application Attack] [Priority: 1] {tcp} 1.2.3.4:60537->2.3.4.5:80]]></testEvent>
+    <testEvent><![CDATA[<114>Aug 13 19:28:24 SG-FIRESIGHT SFIMS: [1:31600:1] "BLACKLIST DNS reverse lookup response for known malware domain example.com - Win.Trojan.Glupteba" [Impact: Vulnerable] From "SG-FS01" at Sat Aug 13 19:28:23 2016 UTC [Classification: A Network Trojan was Detected] [Priority: 1] {udp} 1.1.1.1:53 (russian federation)->10.22.10.20:65437 (unknown) Domain: Global \ JustEnergy]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<hostName:gPatHostName>\s+\w+:\s+\[<:gPatInt>:<_evTypeId:gPatInt>:<:gPatInt>\]\s+<msg:gPatMesgBody>\s+\[Impact:\s+<vulnConseq:gPatStrRightSB>\]\s+.*\[Classification:\s+<devEventTypeGrp:gPatStrRightSB>\]\s+\[Priority:\s+<_severity:gPatInt>\]\s+{<_proto:gPatWord>}\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<hostName:gPatStr>\s+SFAppliance:\s+\[<:gPatInt>:<_evTypeId:gPatInt>:<:gPatInt>\]\s+"<signatureName:patQuote>"\s+\[Impact:\s+<vulnConseq:gPatStrRightSB>\]\s+.*\[Classification:\s+<devEventTypeGrp:gPatStrRightSB>\]\s+\[Priority:\s+<_severity:gPatInt>\]\s+{<_proto:gPatWord>}\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventType">combineMsgId("Snort-", $_evTypeId)</setEventAttribute>
+    <setEventAttribute attr="eventAction">0</setEventAttribute>
+    <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>\s+\(<srcName:patRightParen>\)-\><destIpAddr:gPatIpAddr>:<destIpPort:gPatInt>\s+\(<destName:patRightParen>\)]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>-\><destIpAddr:gPatIpAddr>:<destIpPort:gPatInt>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<srcIpAddr:gPatIpAddr>-\><destIpAddr:gPatIpAddr>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <default/>
+    </switch>
+
+    <choose>
+      <when test="$_severity = '1'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_severity = '2'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="$_severity = '3'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

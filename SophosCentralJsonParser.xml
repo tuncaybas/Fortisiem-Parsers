@@ -1,0 +1,162 @@
+<eventParser name="SophosCentralJsonParser">
+  <deviceType>
+    <Vendor>Sophos</Vendor>
+    <Model>Central</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[2025-04-16T19:47:54Z FSM-Sophos-Central,[apiPath]=/events,[json]={"created_at":"2025-04-16T19:44:30.280Z","customer_id":"ece55c1d-28ae-4627-83f2-f35a3a0d4ecf","endpoint_id":"7c883790-6b99-4a23-80ff-2695c2a12a50","endpoint_type":"computer","group":"PROTECTION","id":"e382224d-2e53-485a-81d1-a715ba1b0ce7","location":"user1\u2019s MacBook Pro","name":"Failed to protect computer: user1 MacBook Pro","severity":"high","source":"user1\u2019s MacBook Pro\\user1","source_info":{"ip":"10.83.8.56"},"type":"Event::Endpoint::NotProtected","user_id":"67fffa8ba1f7ac08a36edfd7","when":"2025-04-16T19:44:30.267Z"}]]></testEvent>
+    <testEvent><![CDATA[2025-04-16T19:50:55Z FSM-Sophos-Central,[apiPath]=/alerts,[json]={"actionable":false,"created_at":"2025-04-16T19:44:30.298Z","customer_id":"ece55c1d-28ae-4627-83f2-f35a3a0d4ecf","data":{"created_at":1744832670280,"endpoint_id":"7c883790-6b99-4a23-80ff-2695c2a12a50","endpoint_java_id":"7c883790-6b99-4a23-80ff-2695c2a12a50","endpoint_platform":"mac","endpoint_type":"computer","event_service_id":{"data":"44IiTS5TSFqB0acVuhsM5w==","type":3},"inserted_at":1744832670280,"source_info":{"ip":"10.83.8.56"},"user_match_id":{"date":1744829067000,"timestamp":1744829067},"user_match_uuid":{"data":"J5sfTfQBTU++PhOTzDxVgg==","type":3}},"description":"Failed to protect computer: user1’s MacBook Pro","event_service_event_id":"e382224d-2e53-485a-81d1-a715ba1b0ce7","id":"e382224d-2e53-485a-81d1-a715ba1b0ce7","javaUUID":"3e2822d4-e235-84a5-181d-7a51abb1c07e","location":"user1\u2019s MacBook Pro","severity":"high","source":"user1\u2019s MacBook Pro\\user1","type":"Event::Endpoint::NotProtected","when":"2025-04-16T19:44:30.267Z"}]]></testEvent>
+
+  </testEvents>
+  <eventFormatRecognizer><![CDATA[^<:gPatYear>-<:gPatMonNum>-<:gPatDay>T<:gPatTime>Z\s+FSM-Sophos-Central,\[apiPath\]=]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime><_tz:gPatTimeZone>\s+FSM-Sophos-Central,\[apiPath\]=<servicePath:gPatStr>,\[json\]=<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+      </case>
+    </switch>
+    <setEventAttribute attr="extEventRecvProto">SOPHOS_CENTRAL_API</setEventAttribute>
+    <choose>
+      <when test="$servicePath = '/events'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="_type" key="type"/>
+          <attrKeyMap attr="origLocation" key="location"/>
+          <attrKeyMap attr="clusterId" key="endpoint_id"/>
+          <attrKeyMap attr="deviceType" key="endpoint_type"/>
+          <attrKeyMap attr="groupID" key="customer_id"/>
+          <attrKeyMap attr="_severity" key="severity"/>
+          <attrKeyMap attr="_createTime" key="created_at"/>
+          <attrKeyMap attr="uuid" key="id"/>
+          <attrKeyMap attr="srcIpAddr" key="source_info.ip"/>
+          <attrKeyMap attr="source" key="resourceName"/>
+          <attrKeyMap attr="hostIpAddr" key="source_info.ip"/>
+          <attrKeyMap attr="actionName" key="name"/>
+          <attrKeyMap attr="userId" key="user_id"/>
+          <attrKeyMap attr="riskName" key="threat"/>
+          <attrKeyMap attr="_eventTime" key="when"/>
+          <attrKeyMap attr="accessKeyId" key="appSha256"/>
+          <attrKeyMap attr="certInfo" key="appCerts"/>
+          <attrKeyMap attr="groupName" key="group"/>
+          <attrKeyMap attr="serialNumber" key="core_remedy_items.items"/>
+          <attrKeyMap attr="cpuCore" key="core_remedy_items.totalItems"/>
+        </collectAndSetAttrByJSON>
+        <setEventAttribute attr="eventType">Sophos-Central</setEventAttribute>
+      </when>
+      <otherwise>
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="_type" key="type"/>
+          <attrKeyMap attr="origLocation" key="location"/>
+          <attrKeyMap attr="groupID" key="customer_id"/>
+          <attrKeyMap attr="description" key="description"/>
+          <attrKeyMap attr="_severity" key="severity"/>
+          <attrKeyMap attr="_createTime" key="created_at"/>
+          <attrKeyMap attr="uuid" key="id"/>
+          <attrKeyMap attr="_eventTime" key="when"/>
+          <attrKeyMap attr="srcIpAddr" key="source_info.ip"/>
+          <attrKeyMap attr="source" key="resourceName"/>
+          <attrKeyMap attr="clusterId" key="data.endpoint_id"/>
+          <attrKeyMap attr="deviceType" key="data.endpoint_type"/>
+          <attrKeyMap attr="_platform" key="data.endpoint_platform"/>
+          <attrKeyMap attr="hostIpAddr" key="data.source_info.ip"/>
+          <attrKeyMap attr="source" key="resourceName"/>
+          <attrKeyMap attr="riskName" key="threat"/>
+        </collectAndSetAttrByJSON>
+        <setEventAttribute attr="eventType">Sophos-Central-Alert</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist _type">
+      <setEventAttribute attr="_type">replaceStringByRegex($_type, "::", "-")</setEventAttribute>
+      <collectFieldsByRegex src="$_type">
+        <regex><![CDATA[Event<_type:gPatMesgBody>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="eventType">combineMsgId($eventType, $_type)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="$_severity = 'very_high'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+      <when test="$_severity = 'high'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$_severity = 'medium'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_severity = 'low'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_severity = 'none'">
+        <setEventAttribute attr="eventSeverity">0</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _eventTime">
+      <collectFieldsByRegex src="$_eventTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <when test="exist _createTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_createTime">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="createTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_createTime">
+            <regex><![CDATA[^<_createTime:gPatInt>$]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="createTime">divide($_createTime, 1000)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist actionName">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_body">
+            <regex><![CDATA[,\[name\]=<actionName:gPatMesgBodyMin>\s*(?:,\[|$)]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+
+      <choose>
+        <when test="not_exist groupName"/>
+
+        <when test="$groupName = 'DATA_LOSS_PREVENTION'">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$actionName">
+                <regex><![CDATA[^An?\s+(?:'|′|"|″)<fwAction:gPatMesgBodyMin>(?:'|′|"|″) action was taken\.\s+Username:\s+<domain:gPatStr>[\\]<user:gPatStr>\s+Rule names:\s+(?:'|′|"|″)<fwRule:gPatMesgBodyMin>(?:'|′|"|″)\s+User action:\s+<action:gPatMesgBodyMin>\s+Application Name:\s+<appName:gPatMesgBodyMin>\s+Data Control action:\s+<:gPatMesgBodyMin>\s+File type:\s+<fileType:gPatMesgBodyMin>\s+File size:\s+<fileSize:gPatInt>\s+Source path:\s+<filePath:gPatMesgBodyMin>\s*$]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+        </when>
+
+        <when test="$groupName = 'PUA'">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$actionName">
+                <regex><![CDATA[^PUA detected:\s+(?:'|′|"|″).*?(?:'|′|"|″) at (?:'|′|"|″)<filePath:gPatMesgBodyMin>(?:'|′|"|″)\s*$]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+        </when>
+      </choose>
+    </when>
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,140 @@
+<eventParser name="TrendMicroWorryFreeParser">
+
+  <deviceType>
+    <Vendor>TrendMicro</Vendor>
+    <Model>Worry Free</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<116>1 2019-12-01 18:36:03 192.168.1.237 WFBS-SVC-AC [LogUrlFiltering@1.3.6.1.4.1.6101 Action="Access to a website was blocked" Device name="lab-machine-1" Domain="-" Generated="2019-12-01T18:18:00-05:00" Group name="test-group" IPv6 Address="-" Label="-" Received="2019-12-01T18:36:03-05:00" URL="http://email.tommyjohnwear.com/t/o?ssid=33137&subscriber_id=balvawbtpegwxz1234ymkzutbnf&delivery_id=blhtujyecktqjfvbjcpotogxzuvjbpo&td=xSbsj1JgsNl93awYOiEZrA6EidKK0n9_7qqnq4Xsw6-NoIpqOXLFNy_tvXPIRq11wyedyXunfyIXTJ0OQm4JBtha_7mcuv_XYape_NCWW2VT9cSoXOJHNh5tMZcw4dYGYGBe3MrKMvvIofv96RqDtT0biiRPi9CSHtxs0rMb1Lmg5wKM5Q93BgDg" URL Category="Intimate Apparel/Swimsuit" User="test-user"]]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patExceptBracket"><![CDATA[[^\[\]]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatInt>\s+<:gPatYear>-<:gPatMon>-<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+WFBS-SVC-AC\s+\[]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><:gPatInt>\s+<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+WFBS-SVC-AC\s+\[<type:gPatWord>@<:gPatStr>\s+<_body:patExceptBracket>\]]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+      <default/>
+    </switch>
+
+    <!-- every log contains a type field here -->
+    <choose>
+      <when test="exist type">
+        <setEventAttribute attr="eventType">combineMsgId("TrendMicro-WorryFree-", $type)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">TrendMicro-WorryFree-Generic</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <!-- In case escape sequence for quotes in body -->
+    <setEventAttribute attr="_body">replaceStringByRegex($_body, "\\\"", "\"")</setEventAttribute>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_body">
+      <attrKeyMap attr="action" key="Action"/>
+      <attrKeyMap attr="action" key="Action Taken"/>
+      <attrKeyMap attr="hostName" key="Device name"/>
+      <attrKeyMap attr="_domain" key="Domain"/>
+      <attrKeyMap attr="_generatedTime" key="Generated"/>
+      <attrKeyMap attr="groupName" key="Group name"/>
+      <attrKeyMap attr="_ipv6Addr" key="IPv6 Address"/>
+      <attrKeyMap attr="_label" key="Label"/>
+      <attrKeyMap attr="_receivedTime" key="Received"/>
+      <attrKeyMap attr="downloadURL" key="URL"/>
+      <attrKeyMap attr="webCategory" key="URL Category"/>
+      <attrKeyMap attr="user" key="User"/>
+      <attrKeyMap attr="fileName" key="Infected Resource"/>
+      <attrKeyMap attr="fileName" key="File name"/>
+      <attrKeyMap attr="resourceType" key="Resource Type"/>
+      <attrKeyMap attr="details" key="Result"/>
+      <attrKeyMap attr="threatLevel" key="Risk Level"/>
+      <attrKeyMap attr="scanProfile" key="Scan Type"/>
+      <attrKeyMap attr="virusName" key="Spyware"/>
+      <attrKeyMap attr="virusType" key="Spyware/Grayware Type"/>
+      <attrKeyMap attr="subtype" key="Event Type"/>
+      <attrKeyMap attr="osObjAccessType" key="Infection Channel"/>
+      <attrKeyMap attr="operation" key="Operation"/>
+      <attrKeyMap attr="threatType" key="Security Threat"/>
+      <attrKeyMap attr="osObjName" key="Subject"/>
+      <attrKeyMap attr="targetOsObjName" key="Target"/>
+      <attrKeyMap attr="filePath" key="Path"/>
+      <attrKeyMap attr="_threatProbability" key="Threat Probability"/>
+      <attrKeyMap attr="virusName" key="Unknown Threat"/>
+      <attrKeyMap attr="virusName" key="Virus/Malware Name"/>
+    </collectFieldsByKeyValuePair>
+
+    <!-- Not every log type will contain these -->
+    <when test="exist subtype">
+      <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $subtype)</setEventAttribute>
+    </when>
+    <when test="exist operation">
+      <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $operation)</setEventAttribute>
+    </when>
+
+    <!-- Attempt to define fine specific event types -->
+    <choose>
+      <when test="not_exist type"/>
+      <when test="exist action">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$action">
+              <regex><![CDATA[Access to a website was blocked]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("TrendMicro-WorryFree-", $type,"-WebsiteBlocked")</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$action">
+              <regex><![CDATA[Attempt to clean the infected file was unsuccessful; File quarantined successfully]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("TrendMicro-WorryFree-", $type,"-FileQuarantined")</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$action">
+              <regex><![CDATA[Spyware\/Grayware cleaned successfully]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("TrendMicro-WorryFree-", $type,"-MalwareCleaned")</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="exist threatType">
+        <when test="exist details">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$details">
+                <regex><![CDATA[Program terminated successfully]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="eventType">combineMsgId("TrendMicro-WorryFree-", $type,"-ProgramTerminated")</setEventAttribute>
+            </case>
+            <default/>
+          </switch>
+        </when>
+      </when>
+    </choose>
+
+    <!-- Check if IP value is valid and set -->
+    <when test="exist _ipv6Addr">
+      <when test="$_ipv6Addr != '-'">
+        <setEventAttribute attr="srcIpAddr">$_ipv6Addr</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _domain">
+      <when test="$_domain != '-'">
+        <setEventAttribute attr="domain">$_domain</setEventAttribute>
+      </when>
+    </when>
+
+  </parsingInstructions>
+
+</eventParser>

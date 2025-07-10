@@ -1,0 +1,181 @@
+<eventParser name="TipPointSMSCEFParser">
+  <deviceType>
+    <Vendor>TrendMicro</Vendor>
+    <Model>TippingPoint Security Management System</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<35>Oct 23 16:49:50 my-host-vsms-01 CEF:0|TippingPoint|UnityOne|1.0.0.17|16961|16961: DTLS: Microsoft SChannel Cookie Length Buffer Overflow Vulnerability|7|app=UDP cnt=1 dst=10.10.10.2 dpt=12345 act=Permit cn1=60 cn1Label=VLAN ID cn2=16918781 cn2Label=Taxonomy cn3=1 cn3Label=Packet Trace cs1=<unknown> cs1Label=Profile Name cs2=abcd1234-aa22-1122-1234-abcdef12345 cs2Label=Policy UUID cs3=000001-0001-0001-0001-0000016961 cs3Label=Signature UUID cs4=1-1A 1-1B cs4Label=ZoneNames cs5=my-host-vsms-01 cs5Label=SMS Name dvchost=ABCDEF1234 cs6=  cs6Label=Filter Message Parms src=192.168.1.2 spt=443 externalId=505502 rt=1698094190738 cat=Vulnerabilities proto=UDP deviceInboundInterface=1 c6a2= c6a2Label=Source IPv6 c6a3= c6a3Label=Destination IPv6 request= requestMethod= dhost= sourceTranslatedAddress=192.168.3.4 c6a1= c6a1Label=Client IPv6 suser= sntdom= duser= dntdom=]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patExceptPipe"><![CDATA[[^|]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\s*CEF\s*:\d+\|TippingPoint\|UnityOne\|]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>?\s*<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<:gPatStr>\s+)?CEF\s*:<:gPatInt>\|TippingPoint\|UnityOne\|<version:patExceptPipe>\|<_tiptype:gPatInt>\|<msg:patExceptPipe>\|<eventSeverity:patExceptPipe>\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+
+    <setEventAttribute attr="eventType">combineMsgId("Tipp", "_", "IPS", "-", $_tiptype)</setEventAttribute>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="_rt" key="rt"/>
+      <attrKeyMap attr="srcIpAddr" key="srcip"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="postNATSrcIpAddr" key="sourceTranslatedAddress"/>
+      <attrKeyMap attr="postNATDestIpAddr" key="destinationTranslatedAddress"/>
+      <attrKeyMap attr="srcUser" key="suser"/>
+      <attrKeyMap attr="destUser" key="duser"/>
+      <attrKeyMap attr="_proto" key="proto"/>
+      <attrKeyMap attr="appTransportProto" key="app"/>
+      <attrKeyMap attr="srcIntfName" key="deviceInboundInterface"/>
+      <attrKeyMap attr="destIntfName" key="deviceOutboundInterface"/>
+      <attrKeyMap attr="count" key="cnt"/>
+      <attrKeyMap attr="srcIpPort" key="spt"/>
+      <attrKeyMap attr="destIpPort" key="dpt"/>
+      <attrKeyMap attr="fwAction" key="act"/>
+      <attrKeyMap attr="downloadURL" key="request"/>
+      <attrKeyMap attr="eventId" key="externalId"/>
+      <attrKeyMap attr="threatCategory" key="cat"/>
+      <attrKeyMap attr="httpMethod" key="requestMethod"/>
+      <attrKeyMap attr="hostName" key="dvchost"/>
+      <attrKeyMap attr="destName" key="dhost"/>
+      <attrKeyMap attr="destUser" key="duser"/>
+      <attrKeyMap attr="srcUser" key="suser"/>
+      <attrKeyMap attr="destDomain" key="dntdom"/>
+      <attrKeyMap attr="srcDomain" key="sntdom"/>
+      <!-- cs labels -->
+      <attrKeyMap attr="_cs1" key="cs1"/>
+      <attrKeyMap attr="_cs2" key="cs2"/>
+      <attrKeyMap attr="_cs3" key="cs3"/>
+      <attrKeyMap attr="_cs4" key="cs4"/>
+      <attrKeyMap attr="_cs5" key="cs5"/>
+      <attrKeyMap attr="_cs6" key="cs6"/>
+      <attrKeyMap attr="_c6a1" key="c6a1"/>
+      <attrKeyMap attr="_c6a2" key="c6a2"/>
+      <attrKeyMap attr="_c6a3" key="c6a3"/>
+      <attrKeyMap attr="_cs1Label" key="cs1Label"/>
+      <attrKeyMap attr="_cs2Label" key="cs2Label"/>
+      <attrKeyMap attr="_cs3Label" key="cs3Label"/>
+      <attrKeyMap attr="_cs4Label" key="cs4Label"/>
+      <attrKeyMap attr="_cs5Label" key="cs5Label"/>
+      <attrKeyMap attr="_cs6Label" key="cs6Label"/>
+      <attrKeyMap attr="_c6a1Label" key="c6a1Label"/>
+      <attrKeyMap attr="_c6a2Label" key="c6a2Label"/>
+      <attrKeyMap attr="_c6a3Label" key="c6a3Label"/>
+      <!-- cn labels -->
+      <attrKeyMap attr="_cn1" key="cn1"/>
+      <attrKeyMap attr="_cn2" key="cn2"/>
+      <attrKeyMap attr="_cn3" key="cn3"/>
+      <attrKeyMap attr="_cn1Label" key="cn1Label"/>
+      <attrKeyMap attr="_cn2Label" key="cn2Label"/>
+      <attrKeyMap attr="_cn3Label" key="cn3Label"/>
+    </collectFieldsByKeyValuePair>
+
+    <choose>
+      <when test="not_exist _cs1Label"/>
+      <when test="not_exist _cs1"/>
+      <when test="$_cs1Label = 'Profile Name'">
+        <setEventAttribute attr="profileName">$_cs1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs2Label"/>
+      <when test="not_exist _cs2"/>
+      <when test="$_cs2Label = 'Policy UUID'">
+        <setEventAttribute attr="uuid">$_cs2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs3Label"/>
+      <when test="not_exist _cs3"/>
+      <when test="$_cs3Label = 'Signature UUID'">
+        <setEventAttribute attr="_signUuid">$_cs3</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs4Label"/>
+      <when test="not_exist _cs4"/>
+      <when test="$_cs4Label = 'ZoneNames'">
+        <setEventAttribute attr="destFwZone">$_cs4</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs5Label"/>
+      <when test="not_exist _cs5"/>
+      <when test="$_cs5Label = 'SMS Name'">
+        <setEventAttribute attr="virtualHostName">$_cs5</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs6Label"/>
+      <when test="not_exist _cs6"/>
+      <when test="$_cs6Label = 'Filter Message Parms'">
+        <setEventAttribute attr="filter">$_cs6</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _c6a1Label"/>
+      <when test="not_exist _c6a1"/>
+      <when test="$_c6a1Label = 'Client IPv6'">
+        <setEventAttribute attr="clientIpAddr">$_c6a1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _c6a2Label"/>
+      <when test="not_exist _c6a2"/>
+      <when test="$_c6a2Label = 'Source IPv6'">
+        <setEventAttribute attr="_srcIPv6">$_c6a2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _c6a3Label"/>
+      <when test="not_exist _c6a3"/>
+      <when test="$_c6a3Label = 'Destination IPv6'">
+        <setEventAttribute attr="_destIPv6">$_c6a3</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cn1Label"/>
+      <when test="not_exist _cn1"/>
+      <when test="$_cn1Label = 'VLAN ID'">
+        <setEventAttribute attr="hostVLAN">$_cn1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cn2Label"/>
+      <when test="not_exist _cn2"/>
+      <when test="$_cn2Label = 'Taxonomy'">
+        <setEventAttribute attr="_taxonomy">$_cn2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cn3Label"/>
+      <when test="not_exist _cn3"/>
+      <when test="$_cn3Label = 'Packet Trace'">
+        <setEventAttribute attr="_pktTrace">$_cn3</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

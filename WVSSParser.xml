@@ -1,0 +1,67 @@
+<eventParser name="WVSSParser">
+  <deviceType>
+    <Vendor>Green League</Vendor>
+    <Model>WVSS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[AccelOps-WVSS]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[Wed Jul  9 15:10:24 2014 AccelOps-WVSS [event_type]=WVSS-VULN-INFO [vul_id]=10001 [vul_type]=44]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">WVSS-GENERIC</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">WVSS_API</setEventAttribute>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatStr>\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>\s+AccelOps\-WVSS\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+    </switch>
+
+    <collectAndSetAttrByKeyValuePair sep=" [" src="$_body">
+      <attrKeyMap attr="_eventType" key="[event_type]="/>
+      <attrKeyMap attr="reptDevIpAddr" key="[reptDevIpAddr]="/>
+      <attrKeyMap attr="scanId" key="[task_id]="/>
+      <attrKeyMap attr="vulnScore" key="[risk_point]="/>
+      <attrKeyMap attr="_all_url" key="[all_url]="/>
+      <attrKeyMap attr="_scanned_url" key="[scanned_url]="/>
+      <attrKeyMap attr="scannedFiles" key="[found_file]="/>
+      <attrKeyMap attr="infectedFiles" key="[vuln_file]="/>
+      <attrKeyMap attr="_start_time" key="[start_time]="/>
+      <attrKeyMap attr="_end_time" key="[end_time]="/>
+      <attrKeyMap attr="targetHostName" key="[targets]="/>
+      <attrKeyMap attr="user" key="[user]="/>
+      <attrKeyMap attr="osVersion" key="[system_version]="/>
+      <attrKeyMap attr="vulnCount" key="[vul_count]="/>
+      <attrKeyMap attr="vulnId" key="[vul_id]="/>
+      <attrKeyMap attr="vulnType" key="[vul_type]="/>
+      <attrKeyMap attr="vulnName" key="[vul_name]="/>
+      <attrKeyMap attr="_vulnDesc" key="[vul_des]="/>
+      <attrKeyMap attr="vulnSolution" key="[vul_solution]="/>
+      <attrKeyMap attr="infoURL" key="[url_list]="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <choose>
+      <when test="$_eventType = 'WVSS-TASK-INFO'">
+        <setEventAttribute attr="eventType">WVSS-TASK-INFO</setEventAttribute>
+        <collectFieldsByRegex src="$_start_time">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>\s+<_time:gPatTime>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="scanBegin">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        <collectFieldsByRegex src="$_end_time">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>\s+<_time:gPatTime>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="scanEnd">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </when>
+      <when test="$_eventType = 'WVSS-VULN-INFO'">
+        <setEventAttribute attr="eventType">WVSS-VULN-INFO</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+
+</eventParser>

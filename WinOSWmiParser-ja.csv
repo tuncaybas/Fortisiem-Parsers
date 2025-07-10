@@ -1,0 +1,287 @@
+A user account was locked out,
+Access Request Information,
+Accesses,
+Account Domain,アカウント ドメイン
+Account Expires,アカウント有効期限終了日
+Account For Which Logon Failed,ログオンを失敗したアカウント
+Account Information,アカウント情報
+Account Name,アカウント名
+Account Session Identifier,アカウントのセッション ID
+Account That Was Locked Out,ロックアウトされたアカウント
+Account Whose Credentials Were Used,資格情報が使用されたアカウント
+Additional Information,追加情報
+Advanced Options,詳細オプション
+Allowed To Delegate To,許可された委任先
+AllowedToDelegateTo,許可された委任先
+Application Correlation ID,アプリケーションの関連付け ID
+Application Information,アプリケーション情報
+Application Name,アプリケーション名
+Attribute,属性
+Attributes,属性
+Audit Failure,失敗の監査
+Audit Success,成功の監査
+Auditing Settings,監査設定
+Authentication Details,認証の詳細
+Authentication Package Name,
+Authentication Package,認証パッケージ
+Authentication Provider,認証プロバイダー
+Authentication Server,認証サーバー
+Authentication Type,認証の種類
+Called Station Identifier,被呼端末 ID
+Caller Computer Name,呼び出し元コンピューター名
+Caller Domain,
+Caller Logon ID,
+Caller Process ID,呼び出し側プロセス ID
+Caller Process Name,呼び出し側プロセス名
+Caller User Name,
+Calling Station Identifier,起呼端末 ID
+Certificate Information,証明書情報
+Certificate Issuer Name,証明書発行者名
+Certificate Serial Number,証明書シリアル番号
+Certificate Thumbprint,証明書拇印
+Change Type,変更の種類
+Changed Attributes,変更された属性
+Class ID,クラス ID
+Class Name,クラス名
+Class,クラス
+Client Address,クライアント アドレス
+Client Domain,
+Client Friendly Name,クライアントのフレンドリ名
+Client IP Address,クライアント IP アドレス
+Client Logon ID,
+Client Machine,クライアント コンピューター
+Client Name,
+Client Port,クライアント ポート
+Client User Name,
+Compatible IDs,互換性 ID
+Computer Account That Was Changed,変更されたコンピューター アカウント
+Configuration Access Policy,構成アクセス ポリシー
+Configured Names,構成名
+Connection Request Policy Name,接続要求ポリシー名
+Correlation ID,関連付け ID
+Creator Process ID,クリエーター プロセス ID
+Creator Process ID,作成元プロセス ID
+Creator Process Name,作成元プロセス名
+Creator Subject,作成元サブジェクト
+Deleted Group,削除されたグループ
+Destination Address,宛先アドレス
+Destination Port,宛先ポート
+Detailed Authentication Information,詳細な認証情報
+Device ID,デバイス ID
+Device Name,デバイス名
+Direction,方向
+Directory Service,ディレクトリ サービス
+Disable Integrity Checks,整合性チェックの無効化
+Disabled Privileges,無効にされた特権
+Display Name,表示名
+DNS Host Name,DNS ホスト名
+Domain Behavior Version,ドメインの動作バージョン
+Domain ID,ドメイン ID
+Domain Name,ドメイン名
+Domain,ドメイン
+EAP Type,EAP の種類
+Elevated Token,昇格されたトークン
+Enabled Privileges,有効にされた特権
+Error Code,エラー コード
+Event in sequence,シーケンスのイベント
+Expiration time,有効期限
+Extended-Result,拡張結果
+Failed test code,失敗したテスト コード
+Failure Code,エラー コード
+Failure Information,エラー情報
+Failure Reason,失敗の原因
+Filter Information,フィルター情報
+Filter Run-Time ID,フィルターの実行時 ID
+Flight Signing,フライト署名
+Force Logoff,強制ログオフ
+Fully Qualified Account Name,完全修飾アカウント名
+General Settings,一般設定
+Group Domain,グループ ドメイン
+Group Membership,グループ メンバーシップ
+Group Name,グループ名
+Group,グループ
+Handle ID,ハンドル ID
+Hardware IDs,ハードウェア ID
+Help URL,ヘルプ URL
+Home Directory,ホーム ディレクトリ
+Home Drive,ホーム ドライブ
+HyperVisor Debugging,HyperVisor デバッグ
+HyperVisor Launch Type,HyperVisor 起動の種類
+HyperVisor Load Options,HyperVisor 読み込みオプション
+HyperVisor Settings,HyperVisor 設定
+Image File Name,
+Image File,
+Impersonation Level,偽装レベル
+IP Addresses,IP アドレス
+Kernel Debugging,カーネル デバッグ
+Key Length,キーの長さ
+Layer Name,レイヤー名
+Layer Run-Time ID,レイヤーの実行時 ID
+LDAP Display Name,LDAP 表示名
+Linked Logon ID,リンクされたログオン ID
+Load Options,読み込みオプション
+Location Information,場所情報
+Lockout Duration,ロックアウト期間
+Lockout Observation Window,ロックアウト監視ウィンドウ
+Lockout Threshold,ロックアウトしきい値
+Logging Results,ログ結果
+Logon Account,ログオン アカウント
+Logon GUID,ログオン GUID
+Logon Hours,ログオン時間
+Logon ID,ログオン ID
+Logon Information,ログオン情報
+Logon Process Name,
+Logon Process,ログオン プロセス
+Logon Type,ログオン タイプ
+Logon Type,ログオンの種類
+Machine Account Quota,コンピューター アカウントのクォータ
+Mandatory Label,必須ラベル
+Max. Password Age,パスワード有効期間
+Member,メンバー
+Min. Password Age,パスワード変更禁止期間
+Min. Password Length,パスワードの長さの最小
+Mixed Domain Mode,混合ドメイン モード
+Name,名前
+NAS Identifier,NAS ID
+NAS IPv4 Address,NAS IPv4 アドレス
+NAS IPv6 Address,NAS IPv6 アドレス
+NAS Port,NAS ポート
+NAS Port-Type,NAS ポートの種類
+Network Account Domain,ネットワーク アカウント ドメイン
+Network Account Name,ネットワーク アカウント名
+Network Address,ネットワーク アドレス
+Network Information,ネットワーク情報
+Network Policy Name,ネットワーク ポリシー名
+New Account Name,新しいアカウント名
+New Account,新しいアカウント
+New Computer Account,新しいコンピューター アカウント
+New DN,新しい DN
+New Group,新しいグループ
+New Handle ID,
+New Logon,新しいログオン
+New Maxusers,新しい最大ユーザー数
+New Process ID,新しいプロセス ID
+New Process Name,新しいプロセス名
+New Remark,新しい注釈
+New SD,新しい SD
+New Security Descriptor,新しいセキュリティ記述子
+New ShareFlags,新しい共有フラグ
+New State,新しい状態
+New Time,新しい時刻
+New Token Information,新しいトークン情報
+New UAC Value,新 UAC の値
+Object Handle,
+Object Name,オブジェクト名
+Object Server,オブジェクト サーバー
+Object Type,オブジェクトの種類
+Object,オブジェクト
+OEM Information,OEM 情報
+Old Account Name,古いアカウント名
+Old DN,古い DN
+Old MaxUsers,古い最大ユーザー数
+Old Remark,古い注釈
+Old SD,古い SD
+Old ShareFlags,古い共有フラグ
+Old UAC Value,旧 UAC の値
+Operation,操作
+Original Security Descriptor,元のセキュリティ記述子
+OS-Version,OS バージョン
+Package Name (NTLM only),パッケージ名 (NTLM のみ)
+Password History Length,パスワード履歴の長さ
+Password Last Set,最後に設定されたパスワード
+Password Properties,パスワードのプロパティ
+Permissions Change,アクセス許可の変更
+Port,ポート
+Pre-Authentication Type,事前認証の種類
+Previous Time,前の時刻
+Primary Domain,
+Primary Group ID,プライマリ グループ ID
+Primary Logon ID,
+Primary User Name,
+Privileges,特権
+Process Command Line,プロセスのコマンド ライン
+Process ID,プロセス ID
+Process Information,プロセス情報
+Process Name,プロセス名
+Process,プロセス
+Profile Path,プロファイル パス
+Protocol,プロトコル
+Proxy Policy Name,プロキシ ポリシー名
+Quarantine Grace Time,検疫の猶予期間
+Quarantine Information,検疫情報
+RADIUS Client,RADIUS クライアント
+Read Operation,読み取り操作
+Reason Code,理由コード
+Reason,理由
+Resource Manager,リソース マネージャー
+Restricted Admin Mode,制限付き管理モード
+Result Code,結果コード
+Result,結果
+RM Transaction ID,RM トランザクション ID
+SAM Account Name,SAM アカウント名
+Script Path,スクリプトのパス
+Security ID,セキュリティ ID
+Server Information,サーバー情報
+Server Names,サーバー名
+Service ID,サービス ID
+Service Information,サービス情報
+Service Name,サービス名
+Service Principal Names,サービス プリンシパル名
+Session ID,セッション ID
+Session Identifier,セッション ID
+Share Information,共有情報
+Share Name,共有名
+Share Path,共有パス
+SID History,SID の履歴
+SID List,SID の一覧
+Signature Settings,署名の設定
+Source Address,送信元アドレス
+Source Network Address,ソース ネットワーク アドレス
+Source Port,ソース ポート
+Source Workstation,ソース ワークステーション
+SPN Name,SPN 名
+Status,状態
+Sub Status,サブ ステータス
+Subject,サブジェクト
+Subject,件名
+Supplied Realm Name,提供された領域名
+Syntax (OID),構文 (OID)
+System Event Logging,システム イベント ログ
+System Health Validator Result(s),システム正常性検証ツールの結果
+Target Account ID,
+Target Account Name,
+Target Account,ターゲット アカウント
+Target Computer,ターゲット コンピューター
+Target Domain,
+Target Process ID,ターゲット プロセス ID
+Target Process Name,ターゲット プロセス名
+Target Process,ターゲット プロセス
+Target Server Name,ターゲット サーバー名
+Target Server,ターゲット サーバー
+Target Subject,ターゲット サブジェクト
+Target User Name,
+Test Signing,テスト署名
+The domain controller attempted to validate the credentials for an account,
+The workstation was locked,
+The workstation was unlocked,
+Ticket Encryption Type,チケット暗号化の種類
+Ticket Options,チケット オプション
+Token Elevation Type,トークン昇格の種類
+Transaction ID,トランザクション ID
+Transaction Information,トランザクション情報
+Transited Services,移行されたサービス
+Tree Delete,ツリー削除
+Type,種類
+User Account Control,ユーザー アカウント制御
+User Domain,
+User ID,ユーザー ID
+User Name,ユーザー名
+User Parameters,ユーザー パラメーター
+User Principal Name,ユーザー プリンシパル名
+User Workstations,ユーザー ワークステーション
+User,ユーザー
+Value,値
+Vendor IDs,ベンダー ID
+Virtual Account,仮想アカウント
+VSM Launch Type,VSM 起動の種類
+Workstation Name,ワークステーション名

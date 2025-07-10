@@ -1,0 +1,38 @@
+<eventParser name="SalesforceParser">
+  <deviceType>
+    <Vendor>Salesforce</Vendor>
+    <Model>Salesforce Audit</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[\[Salesforce_]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[[Salesforce_Activity_Perf]:[activityType]=API,[activityName]=get_user_info,[srcIpAddr]=1.1.1.1,[user]=user@example.com,[deviceTime]=1458112097,[isSuccess]=false,[runTime]=31,[cpuTime]=9,[dbTime]=19434051,[infoURL]=Api]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\[<eventType:gPatWord>\]:<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="extEventRecvProto">SALESFORCE_API</setEventAttribute>
+
+    <collectAndSetAttrBySymbol src="$_body" sep=",[" symStart="[" symEnd="]=">
+
+    </collectAndSetAttrBySymbol>
+
+    <when test="$eventType = 'Salesforce_Activity_Perf'">
+      <when test="exist deviceTime">
+        <choose>
+          <when test="not_exist activityType">
+            <setEventAttribute attr="phRecvTime">$deviceTime</setEventAttribute>
+          </when>
+          <when test="$activityType != 'Opportunity'">
+            <setEventAttribute attr="phRecvTime">$deviceTime</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+    </when>
+  </parsingInstructions>
+
+</eventParser>

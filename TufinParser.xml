@@ -1,0 +1,105 @@
+<eventParser name="TufinParser">
+  <deviceType>
+    <Vendor>Tufin</Vendor>
+    <Model>SecureTrack</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<5>Global Policy Assigned: revision 934 on CallCenter; revision ticket ids: CHG000459676, last modified by barma002, Additional Info: timestamp: 2015-12-08 05:45:34.133]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patRecg1"><![CDATA[(?:Automatic Policy Fetched|Global Policy Assigned|Policy Installed|Policy Saved): revision \d+ on ]]></pattern>
+    <pattern name="patRecg2"><![CDATA[Tufin SecureTrack, Server tufin\(]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[^\s*<:gPatSyslogPRI>(?:<:patRecg1>|<:patRecg2>)]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">Tufin-Generic</setEventAttribute>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^\s*<:gPatSyslogPRI><_action:gPatStrEndColon>: revision <seqNum:gPatInt> on <policyName:gPatStr>; revision ticket ids: [^,]*, (?:last modified by <user:gPatStr>,|Additional Info:\s)]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">replaceStringByRegex($_action, "\s+", "-")</setEventAttribute>
+        <setEventAttribute attr="eventType">combineMsgId("Tufin-", $eventType)</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^\s*<:gPatSyslogPRI>Tufin SecureTrack, Server tufin\(<srcIpAddr:gPatIpAddr>\):\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Tufin-SecureTrack</setEventAttribute>
+      </case>
+    </switch>
+
+    <when test="exist _body">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_body">
+            <regex><![CDATA[(?:DeviceName|CallCenter) <destIpAddr:gPatIpAddr> \(\d+\): <_msg:gPatMesgBodyMin>(?:\s*$|, Additional Info:\s)]]></regex>
+          </collectFieldsByRegex>
+
+          <choose>
+            <when test="$_msg = 'ssl session established'">
+              <setEventAttribute attr="eventType">Tufin-SSL-Session-Established</setEventAttribute>
+            </when>
+
+            <when test="$_msg = 'Connection timeout'">
+              <setEventAttribute attr="eventType">Tufin-Connection-timeout</setEventAttribute>
+            </when>
+
+            <when test="$_msg = 'Rule usage is being collected'">
+              <setEventAttribute attr="eventType">Tufin-Rule-Usage-Active</setEventAttribute>
+              <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+            </when>
+
+            <when test="$_msg = 'Rule usage is not being collected'">
+              <setEventAttribute attr="eventType">Tufin-Rule-Usage-Inactive</setEventAttribute>
+              <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+            </when>
+
+            <when test="$_msg = 'CPMI session established'">
+              <setEventAttribute attr="eventType">Tufin-CPMI-Session-Established</setEventAttribute>
+              <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+            </when>
+
+            <when test="$_msg = 'CPMI server unavailable'">
+              <setEventAttribute attr="eventType">Tufin-CPMI-Server-Unavailable</setEventAttribute>
+              <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+            </when>
+
+            <when test="$_msg = 'no license'">
+              <setEventAttribute attr="eventType">Tufin-No-License</setEventAttribute>
+              <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+            </when>
+
+            <when test="$_msg = 'Wrong password'">
+              <setEventAttribute attr="eventType">Tufin-Wrong-Password</setEventAttribute>
+              <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+            </when>
+          </choose>
+        </case>
+
+        <case>
+          <collectFieldsByRegex src="$_body">
+            <regex><![CDATA[Syslog server is <_msg:gPatMesgBody>]]></regex>
+          </collectFieldsByRegex>
+
+          <choose>
+            <when test="$_msg = 'down'">
+              <setEventAttribute attr="eventType">Tufin-Syslog-Down</setEventAttribute>
+              <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+            </when>
+            <when test="$_msg = 'running'">
+              <setEventAttribute attr="eventType">Tufin-Syslog-Active</setEventAttribute>
+              <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+            </when>
+          </choose>
+        </case>
+      </switch>
+    </when>
+  </parsingInstructions>
+</eventParser>

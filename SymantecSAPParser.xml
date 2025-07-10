@@ -1,0 +1,107 @@
+<eventParser name="SymantecSAPParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Symantec</Vendor>
+    <Model>Security Analytics Platform</Model>
+    <Version>ANY</Version>
+  </appType>
+
+  <testEvents>
+    <testEvent><![CDATA[<45>Mar 7 21:39:09 10.6.204.128 1 2019-03-08T03:33:02+00:00 672294-bc-sat6 php 5488 - [meta sequenceId="10"] snlog: sn="ec:f4:bb:cc:c6:3f" id="DS" m="69" c="11" event="EVENT_JOB_QUEUE_IMPORT_FAVORITE" category="FAVORITE" ip="1.1.1.1" model="R720xd" msg="logmsg=model.sys_log::options.event.job_queue_import_favorite.started, user=, time=03:33:02, day=03/08/2019, job_id=8421, report_name="]]></testEvent>
+    <testEvent><![CDATA[<46>Mar 7 18:26:56 10.6.204.128 1 2019-03-08T00:20:49+00:00 672294-bc-sat6 ruleEngine 7527 - [meta sequenceId="51"] snlog: sn="ec:f4:bb:cc:c6:3f" id="DS" m="94" c="13" event="EVENT_ANOMALY_DETECTED" category="ANOMALY" ip="1.1.1.1" model="R720xd" msg="logmsg=\"widgets.anomalies::options.event.anomaly\", details=\"score=9 anomaly_score=0.848539 typical=965554 actual=1.41917e+09 probability=93.9542 actual_probability=4.38498e-107 create_time=2019-03-08T00:00:00+0000 start_time=2019-03-07T23:40:00+0000 end_time=2019-03-08T00:10:00+0000 function='high_sum' partition_field_name='responder_country' partition_field_value='N%2FA' field_name='total_bytes' over_field_name='responder_ip' over_field_value='1.1.1.1' link=' https://1.1.1.1/deepsee#eyJhYyI6IlN1bW1hcnkiLCJjYSI6eyJzdGFydCI6MTU1MjAwMjAwMDAwMCwiZW5kIjoxNTUyMDAzODAwMDAwfSwicGIiOlsiaXB2NF9yZXNwb25kZXI9MTAuNjYuNTAuMTI2Il0sInNjIjp7IlN1bW1hcnkiOnsidksiOjd9fX0g '\""]]></testEvent>
+    <testEvent><![CDATA[<46>Mar 8 17:19:28 10.6.204.128 1 2019-03-08T23:13:19+00:00 672294-bc-sat6 gaugefs 6318 - [meta sequenceId="204"] snlog: sn="ec:f4:bb:cc:c6:3f" id="DS" m="75" c="5" event="EVENT_DEEPSEE_REPORT_COMPLETED" category="DEEPSEE" ip="1.1.1.1" model="R720xd" msg="logmsg=\"model.sys_log::options.event.report_finished\", query_id=\"1628917\", path=\"/timespan/2019-03-08T22:45:00+00:00_2019-03-08T23:00:00+00:00/ipv4_address/1.1.1.1/deepseelive.sql:s-http_uri=104094:100:0:0:0:0:10.8.0.1:57:795408:104094,referer=104095:100:0:0:0:0:10.8.0.1:57:795422:104095,port_responder=104096:100:0:0:0:0:10.8.0.1:57:795436:104096,port_initiator=104097:100:0:0:0:0:10.8.0.1:57:795450:104097,http_method=104098:100:0:0:0:0:10.8.0.1:57:795464:104098,application_group=104085:100:1:0:0:0:10.8.0.1:57:795282:104085,user_name=104086:100:0:0:0:0:10.8.0.1:57:795296:104086,ipv4_initiator=104087:100:0:0:0:0:10.8.0.1:57:795310:104087,ipv4_responder=104088:100:0:0:0:0:10.8.0.1:57:795324:104088,dns_query=104089:100:0:0:0:0:10.8.0.1:57:795338:104089,application_id=104090:100:0:0:0:0:10.8.0.1:57:795352:104090,filename=104091:100:0:0:0:0:10.8.0.1:57:795366:104091,social_persona=104092:100:0:0:0:0:10.8.0.1:57:795380:104092,user_agent=104093:100:0:0:0:0:10.8.0.1:57:795394:104093\", elapsed_time=\"18.733206\""]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patType"><![CDATA[snlog]]></pattern>
+    <pattern name="patEndQuote"><![CDATA[[^"]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\s+\[meta\ssequenceId="\d+"\]\s+<:patType>]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime><_tz:gPatTimeZone>\s+<reptDevName:gPatStr>\s+<procName:gPatStr>\s+.*\[meta\ssequenceId="\d+"\]\s+<_type:patType>:<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    <setEventAttribute attr="eventType">"Symantec-SAP-Generic"</setEventAttribute>
+    <setEventAttribute attr="_body">replaceStrInStr($_body, "\=", "=")</setEventAttribute>
+    <setEventAttribute attr="logLevel">"snlog"</setEventAttribute>
+
+    <when test="$_type = 'snlog'">
+      <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_body">
+        <attrKeyMap attr="_sn" key="sn"/>
+        <attrKeyMap attr="_id" key="id"/>
+        <attrKeyMap attr="_m" key="m"/>
+        <attrKeyMap attr="_c" key="c"/>
+        <attrKeyMap attr="hostIpAddr" key="ip"/>
+        <attrKeyMap attr="_event" key="event"/>
+        <attrKeyMap attr="_category" key="category"/>
+        <attrKeyMap attr="_model" key="model"/>
+        <attrKeyMap attr="msg" key="msg"/>
+      </collectFieldsByKeyValuePair>
+      <setEventAttribute attr="_event">replaceStringByRegex($_event, "_", "-")</setEventAttribute>
+      <setEventAttribute attr="eventType">combineMsgId("Symantec-SAP-", $_event)</setEventAttribute>
+    </when>
+
+    <when test="matches($msg, 'logmsg=')">
+      <collectFieldsByRegex src="$msg">
+        <regex><![CDATA[logmsg="?<:gPatStrComma>,\s+<_model:gPatMesgBody>]]></regex>
+      </collectFieldsByRegex>
+      <when test="exist _model">
+        <setEventAttribute attr="_model">replaceStrInStr($_model, ",", " ")</setEventAttribute>
+        <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_model">
+          <attrKeyMap attr="osObjAction" key="action"/>
+          <attrKeyMap attr="user" key="user"/>
+          <attrKeyMap attr="userId" key="user_id"/>
+          <attrKeyMap attr="destIpAddr" key="remote_ip"/>
+          <attrKeyMap attr="srcIpAddr" key="ip"/>
+          <attrKeyMap attr="_reasonCode" key="reason_code"/>
+          <attrKeyMap attr="errReason" key="reason_msg"/>
+          <attrKeyMap attr="authenMethod" key="auth_class"/>
+          <attrKeyMap attr="_fileAndSize" key="filename"/>
+          <attrKeyMap attr="targetName" key="name"/>
+          <attrKeyMap attr="filePath" key="path"/>
+          <attrKeyMap attr="jobId" key="job_id"/>
+          <attrKeyMap attr="srcIpAddr" key="over_field_value"/>
+          <attrKeyMap attr="ipsEvRR" key="score"/>
+          <attrKeyMap attr="ipsEvTR" key="anomaly_score"/>
+        </collectFieldsByKeyValuePair>
+        <when test="exist _fileAndSize">
+          <collectFieldsByRegex src="$_fileAndSize">
+            <regex><![CDATA[<fileName:gPatStrComma>\s+<fileSize:gPatStr>]]></regex>
+          </collectFieldsByRegex>
+        </when>
+      </when>
+    </when>
+
+    <choose>
+      <when test="$eventType = 'Symantec-SAP-USER-LOGIN-FAILED'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[Failed password for <user:gPatStr> from <srcIpAddr:gPatIpV4Dot> port <srcIpPort:gPatStr> <destProto:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[Failed to compute location of secret file for \"<user:gPatStr>\"]]></regex>
+            </collectFieldsByRegex>
+          </case>
+        </switch>
+      </when>
+      <when test="$eventType = 'Symantec-SAP-EVENT-ANOMALY-DETECTED'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[logmsg="<:patEndQuote>",\s+<infoURL:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </when>
+    </choose>
+  </parsingInstructions>
+
+</eventParser>

@@ -1,0 +1,118 @@
+<eventParser name="SymantecWebIsolationParser">
+
+  <deviceType>
+    <Vendor>Symantec</Vendor>
+    <Model>Web Isolation</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <!-- pattern definitions -->
+  <patternDefinitions>
+    <pattern name="patJSON"><![CDATA[{.*}]]></pattern>
+  </patternDefinitions>
+  <!-- This should be updated to be more selctive to the actual events that you are expecting -->
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+(?:<:gPatHostName>|<:gPatIpAddr>)\s+skylight\[-\]:.*?]]></eventFormatRecognizer>
+  <testEvents>
+    <testEvent><![CDATA[<13>Jul 1 13:17:48 68111cfcc93d skylight[-]: Jul 1 13:17:48 proxy2-us engine.x[ID:1][29]: {"service":"Threat Isolation Engine","event":"Network Request","source_ip":"10.1.202.211","original_source_ip":"10.1.202.211","source_port":41266,"destination_ip":"2.2.2.2","top_level_url":"https://www.example.com/","top_level_url_scheme":"https","top_level_url_host":"www.example.com","top_level_url_port":443,"user_agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.90 Safari/537.36","username":"amorgan","url_categories":["Technology/Internet"],"url_parent_categories":["General Use"],"url_computed_categories":[{"id":38,"name":"Technology/Internet","parent_name":"General Use"}],"source_ip_country_code":"INTERNAL","source_ip_country_name":"Internal Network","destination_ip_country_code":"US","destination_ip_country_name":"United States","url_risk":2,"user_groups":["ISOC McAfee Access","Anti-Fraud","GES-AE"],"policy_version":124,"isolation_session_id":"11111111-1111-1111-1111-111111111111","rule_id":"1","rule_type":"default","tab_id":"ad621dbf72b4a1cc","session_id":"ad621dbf72b4a1cc_4478728_2","client_id":"YW1vcmdhbg2__FGL__9622962633c7deb5eeb0d72175be132f7b395c8500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","tenant_id":"","symc_transaction_id":"","initiated_by_gateway":"No","malicious":"No","organization_id":"","organization_name":"","rendering_mode":"VectorRendering","resource_response_headers":{"Set-Cookie":"X-Salesforce-CHAT=!+p9kRJ+DQDIB0Ia2YJmKM+DSXhjHl7kvH/6r8GYj+CidDCP59Tcv9ifRhi31YT2TfVQhodWrRgyYOkg=; path=/; Httponly; Secure","Pragma":"no-cache","X-Content-Type-Options":"nosniff","Content-Type":"text/javascript","Content-Encoding":"gzip","Connection":"close","Cache-Control":"no-cache","Access-Control-Allow-Origin":"*","Expires":"-1","Access-Control-Allow-Credentials":"true"},"referer_host":"www.example.com","redirect_response":"No","total_bytes_sent":0,"resource_request_headers":{"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36","Referer":"https://www.example.com/","Accept":"*/*"},"response_status_code":200,"request_method":"GET","policy_version":124,"url_categories":["Business/Economy"],"rule_id":"1","rule_name_at_log_time":"Default Rule","action":"Isolate","url":"https://c.la3-c1-ia2.salesforceliveagent.com/chat/rest/Visitor/Availability.jsonp?'****'","time_stamp":"2019-07-01T13:17:47.318935Z","url_host":"c.example.com","url_scheme":"https","destination_ip_country_code":"US","total_bytes":151,"resource_type":"Script","content_type":"text/javascript","destination_ip_country_name":"United States","response_cached":"No","log_type":"Network Request","destination_ip":"3.3.3.3","rule_type":"default","action_reason":"Policy Rule","request_id":1685,"url_parent_categories":["General Use"],"referer_url":"https://www.example.com/","url_risk":2,"navigation_reason":"Link","url_port":443}]]></testEvent>
+    <testEvent><![CDATA[<13>Jul 1 13:19:02 68111cfcc93d skylight[-]: Jul 1 13:19:02 proxy2-us localhost a_s_worker_0[54]: [1561987142434] {"service":"Threat Isolation Engine","event":"Session Ended","source_ip":"10.1.202.211","original_source_ip":"10.1.202.211","source_port":41294,"destination_ip":"2.2.2.2","top_level_url":"https://4.4.4.4/","top_level_url_scheme":"https","top_level_url_host":"4.4.4.4","top_level_url_port":443,"user_agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.90 Safari/537.36","username":"amorgan","url_categories":["Uncategorized"],"url_parent_categories":["Unknown"],"url_computed_categories":[{"id":90,"name":"Uncategorized","parent_name":"Unknown"}],"source_ip_country_code":"INTERNAL","source_ip_country_name":"Internal Network","destination_ip_country_code":"GB","destination_ip_country_name":"United Kingdom","url_risk":5,"user_groups":["ISOC McAfee Access","Anti-Fraud","GES-AE"],"policy_version":124,"isolation_session_id":"11111111-1111-1111-1111-111111111111","rule_id":"5","rule_type":"user_defined","tab_id":"ad621dbf72b4a1cc","session_id":"ad621dbf72b4a1cc_4478728_3","client_id":"YW1vcmdhbg2__FGL__9622962633c7deb5eeb0d72175be132f7b395c8500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","tenant_id":"","symc_transaction_id":"","initiated_by_gateway":"No","malicious":"No","organization_id":"","organization_name":"","rendering_mode":"VectorRendering","url_port":443,"url_host":"4.4.4.4","log_type":"Session Ended","beautification_longest_duration":0,"kbytes_sent":0,"beautifications_count":0,"latency":-1,"bandwidth_avg":-1,"time_stamp":"2019-07-01T13:19:02.430763Z","action":"Isolate","url":"https://92.52.76.137/","url_scheme":"https"}]]></testEvent>
+    <testEvent><![CDATA[<13>Jul 1 13:17:58 68111cfcc93d skylight[-]: Jul 1 13:17:57 proxy2-us localhost a_s_worker_3[66]: [1561987077650] {"action":"Isolate","action_reason":"Policy rule","advanced_details":null,"content_action":null,"content_type":"application/json","destination_ip":"0.0.0.0","destination_ip_country_code":"UNKNOWN","destination_ip_country_name":"Unknown Geolocation","details":null,"event":"Forward To Isolation","initiated_by_gateway":"No","isolation_session_id":"11111111-1111-1111-1111-111111111111","malicious":"No","original_source_ip":"10.1.202.211","referer_host":"skylight.example.com","referer_url":"https://skylight.example.com/","rendering_mode":"VectorRendering","request_method":"GET","resource_request_headers":{"connection":"close","host":"skylight.example.com","x-fg-client-ip":"10.1.202.211","x-forwarded-port":"41290","x-forwarded-proto":"https","x-forwarded-host":"skylight.example.com","x-forwarded-for":"72.32.180.178","x-amzn-trace-id":"Root=1-5d1a0805-38792d20ee7790dcd6aecb2c","upgrade-insecure-requests":"1","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.90 Safari/537.36","accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3","referer":"https://skylight.example.com/","accept-encoding":"gzip, deflate, br","accept-language":"en-US,en;q=0.9","cookie":"COOKIE_last_login=amorgan; clientIds=jxy5NSD8BPojrebZQFTzaeOQoSR83BRcom18zz4RmkVy5t00xUA7vhdeZLlAR0Z%2FiENAynEiw9YuU2oVcxVxgRc6tYNHnH62bqk0iGt4ksO%2FdsrfF0iPT5JgJAfPoPsPHlwS%2BqxosmWLdm6hNN5QjnXZLiG%2F2iy4vz9ZZD188aKYTVQUPIra%2FS7YLf3%2FO1%2BVx5%2Bpok%2BXNQ7f1AFXdieFOY%2Bdy1gS525CumAuOI1ZNr50K3XrcedCk%2F6JCqAn%2BvRB%2BBXWnE7q%2FCio9ggU%2BT1qu6OlV4IDKpYzmKluFcsma%2F0%3Df0a03acdb36d45fd0cb6ceaf29b60e6a641365ace364da606ddc34722e51a794; browserDataKeys=DHBW%2BzwjBpX3Fe7DIWLV8N6QsCFjQ46oY8ZXET5kGmVkDCseS0t%2BfiAuObYioVx6k6N22nEoyz0Dr0nm3AJVtmfRQIpdXOAZi9IR8QJ831KSW9ZXcy%2FxepVEeVm8vpy12622d83c19c2913d28af81176a5ee653e2fbbd91c168f350521ec66268d71794; connect.sid=s%3AXfAGZI3AjhK641A5vHzPCjqGMyzXDss8.FtSLL5kwbf%2F3dGBTLSG8hMDuyYXNIGCEQi1c89hI4jQ; fg-sp-ac=ckbdRQxsKj7rhHvKvyGBlwax5T3H7RVdSPJOGJcXgEywxWTMrVR9qJV3L1wltIy6bA3UoVoEgmEcGNNjAsHs4WCsHEDpD6zL1XNk%2BkEI%2Bvr%2Fq5axLt3iNonegeyoLUnzJfSD5PFwYb4H1cpIbzpy9HNKZosNffwqAD1gfz%2BaAB919t9EWfwQkSeb4cRAcyjZIvIfjy6IfHaXiLtgB6xm9GjH; fg-acs2a0ae8fef63363e483b82a8816847797a72fd74c=UMu7m8zwpFlRON3qf9ANxao5JnphdxNgOSULo55f0i05ywbNTFs29R0TWXvnAxYP5nit8a8xjVdmRyPvZY6Rwsev0nk%2FbpZ653jryEcCGGedPRs%2FQkknc%2BTP3L%2FZK4StdrFG%2FKA2LXlHQ2sNgte%2BByakTsxw20MOOJfdCYrIyycuLVcuP6qn65Y3a900yBjP8J8s4IG%2FFaqt9x2bxAkELb7D1mdoIFGtFbsvlHiv%2Fb11W9qQVcsvk9wCSZODqfmzQk6j2jUMu4Q63xo%2FRc8CjWAZnFXBpL3pZstjSEEgmfh3WkHySfnenw2qTc51uw%2BVZkNyIa0UV3QMnEDmWjczRQWuLf8Yp3pqTVMEmRnMQ20jU6DX4CARM9Y%3D; AWSALB=E2CREYvRHjHbagRq1/MGAslC5xvYXJPf9IRs7Gmo2I1jgIp2+VSS0OMFHfStqWT+WdOArwBSUbWLRtA9b8cjdDQBpBa0uLMmbuFn8l9GOS5fBOPtFfAX1bjmb24W","content-type":"application/json"},"resource_response_headers":null,"response_cached":null,"response_status_code":"","rule_id":"5","rule_type":"user_defined","service":"Reverse Proxy","severity":"None","source_ip":"10.1.202.211","source_ip_country_code":"INTERNAL","source_ip_country_name":"Internal Network","source_port":59890,"symc_transaction_id":"","tenant_id":"","time_stamp":"2019-07-01T13:17:57.650Z","total_bytes":null,"total_bytes_sent":null,"url":"https://92.52.76.137/?****","url_categories":["Uncategorized"],"url_computed_categories":[{"id":90,"name":"Uncategorized","parentName":"Unknown"}],"url_host":"4.4.4.4","url_parent_categories":["Unknown"],"url_port":443,"url_risk":5,"url_scheme":"https","user_agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.90 Safari/537.36","user_download_usage_bytes":null,"user_groups":["ISOC McAfee Access","Anti-Fraud","GES-AE"],"user_total_usage_bytes":0,"user_upload_usage_bytes":null,"username":"amorgan"}]]></testEvent>
+    <testEvent><![CDATA[<13>Jul 1 14:14:06 manage.skylight.example.com skylight[-]: {"@timestamp":"2019-07-01T14:14:06.739Z","@version":"1","host":"manage.skylight.example.com","type":"fw.syslog.managementAuditLogs","user":"admin","user_id":1,"action":"login","entity_type":"","revision":125,"pre_change_entity":"","post_change_entity":"","single_change_entity":"","change_description":"User admin logged in successfully with the roles: Administrator. Identity provider: Internal Authentication. Remote address: 10.1.201.100","push_relevant":false}]]></testEvent>
+    <testEvent><![CDATA[<13>Jul 1 14:35:12 68111cfcc93d skylight[-]: Jul 1 14:35:12 proxy2-us localhost a_s_worker_3[66]: [1561991712615] {"service":"Threat Isolation Engine","event":"Session Ended","source_ip":"10.1.201.40","original_source_ip":"10.1.201.40","source_port":5284,"destination_ip":"2.2.2.2","top_level_url":"https://www.virustotal.com/gui/","top_level_url_scheme":"https","top_level_url_host":"www.example.com","top_level_url_port":443,"user_agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.90 Safari/537.36","username":"amorgan","url_categories":["Technology/Internet"],"url_parent_categories":["General Use"],"url_computed_categories":[{"id":38,"name":"Technology/Internet","parent_name":"General Use"}],"source_ip_country_code":"INTERNAL","source_ip_country_name":"Internal Network","destination_ip_country_code":"US","destination_ip_country_name":"United States","url_risk":2,"user_groups":["ISOC McAfee Access","Anti-Fraud","GES-AE"],"policy_version":124,"isolation_session_id":"11111111-1111-1111-1111-111111111111","rule_id":"1","rule_type":"default","tab_id":"ac1891f84278e206","session_id":"ac1891f84278e206_4483372_3","client_id":"YW1vcmdhbg2__FGL__9622962633c7deb5eeb0d72175be132f7b395c8500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","tenant_id":"","symc_transaction_id":"","initiated_by_gateway":"No","malicious":"No","organization_id":"","organization_name":"","rendering_mode":"VectorRendering","url_port":443,"url_host":"www.example.com","log_type":"Session Ended","beautification_longest_duration":0,"kbytes_sent":0,"beautifications_count":0,"latency":-1,"bandwidth_avg":-1,"time_stamp":"2019-07-01T14:35:12.614192Z","action":"Isolate","url":"https://www.virustotal.com/gui/","url_scheme":"https"}]]></testEvent>
+    <testEvent><![CDATA[<13>Jul 1 13:17:45 68111cfcc93d skylight[-]: Jul 1 13:17:44 proxy2-us localhost /usr/bin/node[40]: [1561987064739] {"action":null,"authentication_phase":"Authenticated by IdP","authentication_session_id":"11111111-1111-1111-1111-111111111111","authentication_type":"SAML Authentication","details":null,"event":"Authentication","isolation_session_id":null,"request_method":"POST","resource_request_headers":null,"service":"Threat Isolation Engine","severity":"None","source_ip":"10.1.202.211","source_port":null,"tenant_id":null,"time_stamp":"2019-07-01T13:17:44.739Z","url":"https://skylight.example.com/","user_agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.90 Safari/537.36","username":"amorgan"}]]></testEvent>
+    <testEvent><![CDATA[<13>Jul 1 13:17:48 68111cfcc93d skylight[-]: Jul 1 13:17:48 proxy2-us engine.x[ID:1][29]: {"service":"Threat Isolation Engine","event":"Network Request","source_ip":"10.1.202.211","original_source_ip":"10.1.202.211","source_port":41266,"destination_ip":"2.2.2.2","top_level_url":"https://www.example.com/","top_level_url_scheme":"https","top_level_url_host":"www.example.com","top_level_url_port":443,"user_agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.90 Safari/537.36","username":"amorgan","url_categories":["Technology/Internet"],"url_parent_categories":["General Use"],"url_computed_categories":[{"id":38,"name":"Technology/Internet","parent_name":"General Use"}],"source_ip_country_code":"INTERNAL","source_ip_country_name":"Internal Network","destination_ip_country_code":"US","destination_ip_country_name":"United States","url_risk":2,"user_groups":["ISOC McAfee Access","Anti-Fraud","GES-AE"],"policy_version":124,"isolation_session_id":"11111111-1111-1111-1111-111111111111","rule_id":"1","rule_type":"default","tab_id":"ad621dbf72b4a1cc","session_id":"ad621dbf72b4a1cc_4478728_2","client_id":"YW1vcmdhbg2__FGL__9622962633c7deb5eeb0d72175be132f7b395c8500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","tenant_id":"","symc_transaction_id":"","initiated_by_gateway":"No","malicious":"Yes","organization_id":"","organization_name":"","rendering_mode":"VectorRendering","resource_response_headers":{"Set-Cookie":"X-Salesforce-CHAT=!+p9kRJ+DQDIB0Ia2YJmKM+DSXhjHl7kvH/6r8GYj+CidDCP59Tcv9ifRhi31YT2TfVQhodWrRgyYOkg=; path=/; Httponly; Secure","Pragma":"no-cache","X-Content-Type-Options":"nosniff","Content-Type":"text/javascript","Content-Encoding":"gzip","Connection":"close","Cache-Control":"no-cache","Access-Control-Allow-Origin":"*","Expires":"-1","Access-Control-Allow-Credentials":"true"},"referer_host":"www.example.com","redirect_response":"No","total_bytes_sent":0,"resource_request_headers":{"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36","Referer":"https://www.example.com/","Accept":"*/*"},"response_status_code":200,"request_method":"GET","policy_version":124,"url_categories":["Business/Economy"],"rule_id":"1","rule_name_at_log_time":"Default Rule","action":"Isolate","url":"https://c.la3-c1-ia2.salesforceliveagent.com/chat/rest/Visitor/Availability.jsonp?'****'","time_stamp":"2019-07-01T13:17:47.318935Z","url_host":"c.example.com","url_scheme":"https","destination_ip_country_code":"US","total_bytes":151,"resource_type":"Script","content_type":"text/javascript","destination_ip_country_name":"United States","response_cached":"No","log_type":"Network Request","destination_ip":"3.3.3.3","rule_type":"default","action_reason":"Policy Rule","request_id":1685,"url_parent_categories":["General Use"],"referer_url":"https://www.example.com/","url_risk":2,"navigation_reason":"Link","url_port":443}]]></testEvent>
+    <testEvent><![CDATA[<13>Jul 2 16:11:00 proxy1-ap skylight[-]: {"@version":"1","@timestamp":"2019-07-02T16:11:00.284Z","type":"fw.syslog.gatewayAuditLogs","source":"","command":" fgcli system upgrade to-version 1.13.120.146","user":"root","service":"shell","user_id":0,"current_path":"/home/ubuntu","return_code":"0","host":"proxy1-ap","action_type":"Terminal Command"}]]></testEvent>
+  </testEvents>
+  <parsingInstructions>
+    <setEventAttribute attr="_eventType">Generic</setEventAttribute>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+(?:<reptDevName:gPatHostName>|<reptDevIpAddr:gPatIpAddr>)\s+<:gPatStr>\[-\]:.*?<_json:patJSON>]]></regex>
+    </collectFieldsByRegex>
+    <collectAndSetAttrByJSON src="$_json">
+      <attrKeyMap attr="_action_type" key="action_type"/>
+      <attrKeyMap attr="_change_description" key="change_description"/>
+      <attrKeyMap attr="_connection" key="resource_request_headers.connection"/>
+      <attrKeyMap attr="httpContentType" key="content_type"/>
+      <attrKeyMap attr="_eventType" key="event"/>
+      <attrKeyMap attr="sentBytes" key="kbytes_sent"/>
+      <attrKeyMap attr="_eventType" key="log_type"/>
+      <attrKeyMap attr="_malicious" key="malicious"/>
+      <attrKeyMap attr="webCategory" key="url_computed_categories.0.name"/>
+      <attrKeyMap attr="srcIpAddr" key="original_source_ip"/>
+      <attrKeyMap attr="policyVersion" key="policy_version"/>
+      <attrKeyMap attr="httpReferrer" key="referer_url"/>
+      <attrKeyMap attr="httpMethod" key="request_method"/>
+      <attrKeyMap attr="httpStatusCode" key="response_status_code"/>
+      <attrKeyMap attr="srcIpAddr" key="source_ip"/>
+      <attrKeyMap attr="srcIpPort" key="source_port"/>
+      <attrKeyMap attr="_timestamp" key="@timestamp"/>
+      <attrKeyMap attr="_timestamp" key="time_stamp"/>
+      <attrKeyMap attr="parentObjUrl" key="top_level_url_host"/>
+      <attrKeyMap attr="destURL" key="top_level_url"/>
+      <attrKeyMap attr="destIpPort" key="top_level_url_port"/>
+      <attrKeyMap attr="appTransportProto" key="top_level_url_scheme"/>
+      <attrKeyMap attr="totBytes" key="total_bytes"/>
+      <attrKeyMap attr="_type" key="type"/>
+      <attrKeyMap attr="_url_computed_categories" key="url_computed_categories"/>
+      <attrKeyMap attr="childObjUrl" key="url"/>
+      <attrKeyMap attr="destIpPort" key="url_port"/>
+      <attrKeyMap attr="riskScore" key="url_risk"/>
+      <attrKeyMap attr="appTransportProto " key="url_scheme"/>
+      <attrKeyMap attr="recvBytes" key="user_download_usage_bytes"/>
+      <attrKeyMap attr="user" key="user_id"/>
+      <attrKeyMap attr="user" key="user"/>
+      <attrKeyMap attr="user" key="username"/>
+      <attrKeyMap attr="totBytes" key="user_total_usage_bytes"/>
+      <attrKeyMap attr="_x-amzn-trace-id" key="resource_request_headers.x-amzn-trace-id"/>
+      <attrKeyMap attr="command" key="command"/>
+      <attrKeyMap attr="filePath" key="current_path"/>
+      <attrKeyMap attr="exitValue" key="return_code"/>
+    </collectAndSetAttrByJSON>
+    <when test="exist _type">
+      <when test="matches($_type, 'AuditLogs$')">
+        <setEventAttribute attr="_eventType">combineMsgId("Audit-", $_type)</setEventAttribute>
+      </when>
+    </when>
+    <when test="exist _action_type">
+      <setEventAttribute attr="_eventType">combineMsgId("Audit-", $_action_type)</setEventAttribute>
+    </when>
+    <when test="exist _change_description">
+      <collectAndSetAttrByKeyValuePair src="$_change_description" sep=". ">
+        <attrKeyMap attr="permissionRoleName" key="roles: "/>
+        <attrKeyMap attr="srcIpAddr" key="Remote address: "/>
+        <attrKeyMap attr="authenMethod" key="Identity provider: "/>
+      </collectAndSetAttrByKeyValuePair>
+    </when>
+    <when test="exist _url_computed_categories">
+      <setEventAttribute attr="_url_computed_categories">replaceStringByRegex($_url_computed_categories, "^\[|\]$", "")</setEventAttribute>
+      <collectAndSetAttrByJSON src="$_url_computed_categories">
+        <attrKeyMap attr="webCategory" key="name"/>
+        <attrKeyMap attr="categoryType" key="parent_name"/>
+      </collectAndSetAttrByJSON>
+    </when>
+    <switch>
+      <case>
+        <setEventAttribute attr="eventSeverity">$riskScore</setEventAttribute>
+      </case>
+      <case>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+    </switch>
+    <when test="exist _malicious">
+      <when test="$_malicious = 'Yes'">
+        <setEventAttribute attr="_eventType">combineMsgId("Malicious-", $_eventType)</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+    </when>
+    <when test="exist _timestamp">
+      <collectFieldsByRegex src="$_timestamp">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTimeMSec><:gPatMSec><_zone:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_zone)</setEventAttribute>
+    </when>
+    <setEventAttribute attr="_reptVendor">replaceStringByRegex($reptVendor, "\s+", "_")</setEventAttribute>
+    <setEventAttribute attr="_reptModel">replaceStringByRegex($reptModel, "\s+", "_")</setEventAttribute>
+    <setEventAttribute attr="_eventType">replaceStringByRegex($_eventType, "\s+|_+|\.+", "_")</setEventAttribute>
+    <setEventAttribute attr="_eventType">replaceStringByRegex($_eventType, "_+", "_")</setEventAttribute>
+    <setEventAttribute attr="eventType">combineMsgId($_reptVendor, "-", $_reptModel, "-", $_eventType)</setEventAttribute>
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,232 @@
+<eventParser name="UbiquityParser">
+  <deviceType>
+    <Vendor>Ubiquiti</Vendor>
+    <Model>UniFi AP</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patGeneric_Mod"><![CDATA[hostapd|hostapd\[\d+\]|kernel|libubnt\[\d+\]|mcad|syslog|wevent]]></pattern>
+    <pattern name="patMac"><![CDATA[[[A-Za-z0-9]{2}:[A-Za-z0-9]{2}:[A-Za-z0-9]{2}:[A-Za-z0-9]{2}:[A-Za-z0-9]{2}:[A-Za-z0-9]{2}]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+(?:\("[^,]+,[^,]+,[^"]+"\)|[^ ]+\s+[^,]+,[^:]+:)\s+<:patGeneric_Mod>:\s]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<29>Oct 13 16:05:36 ("U7Ev2,0418d6701c45,v3.7.5.4969") hostapd: AP-STA-CONNECTED 00:56:cd:92:b6:3b]]></testEvent>
+    <testEvent><![CDATA[<30>Oct 13 17:08:09 ("U7Ev2,0418d6701c45,v3.7.5.4969") hostapd: eth1: STA 00:56:cd:92:b6:3b IEEE 802.11: associated]]></testEvent>
+    <testEvent><![CDATA[<30>Oct 13 11:45:39 ("U7Ev2,0418d6701c45,v3.7.5.4969") hostapd: wl0.2: STA 74:e5:0b:34:41:62 IEEE 802.1X: authenticated - EAP type: 25 (PEAP)]]></testEvent>
+    <testEvent><![CDATA[<30>Oct 13 17:08:09 ("U7Ev2,0418d6701c45,v3.7.5.4969") hostapd: eth1: STA 00:56:cd:92:b6:3b WPA: pairwise key handshake completed (RSN)]]></testEvent>
+    <testEvent><![CDATA[<30>Jul 13 10:54:55 6FloorAP4 18e8292d9060,UAP-XG-6.5.28+14491: hostapd[30182]: ath7: STA ba:71:78:87:12:00 IEEE 802.11: disassociated]]></testEvent>
+    <testEvent><![CDATA[<14>Oct 13 17:08:09 ("U7Ev2,0418d6701c45,v3.7.5.4969") syslog: wevent.ubnt_custom_event(): EVENT_STA_JOIN eth1: 00:56:cd:92:b6:3b / 8]]></testEvent>
+    <testEvent><![CDATA[<12>Oct 13 11:39:23 ("U7Ev2,0418d6701c45,v3.7.5.4969") kernel: [6215934.370000] eth1: received packet with  own address as source address]]></testEvent>
+    <testEvent><![CDATA[<12>Oct 13 15:35:56 ("U7Ev2,0418d6701c45,v3.7.5.4969") kernel: [6230112.380000] wevent: UBNT-STA-JOIN eth1:10(78:9f:70:b5:f1:0b)]]></testEvent>
+    <testEvent><![CDATA[<14>Jul 13 10:54:56 6FloorAP4 18e8292d9060,UAP-XG-6.5.28+14491: libubnt[30924]: wevent[30924]: wevent.ubnt_custom_event(): EVENT_STA_LEAVE ath7: ba:71:78:87:12:00 / 2]]></testEvent>
+    <testEvent><![CDATA[<30>Jul 13 10:54:58 7FloorAP2 245a4c17cdcf,UAP-XG-6.5.28+14491: mcad: mcad[27420]: wireless_agg_stats.log_sta_anomalies(): bssid=24:52:41:00:cd:d1 radio=wifi1 vap=ath5 sta=90:0f:0c:80:34:37 satisfaction_now=78 anomalies=tcp_latency]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+.*?<appName:patGeneric_Mod>:\s+(?:<appName:patGeneric_Mod>\[\d+\]+:\s+)?<_body:gPatMesgBody>$]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventAction">0</setEventAttribute>
+    <setEventAttribute attr="eventType">Ubiquity_Generic</setEventAttribute>
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+
+    <choose>
+      <when test="matches($appName, '^hostapd')">
+        <!-- message specific parsing
+             hostapd session end
+             <29>Oct 13 16:05:36 ("U7Ev2,0418d6701c45,v3.7.5.4969") hostapd: AP-STA-CONNECTED 00:56:cd:92:b6:3b
+             <29>Oct 13 11:45:38 ("U7Ev2,0418d6701c45,v3.7.5.4969") hostapd: CTRL-EVENT-EAP-PROPOSED-METHOD vendor=0 method=1
+             <29>Oct 13 14:47:43 ("U7Ev2,0418d6701c45,v3.7.5.4969") hostapd: CTRL-EVENT-EAP-STARTED 44:00:10:4d:7b:f1
+             <30>Oct 13 17:08:09 ("U7Ev2,0418d6701c45,v3.7.5.4969") hostapd: eth1: STA 00:56:cd:92:b6:3b IEEE 802.11: associated
+             <30>Oct 14 11:05:21 ("U7Ev2,0418d6701c45,v3.7.5.4969") hostapd: eth1: STA 64:89:9a:3d:95:af IEEE 802.11: deauthenticated due to local deauth request
+             <30>Oct 13 13:50:26 ("U7Ev2,0418d6701c45,v3.7.5.4969") hostapd: eth1: STA 38:71:de:e0:9e:dd IEEE 802.11: disassociated
+             <30>Oct 13 11:45:39 ("U7Ev2,0418d6701c45,v3.7.5.4969") hostapd: wl0.2: STA 74:e5:0b:34:41:62 IEEE 802.1X: authenticated - EAP type: 25 (PEAP)
+             <30>Oct 14 06:01:54 ("U7Ev2,0418d6701c45,v3.7.5.4969") hostapd: wl0.2: STA 74:e5:0b:34:41:62 IEEE 802.1X: authenticated - EAP type: 25 (PEAP) (PMKSA cache)
+             <30>Oct 13 14:32:04 ("U7Ev2,0418d6701c45,v3.7.5.4969") hostapd: wl1.2: STA 60:67:20:58:7f:50 RADIUS: starting accounting session 57FE9D8F-00000000
+             <30>Oct 13 17:08:09 ("U7Ev2,0418d6701c45,v3.7.5.4969") hostapd: eth1: STA 00:56:cd:92:b6:3b WPA: pairwise key handshake completed (RSN)
+             <30>Jul 13 10:54:55 6FloorAP4 18e8292d9060,UAP-XG-6.5.28+14491: hostapd[30182]: ath7: STA ba:71:78:87:12:00 IEEE 802.11: sta_stats
+        -->
+
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[<_action:gPatStr>\s+(?:<srcMACAddr:patMac>\s*$|vendor=\d+\s+method=\d+)]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Ubiquity-",$_action)</setEventAttribute>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[<intfName:gPatStrEndColon>:\s+STA\s+<srcMACAddr:patMac>\s+RADIUS:\s+starting\s+accounting\s+session\s+]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Ubiquity-RADIUS-accounting-session</setEventAttribute>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[<intfName:gPatStrEndColon>:\s+STA\s+<srcMACAddr:patMac>\s+WPA:\s+pairwise\s+key\s+handshake\s+completed\s+]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Ubiquity-WPA-handshake-completed</setEventAttribute>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[<intfName:gPatStrEndColon>:\s+STA\s+<srcMACAddr:patMac>\s+<wlanProtocol:gPatStrEndColon>:\s+<_action:gPatStr>\s*]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Ubiquity-WLAN-",$_action)</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">Ubiquity-Hostapd-Generic</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+
+      <when test="$appName = 'kernel'">
+        <!-- message specific parsing
+             kernel session end
+             <12>Oct 13 11:39:23 ("U7Ev2,0418d6701c45,v3.7.5.4969") kernel: [6215934.370000] eth1: received packet with  own address as source address
+             <12>Oct 13 15:35:56 ("U7Ev2,0418d6701c45,v3.7.5.4969") kernel: [6230112.380000] wevent: UBNT-STA-JOIN eth1:10(78:9f:70:b5:f1:0b)
+             <12>Oct 13 13:40:15 ("U7Ev2,0418d6701c45,v3.7.5.4969") kernel: [6223180.570000] wevent: UBNT-STA-LEFT eth1:0(d0:33:11:07:41:4b)
+        -->
+
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[\[\d+\.\d+\]\s+<intfName:gPatStrEndColon>:\s*received\s+packet\s+with\s+own\s+address\s+as\s+source\s+address]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Ubiquity-packet-received</setEventAttribute>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[\[\d+\.\d+\]\s+wevent:\s*<_action:gPatStr>\s+<intfName:gPatStrEndColon>:\d+\(<srcMACAddr:patMac>\)]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Ubiquity-",$_action)</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">Ubiquity-Kernel-Generic</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+
+      <when test="$appName = 'mcad'">
+        <!--message specific parsing
+<30>Jul 13 10:54:58 7FloorAP2 245a4c17cdcf,UAP-XG-6.5.28+14491: mcad: mcad[27420]: wireless_agg_stats.log_sta_anomalies(): bssid=24:5a:4c:17:cd:d2 radio=wifi1 vap=ath5 sta=90:0f:0c:80:34:37 satisfaction_now=78 anomalies=tcp_latency
+-->
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[<funName:gPatStrEndColon>:\s*<_msg:gPatMesgBody>]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Ubiquity-Wireless-Stats</setEventAttribute>
+            <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_msg">
+              <attrKeyMap attr="reason" key="anomalies"/>
+              <attrKeyMap attr="bssId" key="bssid"/>
+              <attrKeyMap attr="wlanRadioId" key="radio"/>
+              <attrKeyMap attr="_satisfaction_now" key="satisfaction_now"/>
+              <attrKeyMap attr="srcMACAddr" key="sta"/>
+              <attrKeyMap attr="intfName" key="vap"/>
+            </collectFieldsByKeyValuePair>
+          </case>
+        </switch>
+      </when>
+
+      <when test="matches($appName, '^syslog|^wevent')">
+        <!--message specific parsing
+             syslog session end
+        <11>Oct 13 12:47:19 ("U7Ev2,0418d6701c45,v3.7.5.4969") syslog: ace_reporter.reporter_fail(): inform failed #1 (last inform: 0 seconds ago), rc=10
+        <11>Oct 14 02:08:12 ("U7Ev2,0418d6701c45,v3.7.5.4969") syslog: ace_reporter.reporter_fail(): initial contact failed #4, url=http://10.120.0.224:8080/inform, rc=4
+        <11>Oct 14 02:07:51 ("U7Ev2,0418d6701c45,v3.7.5.4969") syslog: ace_reporter.reporter_fail(): [STATE] entering SELFRUN!!!!
+        <11>Oct 13 17:53:03 ("U7Ev2,0418d6701c45,v3.7.5.4969") syslog: ace_reporter.reporter_fail(): Timeout (http://10.120.0.224:8080/inform)
+        <11>Oct 14 02:08:17 ("U7Ev2,0418d6701c45,v3.7.5.4969") syslog: ace_reporter.reporter_fail(): Unable to resolve (http://unifi:8080/inform)
+        <11>Oct 13 12:47:19 ("U7Ev2,0418d6701c45,v3.7.5.4969") syslog: ace_reporter.reporter_fail(): Unknown[10] (http://10.120.0.224:8080/inform)
+        <14>Oct 14 02:08:17 ("U7Ev2,0418d6701c45,v3.7.5.4969") syslog: ace_reporter.reporter_next_inform_url(): next inform url[0]=http://10.120.0.224:8080/inform
+        <14>Oct 14 02:09:09 ("U7Ev2,0418d6701c45,v3.7.5.4969") syslog: ace_reporter.reporter_set_managed(): [STATE] enter MANAGED
+        <14>Oct 13 17:08:09 ("U7Ev2,0418d6701c45,v3.7.5.4969") syslog: wevent.ubnt_custom_event(): EVENT_STA_JOIN eth1: 00:56:cd:92:b6:3b / 8
+        <14>Oct 13 17:10:09 ("U7Ev2,0418d6701c45,v3.7.5.4969") syslog: wevent.ubnt_custom_event(): EVENT_STA_LEAVE eth1: 00:56:cd:92:b6:3b / 8
+        -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[<funName:gPatStrEndColon>:\s*<_msg:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_msg">
+              <regex><![CDATA[<_action:gPatStr>\s+<intfName:gPatStrEndColon>:\s+<srcMACAddr:patMac>]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Ubiquity-",$_action)</setEventAttribute>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$_msg">
+              <regex><![CDATA[\[[^\]]+\]\s+enter\s+MANAGED]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Ubiquity-reporter-enter-managed</setEventAttribute>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$_msg">
+              <regex><![CDATA[\[[^\]]+\]\s+entering\s+SELFRUN]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Ubiquity-reporter-entering-selfrun</setEventAttribute>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$_msg">
+              <regex><![CDATA[next\s+inform\s+url\[\d+\]=<infoURL:gPatStr>]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Ubiquity-reporter-inform-success</setEventAttribute>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$_msg">
+              <regex><![CDATA[Unknown\[\d+\]\s+\(<infoURL:gPatStr>\)]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Ubiquity-reporter-unknown-error</setEventAttribute>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$_msg">
+              <regex><![CDATA[Unable\s+to\s+resolve\s+\(<infoURL:gPatStr>\)]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Ubiquity-DNS-resolution-failed</setEventAttribute>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$_msg">
+              <regex><![CDATA[Timeout\s+\(<infoURL:gPatStr>\)]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Ubiquity-reporter-timeout</setEventAttribute>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$_msg">
+              <regex><![CDATA[initial\s+contact\s+failed\s+#\d+, url=<infoURL:gPatStrComma>,\s+rc=\d+]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Ubiquity-reporter-inform-contact-failed</setEventAttribute>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$_msg">
+              <regex><![CDATA[inform\s+failed\s+#\d+\s+\(last\s+inform:\s*\d+\s+seconds\s+ago\),\s+rc=\d+]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Ubiquity-reporter-inform-failed</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">Ubiquity-Syslog-Generic</setEventAttribute>
+          </default>
+        </switch>
+        <when test="exist infoURL">
+          <collectFieldsByRegex src="$infoURL">
+            <regex><![CDATA[http://<_dest:gPatStrEndColon>:<destIpPort:gPatInt>/]]></regex>
+          </collectFieldsByRegex>
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_dest">
+                <regex><![CDATA[<destIpAddr:gPatIpAddr>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default>
+              <setEventAttribute attr="destName">$_dest</setEventAttribute>
+            </default>
+          </switch>
+        </when>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">Ubiquity-Generic</setEventAttribute>
+      </otherwise>
+    </choose>
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,331 @@
+A user account was locked out,
+Access Mask,Zugriffsmaske
+Access Request Information,
+Accesses,Zugriffe
+Account Domain,Kontodomäne
+Account Domain,Kontodomõne
+Account Expires,Konto g³ltig bis
+Account Expires,Konto gültig bis
+Account For Which Logon Failed,"Konto, f³r das die Anmeldung fehlgeschlagen ist"
+Account For Which Logon Failed,"Konto, für das die Anmeldung fehlgeschlagen ist"
+Account For Which Logon Failed,Konto  für das die Anmeldung fehlgeschlagen ist
+Account Information,Kontoinformationen
+Account Name,Kontoname
+Account Session Identifier,Kontositzungs-ID
+Account That Was Locked Out,Gesperrtes Konto
+Account Whose Credentials Were Used,"Konto, dessen Anmeldeinformationen verwendet wurden"
+Account Whose Credentials Were Used,Konto  dessen Anmeldeinformationen verwendet wurden
+Additional Information,Weitere Informationen
+Additional Information,Zusätzliche Informationen
+Additional Information,Zusõtzliche Informationen
+Advanced Options,Erweiterte Optionen
+Algorithm Name,Algorithmusname
+Allowed To Delegate To,Kann delegieren an
+AllowedToDelegateTo,Darf delegieren an
+Application Correlation ID,Anwendungskorrelations-ID
+Application Information,Anwendungsinformationen
+Application Name,Anwendungsname
+Attribute,Attribut
+Attributes,Attribute
+Audit Failure,▄berwachung gescheiter
+Audit Success,▄berwachung erfolgreich
+Auditing Settings,Überwachungseinstellungen
+Authentication Details,Authentifizierungsdetails
+Authentication Package Name,
+Authentication Package,Authentifizierungspaket
+Authentication Provider,Authentifizierungsanbieter
+Authentication Server,Authentifizierungsserver
+Authentication Type,Authentifizierungstyp
+Called Station Identifier,Empfangs-ID
+Called Station Identifier,Empfänger-ID
+Called Station Identifier,ID der Empfangsstation
+Caller Computer Name,Aufrufcomputername
+Caller Domain,
+Caller Logon ID,
+Caller Process ID,Aufrufprozess-ID
+Caller Process Name,Aufrufprozessname
+Caller User Name,
+Calling Station Identifier,Anrufer-ID
+Calling Station Identifier,ID der Anrufstation
+Certificate Information,Zertifikatsinformationen
+Certificate Issuer Name,Zertifikatausstellername
+Certificate Serial Number,Seriennummer des Zertifikats
+Certificate Thumbprint,Zertifikatfingerabdruck
+Change Type,Änderungstyp
+Changed Attributes,Geänderte Attribute
+Changed Attributes,Geõnderte Attribute
+Class ID,Klassen-ID
+Class Name,Klassenname
+Class,Klasse
+Client Address,Clientadresse
+Client Domain,
+Client Friendly Name,Clientanzeigename
+Client Friendly Name,Clientanzeigenname
+Client IP Address,Client-IP-Adresse
+Client Logon ID,
+Client Machine,Clientcomputer
+Client Name,
+Client Port,Clientport
+Client User Name,
+Compatible IDs,Kompatible IDs
+Computer Account That Was Changed,Geändertes Computerkonto
+Computer Account That Was Changed,Geõndertes Computerkonto
+Configuration Access Policy,Konfigurationszugriffsrichtlinie
+Configured Names,Konfigurierte Namen
+Connection Request Policy Name,Name der Verbindungsanforderungsrichtline
+Connection Request Policy Name,Name der Verbindungsanforderungsrichtlinie
+Correlation ID,Korrelations-ID
+Creator Process ID,Erstellerprozess-ID
+Creator Process Name,Erstellerprozessname
+Creator Subject,Antragsteller
+Cryptographic Operation,Kryptografischer Vorgang
+Cryptographic Parameters,Kryptografische Parameter
+Deleted Group,Gelöschte Gruppe
+Deleted Group,Gruppe
+Destination Address,Zieladresse
+Destination Port,Zielanschluss
+Detailed Authentication Information,Detaillierte Authentifizierungsinformationen
+Device ID,Geräte-ID
+Device Name,Gerätename
+Direction,Richtung
+Directory Service,Verzeichnisdienst
+Disable Integrity Checks,Integritätsprüfungen deaktivieren
+Disable Integrity Checks,Integritõtspr³fungen deaktivieren
+Disabled Privileges,Deaktivierte Berechtigungen
+Display Name,Anzeigename
+DNS Host Name,DNS-Hostname
+Domain Behavior Version,Domänenverhaltensversion
+Domain ID,Domänen-ID
+Domain Name,Domänenname
+Domain,Domäne
+EAP Type,EAP-Typ
+Elevated Token,Token mit erhöhten Rechten
+Enabled Privileges,Aktivierte Berechtigungen
+Error Code,Fehlercode
+Event in sequence,Ereignis in Sequenz
+Event Source ID,Ereignisquellen-ID
+Event Source,Ereignisquelle
+Expiration Time,Ablaufzeit
+Expiration time,Ablaufzeitpunkt
+Extended-Result,Erweitertes Ergebnis
+Failed test code,Fehlerhafter Testcode
+Failure Code,Fehlercode
+Failure Information,Fehlerinformationen
+Failure Reason,Fehlerursache
+File Path,Dateipfad
+Filter Information,Filterinformationen
+Filter Run-Time ID,Laufzeit-ID des Filters
+Flight Signing,Flightsignatur
+Force Logoff,Abmeldung erzwingen
+Fully Qualified Account Name,Vollqualifizierter Kontoname
+General Settings,Allgemeine Einstellungen
+Group Domain,Gruppendomäne
+Group Domain,Gruppendomõne
+Group Domain,Kontodomäne
+Group Membership,Gruppenmitgliedschaft
+Group Name,Gruppenname
+Group Name,Kontoname
+Group,Gruppe
+Handle ID,Handle-ID
+Hardware IDs,Hardware-IDs
+Help URL,Hilfe-URL
+Home Directory,Stammverzeichnis
+Home Drive,Stammlaufwerk
+HyperVisor Debugging,HyperVisor-Debugging
+HyperVisor Launch Type,HyperVisor-Starttyp
+HyperVisor Load Options,HyperVisor-Ladeoptionen
+HyperVisor Settings,HyperVisor-Einstellungen
+Image File Name,
+Image File,
+Impersonation Level,Identitätswechselebene
+Impersonation Level,Identitõtswechselebene
+IP Addresses,IP-Adressen
+Kernel Debugging,Kerneldebugging
+Key File Operation Information,Informationen zum Schl³sseldateivorgang
+Key Length,Schl³ssellõnge
+Key Length,Schlüssellänge
+Key Name,Schl³sselname
+Key Type,Schl³sseltyp
+Layer Name,Ebenename
+Layer Name,Ebenname
+Layer Run-Time ID,Laufzeit-ID der Ebene
+LDAP Display Name,LDAP-Anzeigename
+Linked Logon ID,Verknüpfte Anmelde-ID
+Load Options,Ladeoptionen
+Location Information,Standortinformationen
+Lockout Duration,Sperrungsdauer
+Lockout Observation Window,Sperrüberprüfungsfenster
+Lockout Threshold,Sperrschwelle
+Logging Results,Protokollierungsergebnisse
+Logon Account,Anmeldekonto
+Logon GUID,Anmelde-GUID
+Logon Hours,Anmeldezeiten
+Logon ID,Anmelde-ID
+Logon Information,Anmeldeinformationen
+Logon Process Name,
+Logon Process,Anmeldeprozess
+Logon Type,Anmeldetyp
+Machine Account Quota,Computerkontokontingent
+Mandatory Label,Verbindliche Beschriftung
+Max. Password Age,Max. Kennwortalter
+Member,Mitglied
+Min. Password Age,Min. Kennwortalter
+Min. Password Length,Min. Kennwortlänge
+Mixed Domain Mode,Gemischter Domänenmodus
+NAS Identifier,NAS-ID
+NAS IPv4 Address,NAS-IPv4-Adresse
+NAS IPv6 Address,NAS-IPv6-Adresse
+NAS Port,NAS-Port
+NAS Port-Type,NAS-Porttyp
+Network Account Domain,Netzwerk-Kontodomäne
+Network Account Name,Netzwerk-Kontoname
+Network Address,Netzwerkadresse
+Network Information,Netzwerkinformationen
+Network Policy Name,Netzwerkrichtlinienname
+New Account Name,Neuer Kontoname
+New Account,Neues Konto
+New Computer Account,Neues Computerkonto
+New DN,Neuer DN
+New Group,Gruppe
+New Group,Neue Gruppe
+New Handle ID,
+New Logon,Neue Anmeldung
+New Maxusers,Neuer Wert für maximale Benutzer
+New Process ID,ID des neuen Prozesses
+New Process ID,Neue Prozess-ID
+New Process Name,Neuer Prozessname
+New Remark,Neue Bemerkung
+New SD,SD neu
+New Security Descriptor,Neue Sicherheitsbeschreibung
+New ShareFlags,Neues Freigabekennzeichen
+New State,Neuer Status
+New Time,Neue Zeit
+New Token Information,Neue Tokeninformationen
+New UAC Value,Neuer Benutzerkontensteuerungswert
+Number of Elements,Anzahl von Elementen
+Object Handle,
+Object Name,Objektname
+Object Server,Objektserver
+Object Type,Objekttyp
+Object,Objekt
+OEM Information,OEM-Informationen
+Old Account Name,Alter Kontoname
+Old DN,Alter DN
+Old MaxUsers,Alter Wert für maximale Benutzer
+Old Remark,Alte Bemerkung
+Old SD,SD alt
+Old ShareFlags,Altes Freigabekennzeichen
+Old UAC Value,Alter Benutzerkontensteuerungswert
+Operation Type,Vorgangstyp
+Operation,Vorgang
+Original Security Descriptor,Originalsicherheitsbeschreibung
+Original Security Descriptor,Ursprüngliche Sicherheitsbeschreibung
+OS-Version,Betriebssystemversion
+OS-Version,Betriebsystemversion
+Package Name (NTLM only),Paketname (nur NTLM)
+Password History Length,Kennwortverlaufslänge
+Password Last Set,Letzte Kennwortänderung
+Password Last Set,Letzte Kennwortõnderung
+Password Properties,Kennworteigenschaften
+Permissions Change,Berechtigungsänderung
+Policy ID,Richtlinienkennung
+Pre-Authentication Type,Typ vor der Authentifizierung
+Previous Time,Vorherige Zeit
+Primary Domain,
+Primary Group ID,Primäre Gruppen-ID
+Primary Group ID,Primõre Gruppen-ID
+Primary Logon ID,
+Primary User Name,
+Privileges,Berechtigungen
+Privileges,Rechte
+Process Command Line,Prozessbefehlszeile
+Process ID,Prozess-ID
+Process Information,Prozessinformationen
+Process Name,Prozessname
+Process,Prozess
+Profile Path,Profilpfad
+Properties,Zeigt die Eigenschaften an.
+Protocol,Protokoll
+Provider Name,Anbietername
+Proxy Policy Name,Proxyrichtlinienname
+Quarantine Grace Time,Quarantäne-Aktivierungszeitraum
+Quarantine Information,Quarantäneinformationen
+RADIUS Client,RADIUS-Client
+Read Operation,Lesevorgang
+Reason Code,Ursachencode
+Reason,Ursache
+Resource Manager,Ressourcen-Manager
+Restricted Admin Mode,Eingeschränkter Administratormodus
+Result Code,Ergebniscode
+Result,Ergebnis
+Return Code,R³ckgabecode
+RM Transaction ID,RM-Transaktions-ID
+SAM Account Name,SAM-Kontoname
+Script Path,Skriptpfad
+Security ID,Sicherheits-ID
+Server Information,Serverinformationen
+Server Names,Servernamen
+Service ID,Dienst-ID
+Service Information,Dienstinformationen
+Service Name,Dienstname
+Service Principal Names,Dienstprinzipalname
+Session ID,Sitzungs-ID
+Session Identifier,Sitzungs-ID
+Share Information,Freigabeinformationen
+Share Name,Freigabename
+Share Path,Freigabepfad
+SID History,SID-Verlauf
+SID List,SID-Liste
+Signature Settings,Signatureinstellungen
+Source Address,Quelladresse
+Source Name,Quellenname
+Source Network Address,Quellnetzwerkadresse
+Source Port,Quellanschluss
+Source Port,Quellport
+Source Workstation,Arbeitsstation
+SPN Name,SPN-Name
+Sub Status,Unterstatus
+Subject,Antragsteller
+Supplied Realm Name,Angegebener Bereichsname
+System Event Logging,Systemereignisprotokollierung
+System Health Validator Result(s),Verifizierungsergebnis(se) der Systemintegrität
+Target Account ID,
+Target Account Name,
+Target Account,Zielkonto
+Target Computer,Zielcomputer
+Target Domain,
+Target Process ID,Zielprozess-ID
+Target Process Name,Zielprozessname
+Target Process,Zielprozess
+Target Server Name,Zielservername
+Target Server,Zielserver
+Target Subject,Zielantragsteller
+Target User Name,
+Test Signing,Testsignatur
+The domain controller attempted to validate the credentials for an account,
+The workstation was locked,
+The workstation was unlocked,
+Ticket Encryption Type,Ticketverschl³sselungstyp
+Ticket Encryption Type,Ticketverschlüsselungstyp
+Ticket Options,Ticketoptionen
+Token Elevation Type,Tokenerhöhungstyp
+Transaction ID,Transaktion-ID
+Transaction Information,Transaktionsinformationen
+Transited Services,Durchlaufene Dienste
+Transited Services,Übertragene Dienste
+Transited Services,▄bertragene Dienste
+Tree Delete,Löschen der Struktur
+Type,Typ
+User Account Control,Benutzerkontensteuerung
+User Domain,
+User ID,Benutzer-ID
+User Name,Benutzername
+User Parameters,Benutzerparameter
+User Principal Name,Benutzerprinzipalname
+User Workstations,Benutzerarbeitsstationen
+User,Benutzer
+Value,Wert
+Vendor IDs,Anbieter-IDs
+Virtual Account,Virtuelles Konto
+VSM Launch Type,VSM-Starttyp
+Workstation Name,Arbeitsstationsname

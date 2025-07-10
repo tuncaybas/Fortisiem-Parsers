@@ -1,0 +1,52 @@
+<eventParser name="WebSphereLogParser">
+  <deviceType>
+    <Vendor>Microsoft</Vendor>
+    <Model>Windows</Model>
+    <Version>ANY</Version>
+  </deviceType>
+  <appType>
+    <Vendor>IBM</Vendor>
+    <Model>WebSphere App Server</Model>
+    <Version>ANY</Version>
+    <Name>IBM WebSphere App Server</Name>
+  </appType>
+  <patternDefinitions>
+    <pattern name="patLevel"><![CDATA[A|C|D|E|F|I|O|R|W|Z]]></pattern>
+    <pattern name="patHexNum"><![CDATA[[0-9A-Fa-f]+]]></pattern>
+  </patternDefinitions>
+  <eventFormatRecognizer><![CDATA[\[<:gPatMonNum>/<:gPatDay>/<:gPatYear>\s+<:gPatTime>:\d{3}\s+<:gPatStrRightSB>\]\s+<:patHexNum>\s+<:gPatWord>\s+<:patLevel>]]></eventFormatRecognizer>
+  <testEvents>
+    <testEvent><![CDATA[[3/31/14 0:08:24:515 PDT] 00000016 webcontainer  E com.WebContainer.ws.webcontainer.WebContainer handleRequest SRVE0255E: A WebGroup/Virtual Host to handle /cgi-bin/directorypro.cgi has not been defined.]]></testEvent>
+    <testEvent><![CDATA[[<13>Oct 12 01:27:14 xxx WebsphereLog	0	[10/28/14 9:48:56:492 GMT] 0000000a AdminTool     A   ADMU7705E: Failed while trying to stop the Windows Service associated with server: server1;]]></testEvent>
+  </testEvents>
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_devmon:gPatMon>\s+<_devday:gPatDay>\s+<_devtime:gPatTime>\s+<hostName:gPatHostName>\s+WebsphereLog\s+\d+\s+\[<_mon:gPatMonNum>/<_day:gPatDay>/<_year:gPatYear>\s+<_time:gPatTime>:\d{3}\s+<:gPatStrRightSB>\]\s+<threadId:patHexNum>\s+<_eventName:gPatWord>\s+<_level:patLevel>\s+<eventDesc:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_devmon, $_devday, $_devtime)</setEventAttribute>
+        <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[\[<_mon:gPatMonNum>/<_day:gPatDay>/<_year:gPatYear>\s+<_time:gPatTime>:\d{3}\s+<:gPatStrRightSB>\]\s+<threadId:patHexNum>\s+<_eventName:gPatWord>\s+<_level:patLevel>\s+<eventDesc:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+    </switch>
+    <setEventAttribute attr="eventType">combineMsgId("WebSphere-", $_eventName)</setEventAttribute>
+    <!-- event severity -->
+    <choose>
+      <when test="$_level = 'F'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$_level IN 'E, W'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_level IN 'A,I,C,D,O,R,Z'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

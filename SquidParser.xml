@@ -1,0 +1,140 @@
+<eventParser name="SquidParser">
+
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Squid-cache-org</Vendor>
+    <Model>Squid Web Proxy</Model>
+    <Version>ANY</Version>
+    <Name>Squid Web Proxy</Name>
+  </appType>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+(?:<:gPatStr>\s+squid\[\d+\]:|squid\[\d+\]:\s+\[ID\s+\d+\s+<:gPatStr>\]|<:gPatStr>\s+\(squid-\d\):)\s+<:gPatIpAddr>\s+]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<166>May  6 17:55:24 squid[1773]: [ID 702911 local4.info] 192.168.20.39 1703 1.1.1.1 172.16.10.6 3128 731 - - - - - [06/May/2008:17:55:24 -0700] CONNECT "abc.com:443" HTTP/1.1 200 92621 196 "-" "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.14) Gecko/20080404 Firefox/2.0.0.14" TCP_MISS:DIRECT]]></testEvent>
+    <testEvent><![CDATA[<166>Apr 14 08:35:02 QA-V-CentOS-Syslog-ng squid[4527]: 192.168.22.4 0 - 255.255.255.255 0 28 - - - - - [14/Apr/2010:08:35:02 -0700] GET "http://google.com/" HTTP/0.0 400 1640 621 "-" "-" TCP_DENIED:NONE]]></testEvent>
+    <testEvent><![CDATA[<166>Sep 25 17:39:43 hog (squid-1): 192.168.0.171 33763 example.net 192.168.0.86 3128 204 - - - - [25/Sep/2015:17:39:43 +0100] GET "http://example.net/ping?" HTTP/1.1 200 356 921 "http://example.com/news/england" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36" TCP_MISS:HIER_DIRECT]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <!-- parsing common fields -->
+    <!-- sample message
+         <166>May  6 17:55:23 squid[1773]: [ID 702911 local4.info] 192.168.20.39 1702 2.2.2.2 172.16.10.6 3128 631 - - - - - [06/May/2008:17:55:23 -0700] CONNECT "abc.com:443" HTTP/1.1 200 2699 196 "-" "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.14) Gecko/20080404 Firefox/2.0.0.14" TCP_MISS:DIRECT
+           <166>May  6 17:55:48 squid[1773]: [ID 702911 local4.info] 192.168.20.39 1715 2.2.2.2 172.16.10.6 3128 674 - - - - - [06/May/2008:17:55:48 -0700] GET "http://mail.abc.com/mail/?" HTTP/1.1 302 1061 568 "http://www.abc.com/" "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.14) Gecko/20080404 Firefox/2.0.0.14" TCP_MISS:DIRECT
+             format:  cliSrcIp cliSport servIp squidIp squidPort responseTimeMsec  userFromAuth  userFromIdent user userFromSSL userFromExtACLHelper localTime responseMethod reqURL httpVer httpReqCode ReplySize  ReqSize Referrer UserAgent SquidRequestStatus SquidHierarchyStatus
+             -->
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay> <:gPatTime> <:gPatStr>\[\d+\]: <_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay> <:gPatTime> <:gPatIpAddr> <:gPatStr>\[\d+\]: <_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay> <:gPatTime> <reptDevName:gPatStr> <:gPatStr>\[\d+\]: <_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay> <:gPatTime> <:gPatStr> \(<:gPatStr>\): <_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><:gPatStr>\[\d+\]: <_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <collectFieldsByRegex src="$_body">
+      <regex><![CDATA[^(?:\[[^]]*\]\s+)?<srcIpAddr:gPatIpAddr>\s+<srcIpPort:gPatInt>\s+(?:<destIpAddr:gPatIpAddr>|-|<destName:gPatHostName>)\s+<preNATDestIpAddr:gPatIpAddr>\s+<destIpPort:gPatInt>\s+<durationMSec:gPatInt>\s+<user:gPatStr>\s+[^[]*<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventAction">0</setEventAttribute>
+    <setEventAttribute attr="eventType">Squid-Web-Generic</setEventAttribute>
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+
+    <collectAndSetAttrByPosWithNestedSep src="$_body" L1Sep=" " L2Sep="&quot;&quot;, []">
+      <attrPosMap attr="_devTime" pos="1"/>
+      <attrPosMap attr="httpMethod" pos="2"/>
+      <attrPosMap attr="uriStem" pos="3"/>
+      <attrPosMap attr="httpVersion" pos="4"/>
+      <attrPosMap attr="httpStatusCode" pos="5"/>
+      <attrPosMap attr="recvBytes64" pos="6"/>
+      <attrPosMap attr="sentBytes64" pos="7"/>
+      <attrPosMap attr="httpReferrer" pos="8"/>
+      <attrPosMap attr="httpUserAgent" pos="9"/>
+    </collectAndSetAttrByPosWithNestedSep>
+
+    <!-- set time -->
+    <collectFieldsByRegex src="$_devTime">
+      <regex><![CDATA[<_day:gPatDay>/<_mon:gPatMon>/<_year:gPatYear>:<_time:gPatTime><:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+
+    <choose>
+
+      <when test="matches($httpStatusCode, '^[12]')">
+        <setEventAttribute attr="eventType">Squid-Web-Request-Success</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="matches($httpStatusCode, '^3')">
+        <setEventAttribute attr="eventType">Squid-Web-Request-Redirect</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="matches($httpStatusCode, '^401')">
+        <setEventAttribute attr="eventType">Squid-Web-Client-Access-Denied</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="matches($httpStatusCode, '^403')">
+        <setEventAttribute attr="eventType">Squid-Web-Forbidden-Access-Denied</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="matches($httpStatusCode, '^400')">
+        <setEventAttribute attr="eventType">Squid-Web-Bad-Request</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="matches($httpStatusCode, '^411')">
+        <setEventAttribute attr="eventType">Squid-Web-Length-Reqd-Access-Denied</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="matches($httpStatusCode, '^4')">
+        <setEventAttribute attr="eventType">Squid-Web-Client-Error</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="matches($httpStatusCode, '^5')">
+        <setEventAttribute attr="eventType">Squid-Web-Server-Error</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+      </when>
+
+      <when test="matches($httpStatusCode, '^6')">
+        <setEventAttribute attr="eventType">Squid-Web-Bad-Request</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <otherwise>
+        <setEventAttribute attr="eventType">Squid-Web-Request</setEventAttribute>
+      </otherwise>
+    </choose>
+
+  </parsingInstructions>
+</eventParser>

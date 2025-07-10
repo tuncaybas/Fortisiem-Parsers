@@ -1,0 +1,899 @@
+<eventParser name="WebsenseWebParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Websense</Vendor>
+    <Model>Web Security</Model>
+    <Version>ANY</Version>
+    <Name>Websense Web Security</Name>
+  </appType>
+
+  <patternDefinitions>
+    <pattern name="patStrEndWithRightSquareBracket"><![CDATA[[^\]]*]]></pattern>
+    <pattern name="patStrEndBrack"><![CDATA[[^\]+]]></pattern>
+  </patternDefinitions>
+  <eventFormatRecognizer><![CDATA[\[Websense_Web_|vendor=Websense\s+product=Security\s+product_version|vendor=Forcepoint\s+product=Security\s+product_version]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<159>Jul 24 14:39:57 10.1.1.1 vendor=Forcepoint product=Security product_version=8.4.0 action=permitted severity=1 category=221 user=LDAP://10.61.5.22 OU\=SBM,DC\=tafedc,DC\=com/E394 loginID=- src_host=10.1.1.2 src_port=54383 dst_host=abc.aarth.mobi dst_ip=10.1.1.3 dst_port=443 bytes_out=2739 bytes_in=1775 http_response=200 http_method=GET http_content_type=text/html http_user_agent=Mozilla/5.0_(Windows_NT_6.1;_Win64;_x64)_AppleWebKit/537.36_(KHTML,_like_Gecko)_Chrome/67.0.3396.99_Safari/537.36 http_proxy_status_code=200 reason=- disposition=1026 policy=Super_Administrator**SMG role=8 duration=14 url=https://abc.aarth.mobi/?cmpid=ERXBM&cb=Z0FFTkNDbzhuOGdzb2k1T01lYjdBZz09&TS=1532423397&ch=1106-59402.405e465a]]></testEvent>
+    <testEvent><![CDATA[<159>Feb 28 14:25:32 10.1.1.2 vendor=Websense product=Security product_version=7.7.0 action=permitted severity=1 category=153 user=DAN src_host=10.1.1.1 src_port=62189 dst_host=mail.google.com dst_ip=1.1.1.1 dst_port=443 bytes_out=197 bytes_in=76 http_response=200 http_method=CONNECT http_content_type=- http_user_agent=Mozilla/5.0_(Windows;_U;_Windows_NT_6.1;_en-US;_rv:1.9.2.23)_Gecko/20110920_Firefox/3.6.23 http_proxy_status_code=200 reason=- disposition=1034 policy=- role=8 duration=0 url=https://mail.google.com]]></testEvent>
+    <testEvent><![CDATA[Apr 10 13:01:26 abc-desktop java: [Websense_Web_Deny]:[eventSeverity]=PHL_INFO, [retCode]=1, [eventTime]=2009-04-01 21:27:35.0, [rptIp]=192.168.0.43, [relayIp]=192.168.0.43, [srcIp]=192.168.20.35, [destPort]=80, [destIp]=2.2.2.2, [destName]=www.example.com, [destCategory]=Productivity,]]></testEvent>
+    <testEvent><![CDATA[<159>Feb 28 14:25:32 10.203.28.21 vendor=Websense product=Security product_version=7.7.0 action=permitted severity=1 category=153 user=- src_host=10.64.134.74 src_port=62189 dst_host=mail.google.com dst_ip=1.1.1.1 dst_port=443 bytes_out=197 bytes_in=76 http_response=200 http_method=CONNECT http_content_type=- http_user_agent=Mozilla/5.0_(Windows;_U;_Windows_NT_6.1;_en-US;_rv:1.9.2.23)_Gecko/20110920_Firefox/3.6.23 http_proxy_status_code=200 reason=- disposition=1034 policy=- role=8 duration=0 url=https://mail.google.com]]></testEvent>
+    <testEvent><![CDATA[<159>Jul 24 14:39:57 10.1.1.1 vendor=Forcepoint product=Security product_version=8.4.0 action=permitted severity=1 category=1911 user=LDAP://10.61.5.22 OU\=SBM,DC\=tafedc,DC\=com/E394 loginID=- src_host=10.1.1.2 src_port=54383 dst_host=abc.aarth.mobi dst_ip=10.1.1.3 dst_port=443 bytes_out=2739 bytes_in=1775 http_response=200 http_method=GET http_content_type=text/html http_user_agent=Mozilla/5.0_(Windows_NT_6.1;_Win64;_x64)_AppleWebKit/537.36_(KHTML,_like_Gecko)_Chrome/67.0.3396.99_Safari/537.36 http_proxy_status_code=200 reason=- disposition=1026 policy=Super_Administrator**SMG role=8 duration=14 url=https://abc.aarth.mobi/?cmpid=ERXBM&cb=Z0FFTkNDbzhuOGdzb2k1T01lYjdBZz09&TS=1532423397&ch=1106-59402.405e465a]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <switch>
+      <case>
+        <!--
+      Apr 10 13:01:26 abc-desktop java: [Websense_Web_Deny]:[eventSeverity]=PHL_INFO, [retCode]=1, [eventTime]=2009-04-01 21:27:35.0, [rptIp]=192.168.0.43, [relayIp]=192.168.0.43, [srcIp]=192.168.20.35, [destPort]=80, [destIp]=2.2.2.2, [destName]=www.example.com, [destCategory]=Productivity,
+Apr 10 13:01:26 abc-desktop java: [Websense_Web_Permit]:[eventSeverity]=PHL_INFO, [retCode]=0, [eventTime]=2009-04-01 21:44:18.0, [rptIp]=192.168.0.43, [relayIp]=192.168.0.43, [srcIp]=192.168.20.35, [destPort]=80, [destIp]=2.2.2.2, [destName]=static.abc.com, [destCategory]=Information Technology,
+    -->
+
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatStr>\s+java:\s+\[<eventType:patStrEndWithRightSquareBracket>\]<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="extEventRecvProto">JDBC</setEventAttribute>
+
+        <collectAndSetAttrByKeyValuePair sep="," src="$_body">
+          <attrKeyMap attr="_severity" key="[eventSeverity]="/>
+          <attrKeyMap attr="_eventTime" key="[eventTime]="/>
+          <attrKeyMap attr="reptDevIpAddr" key="[rptIp]="/>
+          <attrKeyMap attr="relayDevIpAddr" key="[relayIp]="/>
+          <attrKeyMap attr="srcIpAddr" key="[srcIp]="/>
+          <attrKeyMap attr="destIpAddr" key="[destIp]="/>
+          <attrKeyMap attr="destIpPort" key="[destPort]="/>
+          <attrKeyMap attr="destName" key="[destName]="/>
+          <attrKeyMap attr="webCategory" key="[destCategory]="/>
+        </collectAndSetAttrByKeyValuePair>
+
+        <!-- parse this 2009-03-26 19:27:52:752505 -->
+        <collectFieldsByRegex src="$_eventTime">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>.*]]></regex>
+        </collectFieldsByRegex>
+
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+
+        <!-- event severity -->
+        <choose>
+          <when test="$_severity = 'PHL_ALERT'">
+            <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+          </when>
+
+          <when test="$_severity = 'PHL_CRITICAL'">
+            <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+          </when>
+
+          <when test="$_severity IN 'PHL_ERROR, PHL_WARNING'">
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+          </when>
+
+          <when test="$_severity = 'PHL_INFO'">
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+          </when>
+        </choose>
+      </case>
+
+      <case>
+        <!--
+<159>Feb 28 14:25:32 10.203.28.21 vendor=Websense product=Security product_version=7.7.0 action=permitted severity=1 category=153 user=- src_host=10.64.134.74 src_port=62189 dst_host=mail.google.com dst_ip=1.1.1.1 dst_port=443 bytes_out=197 bytes_in=76 http_response=200 http_method=CONNECT http_content_type=- http_user_agent=Mozilla/5.0_(Windows;_U;_Windows_NT_6.1;_en-US;_rv:1.9.2.23)_Gecko/20110920_Firefox/3.6.23 http_proxy_status_code=200 reason=- disposition=1034 policy=- role=8 duration=0 url=https://mail.google.com
+        -->
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatIpAddr>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+
+        <collectAndSetAttrByKeyValuePair sep=" " src="$_body">
+          <attrKeyMap attr="_action" key="action="/>
+          <attrKeyMap attr="eventSeverity" key="severity="/>
+          <attrKeyMap attr="_category" key="category="/>
+          <attrKeyMap attr="_user" key="user="/>
+          <attrKeyMap attr="srcIpAddr" key="src_host="/>
+          <attrKeyMap attr="srcIpPort" key="src_port="/>
+          <attrKeyMap attr="destName" key="dst_host="/>
+          <attrKeyMap attr="destIpAddr" key="dst_ip="/>
+          <attrKeyMap attr="destIpPort" key="dst_port="/>
+          <attrKeyMap attr="sentBytes64" key="bytes_out="/>
+          <attrKeyMap attr="recvBytes64" key="bytes_in="/>
+          <attrKeyMap attr="httpStatusCode" key="http_response="/>
+          <attrKeyMap attr="httpMethod" key="http_method="/>
+          <attrKeyMap attr="_httpContentType" key="http_content_type="/>
+          <attrKeyMap attr="httpUserAgent" key="http_user_agent="/>
+          <attrKeyMap attr="httpStatusCode" key="http_proxy_status_code="/>
+          <attrKeyMap attr="_errReason" key="reason="/>
+          <attrKeyMap attr="_httpDisposition" key="disposition="/>
+          <attrKeyMap attr="_policyName" key="policy="/>
+          <attrKeyMap attr="role" key="role="/>
+          <attrKeyMap attr="durationMSec" key="duration="/>
+          <attrKeyMap attr="infoURL" key="url="/>
+          <attrKeyMap attr="role" key="role="/>
+          <attrKeyMap attr="_fileType" key="file_type="/>
+          <attrKeyMap attr="_loginID" key="loginID="/>
+        </collectAndSetAttrByKeyValuePair>
+
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+        <when test="exist _loginID">
+          <when test="$_loginID != '-'">
+            <setEventAttribute attr="user">$_loginID</setEventAttribute>
+          </when>
+        </when>
+
+        <choose>
+          <when test="not_exist _user"/>
+          <when test="$_user = '-'"/>
+          <otherwise>
+            <switch>
+              <case>
+                <!--
+	       user=LDAP://10.61.5.22 OU=SBM,DC=ABC,DC=com/D123
+	      -->
+                <collectFieldsByRegex src="$_rawmsg">
+                  <regex><![CDATA[user=<:gPatStr>\s+OU=[^,]*,DC=[^,]*,DC=com/<_user1:gPatStr>]]></regex>
+                </collectFieldsByRegex>
+              </case>
+              <case>
+                <!--
+                user=LDAP://10.61.5.22 OU\=SBM,DC\=tafedc,DC\=com/E394
+                -->
+                <collectFieldsByRegex src="$_rawmsg">
+                  <regex><![CDATA[user=<:gPatStr>\s+OU[^,]*,DC[^,]*,DC\\=com/<_user1:gPatStr>]]></regex>
+                </collectFieldsByRegex>
+              </case>
+              <default>
+                <setEventAttribute attr="user">$_user</setEventAttribute>
+                <setEventAttribute attr="infoURL">"here""</setEventAttribute>
+              </default>
+              <!-- <159>Jul 23 16:51:46 172.25.5.68 vendor=Forcepoint product=Security product_version=8.4.0 action=blocked severity=7 category=9 user=dan loginID=- src_host=172.17.17.158 src_port=65065 dst_host=osce12-en.somewhere dst_ip=10.0.0.1 dst_port=80 bytes_out=0 bytes_in=0 http_response=0 http_method=GET http_content_type=- http_user_agent=TMUFE http_proxy_status_code=302 reason=- disposition=1025 policy=Super_Administrator**Default role=8 duration=0 url=http://abc.somewhere:80/CENSUS/192/628a34bf49944a0519fedb6d65cafaf0d75e5b44f4c0cd25e8fd1beebfb2dadce014e1ddbb8a636bc5850c0b445e37e0825d3cca5de9a855a66917a5d323612f5d174ae8fe5adb5f5d174ae8fe5adb5f5d174ae8fe5adb5ffd3c35acca94bf90
+                -->
+            </switch>
+          </otherwise>
+        </choose>
+
+        <when test="not_exist user">
+          <when test="exist _user1">
+            <setEventAttribute attr="user">$_user1</setEventAttribute>
+          </when>
+        </when>
+
+        <when test="exist _httpContentType">
+          <when test="$_httpContentType != '-'">
+            <setEventAttribute attr="httpContentType">$_httpContentType</setEventAttribute>
+          </when>
+        </when>
+        <when test="exist _errReason">
+          <when test="$_errReason != '-'">
+            <setEventAttribute attr="errReason">$_errReason</setEventAttribute>
+          </when>
+        </when>
+        <when test="exist _policyName">
+          <when test="$_policyName != '-'">
+            <setEventAttribute attr="policyName">$_policyName</setEventAttribute>
+          </when>
+        </when>
+
+        <choose>
+          <when test="$_action = 'permitted'">
+            <setEventAttribute attr="eventType">Websense_Web_Permit</setEventAttribute>
+          </when>
+
+          <when test="$_action = 'blocked'">
+            <setEventAttribute attr="eventType">Websense_Web_Deny</setEventAttribute>
+          </when>
+        </choose>
+
+        <choose>
+          <when test="$_category = '1'">
+            <setEventAttribute attr="webCategory">Adult Material</setEventAttribute>
+          </when>
+          <when test="$_category = '2'">
+            <setEventAttribute attr="webCategory">Business and Economy</setEventAttribute>
+          </when>
+          <when test="$_category = '3'">
+            <setEventAttribute attr="webCategory">Education</setEventAttribute>
+          </when>
+          <when test="$_category = '4'">
+            <setEventAttribute attr="webCategory">Government</setEventAttribute>
+          </when>
+          <when test="$_category = '5'">
+            <setEventAttribute attr="webCategory">News and Media</setEventAttribute>
+          </when>
+          <when test="$_category = '6'">
+            <setEventAttribute attr="webCategory">Religion</setEventAttribute>
+          </when>
+          <when test="$_category = '7'">
+            <setEventAttribute attr="webCategory">Society and Lifestyles</setEventAttribute>
+          </when>
+          <when test="$_category = '8'">
+            <setEventAttribute attr="webCategory">Special Events</setEventAttribute>
+          </when>
+          <when test="$_category = '9'">
+            <setEventAttribute attr="webCategory">Information Technology</setEventAttribute>
+          </when>
+          <when test="$_category = '10'">
+            <setEventAttribute attr="webCategory">Abortion</setEventAttribute>
+          </when>
+          <when test="$_category = '11'">
+            <setEventAttribute attr="webCategory">Advocacy Groups</setEventAttribute>
+          </when>
+          <when test="$_category = '12'">
+            <setEventAttribute attr="webCategory">Entertainment</setEventAttribute>
+          </when>
+          <when test="$_category = '13'">
+            <setEventAttribute attr="webCategory">Gambling</setEventAttribute>
+          </when>
+          <when test="$_category = '14'">
+            <setEventAttribute attr="webCategory">Games</setEventAttribute>
+          </when>
+          <when test="$_category = '15'">
+            <setEventAttribute attr="webCategory">Illegal or Questionable</setEventAttribute>
+          </when>
+          <when test="$_category = '16'">
+            <setEventAttribute attr="webCategory">Job Search</setEventAttribute>
+          </when>
+          <when test="$_category = '17'">
+            <setEventAttribute attr="webCategory">Shopping</setEventAttribute>
+          </when>
+          <when test="$_category = '18'">
+            <setEventAttribute attr="webCategory">Sports</setEventAttribute>
+          </when>
+          <when test="$_category = '19'">
+            <setEventAttribute attr="webCategory">Tasteless</setEventAttribute>
+          </when>
+          <when test="$_category = '20'">
+            <setEventAttribute attr="webCategory">Travel</setEventAttribute>
+          </when>
+          <when test="$_category = '21'">
+            <setEventAttribute attr="webCategory">Vehicles</setEventAttribute>
+          </when>
+          <when test="$_category = '22'">
+            <setEventAttribute attr="webCategory">Violence</setEventAttribute>
+          </when>
+          <when test="$_category = '23'">
+            <setEventAttribute attr="webCategory">Weapons</setEventAttribute>
+          </when>
+          <when test="$_category = '24'">
+            <setEventAttribute attr="webCategory">Drugs</setEventAttribute>
+          </when>
+          <when test="$_category = '25'">
+            <setEventAttribute attr="webCategory">Militancy and Extremist</setEventAttribute>
+          </when>
+          <when test="$_category = '26'">
+            <setEventAttribute attr="webCategory">Racism and Hate</setEventAttribute>
+          </when>
+          <when test="$_category = '27'">
+            <setEventAttribute attr="webCategory">Health</setEventAttribute>
+          </when>
+          <when test="$_category = '28'">
+            <setEventAttribute attr="webCategory">Information technology - URL Translation Sites</setEventAttribute>
+          </when>
+          <when test="$_category = '29'">
+            <setEventAttribute attr="webCategory">Productivity - Advertisements</setEventAttribute>
+          </when>
+          <when test="$_category = '64'">
+            <setEventAttribute attr="webCategory">User-Defined</setEventAttribute>
+          </when>
+          <when test="$_category = '65'">
+            <setEventAttribute attr="webCategory">Adult Material - Nudity</setEventAttribute>
+          </when>
+          <when test="$_category = '66'">
+            <setEventAttribute attr="webCategory">Adult Material - Adult Content</setEventAttribute>
+          </when>
+          <when test="$_category = '67'">
+            <setEventAttribute attr="webCategory">Adult Material - Sex</setEventAttribute>
+          </when>
+          <when test="$_category = '68'">
+            <setEventAttribute attr="webCategory">Business and Economy - Financial Data and Services</setEventAttribute>
+          </when>
+          <when test="$_category = '69'">
+            <setEventAttribute attr="webCategory">Education - Cultural Institutions</setEventAttribute>
+          </when>
+          <when test="$_category = '70'">
+            <setEventAttribute attr="webCategory">Entertainment - MP3 and Audio Download Services</setEventAttribute>
+          </when>
+          <when test="$_category = '72'">
+            <setEventAttribute attr="webCategory">Government - Military</setEventAttribute>
+          </when>
+          <when test="$_category = '73'">
+            <setEventAttribute attr="webCategory">Government - Political Organizations</setEventAttribute>
+          </when>
+          <when test="$_category = '74'">
+            <setEventAttribute attr="webCategory">Internet Communication - General Email</setEventAttribute>
+          </when>
+          <when test="$_category = '75'">
+            <setEventAttribute attr="webCategory">Information Technology - Proxy Avoidance</setEventAttribute>
+          </when>
+          <when test="$_category = '76'">
+            <setEventAttribute attr="webCategory">Information Technology - Search Engines and Portals</setEventAttribute>
+          </when>
+          <when test="$_category = '78'">
+            <setEventAttribute attr="webCategory">Information Technology - Web Hosting</setEventAttribute>
+          </when>
+          <when test="$_category = '79'">
+            <setEventAttribute attr="webCategory">Internet Communication - Web Chat</setEventAttribute>
+          </when>
+          <when test="$_category = '80'">
+            <setEventAttribute attr="webCategory">Information Technology - Hacking</setEventAttribute>
+          </when>
+          <when test="$_category = '81'">
+            <setEventAttribute attr="webCategory">News and Media - Alternative Journals</setEventAttribute>
+          </when>
+          <when test="$_category = '82'">
+            <setEventAttribute attr="webCategory">Religion - Non-Traditional Religions and Occult and Folklore</setEventAttribute>
+          </when>
+          <when test="$_category = '83'">
+            <setEventAttribute attr="webCategory">Religion - Traditional Religions</setEventAttribute>
+          </when>
+          <when test="$_category = '84'">
+            <setEventAttribute attr="webCategory">Society and Lifestyles - Restaurants and Dining</setEventAttribute>
+          </when>
+          <when test="$_category = '85'">
+            <setEventAttribute attr="webCategory">Society and Lifestyles - Gay or Lesbian or Bisexual Interest</setEventAttribute>
+          </when>
+          <when test="$_category = '86'">
+            <setEventAttribute attr="webCategory">Society and Lifestyles - Personals and Dating</setEventAttribute>
+          </when>
+          <when test="$_category = '87'">
+            <setEventAttribute attr="webCategory">Society and Lifestyles - Alcohol and Tobacco</setEventAttribute>
+          </when>
+          <when test="$_category = '88'">
+            <setEventAttribute attr="webCategory">Drugs - Prescribed Medications</setEventAttribute>
+          </when>
+          <when test="$_category = '89'">
+            <setEventAttribute attr="webCategory">Drugs - Supplements and Unregulated Compounds</setEventAttribute>
+          </when>
+          <when test="$_category = '90'">
+            <setEventAttribute attr="webCategory">Drugs - Abused Drugs</setEventAttribute>
+          </when>
+          <when test="$_category = '91'">
+            <setEventAttribute attr="webCategory">Internet Communication</setEventAttribute>
+          </when>
+          <when test="$_category = '92'">
+            <setEventAttribute attr="webCategory">Abortion - Pro-Choice</setEventAttribute>
+          </when>
+          <when test="$_category = '93'">
+            <setEventAttribute attr="webCategory">Abortion - Pro-Life</setEventAttribute>
+          </when>
+          <when test="$_category = '94'">
+            <setEventAttribute attr="webCategory">Adult Material - Sex Education</setEventAttribute>
+          </when>
+          <when test="$_category = '95'">
+            <setEventAttribute attr="webCategory">Adult Material - Lingerie and Swimsuit</setEventAttribute>
+          </when>
+          <when test="$_category = '96'">
+            <setEventAttribute attr="webCategory">Productivity - Online Brokerage and Trading</setEventAttribute>
+          </when>
+          <when test="$_category = '97'">
+            <setEventAttribute attr="webCategory">Education - Educational Institutions</setEventAttribute>
+          </when>
+          <when test="$_category = '98'">
+            <setEventAttribute attr="webCategory">Productivity - Instant Messaging</setEventAttribute>
+          </when>
+          <when test="$_category = '99'">
+            <setEventAttribute attr="webCategory">Productivity - Freeware and Software Download</setEventAttribute>
+          </when>
+          <when test="$_category = '100'">
+            <setEventAttribute attr="webCategory">Productivity - Pay-to-Surf</setEventAttribute>
+          </when>
+          <when test="$_category = '101'">
+            <setEventAttribute attr="webCategory">Shopping - Internet Auctions</setEventAttribute>
+          </when>
+          <when test="$_category = '102'">
+            <setEventAttribute attr="webCategory">Shopping - Real Estate</setEventAttribute>
+          </when>
+          <when test="$_category = '103'">
+            <setEventAttribute attr="webCategory">Society and Lifestyles - Hobbies</setEventAttribute>
+          </when>
+          <when test="$_category = '107'">
+            <setEventAttribute attr="webCategory">Sport - Sport Hunting and Gun Clubs</setEventAttribute>
+          </when>
+          <when test="$_category = '108'">
+            <setEventAttribute attr="webCategory">Bandwidth - Internet Telephone</setEventAttribute>
+          </when>
+          <when test="$_category = '109'">
+            <setEventAttribute attr="webCategory">Bandwidth - Streaming Media</setEventAttribute>
+          </when>
+          <when test="$_category = '110'">
+            <setEventAttribute attr="webCategory">Productivity</setEventAttribute>
+          </when>
+          <when test="$_category = '111'">
+            <setEventAttribute attr="webCategory">Drugs - Marijuana</setEventAttribute>
+          </when>
+          <when test="$_category = '112'">
+            <setEventAttribute attr="webCategory">Productivity - Message Boards and Forums</setEventAttribute>
+          </when>
+          <when test="$_category = '113'">
+            <setEventAttribute attr="webCategory">Bandwidth - Personal Network Storage and Backup</setEventAttribute>
+          </when>
+          <when test="$_category = '114'">
+            <setEventAttribute attr="webCategory">Bandwidth - Internet Radio and TV</setEventAttribute>
+          </when>
+          <when test="$_category = '115'">
+            <setEventAttribute attr="webCategory">Bandwidth - Peer-to-Peer File Sharing</setEventAttribute>
+          </when>
+          <when test="$_category = '116'">
+            <setEventAttribute attr="webCategory">Bandwidth</setEventAttribute>
+          </when>
+          <when test="$_category = '117'">
+            <setEventAttribute attr="webCategory">Society and Lifestyles - Social Networking</setEventAttribute>
+          </when>
+          <when test="$_category = '118'">
+            <setEventAttribute attr="webCategory">Education - Educational Materials</setEventAttribute>
+          </when>
+          <when test="$_category = '121'">
+            <setEventAttribute attr="webCategory">Education - Reference Materials</setEventAttribute>
+          </when>
+          <when test="$_category = '122'">
+            <setEventAttribute attr="webCategory">Social Organizations</setEventAttribute>
+          </when>
+          <when test="$_category = '123'">
+            <setEventAttribute attr="webCategory">Social Organizations - Service and Philanthropic Organizations</setEventAttribute>
+          </when>
+          <when test="$_category = '124'">
+            <setEventAttribute attr="webCategory">Social Organizations - Social and Affiliation Organizations</setEventAttribute>
+          </when>
+          <when test="$_category = '125'">
+            <setEventAttribute attr="webCategory">Social Organizations - Professional and Worker Organizations</setEventAttribute>
+          </when>
+          <when test="$_category = '126'">
+            <setEventAttribute attr="webCategory">Security</setEventAttribute>
+          </when>
+          <when test="$_category = '128'">
+            <setEventAttribute attr="webCategory">Security - Malicious Web Sites</setEventAttribute>
+          </when>
+          <when test="$_category = '138'">
+            <setEventAttribute attr="webCategory">Information Technology - Computer Security</setEventAttribute>
+          </when>
+          <when test="$_category = '146'">
+            <setEventAttribute attr="webCategory">Miscellaneous</setEventAttribute>
+          </when>
+          <when test="$_category = '147'">
+            <setEventAttribute attr="webCategory">Miscellaneous - Images - Media</setEventAttribute>
+          </when>
+          <when test="$_category = '148'">
+            <setEventAttribute attr="webCategory">Miscellaneous - Image Servers</setEventAttribute>
+          </when>
+          <when test="$_category = '149'">
+            <setEventAttribute attr="webCategory">Miscellaneous - Private IP Addresses</setEventAttribute>
+          </when>
+          <when test="$_category = '150'">
+            <setEventAttribute attr="webCategory">Miscellaneous - Content Delivery Networks</setEventAttribute>
+          </when>
+          <when test="$_category = '151'">
+            <setEventAttribute attr="webCategory">Miscellaneous - Dynamic Content</setEventAttribute>
+          </when>
+          <when test="$_category = '152'">
+            <setEventAttribute attr="webCategory">Miscellaneous - Network Errors</setEventAttribute>
+          </when>
+          <when test="$_category = '153'">
+            <setEventAttribute attr="webCategory">Miscellaneous - Uncategorized</setEventAttribute>
+          </when>
+          <when test="$_category = '154'">
+            <setEventAttribute attr="webCategory">Security - Spyware</setEventAttribute>
+          </when>
+          <when test="$_category = '156'">
+            <setEventAttribute attr="webCategory">Miscellaneous - File Download Servers</setEventAttribute>
+          </when>
+          <when test="$_category = '164'">
+            <setEventAttribute attr="webCategory">Security - Phishing and Other Frauds</setEventAttribute>
+          </when>
+          <when test="$_category = '166'">
+            <setEventAttribute attr="webCategory">Security - Keyloggers</setEventAttribute>
+          </when>
+          <when test="$_category = '167'">
+            <setEventAttribute attr="webCategory">Security - Potentially Unwanted Software</setEventAttribute>
+          </when>
+          <when test="$_category = '172'">
+            <setEventAttribute attr="webCategory">Security - Bot Networks</setEventAttribute>
+          </when>
+          <when test="$_category = '191'">
+            <setEventAttribute attr="webCategory">Extended Protection</setEventAttribute>
+          </when>
+          <when test="$_category = '192'">
+            <setEventAttribute attr="webCategory">Extended Protection - Elevated Exposure</setEventAttribute>
+          </when>
+          <when test="$_category = '193'">
+            <setEventAttribute attr="webCategory">Extended Protection - Emerging Exploits</setEventAttribute>
+          </when>
+          <when test="$_category = '194'">
+            <setEventAttribute attr="webCategory">Extended Protection - Potentially Damaging Content</setEventAttribute>
+          </when>
+          <when test="$_category = '195'">
+            <setEventAttribute attr="webCategory">Internet Communication - Organizational Email</setEventAttribute>
+          </when>
+          <when test="$_category = '196'">
+            <setEventAttribute attr="webCategory">Internet Communication - Text and Media Messaging</setEventAttribute>
+          </when>
+          <when test="$_category = '200'">
+            <setEventAttribute attr="webCategory">Information Technology - Web and Email Spam</setEventAttribute>
+          </when>
+          <when test="$_category = '201'">
+            <setEventAttribute attr="webCategory">Information Technology - Web Collaboration</setEventAttribute>
+          </when>
+          <when test="$_category = '202'">
+            <setEventAttribute attr="webCategory">Parked Domain</setEventAttribute>
+          </when>
+          <when test="$_category = '203'">
+            <setEventAttribute attr="webCategory">Business and Economy - Hosted Business Applications</setEventAttribute>
+          </when>
+          <when test="$_category = '204'">
+            <setEventAttribute attr="webCategory">Society and Lifestyles - Blogs and Personal Sites</setEventAttribute>
+          </when>
+          <when test="$_category = '205'">
+            <setEventAttribute attr="webCategory">Security - Malicious Embedded Link</setEventAttribute>
+          </when>
+          <when test="$_category = '206'">
+            <setEventAttribute attr="webCategory">Security - Malicious Embedded iFrame</setEventAttribute>
+          </when>
+          <when test="$_category = '207'">
+            <setEventAttribute attr="webCategory">Security - Suspicious Embedded Link</setEventAttribute>
+          </when>
+          <when test="$_category = '208'">
+            <setEventAttribute attr="webCategory">Bandwidth - Surveillance</setEventAttribute>
+          </when>
+          <when test="$_category = '209'">
+            <setEventAttribute attr="webCategory">Bandwidth - Educational Video</setEventAttribute>
+          </when>
+          <when test="$_category = '210'">
+            <setEventAttribute attr="webCategory">Bandwidth - Entertainment Video</setEventAttribute>
+          </when>
+          <when test="$_category = '211'">
+            <setEventAttribute attr="webCategory">Bandwidth - Viral Video</setEventAttribute>
+          </when>
+          <when test="$_category = '212'">
+            <setEventAttribute attr="webCategory">Extended Protection - Dynamic DNS</setEventAttribute>
+          </when>
+          <when test="$_category = '213'">
+            <setEventAttribute attr="webCategory">Security - Potentially Exploited Documents</setEventAttribute>
+          </when>
+          <when test="$_category = '214'">
+            <setEventAttribute attr="webCategory">Security - Mobile Malware</setEventAttribute>
+          </when>
+          <when test="$_category = '215'">
+            <setEventAttribute attr="webCategory">Information Technology - Unauthorized Mobile Marketplaces</setEventAttribute>
+          </when>
+          <when test="$_category = '216'">
+            <setEventAttribute attr="webCategory">Security - Custom-Encrypted Uploads</setEventAttribute>
+          </when>
+          <when test="$_category = '217'">
+            <setEventAttribute attr="webCategory">Security - Files Containing Passwords</setEventAttribute>
+          </when>
+          <when test="$_category = '218'">
+            <setEventAttribute attr="webCategory">Security - Advanced Malware Command and Control</setEventAttribute>
+          </when>
+          <when test="$_category = '219'">
+            <setEventAttribute attr="webCategory">Security - Advanced Malware Payloads</setEventAttribute>
+          </when>
+          <when test="$_category = '220'">
+            <setEventAttribute attr="webCategory">Compromised Websites</setEventAttribute>
+          </when>
+          <when test="$_category = '221'">
+            <setEventAttribute attr="webCategory">Newly Registered Websites</setEventAttribute>
+          </when>
+          <when test="$_category = '222'">
+            <setEventAttribute attr="webCategory">Collaboration - Office</setEventAttribute>
+          </when>
+          <when test="$_category = '223'">
+            <setEventAttribute attr="webCategory">Office - Mail</setEventAttribute>
+          </when>
+          <when test="$_category = '224'">
+            <setEventAttribute attr="webCategory">Office - Drive </setEventAttribute>
+          </when>
+          <when test="$_category = '225'">
+            <setEventAttribute attr="webCategory">Office - Documents</setEventAttribute>
+          </when>
+          <when test="$_category = '226'">
+            <setEventAttribute attr="webCategory">Office - Apps</setEventAttribute>
+          </when>
+          <when test="$_category = '227'">
+            <setEventAttribute attr="webCategory">Web Analytics</setEventAttribute>
+          </when>
+          <when test="$_category = '228'">
+            <setEventAttribute attr="webCategory">Web and Email Marketing</setEventAttribute>
+          </when>
+          <when test="$_category = '1500'">
+            <setEventAttribute attr="webCategory">Social Web Control - Facebook</setEventAttribute>
+          </when>
+          <when test="$_category = '1501'">
+            <setEventAttribute attr="webCategory">Social Web Controls - LinkedIn Updates</setEventAttribute>
+          </when>
+          <when test="$_category = '1502'">
+            <setEventAttribute attr="webCategory">Social Web Controls - LinkedIn Mail</setEventAttribute>
+          </when>
+          <when test="$_category = '1503'">
+            <setEventAttribute attr="webCategory">Social Web Controls - LinkedIn Connections</setEventAttribute>
+          </when>
+          <when test="$_category = '1504'">
+            <setEventAttribute attr="webCategory">Social Web Controls - LinkedIn Jobs</setEventAttribute>
+          </when>
+          <when test="$_category = '1505'">
+            <setEventAttribute attr="webCategory">Social Web Controls - Facebook Posting</setEventAttribute>
+          </when>
+          <when test="$_category = '1506'">
+            <setEventAttribute attr="webCategory">Social Web Controls - Facebook Commenting</setEventAttribute>
+          </when>
+          <when test="$_category = '1507'">
+            <setEventAttribute attr="webCategory">Social Web Controls - Facebook Friends</setEventAttribute>
+          </when>
+          <when test="$_category = '1508'">
+            <setEventAttribute attr="webCategory">Social Web Controls - Facebook Photo Upload</setEventAttribute>
+          </when>
+          <when test="$_category = '1509'">
+            <setEventAttribute attr="webCategory">Social Web Controls - Facebook Mail</setEventAttribute>
+          </when>
+          <when test="$_category = '1510'">
+            <setEventAttribute attr="webCategory">Social Web Controls - Facebook Events</setEventAttribute>
+          </when>
+          <when test="$_category = '1511'">
+            <setEventAttribute attr="webCategory">Social Web Controls - YouTube Commenting</setEventAttribute>
+          </when>
+          <when test="$_category = '1512'">
+            <setEventAttribute attr="webCategory">Social Web Controls - YouTube Video Upload</setEventAttribute>
+          </when>
+          <when test="$_category = '1513'">
+            <setEventAttribute attr="webCategory">Social Web Controls - Facebook Apps</setEventAttribute>
+          </when>
+          <when test="$_category = '1514'">
+            <setEventAttribute attr="webCategory">Social Web Controls - Facebook Chat</setEventAttribute>
+          </when>
+          <when test="$_category = '1516'">
+            <setEventAttribute attr="webCategory">Social Web Controls - Facebook Questions</setEventAttribute>
+          </when>
+          <when test="$_category = '1517'">
+            <setEventAttribute attr="webCategory">Social Web Controls - Facebook Video Upload</setEventAttribute>
+          </when>
+          <when test="$_category = '1518'">
+            <setEventAttribute attr="webCategory">Social Web Controls - Facebook Groups</setEventAttribute>
+          </when>
+          <when test="$_category = '1519'">
+            <setEventAttribute attr="webCategory">Social Web Controls - Twitter Posting</setEventAttribute>
+          </when>
+          <when test="$_category = '1520'">
+            <setEventAttribute attr="webCategory">Social Web Controls - Twitter Mail</setEventAttribute>
+          </when>
+          <when test="$_category = '1521'">
+            <setEventAttribute attr="webCategory">Social Web Controls - Twitter Follow</setEventAttribute>
+          </when>
+          <when test="$_category = '1523'">
+            <setEventAttribute attr="webCategory">Social Web Controls - YouTube Sharing</setEventAttribute>
+          </when>
+          <when test="$_category = '1524'">
+            <setEventAttribute attr="webCategory">Social Web Controls - Facebook Games</setEventAttribute>
+          </when>
+          <when test="$_category = '1525'">
+            <setEventAttribute attr="webCategory">Social Web Controls - YouTube</setEventAttribute>
+          </when>
+          <when test="$_category = '1526'">
+            <setEventAttribute attr="webCategory">Social Web Controls - Twitter</setEventAttribute>
+          </when>
+          <when test="$_category = '1527'">
+            <setEventAttribute attr="webCategory">Social Web Controls - LinkedIn</setEventAttribute>
+          </when>
+          <when test="$_category = '1528'">
+            <setEventAttribute attr="webCategory">Social Web Controls - Various</setEventAttribute>
+          </when>
+          <when test="$_category = '1529'">
+            <setEventAttribute attr="webCategory">Social Web Controls - Craigslist Posting</setEventAttribute>
+          </when>
+          <when test="$_category = '1530'">
+            <setEventAttribute attr="webCategory">Social Web Controls - WordPress Posting</setEventAttribute>
+          </when>
+          <when test="$_category = '1531'">
+            <setEventAttribute attr="webCategory">Social Web Controls - WordPress Commenting</setEventAttribute>
+          </when>
+          <when test="$_category = '1801'">
+            <setEventAttribute attr="webCategory">Non-HTTP</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="webCategory">$_category</setEventAttribute>
+          </otherwise>
+        </choose>
+
+        <choose>
+          <when test="$_httpDisposition = '1024'">
+            <setEventAttribute attr="httpProxyAction">Category permitted, not set</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1025'">
+            <setEventAttribute attr="httpProxyAction">Category blocked</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1026'">
+            <setEventAttribute attr="httpProxyAction">Category permitted</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1027'">
+            <setEventAttribute attr="httpProxyAction">Custom URL, category blocked</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1028'">
+            <setEventAttribute attr="httpProxyAction">Custom URL, category permitted</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1029'">
+            <setEventAttribute attr="httpProxyAction">Always blocked</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1030'">
+            <setEventAttribute attr="httpProxyAction">Never blocked</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1031'">
+            <setEventAttribute attr="httpProxyAction">Blocked by limited access filter</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1032'">
+            <setEventAttribute attr="httpProxyAction">Blocked by keyword</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1033'">
+            <setEventAttribute attr="httpProxyAction">Blocked - subscription level exceeded</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1034'">
+            <setEventAttribute attr="httpProxyAction">Permitted - subscription level exceeded</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1035'">
+            <setEventAttribute attr="httpProxyAction">Password override page</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1037'">
+            <setEventAttribute attr="httpProxyAction">Permitted by password override</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1040'">
+            <setEventAttribute attr="httpProxyAction">Permitted with Confirm option</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1041'">
+            <setEventAttribute attr="httpProxyAction">Blocked - authentication required</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1042'">
+            <setEventAttribute attr="httpProxyAction">Permitted - category not purchased</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1043'">
+            <setEventAttribute attr="httpProxyAction">Permitted by quota</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1044'">
+            <setEventAttribute attr="httpProxyAction">Permitted with keyword match</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1045'">
+            <setEventAttribute attr="httpProxyAction">Blocked due to network bandwidth</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1046'">
+            <setEventAttribute attr="httpProxyAction">Blocked due to protocol bandwidth</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1047'">
+            <setEventAttribute attr="httpProxyAction">File type blocked</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1048'">
+            <setEventAttribute attr="httpProxyAction">File type permitted</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1049'">
+            <setEventAttribute attr="httpProxyAction">Protocol blocked</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1050'">
+            <setEventAttribute attr="httpProxyAction">Protocol permitted</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1051'">
+            <setEventAttribute attr="httpProxyAction">Protocol permitted, not set</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1052'">
+            <setEventAttribute attr="httpProxyAction">Permitted by limited access filter</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1053'">
+            <setEventAttribute attr="httpProxyAction">Redirected by search filtering</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1054'">
+            <setEventAttribute attr="httpProxyAction">Blocked with Confirm option</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1055'">
+            <setEventAttribute attr="httpProxyAction">Blocked by quota</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1056'">
+            <setEventAttribute attr="httpProxyAction">Permitted - protocol not purchased</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1057'">
+            <setEventAttribute attr="httpProxyAction">Blocked by security override</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1058'">
+            <setEventAttribute attr="httpProxyAction">Blocked by hybrid antivirus scanning - inbound</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1059'">
+            <setEventAttribute attr="httpProxyAction">Blocked by hybrid antivirus scanning - outbound</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1060'">
+            <setEventAttribute attr="httpProxyAction">Permitted by exception</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1061'">
+            <setEventAttribute attr="httpProxyAction">Blocked by exception</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1281'">
+            <setEventAttribute attr="httpProxyAction">Category blocked - Content Gateway analysis</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1282'">
+            <setEventAttribute attr="httpProxyAction">Category permitted - Content Gateway analysis</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1293'">
+            <setEventAttribute attr="httpProxyAction">Permitted by password override - Content Gateway analysis</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1296'">
+            <setEventAttribute attr="httpProxyAction">Permitted with confirm option - Content Gateway analysis</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1299'">
+            <setEventAttribute attr="httpProxyAction">Permitted by quota - Content Gateway analysis</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1301'">
+            <setEventAttribute attr="httpProxyAction">Blocked due to network bandwidth - Content Gateway analysis</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1302'">
+            <setEventAttribute attr="httpProxyAction">Blocked due to protocol bandwidth - Content Gateway analysis</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1303'">
+            <setEventAttribute attr="httpProxyAction">File type blocked - Content Gateway analysis</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1304'">
+            <setEventAttribute attr="httpProxyAction">File type permitted - Content Gateway analysis</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1310'">
+            <setEventAttribute attr="httpProxyAction">Blocked with confirm option - Content Gateway analysis</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1311'">
+            <setEventAttribute attr="httpProxyAction">Blocked by quota - Content Gateway analysis</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1313'">
+            <setEventAttribute attr="httpProxyAction">Blocked by security override - Content Gateway analysis</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1537'">
+            <setEventAttribute attr="httpProxyAction">Permitted by scanning link analysis</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1538'">
+            <setEventAttribute attr="httpProxyAction">Web 2.0 request permitted</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1539'">
+            <setEventAttribute attr="httpProxyAction">Permitted after Web 2.0 scanning and link analysis</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1553'">
+            <setEventAttribute attr="httpProxyAction">Blocked by scanning link analysis</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1554'">
+            <setEventAttribute attr="httpProxyAction">Web 2.0 request blocked</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1555'">
+            <setEventAttribute attr="httpProxyAction">Blocked after Web 2.0 scanning and link analysis</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1556'">
+            <setEventAttribute attr="httpProxyAction">Zipbomb permitted - Content Gateway analysis</setEventAttribute>
+          </when>
+          <when test="$_httpDisposition = '1557'">
+            <setEventAttribute attr="httpProxyAction">Zipbomb blocked - Content Gateway analysis</setEventAttribute>
+          </when>
+        </choose>
+
+        <when test="exist _fileType">
+          <choose>
+            <when test="$_fileType = '3'">
+              <setEventAttribute attr="fileType">Executables</setEventAttribute>
+            </when>
+            <when test="$_fileType = '4'">
+              <setEventAttribute attr="fileType">Compressed Files</setEventAttribute>
+            </when>
+            <when test="$_fileType = '5'">
+              <setEventAttribute attr="fileType">Multimedia</setEventAttribute>
+            </when>
+            <when test="$_fileType = '6'">
+              <setEventAttribute attr="fileType">Text</setEventAttribute>
+            </when>
+            <when test="$_fileType = '7'">
+              <setEventAttribute attr="fileType">Images</setEventAttribute>
+            </when>
+            <when test="$_fileType = '8'">
+              <setEventAttribute attr="fileType">Documents</setEventAttribute>
+            </when>
+            <when test="$_fileType = '9'">
+              <setEventAttribute attr="fileType">Threats</setEventAttribute>
+            </when>
+            <when test="$_fileType = '10'">
+              <setEventAttribute attr="fileType">Rich Internet Applications</setEventAttribute>
+            </when>
+            <when test="$_fileType = '11'">
+              <setEventAttribute attr="fileType">Unknown</setEventAttribute>
+            </when>
+          </choose>
+        </when>
+
+      </case>
+    </switch>
+
+  </parsingInstructions>
+</eventParser>

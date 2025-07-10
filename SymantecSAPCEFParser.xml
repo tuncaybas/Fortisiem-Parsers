@@ -1,0 +1,90 @@
+<eventParser name="SymantecSAPCEFParser">
+  <deviceType>
+    <Vendor>Symantec</Vendor>
+    <Model>Security Analytics Platform</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patStrSpaceAndEndColon"><![CDATA[[^ :]*]]></pattern>
+    <pattern name="patStrOr"><![CDATA[[^|]*]]></pattern>
+    <pattern name="patStrLeftSB"><![CDATA[[^\[]*]]></pattern>
+    <pattern name="patStrSAP"><![CDATA[php|ruleEngine|gaugefs]]></pattern>
+    <pattern name="patStrEndQuote"><![CDATA[[^']+]]></pattern>
+  </patternDefinitions>
+
+
+  <testEvents>
+    <testEvent><![CDATA[<25>Mar 7 18:42:07 10.6.204.128 1 2019-03-08T00:36:01+00:00 host6 offboxd - - [meta sequenceId="1"] CEF:0|Symantec Corporation|Security Analytics Platform|7.3.5|100|Alert|10|src=10.6.42.148 spt=54966 dst=10.1.1.1 dpt=80 start=1552005341453 end=1552005341455 smac=00:17:0f:9b:14:00 dmac= msg="Rule: 'posture-test' was triggered by Indicator: 'posture_url-test'"]]></testEvent>
+    <testEvent><![CDATA[<25>Mar 12 09:17:21 10.6.204.128 1 2019-03-12T14:11:04+00:00 host6 offboxd - - [meta sequenceId="49"] CEF:0|Symantec Corporation|Security Analytics Platform|7.3.5|100|Alert|1|src=10.66.16.36 spt=59132 dst=10.1.1.1 dpt=80 start=1552399822 396 end=1552399838278 smac=00:17:0f:9b:14:00 dmac= cn1Label=verdict cn1=10.000000 title="jquery-1.11.1-ui-1.11.0-ujs-3.1.4.js" msg="Rule: 'Local File Analysis' was triggered by Indicator: 'Local File Analysis'"]]></testEvent>
+  </testEvents>
+  <eventFormatRecognizer><![CDATA[<:gPatYear>-<:gPatMonNum>-<:gPatDay>T<:gPatTime><:gPatTimeZone>\s+<:gPatStr>\s+<:gPatStr>\s+<:gPatStr>\s+<:gPatStr>\s+\[meta\ssequenceId="\d+"\]\sCEF:]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime><_tz:gPatTimeZone>\s+<reptDevName:gPatStr>\s+<procName:gPatStr>\s+.*\[meta\s+sequenceId="\d+"\]\s+CEF:<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    <setEventAttribute attr="logLevel">"CEF"</setEventAttribute>
+    <setEventAttribute attr="eventType">"Symantec-SAP-Generic"</setEventAttribute>
+    <setEventAttribute attr="_body">replaceStrInStr($_body, "\=", "=")</setEventAttribute>
+
+    <when test="matches($_body, '\\\|')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "\|", "::TEMP::")</setEventAttribute>
+    </when>
+
+    <setEventAttribute attr="_body">replaceStrInStr($_body, "|", "::SEP::")</setEventAttribute>
+
+    <when test="matches($_body, '::TEMP::')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "::TEMP::", "|")</setEventAttribute>
+    </when>
+
+    <collectAndSetAttrByPos sep="::SEP::" src="$_body">
+      <attrPosMap attr="appVersion" pos="4"/>
+      <attrPosMap attr="_category" pos="6"/>
+      <attrPosMap attr="eventSeverity" pos="7"/>
+      <attrPosMap attr="_extension" pos="8"/>
+    </collectAndSetAttrByPos>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_extension">
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="srcIpPort" key="spt"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="destIpPort" key="dpt"/>
+      <attrKeyMap attr="_startTime" key="start"/>
+      <attrKeyMap attr="_endTime" key="end"/>
+      <attrKeyMap attr="srcMACAddr" key="smac"/>
+      <attrKeyMap attr="destMACAddr" key="dmac"/>
+      <attrKeyMap attr="_msg" key="msg"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist _startTime">
+      <setEventAttribute attr="startTime">divide($_startTime, 1000)</setEventAttribute>
+    </when>
+
+    <when test="exist _endTime">
+      <setEventAttribute attr="endTime">divide($_endTime, 1000)</setEventAttribute>
+    </when>
+
+    <when test="exist _msg">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_msg">
+            <regex><![CDATA[Rule:\s'<ruleName:patStrEndQuote>' was triggered by Indicator:\s'<iocDesc:patStrEndQuote>']]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="msg">$_msg</setEventAttribute>
+        </case>
+        <default>
+          <setEventAttribute attr="msg">$_msg</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+    <when test="exist _category">
+      <setEventAttribute attr="_category">replaceStringByRegex($_category, "\s+", "_")</setEventAttribute>
+      <setEventAttribute attr="eventType">combineMsgId("Symantec-SAP-", $_category)</setEventAttribute>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

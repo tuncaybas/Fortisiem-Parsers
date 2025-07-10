@@ -1,0 +1,371 @@
+A user account was locked out,Se bloque¾ una cuenta de usuario
+A user account was locked out,Se bloqueÂ¾ una cuenta de usuario
+Access Check Results,Resultados de la comprobación de acceso
+Access Mask,Máscara de acceso
+Access Request Information,Información de solicitud de acceso
+Accesses,Accesos
+Account Domain,Dominio de cuenta
+Account Domain,Dominio de la cuenta
+Account Domain,Nombre de dominio
+Account Expires,Expiración de cuenta
+Account For Which Logon Failed,Cuenta con error de inicio de sesi¾n
+Account For Which Logon Failed,Cuenta con error de inicio de sesión
+Account Information,Informaci¾n de cuenta
+Account Information,InformaciÂ¾n de cuenta
+Account Information,Información de cuenta
+Account Name,Nombre de cuenta
+Account Name,Nombre de la cuenta
+Account Session Identifier,Identificador de sesión de cuenta
+Account That Was Locked Out,Cuenta bloqueada
+Account Whose Credentials Were Used,Cuenta cuyas credenciales se usaron
+Additional Information,Informaci¾n adicional
+Additional Information,InformaciÂ¾n adicional
+Additional Information,Información adicional
+Advanced Options,Opciones avanzadas
+Allowed To Delegate To,Se permite delegación a
+AllowedToDelegateTo,Se permite delegación a
+Application Correlation ID,Id. de correlación de aplicación
+Application Correlation ID,Id. de correlación de la aplicación
+Application Information,Información de aplicación
+Application Name,Nombre de aplicación
+Attribute,Atributo
+Attributes,Atributos
+Audit Failure,Error de auditorÝa
+Audit Success,AuditorÝa correcta
+Auditing Settings,Configuración de auditoría
+Authentication Details,Detalles de autenticación
+Authentication Details,Informaci¾n de autenticaci¾n detallada
+Authentication Details,InformaciÂ¾n de autenticaciÂ¾n detallada
+Authentication Package Name,
+Authentication Package,Paquete de autenticaci¾n
+Authentication Package,Paquete de autenticaciÂ¾n
+Authentication Package,Paquete de autenticación
+Authentication Provider,Proveedor de autenticación
+Authentication Server,Servidor de autenticación
+Authentication Type,Tipo de autenticación
+Called Station Identifier,Identificador de estación llamada
+Caller Computer Name,Nombre de equipo del autor de la llamada
+Caller Domain,
+Caller Logon ID,
+Caller Process ID,Id. de proceso del autor de la llamada
+Caller Process Name,Nombre de proceso del autor de la llamada
+Caller User Name,
+Calling Station Identifier,Identificador de estación de llamada
+Calling Station Identifier,Identificador de estación que llama
+Certificate Information,Informaci¾n de certificado
+Certificate Information,InformaciÂ¾n de certificado
+Certificate Information,Información de certificado
+Certificate Issuer Name,Nombre de emisor de certificado
+Certificate Issuer Name,Nombre de emisor de certificados
+Certificate Serial Number,Número de serie de certificado
+Certificate Thumbprint,Huella digital de certificado
+Change Type,Tipo de cambio
+Changed Attributes,Atributos cambiados
+Class ID,Id. de clase
+Class Name,Nombre de clase
+Class,Clase
+Client Address,Direcci¾n de cliente
+Client Address,DirecciÂ¾n de cliente
+Client Address,Dirección de cliente
+Client Address,Dirección del cliente
+Client Domain,
+Client Friendly Name,Nombre descriptivo de cliente
+Client IP Address,Dirección IP cliente
+Client IP Address,Dirección IP de cliente
+Client Logon ID,
+Client Machine,Equipo cliente
+Client Name,Nombre de cliente
+Client Port,Puerto de cliente
+Client User Name,
+Compatible IDs,Id. compatible
+Compatible IDs,Id. compatibles
+Computer Account That Was Changed,Cuenta de equipo cambiada
+Configuration Access Policy,Directiva de acceso a la configuración
+Configured Names,Nombres configurados
+Connection Request Policy Name,Nombre de directiva de solicitud de conexión
+Correlation ID,Id. de correlación
+Creator Process ID,Id. de proceso creador
+Creator Process ID,Identificador del proceso creador
+Creator Process Name,Nombre del proceso creador
+Creator Subject,Firmante creador
+Deleted Group,Grupo eliminado
+Destination Address,Dirección de destino
+Destination Port,Puerto de destino
+Detailed Authentication Information,Informaci¾n de autenticaci¾n detallada
+Detailed Authentication Information,InformaciÂ¾n de autenticaciÂ¾n detallada
+Detailed Authentication Information,Información de autenticación detallada
+Device ID,Id. de dispositivo
+Device Name,Nombre de dispositivo
+Device Name,Nombre del dispositivo
+Direction,Dirección
+Directory Service,Servicio de directorio
+Disable Integrity Checks,Desactivar comprobaciones de integridad
+Disabled Privileges,Privilegios deshabilitados
+Display Name,Nombre para mostrar
+DNS Host Name,Nombre de host DNS
+Domain Behavior Version,Versión de comportamiento de dominio
+Domain ID,Id. de dominio
+Domain Name,Nombre de dominio
+Domain,Dominio
+EAP Type,Tipo de EAP
+Elevated Token,Token elevado
+Enabled Privileges,Privilegios habilitados
+Error Code,C¾digo de error
+Error Code,CÂ¾digo de error
+Error Code,Código de error
+Error Code,Código del error
+Event in sequence,Evento en secuencia
+Expiration time,Hora de expiración
+Extended-Result,Resultado ampliado
+Failed test code,código de prueba con error
+Failure Code,C¾digo de error
+Failure Code,CÂ¾digo de error
+Failure Code,Código de error
+Failure Information,Informaci¾n de error
+Failure Information,InformaciÂ¾n de error
+Failure Information,Información de error
+Failure Reason,Motivo del error
+Filter Information,Información de filtro
+Filter Run-Time ID,Id. de tiempo de ejecución de filtro
+Flight Signing,Firma de desarrollo
+Force Logoff,Aplicar cierre de sesión
+Fully Qualified Account Name,Nombre de cuenta completo
+General Settings,Configuración general
+Group Domain,Dominio de grupo
+Group Membership,Pertenencia a grupos
+Group Name,Nombre de grupo
+Group,Grupo
+Handle ID,Id. de identificador
+Hardware IDs,Id. de hardware
+Help URL,URL de ayuda
+Home Directory,Directorio principal
+Home Drive,Unidad principal
+HyperVisor Debugging,Depuración del hipervisor
+HyperVisor Launch Type,Tipo de inicio del hipervisor
+HyperVisor Load Options,Opciones de carga del hipervisor
+HyperVisor Settings,Configuración del hipervisor
+Image File Name,
+Image File,
+Impersonation Level,Nivel de suplantaci¾n
+Impersonation Level,Nivel de suplantaciÂ¾n
+Impersonation Level,Nivel de suplantación
+IP Addresses,Direcciones IP
+Kernel Debugging,Depuración del kernel
+Key Length,Longitud de clave
+Layer Name,Nombre de nivel
+Layer Run-Time ID,Id. de tiempo de ejecución de nivel
+LDAP Display Name,Nombre LDAP para mostrar
+LDAP Display Name,Nombre para mostrar LDAP
+Linked Logon ID,Inicio de sesión vinculado
+Load Options,Opciones de carga
+Location Information,Información de la ubicación
+Location Information,Información de ubicación
+Lockout Duration,Duración del bloqueo
+Lockout Observation Window,Ventana de observación de bloqueo
+Lockout Threshold,Umbral de bloqueo
+Logging Results,Resultados de registro
+Logon Account,Cuenta de inicio de sesi¾n
+Logon Account,Cuenta de inicio de sesiÂ¾n
+Logon Account,Cuenta de inicio de sesión
+Logon GUID,GUID de inicio de sesi¾n
+Logon GUID,GUID de inicio de sesiÂ¾n
+Logon GUID,GUID de inicio de sesión
+Logon Hours,Horas de inicio de sesión
+Logon ID,Id. de inicio de sesi¾n
+Logon ID,Id. de inicio de sesiÂ¾n
+Logon ID,Id. de inicio de sesión
+Logon ID,Identificador de inicio de sesión
+Logon Information,Información de inicio de sesión
+Logon Process Name,
+Logon Process,Proceso de inicio de sesi¾n
+Logon Process,Proceso de inicio de sesiÂ¾n
+Logon Process,Proceso de inicio de sesión
+Logon Type,Tipo de inicio de sesi¾n
+Logon Type,Tipo de inicio de sesiÂ¾n
+Logon Type,Tipo de inicio de sesión
+Machine Account Quota,Cuota de cuenta de equipo
+Mandatory Label,Etiqueta obligatoria
+Max. Password Age,Vigencia máxima de la contraseña
+Member,Miembro
+Min. Password Age,Vigencia mínima de la contraseña
+Min. Password Length,Longitud mínima de contraseña
+Mixed Domain Mode,Modo de dominio mixto
+Name,Nombre
+NAS Identifier,Identificador NAS
+NAS IPv4 Address,Dirección IPv4 NAS
+NAS IPv6 Address,Dirección IPv6 NAS
+NAS Port,Puerto NAS
+NAS Port-Type,Tipo de puerto NAS
+Network Account Domain,Dominio de cuenta de red
+Network Account Name,Nombre de cuenta de red
+Network Address,Dirección de red
+Network Information,Informaci¾n de red
+Network Information,InformaciÂ¾n de red
+Network Information,Información de red
+Network Policy Name,Nombre de directiva de red
+Network Policy Name,Nombre de directiva red
+New Account Name,Nuevo nombre de cuenta
+New Account,Nueva cuenta
+New Computer Account,Nueva cuenta de equipo
+New DN,Nuevo DN
+New Group,Nuevo grupo
+New Handle ID,
+New Logon,Nuevo inicio de sesi¾n
+New Logon,Nuevo inicio de sesiÂ¾n
+New Logon,Nuevo inicio de sesión
+New Maxusers,Usuarios máximos nuevos
+New Process ID,Id. de nuevo proceso
+New Process ID,Identificador del nuevo proceso
+New Process Name,Nombre de nuevo proceso
+New Process Name,Nombre del nuevo proceso
+New Remark,Nota nueva
+New SD,Descriptor de seguridad nuevo
+New Security Descriptor,Nuevo descriptor de seguridad
+New ShareFlags,Marcas de recurso compartido nuevas
+New State,Nuevo estado
+New Time,Nueva hora
+New Token Information,Información de nuevo símbolo
+New UAC Value,Nuevo valor de UAC
+Object Handle,
+Object Name,Nombre de objeto
+Object Name,Nombre del objeto
+Object Server,Servidor del objeto
+Object Type,Tipo de objeto
+Object,Objeto
+OEM Information,Información de OEM
+Old Account Name,Anterior nombre de cuenta
+Old DN,Anterior DN
+Old MaxUsers,Usuarios máximos anteriores
+Old Remark,Nota anterior
+Old SD,Descriptor de seguridad anterior
+Old ShareFlags,Marcas de recurso compartido anteriores
+Old UAC Value,Valor de UAC anterior
+Operation,Operaci¾n
+Operation,OperaciÂ¾n
+Operation,Operación
+Original Security Descriptor,Descriptor de seguridad original
+OS-Version,Versión del SO
+OS-Version,Versión SO
+Package Name (NTLM only),Nombre de paquete (solo NTLM)
+Package Name (NTLM only),Nombre de paquete (s¾lo NTLM)
+Package Name (NTLM only),Nombre de paquete (sÂ¾lo NTLM)
+Password History Length,Longitud de historial de contraseña
+Password Last Set,Última contraseña establecida
+Password Properties,Propiedades de contraseña
+Permissions Change,Cambio de permisos
+Port,Puerto
+Pre-Authentication Type,Tipo de autenticación previa
+Previous Time,Hora anterior
+Primary Domain,
+Primary Group ID,Id. de grupo primario
+Primary Logon ID,
+Primary User Name,
+Privileges,Privilegios
+Process Command Line,Línea de comandos de proceso
+Process Command Line,Tipo de elevación
+Process ID,Id. de proceso
+Process ID,Id. del proceso
+Process ID,Identificador de proceso
+Process Information,Informaci¾n de proceso
+Process Information,InformaciÂ¾n de proceso
+Process Information,Información de proceso
+Process Name,Nombre de proceso
+Process Name,Nombre del proceso
+Process,Proceso
+Profile Path,Ruta de acceso de perfil
+Protocol,Protocolo
+Proxy Policy Name,Nombre de directiva de proxy
+Quarantine Grace Time,Período de gracia de cuarentena
+Quarantine Information,Información de cuarentena
+RADIUS Client,Cliente RADIUS
+Read Operation,Operación de lectura
+Reason Code,Código de motivo
+Reason,Motivo
+Relative Target Name,Nombre de destino relativo
+Resource Manager,Administrador de recursos
+Restricted Admin Mode,Modo de administrador restringido
+Result Code,Código de resultado
+Result,Resultado
+RM Transaction ID,Id. de transacción de RM
+SAM Account Name,Nombre de cuenta SAM
+Script Path,Ruta de acceso de script
+Security ID,Id. de seguridad
+Security ID,Identificador de seguridad
+Server Information,Información de servidor
+Server Names,Nombres de servidor
+Service ID,Id. de servicio
+Service Information,Informaci¾n de servicio
+Service Information,InformaciÂ¾n de servicio
+Service Information,Información de servicio
+Service Name,Nombre de servicio
+Service Principal Names,Nombres principales de servicio
+Session ID,Id. de sesión
+Session Identifier,Identificador de sesión
+Share Information,Información de recurso compartido
+Share Name,Nombre de recurso compartido
+Share Path,Ruta de acceso de recurso compartido
+SID History,Historial de SID
+SID List,Lista de SID
+Signature Settings,Configuración de la firma
+Source Address,Dirección de origen
+Source Network Address,Direcci¾n de red de origen
+Source Network Address,DirecciÂ¾n de red de origen
+Source Network Address,Dirección de red de origen
+Source Port,Puerto de origen
+Source Workstation,Estaci¾n de trabajo de origen
+Source Workstation,EstaciÂ¾n de trabajo de origen
+Source Workstation,Estación de trabajo de origen
+SPN Name,Nombre de SPN
+Status,Estado
+Sub Status,Subestado
+Subject,Asunto
+Subject,Firmante
+Subject,Sujeto
+Subject,Tema
+Supplied Realm Name,Nombre de dominio Kerberos proporcionado
+Syntax (OID),Sintaxis (OID)
+System Event Logging,Registro de eventos del sistema
+System Health Validator Result(s),Resultados del validador de mantenimiento del sistema
+Target Account ID,
+Target Account Name,
+Target Account,Cuenta de destino
+Target Computer,Equipo de destino
+Target Domain,
+Target Process ID,Id. de proceso de destino
+Target Process Name,Nombre de proceso de destino
+Target Process,Proceso de destino
+Target Server Name,Nombre de servidor de destino
+Target Server,Servidor de destino
+Target Subject,Firmante de destino
+Target User Name,
+Test Signing,Firma de prueba
+The domain controller attempted to validate the credentials for an account,El controlador de dominio intent¾ validar las credenciales para una cuenta
+The domain controller attempted to validate the credentials for an account,El controlador de dominio intentÂ¾ validar las credenciales para una cuenta
+The workstation was locked,La estaci¾n de trabajo estaba bloqueada
+The workstation was locked,La estaciÂ¾n de trabajo estaba bloqueada
+The workstation was unlocked,La estaci¾n de trabajo estaba desbloqueada
+The workstation was unlocked,La estaciÂ¾n de trabajo estaba desbloqueada
+Ticket Encryption Type,Tipo de cifrado de vale
+Ticket Options,Opciones de vale
+Token Elevation Type,Tipo de elevación de token
+Transaction ID,Id. de transacción
+Transaction Information,Información de transacción
+Transited Services,Servicios transitados
+Tree Delete,Borrar árbol
+Type,Tipo
+User Account Control,Control de cuentas de usuario
+User Domain,
+User ID,Id. de usuario
+User Name,Nombre de usuario
+User Parameters,Parámetros de usuario
+User Principal Name,Nombre principal de usuario
+User Workstations,Estaciones de trabajo de usuario
+User,Usuario
+Value,Valor
+Vendor IDs,Id. de proveedor
+Virtual Account,Cuenta virtual
+VSM Launch Type,Tipo de inicio de VSM
+Workstation Name,Nombre de estaci¾n de trabajo
+Workstation Name,Nombre de estaciÂ¾n de trabajo
+Workstation Name,Nombre de estación de trabajo
+Source Account,Source Account

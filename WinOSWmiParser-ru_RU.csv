@@ -1,0 +1,400 @@
+Access Check Results,Результаты проверки доступа
+Access Granted,Предоставленный доступ
+Access Mask,Маска доступа
+Access Reasons,Причины доступа
+Access Reasons,Сведения о причинах доступа
+Access Request Information,Сведения о запросе доступа
+Access Request Information,Сведения о запросе на доступ
+Access Right,Право на доступ
+Accesses,Доступы
+Accesses,Операции доступа
+Account Domain,Домен учетной записи
+Account Expires,Срок действия учетной записи истекает
+Account For Which Logon Failed,"Учетная запись, которой не удалось выполнить вход"
+Account Information,Сведения об учетной записи
+Account Modified,Измененная учетная запись
+Account Name,Имя учетной записи
+Account Name,имя учетной записи
+Account Session Identifier,Идентификатор сеанса учетной записи
+Account That Was Locked Out,Заблокированная учетная запись
+Account Whose Credentials Were Used,Были использованы учетные данные следующей учетной записи
+Additional Information,Дополнительные сведения
+Advanced Options,Дополнительные параметры
+Allowed To Delegate To,Разрешено делегировать
+AllowedToDelegateTo,Разрешено делегировать
+Application Correlation ID,Идентификатор корреляции приложения
+Application Information,Сведения о приложении
+Application Name,Имя приложения
+Attribute,Атрибут
+Attributes,Атрибуты
+Audit Failure,Аудит отказа
+Audit Policy Change,Изменение политики аудита
+Audit Success,Аудит успеха
+Auditing Settings,Параметры аудита
+Authentication Details,Сведения о проверке подлинности
+Authentication Package,Пакет проверки подлинности
+Authentication Provider,Поставщик проверки подлинности
+Authentication Server,Сервер проверки подлинности
+Authentication Type,Тип проверки подлинности
+BackupFileName,Имя файла резервной копии
+CA Certificate Hash,Хэш сертификата ЦС
+CA Public Key Hash,Хэш открытого ключа ЦС
+Called Station Identifier,Идентификатор вызываемой станции
+Caller Computer Name,Имя вызывающего компьютера
+Caller Process ID,Идентификатор процесса вызывающей стороны
+Caller Process Name,Имя процесса вызывающей стороны
+Caller Workstation,Вызывающая рабочая станция
+Calling Station Identifier,Идентификатор вызывающей станции
+Category,Категория
+Certificate Database Hash,Хеш базы данных сертификатов
+Certificate Database Hash,Хэш базы данных сертификатов
+Certificate Information,Сведения о сертификате
+Certificate Issuer Name,Имя поставщика сертификата
+Certificate Serial Number,Серийный номер сертификата
+Certificate Thumbprint,Отпечаток сертификата
+Change Information,Сведения об изменении
+Change Type,Тип изменения
+Changed Attributes,Измененные атрибуты
+Changes Made,Внесенные изменения
+Changes,Изменения
+Class ID,ИД класса
+Class Name,Имя класса
+Class,Класс
+Client Address,Адрес клиента
+Client Friendly Name,Понятное имя клиента
+Client IP Address,IP-адрес клиента
+Client Machine,Клиентский компьютер
+Client Machine,Компьютер клиента
+Client Name,Имя клиента
+Client Port,Порт клиента
+Compatible IDs,Совместимые ИД
+Computer Account That Was Changed,Измененная учетная запись компьютера
+Configuration Access Policy,Политика доступа к конфигурации
+Configured Names,Настроенные имена
+Connection Request Policy Name,Имя политики запроса на подключение
+Connection Request Policy Name,Имя политики запросов на подключение
+Correlation ID,Идентификатор корреляции
+Creator Process ID,ИД процесса-создателя
+Creator Process ID,Идентификатор создавшего процесса
+Creator Process Name,Имя процесса-создателя
+Creator Subject,Субъект-создатель
+Data,Данные
+Deleted Group,Удаленная группа
+Desired Access,Требуемый доступ
+Destination Address,Адрес назначения
+Destination Address,Конечный адрес
+Destination DRA,Конечный DRA
+Destination Port,Порт назначения
+Detailed Authentication Information,Подробные сведения о проверке подлинности
+Detailed Authentication Information,Сведения о проверке подлинности
+Device ID,ИД устройства
+Device Name,Имя устройства
+Direction,Направление
+Directory Service,Служба каталогов
+Disable Integrity Checks,Отключить проверку целостности
+Disabled Privileges,Отключенные привилегии
+Display Name,Отображаемое имя
+Disposition,Назначение
+DN,Различаемое имя
+DNS Host Name,DNS-имя узла
+Domain Behavior Version,Версия поведения домена
+Domain ID,Идентификатор домена
+Domain ID,Код домена
+Domain Name,Имя домена
+Domain,Домен
+EAP Error Code,Код ошибки EAP
+EAP Reason Code,Код причины EAP
+EAP Root Cause String,Строка основной причины EAP
+EAP Type,Тип EAP
+Elevated Token,Расширенный маркер
+Enabled Privileges,Включенные привилегии
+Entry,Запись
+Error Code,Код ошибки
+Error,Ошибка
+Event in sequence,Событие в последовательности
+Event Source ID,Идентификатор источника событий
+Event Source,Источник событий
+Exit Status,Состояние выхода
+Expiration time,Время окончания срока действия
+Expiration Time,Срок действия
+Extended-Result,Расширенный результат
+Failed test code,Код ошибки проверки
+Failure Code,Код ошибки
+Failure Information,Сведения об ошибке
+Failure Reason,Причина ошибки
+File Name,Имя файла
+Filter Information,tСведения о фильтре
+Filter Information,Сведения о фильтре
+Filter Run-Time ID,Идентификатор выполнения фильтра
+Filter Run-Time ID,Код выполнения фильтра
+Filter,Фильтр
+Flags,Флаги
+Flight Signing,Подписание рейса
+Force Logoff,Принудительный выход
+Fully Qualified Account Name,Полное имя учетной записи
+General Settings,Общие параметры
+Group Domain,Домен группы
+Group Membership,Участие в группе
+Group Name,Имя группы
+Group,Группа
+Handle ID,Идентификатор дескриптора
+Handle ID,Код дескриптора
+Hardware IDs,Идентификаторы оборудования
+Help URL,URL-адрес справки
+Home Directory,Домашний каталог
+Home Drive,Домашний диск
+HyperVisor Debugging,Отладка низкоуровневой оболочки
+HyperVisor Launch Type,Тип запуска низкоуровневой оболочки
+HyperVisor Load Options,Параметры загрузки низкоуровневой оболочки
+HyperVisor Settings,Параметры низкоуровневой оболочки
+Impersonation Level,Уровень олицетворения
+Index,Индекс
+Interface GUID,GUID интерфейса
+IP Addresses,IP-адреса
+Kernel Debugging,Отладка ядра
+Key Length,Длина ключа
+Layer Name,Имя уровня
+Layer Run-Time ID,Идентификатор выполнения уровня
+Layer Run-Time ID,Код выполнения уровня
+LDAP Display Name,Отображаемое имя LDAP
+Linked Logon ID,Связанный ИД входа
+Load Options,Параметры загрузки
+Local MAC Address,Локальный MAC-адрес
+Location Information,Сведения о расположении
+Lockout Duration,Длительность блокировки
+Lockout Observation Window,Сброс счетчика блокировок через
+Lockout Threshold,Порог блокировки
+Logging Results,Результаты ведения журнала
+Logging Results,Результаты входа в систему
+Logon Account,Учетная запись входа
+Logon GUID,GUID входа
+Logon Hours,Часы входа
+Logon ID,ИД входа
+Logon ID,ИД входа в систему
+Logon ID,Идентификатор входа
+Logon ID,Идентификатор входа в систему
+Logon ID,Код входа
+Logon ID,Код входа в систему
+Logon Information,Сведения о входе
+Logon Process,Процесс входа
+Logon Type,Тип входа
+Machine Account Quota,Квота учетной записи компьютера
+Mandatory Label,Обязательная метка
+Max. Password Age,Макс. срок действия пароля
+Member,Член
+Min. Password Age,Мин. срок действия паролей
+Min. Password Length,Мин. Длина пароля
+Mixed Domain Mode,Смешанный режим домена
+Name (SSID),Имя (SSID)
+Name,Имя
+Naming Context,Контекст именования
+NAS Identifier,Идентификатор NAS
+NAS Identifier,Идентификтор NAS
+NAS IPv4 Address,IPv4-адрес NAS
+NAS IPv4 Address,Адрес IPv4 NAS
+NAS IPv6 Address,IPv6-адрес NAS
+NAS IPv6 Address,Адрес IPv6 NAS
+NAS Port,Порт NAS
+NAS Port-Type,Тип порта NAS
+Network Account Domain,Сетевой домен учетной записи
+Network Account Name,Сетевое имя учетной записи
+Network Address,Сетевой адрес
+Network Information,Сведения о сети
+Network Policy Name,Имя политики сети
+Network Policy Name,Имя сетевой политики
+New Account Name,Новое имя учетной записи
+New Account,Новая учетная запись
+New Computer Account,Новая учетная запись компьютера
+New DN,Новый DN
+New Group,Новая группа
+New Logon,Новый вход
+New Maxusers,Новое максимальное число пользователей
+New Process ID,ИД нового процесса
+New Process Name,Имя нового процесса
+New Remark,Новое примечание
+New Right,Новое право
+New SD,Новый дескриптор безопасности
+New Security Descriptor,Новый дескриптор безопасности
+New ShareFlags,Новые флаги общего ресурса
+New State,Новое состояние
+New Time,Новое время
+New Token Information,Сведения о новом маркере
+New Token Information,Сведения о новом токене
+New Trust Information,Новые сведения о доверии
+New UAC Value,Новое значение UAC
+New Value Type,Тип нового значения
+New Value,Новое значение
+Node,Узел
+Number of Elements,Число элементов
+Object Handle,Дескриптор объекта
+Object Name,Имя объекта
+Object Server,Сервер объекта
+Object Type,Тип объекта
+Object Value Name,Имя значения объекта
+Object,Объект
+OEM Information,Сведения об изготовителе оборудования (OEM)
+Old Account Name,Старое имя учетной записи
+Old DN,Старый DN
+Old MaxUsers,Предыдущее максимальное число пользователей
+Old Remark,Предыдущее примечание
+Old SD,Предыдущий дескриптор безопасности
+Old ShareFlags,Предыдущие флаги общего ресурса
+Old UAC Value,Старое значение UAC
+Old Value Type,Тип старого значения
+Old Value,Старое значение
+Operation Type,Тип операции
+Operation,Операция
+Options,Параметры
+Original Security Descriptor,Исходный дескриптор безопасности
+OS-Version,Версия ОС
+Package Name (NTLM only),Имя пакета (только NTLM)
+Parameter 1,Параметр 1
+Parameter 2,Параметр 2
+Password History Length,Длина журнала паролей
+Password Last Set,Последний пароль задан
+Password Properties,Свойства пароля
+Peer MAC Address,MAC-адрес узла
+Peer MAC Address,Одноранговый MAC-адрес
+Permissions Change,Изменение разрешений
+Policy Change Details,Сведения об изменении политики
+Policy For Account,Политика для учетной записи
+Policy ID,Идентификатор политики
+Policy,Политика
+Port,Порт
+Pre-Authentication Type,Тип предварительной проверки подлинности
+Previous Time,Предыдущее время
+Primary Group ID,Идентификатор основной группы
+Private Key Usage Count,Счетчик использования закрытого ключа
+Privileges Used for Access Check,"Привилегии, использованные для проверки доступа"
+Privileges Used for Access Check,"Привилегии, используемые для проверки доступа"
+Privileges,Привилегии
+Process Command Line,Командная строка процесса
+Process ID,ИД процесса
+Process ID,Идентификатор процесса
+Process Information,Сведения о процессе
+Process Name,Имя процесса
+Process,Процесс
+Profile Path,Путь к профилю
+Properties,Свойства
+Property,Свойство
+Protocol,Протокол
+Provided Account Name (unauthenticated),Предоставленное имя учетной записи (без проверки подлинности)
+Proxy Policy Name,Имя политики запроса на подключение
+Quarantine Grace Time,Льготное время карантина
+Quarantine Information,Cведения о карантине
+Quarantine Information,Сведения о карантине
+RADIUS Client,RADIUS-клиент
+Read Operation,Операция чтения
+Reason Code,Код причины
+Reason,Причина
+Relative Target Name,Относительное имя конечного объекта
+Request ID,Идентификатор запроса
+Requested Operation,Запрошенная операция
+Requester,Запросивший
+Resource Attributes,Атрибуты ресурса
+Resource Manager,Диспетчер ресурсов
+Restricted Admin Mode,Ограниченный режим администрирования
+Restricted SID Count,Число ограниченных ИД безопасности
+Result Code,Код результата
+Result,Результат
+RM Transaction ID,Идентификатор транзакции службы RM
+Rows Deleted,Удалено строк
+SAM Account Name,Имя учетной записи SAM
+Script Path,Путь к сценарию
+Security ID,ИД безовапсности
+Security ID,ИД безопасности
+Security ID,Идентификатор безопасности
+Security ID,Код безопасности
+Serial Number,Серийный номер
+Server Information,Сведения о сервере
+Server Names,Имена серверов
+Server,Сервер
+Service Account,Учетная запись службы
+Service File Name,Имя файла службы
+Service ID,Идентификатор службы
+Service ID,Код службы
+Service Information,Сведения о службе
+Service Name,Имя службы
+Service Principal Names,Основные имена служб
+Service Request Information,Сведения о запросе службы
+Service Start Type,Тип запуска службы
+Service Type,Тип службы
+Service,Служба
+Session ID,Код сеанса
+Session Identifier,Идентификатор сеанса
+Session Name,Имя сеанса
+Session,Сеанс
+Share Information,Сведения об общем ресурсе
+Share Name,Имя общего ресурса
+Share Name,имя общего ресурса
+Share Path,Путь к общему ресурсу
+SID Filtering,Фильтрация ИД безопасности
+SID History,Журнал SID
+SID List,Список SID
+SID List,Список ИД безопасности
+Signature Settings,Параметры подписи
+Source Account,Исходная учетная запись
+Source Address,Адрес источника
+Source DRA,Исходный DRA
+Source Name,Имя источника
+Source Network Address,Сетевой адрес источника
+Source Port,Порт источника
+Source Workstation,Исходная рабочая станция
+SPN Name,Имя SPN
+Status Code,Код состояния
+Status,Состояние
+Sub Status,Подсостояние
+Subcategory GUID,GUID подкатегории
+Subcategory,Подкатегория
+Subject,Предмет
+Subject,Субъект
+Supplied Realm Name,Предоставленное имя сферы
+Syntax (OID),Синтаксис (OID)
+System Event Logging,Ведение журнала событий системы
+System Health Validator Result(s),Результат(ы) средства проверки работоспособности системы
+Table ID,Идентификатор таблицы
+Target Account,Конечная учетная запись
+Target Account,Целевая учетная запись
+Target Computer,Конечный компьютер
+Target Computer,Целевой компьютер
+Target Process ID,Код конечного процесса
+Target Process Name,Имя конечного процесса
+Target Process,Конечный процесс
+Target Server Name,Имя целевого сервера
+Target Server,Целевой сервер
+Target Subject,Целевой субъект
+Task Content,Содержание задачи
+Task Information,Сведения о задаче
+Task Name,Имя задачи
+Task New Content,Новое содержание задачи
+Test Signing,Подпись теста
+Ticket Encryption Type,Тип шифрования билета
+Ticket Options,Параметры билета
+Token Elevation Type,Тип повышения прав маркера
+Token Elevation Type,Тип уровня токена
+Transaction ID,Код транзакции
+Transaction Information,Сведения о транзакции
+Transited Services,Промежуточные службы
+Transited Services,Службы передачи
+Tree Delete,Удаление дерева
+Trust Attributes,Атрибуты доверия
+Trust Direction,Направление доверия
+Trust Information,Сведения о доверии
+Trust Type,Тип доверия
+Trusted Domain,Доверенный домен
+Type,Тип
+User Account Control,Управление учетной записью пользователя
+User ID,Идентификатор пользователя
+User initiated logoff,"Выход, запрошенный пользователем"
+User Name,Имя пользователя
+User Parameters,Параметры пользователя
+User Principal Name,Основное имя пользователя
+User Right,Право пользователя
+User Workstations,Рабочие станции пользователя
+User,Пользоваль
+User,Пользователь
+Value,Значение
+Vendor IDs,ИД поставщиков
+Virtual Account,Виртуальная учетная запись
+VSM Launch Type,Тип запуска VSM
+Workstation Name,Имя рабочей станции

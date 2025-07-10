@@ -1,0 +1,302 @@
+<eventParser name="VMwareVCenterParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>VMware</Vendor>
+    <Model>vCenter</Model>
+    <Version>ANY</Version>
+    <Name>Generic</Name>
+  </appType>
+
+  <patternDefinitions>
+    <pattern name="patGeneric_VmwareMod" list="begin"><![CDATA[cli|applmgmt-audit|\d+\s+-|vpxd|vmafdd|vmcad|vmon|vmdird|hostd-probe|setroubleshoot|postfix/\w+\[\d+\]|nssquery|hpHelper\[\d+\]|]]></pattern>
+    <pattern name="patGeneric_VmwareMod" list="continue"><![CDATA[(?:shell|sfcb-vmware_raw|slpd|vmauthd)\[\d+\]|]]></pattern>
+    <pattern name="patGeneric_VmwareMod" list="continue"><![CDATA[(?:Fdm|Hostd|kmxa|Vpxa|localcli|(?:[\w.]+\/)?hbrsrv|vpxaHealth|vsananalyticsevents|vobd|clomd|osfsd|epd|sandboxd|etcd|vsand|vsanHealth|cmmdsd|clusterAgent|nfcd|vsandevicemonitord|healthdPlugins|envoy(?:-\w+)?|vsansystem|vsanObserver.sh.rm|[rR]httpproxy|watchdog(?:-\w+)?|pmemGC|(?:\w+)?Backtrace|(?:[\w.]+)?vsanmgmtd|sfcb-vmw_ipmi|vsanperfsvc|chardevlogger|pcs|iofiltervpd|clomdb|apiForwarder|esxtokend|vsm-main|apiForwarder|gclog|VSANMGMTSVC)(?:\[\d+\])?|]]></pattern>
+    <pattern name="patGeneric_VmwareMod" list="continue"><![CDATA[analytics|analytics-runtime|applmgmt|certificatemanagement-runtime|certificatemanagement-svcs|cis-license|cloudvm-ram-size|content-library|dnsmasq|eam-access|eam-main|hvc|java.lang.RuntimeException|logrotate|lookupsvc-gc|lookupsvc-localhost_access|observability-main|perfcharts-localhost_access|pod-console|postgres-archiver|procstate|rsyslogd|sca|sca-gc|sca-vmon.std|sps|sps-gc|sso-tomcat|ssoadminserver|StatsMonitor|tokenservice|trustmanagement-gc|trustmanagement-svcs|ui-access|ui-apigw|ui-main|ui-threadmonitor|ui-vspheremessaging|vami-access|vami-error|vapi-endpoint|vapi-endpoint-access|vapi-gc|vapi-runtime|vdtc-main|vlcm-twisted_server|vpxd-profiler|vpxd-svcs|vpxd-svcs-access|vpxd-svcs-main|vpxd-svcs-perf|vsan-health-main|vstats|vtsdb|vum-log4cpp|vum-vmacore|wcpsvc|]]></pattern>
+    <pattern name="patGeneric_VmwareMod" list="end"><![CDATA[cimslp|doat|heartbeat|ImageConfigManager|snmpd|SSH|tmpwatch|vmkwarning|systemd-tmpfiles|vsantrace\w+|cmmdsTimeMachineDump|eam-api|nsx-sha]]></pattern>
+    <pattern name="PatWord"><![CDATA[[\w:]+]]></pattern>
+    <pattern name="patProcName"><![CDATA[[^[:]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[(?:<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatStr>\s+<:gPatYear>-<:gPatMon>-<:gPatDay>T<:gPatTime>\.\d+<:gPatTimeZone>\s+\[<:gPatWord>\s+<:gPatWord>\s)|(?:<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatStr>\s+\[<:gPatYear>-<:gPatMon>-<:gPatDay>\s+<:gPatTime>,\d+\s+<:gPatStr>\s)|(?:<:gPatYear>-<:gPatMon>-<:gPatDay>T<:gPatTime>(?:\.\d+)?<:gPatTimeZone>?\s+<:gPatStr>\s+<:patGeneric_VmwareMod>:?\s)|(?:<:gPatYear>-<:gPatMon>-<:gPatDay>T<:gPatTime>(?:\.\d+)?<:gPatTimeZone>\s+vcenter\s+(?:sshd|-):?\s)|(?:\d*\s*<:gPatStr>,\s+<:gPatStr>\s+<:patGeneric_VmwareMod>:?\s)|(?:\d*\s*\w+-\w+-\w+-\w+\s+<:gPatStr>\s+<:patGeneric_VmwareMod>:?\s)]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<166>2016-03-22T10:40:45.403Z example.com Vpxa: [59544B70 verbose 'VpxaHalCnxHostagent' opID=WFU-e82ed594] [WaitForUpdatesDone] Received callback-]]></testEvent>
+    <testEvent><![CDATA[<0>Apr  8 23:17:02 vcenter01-mgm 2016-03-22T10:41:50.896Z [7FAF15CB0700 info '[SSO]' opID=350789a7] User AD\jofo2-adm authenticated successfully.]]></testEvent>
+    <testEvent><![CDATA[<0>Apr  8 23:17:01 vcenter01-mgm 2016-03-22T10:40:52.721Z [7FAF14B86700 info 'vpxdvpxdInvtHostCnx' opID=HB-host-420@162527-1a4f3e81] [VpxdHostSync] Synchronizing host: host-420 (example.com, 10.233.59.18)]]></testEvent>
+    <testEvent><![CDATA[<0>Apr  8 23:17:01 vcenter01-mgm 2016-03-22T10:40:52.796Z [7FAF14B86700 info 'vpxdvpxdInvtHostDb' opID=HB-host-420@162527-1a4f3e81] [VpxdInvtHost::SaveFieldsToDb] IPMI info of host example.com is not set]]></testEvent>
+    <testEvent><![CDATA[<166>2016-03-22T10:47:50.558Z example.com Fdm: [FFD40B70 info 'Cluster' opID=SWI-56f32f43] [ClusterManagerImpl::LogState] hostId=host-12397 state=Slave master=host-250 isolated=false host-list-version=72 config-version=56 vm-metadata-version=38165]]></testEvent>
+    <testEvent><![CDATA[<0>Apr  8 23:17:12 vcenter01-mgm 2016-03-22T10:50:07.053Z [7FAF146FD700 warning 'VpxProfiler'] Local Stats [Local Stats Time] took 2052 ms]]></testEvent>
+    <testEvent><![CDATA[<0>Apr  8 23:17:01 vcenter01-mgm [2016-03-22 10:41:02,206 pool-18-thread-1  INFO  com.vmware.vim.dataservices.federation.FederationReconfigurator] No peers reachable - skipping reconfiguration.]]></testEvent>
+    <testEvent><![CDATA[<12>2016-03-22T10:40:47Z example.com nssquery: Group lookup failed for 'AD\ESX Admins']]></testEvent>
+    <testEvent><![CDATA[<166>2016-03-22T10:40:01.653Z example.com hostd-probe: [FFC86B70 info 'Libs'] VThreadBase detected multiple threads.]]></testEvent>
+    <testEvent><![CDATA[<166>Section for VMware ESX,  example.com hostd-probe: id=42648690, version=5.5.0, build=2068190, option=Release]]></testEvent>
+    <testEvent><![CDATA[<11>2016-03-22T11:40:30.335467+01:00 radius02-mgm setroubleshoot: Exception during AVC analysis: [Errno 32] Broken pipe]]></testEvent>
+    <testEvent><![CDATA[<13>2017-03-17T17:02:16Z example.com SSH: SSH login disabled]]></testEvent>
+    <testEvent><![CDATA[<13>2017-03-18T04:19:02Z example.com vmauthd[11791191]: authd| I120: Connect from 10.4.88.249]]></testEvent>
+    <testEvent><![CDATA[<14>2017-03-17T15:02:14.992Z example.com vobd:  [GenericCorrelator] 4256436369196us: [vob.user.ssh.enabled] SSH access has been enabled]]></testEvent>
+    <testEvent><![CDATA[<14>1 2019-06-13T14:47:58.713494+00:00 example.com vmcad - - - t@140184972650240: VMCACheckAccessKrb: Authenticated user pci-vc60-bel.pcistratosphere.local@vsphere.local]]></testEvent>
+    <testEvent><![CDATA[<14>1 2019-06-13T14:42:11.653769+00:00 example.com vpxd 57419 - - 2019-06-13T14:42:11.653Z info vpxd[7F744BFFF700] [Originator@6876 sub=vpxLro opID=5e70ec8f] [VpxLRO] -- FINISH lro-1119274]]></testEvent>
+    <testEvent><![CDATA[<14>1 2019-06-13T14:44:27.508537+00:00 example.com vmafdd - - - t@140006538606336: User vdcs requested READ operation on Store with ID: 2]]></testEvent>
+    <testEvent><![CDATA[<14>1 2019-06-13T15:00:27.121572+00:00 example.com vmon 34763 - - Executing op API_HEALTH on service vmware-vpostgres...]]></testEvent>
+    <testEvent><![CDATA[<14>1 2019-06-13T18:06:41.215812+00:00 example.com cli - - - twisted "127.0.0.1" - - [13/Jun/2019:18:06:40 +0000] "POST /api HTTP/1.1" 200 2783 "-" "vAPI http client"]]></testEvent>
+    <testEvent><![CDATA[<14>1 2019-06-13T15:20:01.405507+00:00 example.com 19977 - - (root) CMD ( /usr/sbin/iiad.sh >/dev/null 2>&1)]]></testEvent>
+    <testEvent><![CDATA[<14>1 2019-06-13T20:25:28Z example.com slpd[34272]: SLPDRegMulticast: no v6 service sock found, no service groups joined for service:wbem:https]]></testEvent>
+    <testEvent><![CDATA[<14>1 7e4ddb-b26cd91f-d593-68b example.com Vpxa: 99cdd394/ /vmfs/volumes/577a5f7e-084182c1-e62c-68b599cdd394/ /vmfs/volumes/577a5784-3382f6b3-8f8d-68b599cdd394/ /vmfs/volumes/577a694f-385cd7d9-fb60-68b599cdd394/ /vmfs/volumes/577a508a-c09732ab-8d9d-68b599cdd394/ /vmfs/volumes/577a4ae5-b2b4c239-f393-68b599cdd394/ /vmfs/volumes/577a4cb6-f74edc62-d958-68b599cdd394/ /vmfs/volumes/4dda29a4-018ac3e5-b96f-68b599cd3442/]]></testEvent>
+    <testEvent><![CDATA[<14>1 2019-06-25T18:17:58.578187+00:00 example.com systemd-tmpfiles 58181 - - [/usr/lib/tmpfiles.d/named.conf:1] Unknown user 'named'.]]></testEvent>
+
+  </testEvents>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon2:gPatMon>\s+<_day2:gPatDay>\s+<_time2:gPatTime>\s+<_reptDevHost:gPatStr>\s+<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>\.\d{3}Z\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon2, $_day2, $_time2)</setEventAttribute>
+        <setEventAttribute attr="eventTime">toDateTime($_mon, $_day,$_year, $_time)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon2:gPatMon>\s+<_day2:gPatDay>\s+<_time2:gPatTime>\s+<_reptDevHost:gPatStr>\s+\[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>\s+<_time:gPatTime>,\d{3}\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon2, $_day2, $_time2)</setEventAttribute>
+        <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>\.\d{3}Z\s+<_reptDevHost:gPatStr>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>Z\s+<_reptDevHost:gPatStr>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>\.\d+\+\d{2}:\d{2}\s+<_reptDevHost:gPatStr>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_reptDevHost:gPatStr>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </case>
+      <case>
+        <!--<166>Section for VMware ESX,  example.com hostd-probe: id=42648690, -->
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>Section\s+for\s+VMware\s+ESX,\s*<_reptDevHost:gPatHostName>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>\d+\s+<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTimeMSec><_zone:gPatTimeZone>\s+<_reptDevHost:gPatStr>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_zone)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>\d+\s+<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime><_zone:gPatTimeZone>\s+<_reptDevHost:gPatStr>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_zone)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>\d+\s+<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_zone:gPatTimeZone>\s+<_reptDevHost:gPatStr>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_zone)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <!--<14>1 7e4ddb-b26cd91f-d593-68b pci-esx-bel-004.pcistratosphere.local Vpxa:-->
+          <regex><![CDATA[<:gPatSyslogPRI>\d+\s+\S+\s+<_reptDevHost:gPatStr>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>\s*<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^<procName:patGeneric_VmwareMod>(?:\[\d+\])?\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^<procName:patProcName>(?:\[\d+\])?:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <when test="matches($procName, '^sshd')">
+          <setEventAttribute attr="procName">SSH</setEventAttribute>
+        </when>
+      </case>
+      <default/>
+    </switch>
+
+
+    <when test="exist _reptDevHost">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_reptDevHost">
+            <regex><![CDATA[<reptDevIpAddr:gPatIpAddr>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="destIpAddr">$reptDevIpAddr</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_reptDevHost">
+            <regex><![CDATA[<reptDevName:gPatHostName>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="destName">$reptDevName</setEventAttribute>
+          <setEventAttribute attr="destIpAddr">resolveDNSName($destName)</setEventAttribute>
+          <when test="exist destIpAddr">
+            <setEventAttribute attr="reptDevIpAddr">$destIpAddr</setEventAttribute>
+          </when>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <setEventAttribute attr="eventAction">0</setEventAttribute>
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+    <setEventAttribute attr="eventType">Vmware_Generic</setEventAttribute>
+
+    <choose>
+      <when test="not_exist procName">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[<sessionId:gPatWord>\s+<type:gPatWord>\s+'\[?<procName:gPatWord>\]?'\s+opID=<sessionId:gPatStr>\]\s+\[<status:gPatStrRightSB>\]]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">VMware_Vpxd_Generic</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[<sessionId:gPatWord>\s+<type:gPatWord>\s+'\[?<procName:gPatWord>\]?'\s+opID=<sessionId:gPatStr>\]]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">VMware_Vpxd_Generic</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[pam_unix\(passwd:auth\): authentication failure; logname= uid=\d+ euid=\d+ tty= ruser= rhost=\s+user=<user:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">VMware_PAM_Auth_Failure</setEventAttribute>
+          </case>
+          <default>
+          </default>
+        </switch>
+      </when>
+
+      <when test="$procName = 'Fdm'">
+        <!--166>2016-03-22T10:47:50.558Z vcenter01-mgm Fdm: [FFD40B70 info 'Cluster' opID=SWI-56f32f43] [ClusterManagerImpl::LogState] hostId=host-12397 state=Slave master=host-250 isolated=false host-list-version=72 config-version=56 vm-metadata-version=38165-->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^\[<sessionId:gPatWord>\s+<type:gPatWord>\s+'\[?<procName:gPatWord>\]?'\s+opID=<sessionId:gPatStr>\]\s+\[<status:gPatStrRightSB>\]]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">VMware_Vpxd_Generic</setEventAttribute>
+      </when>
+
+      <when test="$procName = 'Vpxa'">
+        <!--<166>2016-03-22T10:40:45.403Z example.com Vpxa: [59544B70 verbose 'VpxaHalCnxHostagent' opID=WFU-e82ed594] [WaitForUpdatesDone] Received callback-->
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^\[<sessionId:gPatWord>\s+<type:gPatWord>\s+'\[?<procName:gPatWord>\]?'\s+opID=<sessionId:gPatStr>\]\s+\[<status:gPatStrRightSB>\]]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">VMware_Vpxa_Generic</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$procName = 'Hostd'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Hostd:\s+\[<sessionId:gPatWord>\s+<type:gPatWord>\s+'\[?<procName:gPatWord>\]?'\s+opID=<sessionId:gPatStr>\s+user=<user:gPatStr>\]]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">VMware_Hostd</setEventAttribute>
+          </case>
+          <case>
+            <!-- <164>2023-03-27T21:09:32.559Z exsiname.domain.local Hostd: warning hostd[2100360] [Originator@6876 sub=Default opID=esxui-32fe-fe99] Rejected password for user test from 2.2.2.2 -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[warning\s+hostd\[<sessionId:gPatWord>\].*Rejected password for user <user:gPatStr> from <srcIpAddr:gPatIpV4Dot>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">VMware_Logon_Failure</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <!-- <14>1 2023-03-30T07:06:29.081435-06:00 vcenter vpxd 24027 - -  Event [1273539] [1-1] [2023-03-30T13:06:29.081072Z] [vim.event.EventEx] [info] [test@test.local] [] [1273539] [Failed login test@test.local from 2.2.2.2 at 03/30/2023 13:03:56 GMT in SSO] -->
+      <when test="$procName = 'vpxd'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[<sessionId:gPatWord>\]\s+\[Failed login <user:gPatStr> from <srcIpAddr:gPatIpV4Dot> at]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">VMware_Logon_Failure</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$procName = 'SSH'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^SSH login <_action:gPatWord>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("VMware_SSH_", $_action)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[PAM: Authentication service cannot retrieve authentication info for <user:gPatStr> from <srcIpAddr:gPatIpV4Dot>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="_action">AuthError</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId("VMware_SSH_", $_action)</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$procName = 'vmauthd'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[ Connect from (?:<srcIpAddr:gPatIpV4Dot>|remote socket \(<srcIpAddr:gPatIpV4Dot>:<srcIpPort:gPatInt>\))]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">VMware_vmauthd_connect</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$procName = 'vobd'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[ SSH access has been <_action:gPatWord>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("VMware_vobd_SSH_", $_action)</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <otherwise>
+        <setEventAttribute attr="_procName">replaceStringByRegex($procName, "-.+", "")</setEventAttribute>
+        <setEventAttribute attr="eventType">combineMsgId("VMware_", $_procName, "_Generic")</setEventAttribute>
+      </otherwise>
+    </choose>
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,356 @@
+<eventParser name="TrendMicroOfficeScanParser">
+
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>TrendMicro</Vendor>
+    <Model>Antivirus Manager</Model>
+    <Version>ANY</Version>
+    <Name>TrendMicro Antivirus Manager</Name>
+  </appType>
+
+  <eventFormatRecognizer><![CDATA[SNMPv2-SMI::enterprises\.6101\.]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[2011-04-14 02:17:54 192.168.20.214(via UDP: [192.168.20.214]:45440) TRAP, SNMP v1, community public	SNMPv2-SMI::enterprises.6101 Enterprise Specific Trap (5) Uptime: 0:00:00.30	SNMPv2-SMI::enterprises.6101.141 = STRING: "Virus/Malware: Eicar_test_file Computer: SJDEVVWINDB05 Domain: ABC File: C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\yc8eayj0.com Date/Time: 4/10/2008 14:23:26 Result: Virus successfully detected, cannot perform the Clean action (Quarantine) "]]></testEvent>
+    <testEvent><![CDATA[2013-06-28 10:14:03 0.0.0.0(via UDP: [10.13.4.119]:1330) TRAP2, SNMP v2c, community @rc0n_2015                      . Cold Start Trap (0) Uptime: 0:00:00.00                       DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (2812030563) 325 days, 11:11:45.63   SNMPv2-MIB::snmpTrapOID.0 = OID: SNMPv2-SMI::enterprises.6101.999.3.4                        SNMPv2-SMI::enterprises.6101.1000.1.1 =         SNMPv2-SMI::enterprises.6101.1000.1.2 =               SNMPv2-SMI::enterprises.6101.1000.1.3 =               SNMPv2-SMI::enterprises.6101.1000.1.4 =                         SNMPv2-SMI::enterprises.6101.1000.1.5 = STRING: Virus found action result                        SNMPv2-SMI::enterprises.6101.1000.1.6 =               SNMPv2-SMI::enterprises.6101.1000.1.7 = STRING: 6/28/2013 10:06:53 AM          SNMPv2-SMI::enterprises.6101.1000.1.8 = STRING: 2013-06-28T10:06:53-0300                 SNMPv2-SMI::enterprises.6101.1000.1.9 = STRING: SJKAP67                        SNMPv2-SMI::enterprises.6101.1000.1.10 = STRING: 127.0.0.1  SNMPv2-SMI::enterprises.6101.1000.1.11 =             SNMPv2-SMI::enterprises.6101.1000.1.12 =             SNMPv2-SMI::enterprises.6101.1000.1.13 =      SNMPv2-SMI::enterprises.6101.1000.1.14 = STRING: SJKAP119  SNMPv2-SMI::enterprises.6101.1000.1.15 =             SNMPv2-SMI::enterprises.6101.1000.1.16 = STRING: \SJKAP119\Local Folder\SJK\Officescan\SJKAP67_OSCE\Sjk_file servers\SJKCS10                        SNMPv2-SMI::enterprises.6101.1000.1.17 =             SNMPv2-SMI::enterprises.6101.1000.1.18 = STRING: OfficeScan             SNMPv2-SMI::enterprises.6101.1000.1.19 = STRING: 8.05            SNMPv2-SMI::enterprises.6101.1000.1.20 =             SNMPv2-SMI::enterprises.6101.1000.1.25 =                         SNMPv2-SMI::enterprises.6101.1000.2.1 = STRING: Malware       SNMPv2-SMI::enterprises.6101.1000.2.2 =               SNMPv2-SMI::enterprises.6101.1000.2.3 = STRING: PE_SALITY.EN-3                        SNMPv2-SMI::enterprises.6101.1000.2.5 = STRING: hnebml.exe                        SNMPv2-SMI::enterprises.6101.1000.2.6 = STRING: F:\Usr\TERC\SCDIAS\       SNMPv2-SMI::enterprises.6101.1000.2.7 = STRING: 10.16.88.27\SCDIAS  SNMPv2-SMI::enterprises.6101.1000.2.8 = STRING: 0.0.0.0          SNMPv2-SMI::enterprises.6101.1000.2.9 = STRING: SJKCS10                        SNMPv2-SMI::enterprises.6101.1000.2.10 = STRING: 10.13.3.213                     SNMPv2-SMI::enterprises.6101.1000.2.26 = STRING: Delete       SNMPv2-SMI::enterprises.6101.1000.2.28 = STRING: File deleted          SNMPv2-SMI::enterprises.6101.1000.2.30 =             SNMPv2-SMI::enterprises.6101.1000.2.31 = STRING: 9.700.1001                      SNMPv2-SMI::enterprises.6101.1000.2.33 =                         SNMPv2-SMI::enterprises.6101.1000.2.34 = STRING: 10.121.00                         SNMPv2-SMI::enterprises.6101.1000.2.39 =             SNMPv2-SMI::enterprises.6101.1000.2.40 =]]></testEvent>
+    <testEvent><![CDATA[2011-04-14 02:17:54 192.168.20.214TRAP, SNMP v1, community public	SNMPv2-SMI::enterprises.6101 Enterprise Specific Trap (5) Uptime: 0:00:00.30	SNMPv2-SMI::enterprises.6101.141 = STRING: "Virus/Malware: Eicar_test_file Computer: SJDEVVWINDB05 Domain: ABC File: C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\yc8eayj0.com Date/Time: 4/10/2008 14:23:26 Result: Virus successfully detected, cannot perform the Clean action (Quarantine) "]]></testEvent>
+  </testEvents>
+
+  <!-- pattern definitions -->
+  <patternDefinitions>
+    <pattern name="patStrRightParenthesis"><![CDATA[[^\)]*]]></pattern>
+    <pattern name="patStrColon"><![CDATA[[^:]*]]></pattern>
+  </patternDefinitions>
+
+  <!-- keep the white space at the end -->
+  <parsingInstructions>
+    <!-- parsing common fields -->
+    <!-- sample message
+        2008-04-11 16:01:46 192.168.1.43(via UDP: [192.168.20.8]:59829) TRAP, SNMP v1, community public       SNMPv2-SMI::enterprises.6101 Enterprise Specific Trap (5) Uptime: 0:00:00.00   SNMPv2-SMI::enterprises.6101.141 = STRING: "Virus/Malware: Eicar_test_file Computer: SJDEVVWINDB05 Domain: ABC File: C:\\DOCUME~1\\ADMINI~1\\LOCALS~1\\Temp\\yc8eayj0.com Date/Time: 4/10/2008 14:23:26 Result: Virus successfully detected, cannot perform the Clean action (Quarantine) "
+2015-01-22 06:53:10 10.3.9.31TRAP, SNMP v1, community dso-rx-itn	SNMPv2-SMI::enterprises.6101.141 Enterprise Specific Trap (1) Uptime: 2 days, 14:26:02.74	SNMPv2-SMI::enterprises.6101.141 = STRING: "Threat Alert  OfficeScan detected TROJ_BR.32A9F08E on 062-ICT-D7-PC(con10038) in Dsoa.loc\ domains.  File: C:\Program Files (x86)\AppEnable\bin\AppEnable.BOASPRT.exe.tmp Detection date: 1/22/2015 6:52:35 Action: Cleaned "
+      -->
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay> <_time:gPatTime> <:gPatIpAddr>\(via <_reptIp:patStrRightParenthesis>\)<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay> <_time:gPatTime> <hostName:gPatStr> <:gPatStr> \(via <_reptIp:patStrRightParenthesis>\)<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay> <_time:gPatTime> <_reptIp:gPatIpAddr><_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay> <_time:gPatTime> <hostName:gPatStr> <:gPatStr> <_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <!-- parse reporting ip -->
+    <when test="exist _reptIp">
+      <when test="matches($_reptIp, '^\w+:')">
+        <collectFieldsByRegex src="$_reptIp">
+          <regex><![CDATA[<:patStrColon>:\s+\[<_reptIp:gPatIpAddr>\]<:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </when>
+      <when test="$_reptIp != '127.0.0.1'">
+        <when test="$_reptIp != '0.0.0.0'">
+          <setEventAttribute attr="reptDevIpAddr">$_reptIp</setEventAttribute>
+        </when>
+      </when>
+    </when>
+
+    <setEventAttribute attr="extEventRecvProto">Snmp Trap</setEventAttribute>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[STRING:\s*"<_body1:gPatMesgBody>\s*File:\s*<_body2:gPatMesgBody>\s+Date/Time:\s*(?:<_year2:gPatYear>-<_mon2:gPatMonNum>-<_day2:gPatDay>|<_mon2:gPatMonNum>/<_day2:gPatDay>/<_year2:gPatYear>)\s+<_time2:gPatTime>\s+Result:\s*<msg:gPatMesgBody>"]]></regex>
+        </collectFieldsByRegex>
+
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        <setEventAttribute attr="eventTime">toDateTime($_mon2, $_day2, $_year2, $_time2)</setEventAttribute>
+
+        <collectAndSetAttrByKeyValuePair sep=" " src="$_body1">
+          <attrKeyMap attr="domain" key="Domain: "/>
+          <attrKeyMap attr="hostName" key="Computer: "/>
+          <attrKeyMap attr="virusName" key="Virus/Malware: "/>
+          <attrKeyMap attr="user" key="UserName: "/>
+          <attrKeyMap attr="srcName" key="Endpoint: "/>
+          <attrKeyMap attr="srcIpAddr" key="IP Address: "/>
+          <attrKeyMap attr="srcMACAddr" key="MAC Address: "/>
+        </collectAndSetAttrByKeyValuePair>
+
+        <choose>
+          <when test="matches($_body2, 'Username:')">
+            <collectFieldsByRegex src="$_body2">
+              <regex><![CDATA[<fileName:gPatMesgBody> Username: <user:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="fileName">$_body2</setEventAttribute>
+          </otherwise>
+        </choose>
+
+        <choose>
+          <when test="matches($msg, 'Cleaned')">
+            <setEventAttribute attr="eventAction">0</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+            <setEventAttribute attr="eventType">Trend-AV-Virus-remedy-success</setEventAttribute>
+          </when>
+          <when test="matches($msg, 'cannot perform the Clean action')">
+            <setEventAttribute attr="eventAction">1</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+            <setEventAttribute attr="eventType">Trend-AV-Virus-remedy-failure</setEventAttribute>
+          </when>
+          <when test="matches($msg, 'successfully')">
+            <setEventAttribute attr="eventAction">0</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId("Trend-AV-Virus","-remedy-success")</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventAction">1</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId("Trend-AV-Virus","-remedy-failure")</setEventAttribute>
+          </otherwise>
+        </choose>
+
+        <when test="exist srcMACAddr">
+          <setEventAttribute attr="srcMACAddr">normalizeMAC($srcMACAddr)</setEventAttribute>
+        </when>
+      </case>
+
+      <case>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[STRING: "<_body1:gPatMesgBody>File: <_body2:gPatMesgBody> Detection date: <_mon2:gPatMonNum>/<_day2:gPatDay>/<_year2:gPatYear> <_time2:gPatTime> Action: <_body3:gPatMesgBody>"]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[STRING: "<_body1:gPatMesgBody>File:\s+Detection date: <_mon2:gPatMonNum>/<_day2:gPatDay>/<_year2:gPatYear> <_time2:gPatTime> Action: <_body3:gPatMesgBody>"]]></regex>
+            </collectFieldsByRegex>
+          </case>
+        </switch>
+
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        <setEventAttribute attr="eventTime">toDateTime($_mon2, $_day2, $_year2, $_time2)</setEventAttribute>
+
+        <collectFieldsByRegex src="$_body1">
+          <regex><![CDATA[Threat Alert\s+OfficeScan detected\s<virusName:gPatStr> on <hostName:gPatStr>\(<user:gPatStr>\)\s+in\s<domain:gPatStr>\\ domains]]></regex>
+        </collectFieldsByRegex>
+
+        <choose>
+          <when test="exist _body2">
+            <setEventAttribute attr="fileName">$_body2</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="fileName">None</setEventAttribute>
+          </otherwise>
+        </choose>
+
+        <choose>
+          <when test="matches($_body3, 'Cleaned')">
+            <setEventAttribute attr="eventAction">0</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId("Trend-AV-Virus","-remedy-success")</setEventAttribute>
+          </when>
+          <when test="matches($_body3, 'cannot perform the Clean action')">
+            <setEventAttribute attr="eventAction">1</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId("Trend-AV-Virus","-remedy-failure")</setEventAttribute>
+          </when>
+          <when test="matches($_body3, 'Encrypted')">
+            <setEventAttribute attr="eventAction">1</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId("Trend-AV-Virus","-remedy-failure")</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventAction">1</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId("Trend-AV-Virus","-remedy-failure")</setEventAttribute>
+          </otherwise>
+        </choose>
+        <setEventAttribute attr="virusAction">$_body3</setEventAttribute>
+      </case>
+
+      <case>
+        <!--
+2013-06-28 10:14:03 0.0.0.0(via UDP: [10.13.4.119]:1330) TRAP2, SNMP v2c, community @rc0n_2015                      . Cold Start Trap (0) Uptime: 0:00:00.00                       DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (2812030563) 325 days, 11:11:45.63   SNMPv2-MIB::snmpTrapOID.0 = OID: SNMPv2-SMI::enterprises.6101.999.3.4                        SNMPv2-SMI::enterprises.6101.1000.1.1 =         SNMPv2-SMI::enterprises.6101.1000.1.2 =               SNMPv2-SMI::enterprises.6101.1000.1.3 =               SNMPv2-SMI::enterprises.6101.1000.1.4 =                         SNMPv2-SMI::enterprises.6101.1000.1.5 = STRING: Virus found action result                        SNMPv2-SMI::enterprises.6101.1000.1.6 =               SNMPv2-SMI::enterprises.6101.1000.1.7 = STRING: 6/28/2013 10:06:53 AM          SNMPv2-SMI::enterprises.6101.1000.1.8 = STRING: 2013-06-28T10:06:53-0300                 SNMPv2-SMI::enterprises.6101.1000.1.9 = STRING: SJKAP67                        SNMPv2-SMI::enterprises.6101.1000.1.10 = STRING: 127.0.0.1  SNMPv2-SMI::enterprises.6101.1000.1.11 =             SNMPv2-SMI::enterprises.6101.1000.1.12 =             SNMPv2-SMI::enterprises.6101.1000.1.13 =      SNMPv2-SMI::enterprises.6101.1000.1.14 = STRING: SJKAP119  SNMPv2-SMI::enterprises.6101.1000.1.15 =             SNMPv2-SMI::enterprises.6101.1000.1.16 = STRING: \SJKAP119\Local Folder\SJK\Officescan\SJKAP67_OSCE\Sjk_file servers\SJKCS10                        SNMPv2-SMI::enterprises.6101.1000.1.17 =             SNMPv2-SMI::enterprises.6101.1000.1.18 = STRING: OfficeScan             SNMPv2-SMI::enterprises.6101.1000.1.19 = STRING: 8.05            SNMPv2-SMI::enterprises.6101.1000.1.20 =             SNMPv2-SMI::enterprises.6101.1000.1.25 =                         SNMPv2-SMI::enterprises.6101.1000.2.1 = STRING: Malware       SNMPv2-SMI::enterprises.6101.1000.2.2 =               SNMPv2-SMI::enterprises.6101.1000.2.3 = STRING: PE_SALITY.EN-3                        SNMPv2-SMI::enterprises.6101.1000.2.5 = STRING: hnebml.exe                        SNMPv2-SMI::enterprises.6101.1000.2.6 = STRING: F:\Usr\TERC\SCDIAS\       SNMPv2-SMI::enterprises.6101.1000.2.7 = STRING: 10.16.88.27\SCDIAS  SNMPv2-SMI::enterprises.6101.1000.2.8 = STRING: 0.0.0.0          SNMPv2-SMI::enterprises.6101.1000.2.9 = STRING: SJKCS10                        SNMPv2-SMI::enterprises.6101.1000.2.10 = STRING: 10.13.3.213                     SNMPv2-SMI::enterprises.6101.1000.2.26 = STRING: Delete       SNMPv2-SMI::enterprises.6101.1000.2.28 = STRING: File deleted          SNMPv2-SMI::enterprises.6101.1000.2.30 =             SNMPv2-SMI::enterprises.6101.1000.2.31 = STRING: 9.700.1001                      SNMPv2-SMI::enterprises.6101.1000.2.33 =                         SNMPv2-SMI::enterprises.6101.1000.2.34 = STRING: 10.121.00                         SNMPv2-SMI::enterprises.6101.1000.2.39 =             SNMPv2-SMI::enterprises.6101.1000.2.40 =
+        -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[SNMPv2-MIB::snmpTrapOID\.0 = OID: SNMPv2-SMI::enterprises\.6101\.999\.<_eventType:gPatStr>\s+<_body1:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+
+        <collectAndSetAttrByKeyValuePair sep="SNMPv2-SMI::enterprises.6101.1000" src="$_body1">
+          <attrKeyMap attr="eventDesc" key="SNMPv2-SMI::enterprises.6101.1000.1.5 = STRING: "/>
+          <attrKeyMap attr="deviceTime" key="SNMPv2-SMI::enterprises.6101.1000.1.7 = STRING: "/>
+          <attrKeyMap attr="hostName" key="SNMPv2-SMI::enterprises.6101.1000.1.9 = STRING: "/>
+          <attrKeyMap attr="hostIpAddr" key="SNMPv2-SMI::enterprises.6101.1000.1.10 = STRING: "/>
+          <attrKeyMap attr="user" key="SNMPv2-SMI::enterprises.6101.1000.1.11 = STRING: "/>
+          <attrKeyMap attr="relayDevName" key="SNMPv2-SMI::enterprises.6101.1000.1.14 = STRING: "/>
+          <attrKeyMap attr="procName" key="SNMPv2-SMI::enterprises.6101.1000.1.21 = STRING: "/>
+          <attrKeyMap attr="attackType" key="SNMPv2-SMI::enterprises.6101.1000.2.1 = STRING: "/>
+          <attrKeyMap attr="attackName" key="SNMPv2-SMI::enterprises.6101.1000.2.3 = STRING: "/>
+          <attrKeyMap attr="_infectedFileName" key="SNMPv2-SMI::enterprises.6101.1000.2.5 = STRING: "/>
+          <attrKeyMap attr="_infectedFilePath" key="SNMPv2-SMI::enterprises.6101.1000.2.6 = STRING: "/>
+          <attrKeyMap attr="srcName" key="SNMPv2-SMI::enterprises.6101.1000.2.7 = STRING: "/>
+          <attrKeyMap attr="srcIpAddr" key="SNMPv2-SMI::enterprises.6101.1000.2.8 = STRING: "/>
+          <attrKeyMap attr="destName" key="SNMPv2-SMI::enterprises.6101.1000.2.9 = STRING: "/>
+          <attrKeyMap attr="destIpAddr" key="SNMPv2-SMI::enterprises.6101.1000.2.10 = STRING: "/>
+          <attrKeyMap attr="senderMailAddr" key="SNMPv2-SMI::enterprises.6101.1000.2.14 = STRING: "/>
+          <attrKeyMap attr="receiverMailAddr" key="SNMPv2-SMI::enterprises.6101.1000.2.15 = STRING: "/>
+          <attrKeyMap attr="mailSubject" key="SNMPv2-SMI::enterprises.6101.1000.2.16 = STRING: "/>
+          <attrKeyMap attr="mailAction" key="SNMPv2-SMI::enterprises.6101.1000.2.18 = STRING: "/>
+          <attrKeyMap attr="webFilterAction" key="SNMPv2-SMI::enterprises.6101.1000.2.20 = STRING: "/>
+          <attrKeyMap attr="ruleName" key="SNMPv2-SMI::enterprises.6101.1000.2.21 = STRING: "/>
+          <attrKeyMap attr="infoURL" key="SNMPv2-SMI::enterprises.6101.1000.2.22 = STRING: "/>
+          <attrKeyMap attr="fileName" key="SNMPv2-SMI::enterprises.6101.1000.2.23 = STRING: "/>
+          <attrKeyMap attr="virusAction" key="SNMPv2-SMI::enterprises.6101.1000.2.26 = STRING: "/>
+          <attrKeyMap attr="virusQuarantStatus" key="SNMPv2-SMI::enterprises.6101.1000.2.28 = STRING: "/>
+          <attrKeyMap attr="scanEngineVer" key="SNMPv2-SMI::enterprises.6101.1000.2.31 = STRING: "/>
+          <attrKeyMap attr="patternRuleVer" key="SNMPv2-SMI::enterprises.6101.1000.2.34 = STRING: "/>
+          <attrKeyMap attr="appName" key="SNMPv2-SMI::enterprises.6101.1000.2.36 = STRING: "/>
+          <attrKeyMap attr="appVersion" key="SNMPv2-SMI::enterprises.6101.1000.2.37 = STRING: "/>
+          <attrKeyMap attr="srcIpAddr" key="SNMPv2-SMI::enterprises.6101.1000.2.39 = STRING: "/>
+          <attrKeyMap attr="destIpAddr" key="SNMPv2-SMI::enterprises.6101.1000.2.40 = STRING: "/>
+        </collectAndSetAttrByKeyValuePair>
+
+        <when test="exist _infectedFileName">
+          <choose>
+            <when test="exist _infectedFilePath">
+              <setEventAttribute attr="fileName">combineMsgId($_infectedFilePath, $_infectedFileName)</setEventAttribute>
+            </when>
+
+            <otherwise>
+              <setEventAttribute attr="fileName">$_infectedFileName</setEventAttribute>
+            </otherwise>
+          </choose>
+        </when>
+
+        <choose>
+          <when test="exist virusQuarantStatus">
+            <!-- $_eventType = "3.3" or "3.4" -->
+            <setEventAttribute attr="_action">replaceStringByRegex($virusQuarantStatus, "\s", "_")</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId("Trend-", $attackType, "-", $_action)</setEventAttribute>
+
+            <choose>
+              <when test="$_action = 'No_action'">
+                <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+              </when>
+
+              <when test="$_action = 'File_cleaned'">
+                <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+              </when>
+
+              <when test="$_action = 'File_deleted'">
+                <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+              </when>
+
+              <when test="$_action = 'File_quarantined'">
+                <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+              </when>
+
+              <when test="$_action = 'Access_denied'">
+                <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+              </when>
+
+              <when test="$_action = 'File_passed'">
+                <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+              </when>
+
+              <when test="$_action = 'Reboot_system_successfully'">
+                <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+              </when>
+
+              <when test="$_action = 'Encrypted'">
+                <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+              </when>
+
+              <when test="$_action = 'Unable_to_clean_file'">
+                <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+              </when>
+
+              <when test="$_action = 'Unable_to_delete_file'">
+                <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+
+          <when test="$_eventType = '0.0'">
+            <setEventAttribute attr="eventType">Trend-Test_Notification</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+          </when>
+
+          <when test="$_eventType = '1.1'">
+            <setEventAttribute attr="eventType">Trend-Test_Notification</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+          </when>
+
+          <when test="$_eventType = '1.2'">
+            <setEventAttribute attr="eventType">Trend-Product_Service_Stopped</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+          </when>
+
+          <when test="$_eventType = '2.1'">
+            <setEventAttribute attr="eventType">Trend-Component_Update_Successful</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+          </when>
+
+          <when test="$_eventType = '2.2'">
+            <setEventAttribute attr="eventType">Trend-Component_Update_Failed</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+          </when>
+
+          <when test="$_eventType = '3.1'">
+            <setEventAttribute attr="eventType">Trend-Active_Outbreak_Prevention_Policy_Received</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+          </when>
+
+          <when test="$_eventType = '3.2'">
+            <setEventAttribute attr="eventType">Trend-Virus_Outbreak_Alert</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+          </when>
+
+          <when test="$_eventType = '3.5'">
+            <setEventAttribute attr="eventType">Trend-Network_Virus_Found</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+          </when>
+
+          <when test="$_eventType = '3.6'">
+            <setEventAttribute attr="eventType">Trend-Trend-Potential_Vulnerability_Attack</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+          </when>
+
+          <when test="$_eventType = '3.7'">
+            <setEventAttribute attr="eventType">Trend-Violation_Statistic_Update</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+          </when>
+
+          <when test="$_eventType = '3.8'">
+            <setEventAttribute attr="eventType">Trend-Content_Security_Found</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+          </when>
+
+          <when test="$_eventType = '3.9'">
+            <setEventAttribute attr="eventType">Trend-Web_Security_Found</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+          </when>
+        </choose>
+      </case>
+    </switch>
+  </parsingInstructions>
+
+</eventParser>

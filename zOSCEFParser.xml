@@ -1,0 +1,401 @@
+<eventParser name="zOSCEFParser">
+  <deviceType>
+    <Vendor>IBM</Vendor>
+    <Model>zOS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<113>Dec 17 15:21:18 SDS1 CEF:0|SDS|VSA|4.1.2|WTO|ICH408I|9|cat=WTO dvchost=SDS1 cs4Label=CpuSerial cs4=0003BEF72965 dst=10.22.157.10 rt=Dec 17 2020 15:21:18 duid=BCVR1 dproc=TSU06478 externalId=0000015.0 reason=ICH408I USER(BCV cs1Label=Rule cs1=MES:ICH408I* cs2Label=message cs2=ICH408I USER(BCVR1 ) GROUP(group1) NAME(name1 ) FULL VIOLATION ON COMMAND SETROPTS]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patStrEndSep"><![CDATA[[^|]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\s*CEF\s*:\d+\|SDS\|VSA\|(?:<:patStrEndSep>\|){4}\s*]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>?\s*<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<:gPatStr>\s+)?CEF\s*:<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </case>
+      <default>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[\bCEF\s*:<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </default>
+    </switch>
+
+
+    <when test="matches($_body, '\\\|')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "\|", "::TEMP::")</setEventAttribute>
+    </when>
+    <setEventAttribute attr="_body">replaceStrInStr($_body, "|", "::SEP::")</setEventAttribute>
+    <when test="matches($_body, '::TEMP::')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "::TEMP::", "|")</setEventAttribute>
+    </when>
+
+    <collectAndSetAttrByPos sep="::SEP::" src="$_body">
+      <attrPosMap attr="version" pos="1"/>
+      <attrPosMap attr="_reptVendor" pos="2"/>
+      <attrPosMap attr="_reptModel" pos="3"/>
+      <attrPosMap attr="appVersion" pos="4"/>
+      <attrPosMap attr="_sigId" pos="5"/>
+      <attrPosMap attr="_name" pos="6"/>
+      <attrPosMap attr="_severity" pos="7"/>
+      <attrPosMap attr="_extension" pos="8"/>
+    </collectAndSetAttrByPos>
+
+
+    <choose>
+      <when test="$_severity = '0'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventSeverity">$_severity</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_extension">
+      <attrKeyMap attr="categoryType" key="cat"/>
+      <attrKeyMap attr="_hostName" key="dvchost"/>
+      <attrKeyMap attr="_rt" key="rt"/>
+      <attrKeyMap attr="_cs1Label" key="cs1Label"/>
+      <attrKeyMap attr="_cs1" key="cs1"/>
+      <attrKeyMap attr="_cs2Label" key="cs2Label"/>
+      <attrKeyMap attr="_cs2" key="cs2"/>
+      <attrKeyMap attr="_cs3Label" key="cs3Label"/>
+      <attrKeyMap attr="_cs3" key="cs3"/>
+      <attrKeyMap attr="_cs4Label" key="cs4Label"/>
+      <attrKeyMap attr="_cs4" key="cs4"/>
+      <attrKeyMap attr="_cs5Label" key="cs5Label"/>
+      <attrKeyMap attr="_cs5" key="cs5"/>
+      <attrKeyMap attr="_cs6Label" key="cs6Label"/>
+      <attrKeyMap attr="_cs6" key="cs6"/>
+    </collectFieldsByKeyValuePair>
+
+    <choose>
+      <when test="not_exist categoryType"/>
+      <when test="$categoryType = 'WTO'">
+        <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_extension">
+          <attrKeyMap attr="hostIpAddr" key="dst"/>
+          <attrKeyMap attr="userId" key="duid"/>
+          <attrKeyMap attr="procName" key="dproc"/>
+          <attrKeyMap attr="msg" key="reason"/>
+        </collectFieldsByKeyValuePair>
+        <setEventAttribute attr="eventType">IBM-zOS-WTO-Generic</setEventAttribute>
+      </when>
+      <when test="$categoryType = 'SMF'">
+        <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_extension">
+          <attrKeyMap attr="hostIpAddr" key="dst"/>
+          <attrKeyMap attr="user" key="duid"/>
+          <attrKeyMap attr="userId" key="duid"/>
+          <attrKeyMap attr="userGrp" key="dpriv"/>
+          <attrKeyMap attr="procName" key="dproc"/>
+        </collectFieldsByKeyValuePair>
+        <setEventAttribute attr="eventType">IBM-zOS-SMF-Generic</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_sigId">
+              <regex><![CDATA[^SMF<_id:gPatInt>(?::<_id1:gPatInt>)?]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("IBM-zOS-SMF-", $_id)</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">IBM-zOS-Generic</setEventAttribute>
+      </otherwise>
+    </choose>
+
+
+    <choose>
+      <when test="not_exist _id"/>
+      <when test="$_id IN '14,15,17,18'">
+        <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_extension">
+          <attrKeyMap attr="fileName" key="filePath"/>
+          <attrKeyMap attr="prevFileName" key="oldFilePath"/>
+        </collectFieldsByKeyValuePair>
+      </when>
+
+      <when test="$_id IN '30,32'">
+        <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_extension">
+          <attrKeyMap attr="userId" key="suser"/>
+          <attrKeyMap attr="programName" key="deviceProcessName"/>
+          <attrKeyMap attr="_outcome" key="outcome"/>
+          <attrKeyMap attr="jobClass" key="fileType"/>
+        </collectFieldsByKeyValuePair>
+
+        <when test="exist _outcome">
+          <collectFieldsByKeyValuePair kvsep=":" sep=" " src="$_outcome">
+            <attrKeyMap attr="stepCC" key="StepCC"/>
+            <attrKeyMap attr="stepTerm" key="StepTerm"/>
+            <attrKeyMap attr="jobAbendCode" key="AbendReason"/>
+          </collectFieldsByKeyValuePair>
+        </when>
+      </when>
+
+      <when test="$_id = '42'">
+        <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_extension">
+          <attrKeyMap attr="volSerial" key="fileId"/>
+          <attrKeyMap attr="fileName" key="filePath"/>
+          <attrKeyMap attr="memberName" key="fname"/>
+          <attrKeyMap attr="prevFileName" key="oldFileName"/>
+        </collectFieldsByKeyValuePair>
+      </when>
+
+      <when test="$_id = '62'">
+        <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_extension">
+          <attrKeyMap attr="fileName" key="filePath"/>
+          <attrKeyMap attr="volSerial" key="fileId"/>
+          <attrKeyMap attr="reason" key="reason"/>
+        </collectFieldsByKeyValuePair>
+      </when>
+
+      <when test="$_id IN '80,83'">
+        <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_extension">
+          <attrKeyMap attr="srcTerminal" key="requestClientApplication"/>
+          <attrKeyMap attr="userId" key="suser"/>
+          <attrKeyMap attr="eventCode" key="EvtCd-EvtQual"/>
+          <attrKeyMap attr="eventQualifier" key="reason"/>
+          <attrKeyMap attr="reason" key="reason"/>
+          <attrKeyMap attr="fileName" key="filePath"/>
+          <attrKeyMap attr="prevFileName" key="oldFileName"/>
+        </collectFieldsByKeyValuePair>
+      </when>
+
+      <when test="$_id = '81'">
+        <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_extension">
+          <attrKeyMap attr="fileId" key="fileId"/>
+          <attrKeyMap attr="fileName" key="filePath"/>
+        </collectFieldsByKeyValuePair>
+      </when>
+
+      <when test="$_id = '90'">
+        <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_extension">
+          <attrKeyMap attr="fileId" key="fileId"/>
+          <attrKeyMap attr="fileName" key="filePath"/>
+          <attrKeyMap attr="funName" key="rawEvent"/>
+        </collectFieldsByKeyValuePair>
+        <when test="exist _id1">
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$_id1)</setEventAttribute>
+        </when>
+      </when>
+      <when test="$_id = '119'">
+        <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_extension">
+          <attrKeyMap attr="reason" key="reason"/>
+          <attrKeyMap attr="recvBytes64" key="in"/>
+          <attrKeyMap attr="sentBytes64" key="out"/>
+          <attrKeyMap attr="serviceProfile" key="serviceProfileName"/>
+          <attrKeyMap attr="servicePolicy" key="servicePolicyName"/>
+          <attrKeyMap attr="command" key="ftpCommand"/>
+          <attrKeyMap attr="fileName" key="filePath"/>
+          <attrKeyMap attr="prevFileName" key="oldFileName"/>
+          <attrKeyMap attr="destIpAddr" key="src"/>
+          <attrKeyMap attr="srcIpAddr" key="deviceTranslatedAddress"/>
+          <attrKeyMap attr="appName" key="applicationName"/>
+          <attrKeyMap attr="fileType" key="fileType"/>
+          <attrKeyMap attr="appTransportProto" key="protocolLevel"/>
+          <attrKeyMap attr="appSvrName" key="hostApplName"/>
+          <attrKeyMap attr="_end" key="end"/>
+          <attrKeyMap attr="_start" key="start"/>
+        </collectFieldsByKeyValuePair>
+        <when test="exist _id1">
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$_id1)</setEventAttribute>
+        </when>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs1Label"/>
+      <when test="not_exist _cs1"/>
+      <when test="$_cs1Label = 'Rule'">
+        <setEventAttribute attr="ruleName">$_cs1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs2Label"/>
+      <when test="not_exist _cs2"/>
+      <when test="$_cs2Label = 'Message'">
+        <setEventAttribute attr="msg">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label = 'STEPname'">
+        <setEventAttribute attr="stepName">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label = 'VolSer'">
+        <setEventAttribute attr="volSerial">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label = 'Step'">
+        <setEventAttribute attr="stepName">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label = 'Catalog'">
+        <setEventAttribute attr="dirName">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label = 'descriptor'">
+        <setEventAttribute attr="description">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label = 'User'">
+        <setEventAttribute attr="user">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label = 'UADSdsn'">
+        <setEventAttribute attr="UADSdsn">$_cs2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs3Label"/>
+      <when test="not_exist _cs3"/>
+      <when test="$_cs3Label = 'JobSrc'">
+        <setEventAttribute attr="jobSource">$_cs3</setEventAttribute>
+      </when>
+      <when test="$_cs3Label = 'Proc'">
+        <setEventAttribute attr="procName">$_cs3</setEventAttribute>
+      </when>
+      <when test="$_cs3Label = 'Auth2'">
+        <setEventAttribute attr="authenMethod">$_cs3</setEventAttribute>
+      </when>
+      <when test="$_cs3Label = 'DDname'">
+        <setEventAttribute attr="dbName">$_cs3</setEventAttribute>
+      </when>
+      <when test="$_cs3Label = 'UADSvol'">
+        <setEventAttribute attr="UADSvol">$_cs3</setEventAttribute>
+      </when>
+      <when test="$_cs3Label = 'Consol-Sufix'">
+        <setEventAttribute attr="consoleIdSufix">$_cs3</setEventAttribute>
+      </when>
+      <when test="$_cs3Label = 'Host'">
+        <setEventAttribute attr="hostName">$_cs3</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs4Label"/>
+      <when test="not_exist _cs4"/>
+      <when test="$_cs4Label = 'CpuSerial'">
+        <setEventAttribute attr="cpuSerial">$_cs4</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs5Label"/>
+      <when test="not_exist _cs5"/>
+      <when test="$_cs5Label = 'Program'">
+        <setEventAttribute attr="programName">$_cs5</setEventAttribute>
+      </when>
+      <when test="$_cs5Label = 'JobUserId'">
+        <setEventAttribute attr="jobUserId">$_cs5</setEventAttribute>
+      </when>
+      <when test="$_cs5Label = 'SecIdent'">
+        <setEventAttribute attr="securityId">$_cs5</setEventAttribute>
+      </when>
+      <when test="$_cs5Label = 'StorClass'">
+        <setEventAttribute attr="datastoreType">$_cs5</setEventAttribute>
+      </when>
+      <when test="$_cs5Label = 'Reason1'">
+        <setEventAttribute attr="reason1">$_cs5</setEventAttribute>
+      </when>
+      <when test="$_cs5Label = 'Options'">
+        <setEventAttribute attr="options">$_cs5</setEventAttribute>
+      </when>
+
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs6Label"/>
+      <when test="not_exist _cs6"/>
+      <when test="$_cs6Label = 'RecFlag'">
+        <setEventAttribute attr="flag">$_cs6</setEventAttribute>
+      </when>
+      <when test="$_cs6Label = 'SecFlags'">
+        <setEventAttribute attr="flag">$_cs6</setEventAttribute>
+      </when>
+      <when test="$_cs6Label = 'Flags'">
+        <setEventAttribute attr="flag">$_cs6</setEventAttribute>
+      </when>
+      <when test="$_cs5Label = 'Reason2'">
+        <setEventAttribute attr="reason2">$_cs6</setEventAttribute>
+      </when>
+      <when test="$_cs6Label = 'Text'">
+        <setEventAttribute attr="comment">$_cs6</setEventAttribute>
+      </when>
+      <when test="$_cs6Label = 'TermName'">
+        <setEventAttribute attr="terminalName">$_cs6</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _c6a1Label"/>
+      <when test="not_exist _c6a1"/>
+      <when test="$_c6a1Label = 'LocalIP'">
+        <setEventAttribute attr="srcIpAddr">$_c6a1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _c6a2Label"/>
+      <when test="not_exist _c6a2"/>
+      <when test="$_c6a2Label IN 'RemoteIp'">
+        <setEventAttribute attr="destIpAddr">$_c6a2</setEventAttribute>
+      </when>
+    </choose>
+
+    <!--Dec 23 2020 13:03:01-->
+    <when test="exist _rt">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_rt">
+            <regex><![CDATA[<_mon1:gPatMon>\s+<_day1:gPatDay>\s+<_year1:gPatYear>\s+<_time1:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventTime">toDateTime($_mon1, $_day1, $_year1, $_time1)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _end">
+      <!--2020-12-23 19:08:48-->
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_end">
+            <regex><![CDATA[<_year1:gPatYear>-<_mon1:gPatMon>-<_day1:gPatDay>\s+<_time1:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="end">toDateTime($_mon1, $_day1, $_year1, $_time1)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _start">
+      <!--2020-12-23 19:08:48-->
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_start">
+            <regex><![CDATA[<_year1:gPatYear>-<_mon1:gPatMon>-<_day1:gPatDay>\s+<_time1:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="start">toDateTime($_mon1, $_day1, $_year1, $_time1)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _hostName">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_hostName">
+            <regex><![CDATA[<hostIpAddr:gPatIpAddr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="hostName">$_hostName</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+  </parsingInstructions>
+</eventParser>
+

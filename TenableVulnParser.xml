@@ -1,0 +1,192 @@
+<eventParser name="TenableVulnParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Tenable</Vendor>
+    <Model>Tenable.io</Model>
+    <Version>ANY</Version>
+    <Name>ANY</Name>
+  </appType>
+
+  <eventFormatRecognizer><![CDATA[\[Tenable(?:IO|Sc)-Vuln-Detected\]\s*:\s*]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[[TenableIO-Vuln-Detected] : [phCustId]=1, [serverIp]=10.10.10.10, [serverName]=cloud.tenable.com, [Plugin ID]="54615", [CVE]=, [CVSS]=0.0, [Risk]=None, [Host]=10.10.10.10, [Protocol]=TCP, [Port]=0, [Name]=Device Type, [Synopsis]=It is possible to guess the remote device type., [Description]=Based on the remote operating system, it is possible to determine what the remote system type is (eg: a printer, router, general-purpose computer, etc)., [Solution]=n/a, [See Also]=, [Plugin Output]=Remote device type : general-purpose Confidence level : 54, [Asset UUID]=11111111-1111-1111-1111-111111111111, [Vulnerability State]=Resurfaced, [IP Address]=10.10.10.10, [FQDN]=ec2-10-10-10-10.us-west-2.compute.amazonaws.com, [NetBios]=, [OS]=Linux Kernel 2.2, [MAC Address]=, [Plugin Family]=General, [CVSS Base Score]=, [CVSS Temporal Score]=, [CVSS Temporal Vector]=, [CVSS Vector]=, [CVSS3 Base Score]=, [CVSS3 Temporal Score]=, [CVSS3 Temporal Vector]=, [CVSS3 Vector]=, [System Type]=general-purpose, [Host Start]=2018-11-07T16:00:33.851Z, [Host End]=2018-11-07T16:07:58.566Z]]></testEvent>
+    <testEvent><![CDATA[[TenableSc-Vuln-Detected]:[serverIp]=192.168.1.25,[serverName]=,[reptDevIpAddr]=192.168.1.25,[reptDevName]=,[scanId]=433,[vulnDetail]={"acceptRisk":"0","acceptRiskRuleComment":"Accept risk comments are not displayed for individual scan results","acrScore":"","assetExposureScore":"447","baseScore":"5.0","bid":"","checkType":"remote","cpe":"","credentialed":"false","cve":"CVE-2016-2183","cvssV3BaseScore":"7.5","cvssV3TemporalScore":"","cvssV3Vector":"AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N","cvssVector":"AV:N/AC:L/Au:N/C:P/I:N/A:N","description":"The remote host supports the use of SSL ciphers that offer medium strength encryption. Nessus regards medium strength as any encryption that uses key lengths at least 64 bits and less than 112 bits, or else that uses the 3DES encryption suite.\n\nNote that it is considerably easier to circumvent medium strength encryption if the attacker is on the same physical network.","dnsName":"lab01.example.com","exploitAvailable":"No","exploitEase":"","exploitFrameworks":"","family":{"id":"30","name":"General","type":"active"},"firstSeen":"1715027543","hasBeenMitigated":"0","hostUUID":"","hostUniqueness":"repositoryID,ip,dnsName","ip":"192.168.1.50","ips":"192.168.1.50","keyDrivers":"{\"internet exposure\":\"internal\",\"device capability\":\"\",\"device type\":\"\"}","lastSeen":"1724703800","macAddress":"00:50:56:a7:cc:bb","netbiosName":"example\\lab01","operatingSystem":"Microsoft Windows","patchPubDate":"-1","pluginID":"42873","pluginInfo":"42873 (3389/6) SSL Medium Strength Cipher Suites Supported (SWEET32)","pluginModDate":"1612353600","pluginName":"SSL Medium Strength Cipher Suites Supported (SWEET32)","pluginPubDate":"1258977600","pluginText":"<plugin_output>\n Medium Strength Ciphers (&gt; 64-bit and &lt; 112-bit key, or 3DES)\n\n Name Code KEX Auth Encryption MAC\n ---------------------- ---------- --- ---- --------------------- ---\n DES-CBC3-SHA 0x00, 0x0A RSA RSA 3DES-CBC(168) SHA1\n\nThe fields above are :\n\n {Tenable ciphername}\n {Cipher ID code}\n Kex={key exchange}\n Auth={authentication}\n Encrypt={symmetric encryption method}\n MAC={message authentication code}\n {export flag}\n</plugin_output>","port":"3389","protocol":"TCP","recastRisk":"0","recastRiskRuleComment":"Recast risk comments are not displayed for individual scan results","repository":{"dataFormat":"IPv4","description":"","id":-1,"name":"Individual Scan"},"riskFactor":"Medium","seeAlso":"https://www.openssl.org/blog/blog/2016/08/24/sweet32/\nhttps://sweet32.info","seolDate":"-1","severity":{"description":"High Severity","id":"3","name":"High"},"solution":"Reconfigure the affected application if possible to avoid use of medium strength ciphers.","stigSeverity":"","synopsis":"The remote service supports the use of medium strength SSL ciphers.","temporalScore":"","uniqueness":"repositoryID,ip,dnsName","uuid":"","version":"1.21","vprContext":"[{\"id\":\"age_of_vuln\",\"name\":\"Vulnerability Age\",\"type\":\"string\",\"value\":\"730 days +\"},{\"id\":\"cvssV3_impactScore\",\"name\":\"CVSS v3 Impact Score\",\"type\":\"number\",\"value\":3.6},{\"id\":\"exploit_code_maturity\",\"name\":\"Exploit Code Maturity\",\"type\":\"string\",\"value\":\"PoC\"},{\"id\":\"product_coverage\",\"name\":\"Product Coverage\",\"type\":\"string\",\"value\":\"High\"},{\"id\":\"threat_intensity_last_28\",\"name\":\"Threat Intensity\",\"type\":\"string\",\"value\":\"Very Low\"},{\"id\":\"threat_recency\",\"name\":\"Threat Recency\",\"type\":\"string\",\"value\":\"No recorded events\"},{\"id\":\"threat_sources_last_28\",\"name\":\"Threat Sources\",\"type\":\"string\",\"value\":\"No recorded events\"}]","vprScore":"5.1","vulnPubDate":"1472040000","vulnUUID":"","vulnUniqueness":"repositoryID,ip,port,protocol,pluginID","xref":""}]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\[<eventType:gPatStrRightSB>\]\s*:\s*<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <choose>
+      <when test="$eventType = 'TenableSc-Vuln-Detected'">
+        <collectAndSetAttrBySymbol sep=",[" src="$_body" symEnd="]=" symStart="[">
+        </collectAndSetAttrBySymbol>
+        <setEventAttribute attr="reptModel">Tenable Security Center</setEventAttribute>
+
+
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_rawmsg">
+              <regex><![CDATA[,\[vulnDetail\]=\s*<_vulnDetail:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+        <when test="exist _vulnDetail">
+          <collectAndSetAttrByJSON src="$_vulnDetail">
+            <attrKeyMap attr="hostIpAddr" key="ip"/>
+            <attrKeyMap attr="osName" key="operatingSystem"/>
+            <attrKeyMap attr="osType" key="operatingSystem"/>
+            <attrKeyMap attr="hostModel" key="operatingSystem"/>
+            <attrKeyMap attr="hostMACAddr" key="macAddress"/>
+            <attrKeyMap attr="lastSeenTime" key="lastSeen"/>
+            <attrKeyMap attr="firstSeenTime" key="firstSeen"/>
+            <attrKeyMap attr="appPort" key="port"/>
+            <attrKeyMap attr="appTransportProto" key="protocol"/>
+            <attrKeyMap attr="eventSeverity" key="severity.id"/>
+            <attrKeyMap attr="nessusPluginId" key="pluginID"/>
+            <attrKeyMap attr="nessusPluginName" key="pluginName"/>
+            <attrKeyMap attr="categoryType" key="family.namd"/>
+            <attrKeyMap attr="vulnDesc" key="description"/>
+            <attrKeyMap attr="threatLevel" key="riskFactor"/>
+            <attrKeyMap attr="vulnSolution" key="solution"/>
+            <attrKeyMap attr="vulnCVESummary" key="synopsis"/>
+            <attrKeyMap attr="vulnName" key="synopsis"/>
+            <attrKeyMap attr="nessusPluginOutput" key="pluginText"/>
+            <attrKeyMap attr="vulnCVEId" key="cve"/>
+            <!-- These are used to set cvss version attrib -->
+            <attrKeyMap attr="_vulnCvss2BaseScore" key="baseScore"/>
+            <attrKeyMap attr="_vulnCvss3BaseScore" key="cvssV3BaseScore"/>
+            <attrKeyMap attr="_vulnCvss4BaseScore" key="cvssV4BaseScore"/>
+            <!-- temporalScore implies cvss v2 which is retired -->
+            <attrKeyMap attr="vulnCvssBaseTemporal" key="temporalScore"/>
+            <attrKeyMap attr="vulnCvssBaseTemporal" key="cvssV3TemporalScore"/>
+            <attrKeyMap attr="vulnCvssBaseTemporal" key="cvssV4TemporalScore"/>
+            <!-- csssVector is v2 which is retired -->
+            <attrKeyMap attr="cvssAccessVector" key="cvssVector"/>
+            <attrKeyMap attr="cvssAccessVector" key="cvssV3Vector"/>
+            <attrKeyMap attr="cvssAccessVector" key="cvssV4Vector"/>
+          </collectAndSetAttrByJSON>
+        </when>
+      </when>
+      <otherwise>
+
+        <collectFieldsByKeyValuePair kvsep="]=" sep=", [" src="$_body">
+          <attrKeyMap attr="phCustId" key="phCustId"/>
+          <attrKeyMap attr="reptDevIpAddr" key="serverIp"/>
+          <attrKeyMap attr="reptDevName" key="serverName"/>
+          <attrKeyMap attr="extEventRecvProto" key="[extEventRecvProto]="/>
+          <attrKeyMap attr="serverIpAddr" key="serverIp"/>
+          <attrKeyMap attr="serverName" key="serverName"/>
+          <attrKeyMap attr="nessusPluginId" key="Plugin ID"/>
+          <attrKeyMap attr="vulnCVEId" key="CVE"/>
+          <attrKeyMap attr="vulnCvssScore" key="CVSS"/>
+          <attrKeyMap attr="hostIpAddr" key="Host"/>
+          <attrKeyMap attr="_ipProto" key="Protocol"/>
+          <attrKeyMap attr="ipPort" key="Port"/>
+          <attrKeyMap attr="vulnName" key="Name"/>
+          <attrKeyMap attr="description" key="Description"/>
+          <attrKeyMap attr="vulnSolution" key="Solution"/>
+          <attrKeyMap attr="nessusPluginOutput" key="Plugin Output"/>
+          <attrKeyMap attr="vulnReportStatus" key="Vulnerability State"/>
+          <attrKeyMap attr="hostIpAddr" key="IP Address"/>
+          <attrKeyMap attr="hostName" key="FQDN"/>
+          <attrKeyMap attr="osType" key="OS"/>
+          <attrKeyMap attr="hostMACAddr" key="MAC Address"/>
+          <!-- these 3 used to determine cvss version -->
+          <attrKeyMap attr="_vulnCvss2BaseScore" key="CVSS Base Score"/>
+          <attrKeyMap attr="_vulnCvss3BaseScore" key="CVSS3 Base Score"/>
+          <attrKeyMap attr="_vulnCvss4BaseScore" key="CVSS4 Base Score"/>
+          <!-- latest supported version is used -->
+          <attrKeyMap attr="vulnCvssBaseTemporal" key="CVSS Temporal Score"/>
+          <attrKeyMap attr="vulnCvssBaseTemporal" key="CVSS3 Temporal Score"/>
+          <attrKeyMap attr="vulnCvssBaseTemporal" key="CVSS4 Temporal Score"/>
+          <attrKeyMap attr="osType" key="System Type"/>
+          <attrKeyMap attr="_startTime" key="Host Start"/>
+          <attrKeyMap attr="_endTime" key="Host End"/>
+          <attrKeyMap attr="vulnPriRating" key="Vulnerability Priority Rating (VPR)"/>
+          <!-- latest supported cvss version used -->
+          <attrKeyMap attr="cvssAccessVector" key="CVSS Vector"/>
+          <attrKeyMap attr="cvssAccessVector" key="CVSS3 Vector"/>
+          <attrKeyMap attr="cvssAccessVector" key="CVSS4 Vector"/>
+          <!-- implies cvssv2 which is retired, latest overall score used -->
+          <attrKeyMap attr="vulnCvssScore" key="CVSS Score"/>
+          <attrKeyMap attr="vulnCvssScore" key="CVSS3 Score"/>
+          <attrKeyMap attr="vulnCvssScore" key="CVSS4 Score"/>
+        </collectFieldsByKeyValuePair>
+
+        <setEventAttribute attr="eventType">TenableIO-Vuln-Detected</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <!-- determine the latest supported cvss standard attribute and set the version var -->
+    <choose>
+      <when test="exist _vulnCvss4BaseScore">
+        <setEventAttribute attr="vulnCvssVersion">v4</setEventAttribute>
+        <setEventAttribute attr="vulnCvssBaseScore">$_vulnCvss4BaseScore</setEventAttribute>
+      </when>
+      <when test="exist _vulnCvss3BaseScore">
+        <setEventAttribute attr="vulnCvssVersion">v3</setEventAttribute>
+        <setEventAttribute attr="vulnCvssBaseScore">$_vulnCvss3BaseScore</setEventAttribute>
+      </when>
+      <when test="exist _vulnCvss2BaseScore">
+        <setEventAttribute attr="vulnCvssVersion">v2</setEventAttribute>
+        <setEventAttribute attr="vulnCvssBaseScore">$_vulnCvss2BaseScore</setEventAttribute>
+      </when>
+      <otherwise/>
+    </choose>
+
+    <!-- several reports rely on vulnScore, need to normalize -->
+    <choose>
+      <when test="exist vulnCvssScore">
+        <setEventAttribute attr="vulnScore">$vulnCvssScore</setEventAttribute>
+      </when>
+      <when test="exist vulnCvssBaseScore">
+        <setEventAttribute attr="vulnScore">$vulnCvssBaseScore</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist vulnCvssScore"/>
+      <otherwise>
+        <!-- casting double cvss score to int 1-10 -->
+        <setEventAttribute attr="eventSeverity">replaceStringByRegex($vulnCvssScore, "\..*", "")</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist _ipProto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_ipProto)</setEventAttribute>
+    </when>
+
+    <when test="exist _startTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_startTime">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="startTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <when test="exist _endTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_endTime">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="endTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

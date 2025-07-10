@@ -1,0 +1,130 @@
+<eventParser name="TrendMicroDeepSecurityParser">
+
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>TrendMicro</Vendor>
+    <Model>Deep Security Manager</Model>
+    <Version>ANY</Version>
+    <Name>TrendMicro Deep Security Manager</Name>
+  </appType>
+
+  <testEvents>
+    <testEvent><![CDATA[<132>Nov 19 13:46:39 RECICLATO3 CEF:0|Trend Micro|Deep Security Manager|7.7.59|771|Contact by Unrecognized Client|6|src=172.16.146.157 suser=System msg=A connection to IDF Server Plug-in was initiated by a client not identifiable as a managed computer: 172.16.215.31:49923.  Either the client is not a managed IDF component, or a secure communication channel could not be established.]]></testEvent>
+    <testEvent><![CDATA[<133>Aug 10 2017 13:41:26 example.com CEF:0|Trend Micro|Control Manager|6.0SP3|800101|Pattern Update Status|3|rt=Jul 31 2017 23:55:58 GMT+00:00 shost=ECU cs1Label=Operating_System cs1=Windows 7 cs2Label=Product/Endpoint_IP cs2=172.28.96.169 cs3Label=Update_Agent cs3=0 cs4Label=Domain cs4=La.ad.dole.net cn1Label=Connection_Status cn1=100 cn2Label=Pattern/Rule cn2=1208221808 cs5Label=Pattern/Rule_Version cs5=7.5.1554 cn3Label=Pattern/Rule_Status cn3=1 cs6Label=AUComponent_Type cs6=2 deviceFacility=OfficeScan]]></testEvent>
+    <testEvent><![CDATA[<134>Aug 14 17:17:00 example.com CEF:0|Trend Micro|Deep Security Agent|10.0.3297|123|Out Of Allowed Policy|5|cn1=1 cn1Label=Host ID dvchost=example.com TrendMicroDsTenant=Primary TrendMicroDsTenantId=0 act=Deny dmac=00:00:00:00:00:00 smac=00:00:00:00:00:00 TrendMicroDsFrameType=IP src=172.28.93.156 dst=172.27.101.56 in=0 cs3=DF 0 cs3Label=Fragmentation Bits proto=TCPTCP spt=63712 dpt=135 cs2=CWR ECE SYN cs2Label=TCP Flags cnt=1]]></testEvent>
+    <testEvent><![CDATA[<133>Jul 23 12:12:51 CEF: 0|Trend Micro|Control Manager|7.0|PML:文件行成功|Troj.Win32.TRX.XXPE50F13013|3|deviceExternalId=322 rt=Jul 23 2021 12:09:41 GMT+00:00 deviceFacility=15 dvchost=ZZ-XXX-XXX_AAA cn1Label=ThreatType cn1=35151 cs2Label=DetectionName cs2=Troj.Win32.TRX.XXPE50F13013 suser=ASDASDASD\\XX cn2Label=DetectionType cn2=0 filePath=c:\\program files (x86)\\username\\pdf_convert\\jkcovupd.exe fname=jkcovupd.exe deviceCustomDate1Label=FileCreationDate deviceCustomDate1=Jul 13 2021 04:09:39 GMT+00:00 duser=XX app=999 dst=2.0.1.112 cn3Label=Confidence cn3=78 act=25 fileHash=9533EB0ED96462D2F44BA95C27C885C3DBC6A7DE dhost=HOST-NAME]]></testEvent>
+    <testEvent><![CDATA[<190>2019-12-04T12:25:48-05:00 Deep Security CEF:0|Trend Micro|Deep Security Manager|12.5.349|601|User Signed Out|3|src=192.168.1.2 suser=System target=MasterAdmin msg=Description Omitted TrendMicroDsTenant=Primary TrendMicroDsTenantId=0 ]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patTMRole"><![CDATA[Control Manager|Deep Security Agent|Deep Security Manager]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\s+CEF:\s*\d+\|Trend Micro\|<:patTMRole>\|]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+(?:<_year:gPatYear>\s+)?<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>\s+|<reptDevName:gPatHostName>\s+)?CEF:\s*\d+\|Trend Micro\|<_role:patTMRole>\|<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime><_tz:gPatTimeZone>\s+<:gPatSentence>\s+CEF:\d+\|Trend Micro\|<_role:patTMRole>\|<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <setEventAttribute attr="eventType">Trend-Generic</setEventAttribute>
+
+    <collectAndSetAttrByPos src="$_body" sep="|">
+      <attrPosMap attr="_version" pos="1"/>
+      <attrPosMap attr="_sigId" pos="2"/>
+      <attrPosMap attr="_name" pos="3"/>
+      <attrPosMap attr="eventSeverity" pos="4"/>
+      <attrPosMap attr="_body" pos="5"/>
+    </collectAndSetAttrByPos>
+
+    <choose>
+      <when test="exist _year">
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <setEventAttribute attr="_name">replaceStringByRegex($_name, "\s+\(CVE-[^)]*\)", "")</setEventAttribute>
+    <setEventAttribute attr="_name">replaceStringByRegex($_name, "\s", "_")</setEventAttribute>
+    <choose>
+      <when test="$_role = 'Deep Security Manager'">
+        <setEventAttribute attr="eventType">combineMsgId("Trend-DeepSecurity-", $_name, "-", $_sigId)</setEventAttribute>
+      </when>
+      <when test="$_role = 'Deep Security Agent'">
+        <setEventAttribute attr="eventType">combineMsgId("Trend-DeepSecurityAgent-", $_name, "-", $_sigId)</setEventAttribute>
+      </when>
+      <when test="$_role = 'Control Manager'">
+        <setEventAttribute attr="eventType">combineMsgId("Trend-ControlManager-", $_name, "-", $_sigId)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="_role">replaceStringByRegex($_role, "\s+", "")</setEventAttribute>
+        <setEventAttribute attr="eventType">combineMsgId("Trend-", $_role, "-", $_name, "-", $_sigId)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="$eventSeverity = '0'">
+      <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+    </when>
+
+    <collectAndSetAttrByKeyValuePair sep=" " src="$_body">
+      <attrKeyMap attr="appTransportProto" key="app="/>
+      <attrKeyMap attr="destIpAddr" key="dst="/>
+      <attrKeyMap attr="destName" key="dhost="/>
+      <attrKeyMap attr="destMACAddr" key="dmac="/>
+      <attrKeyMap attr="destDomain" key="dntdom="/>
+      <attrKeyMap attr="destIpPort" key="dpt="/>
+      <attrKeyMap attr="destUser" key="duser="/>
+      <attrKeyMap attr="targetUser" key="target="/>
+      <attrKeyMap attr="reptDevName" key="dvchost="/>
+      <attrKeyMap attr="fileName" key="fname="/>
+      <attrKeyMap attr="recvBytes64" key="in="/>
+      <attrKeyMap attr="sentBytes64" key="out="/>
+      <attrKeyMap attr="srcIpAddr" key="src="/>
+      <attrKeyMap attr="srcName" key="shost="/>
+      <attrKeyMap attr="srcMACAddr" key="smac="/>
+      <attrKeyMap attr="srcDomain" key="sntdom="/>
+      <attrKeyMap attr="srcIpPort" key="spt="/>
+      <attrKeyMap attr="srcUser" key="suser="/>
+      <attrKeyMap attr="user" key="suser="/>
+      <attrKeyMap attr="startTime" key="start="/>
+      <attrKeyMap attr="ipProto" key="proto="/>
+      <attrKeyMap attr="count" key="cnt1="/>
+      <attrKeyMap attr="tcpFlags" key="cs2="/>
+      <attrKeyMap attr="dataPayload" key="TrendMicroDsPacketData="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <choose>
+      <when test="not_exist targetUser">
+        <when test="exist destUser">
+          <setEventAttribute attr="targetUser">$destUser</setEventAttribute>
+        </when>
+      </when>
+      <otherwise/>
+    </choose>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[ msg=<msg:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+  </parsingInstructions>
+</eventParser>

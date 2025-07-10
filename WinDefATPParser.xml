@@ -1,0 +1,145 @@
+<eventParser name="WinDefATPParser">
+  <deviceType>
+    <Vendor>Microsoft</Vendor>
+    <Model>Windows Defender ATP</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[2018-10-29 16:06:20 [Windows-Defender-ATP] [1][a.com][10.10.10.10]:{"Actor":"","AlertId":"636624704596718787_-1432181296","AlertPart":0,"AlertTime":"2018-05-21T03:34:06.9808865Z","AlertTitle":"[Test Alert] Suspicious Powershell commandline","Category":"Installation","ComputerDnsName":"ec2amaz-e8ongpc","CreatorIocName":"","CreatorIocValue":"","Description":"","DeviceID":"","ExternalId":"6F42CEF333D82242890FAFE93B351FE8525DE276","FileHash":"044a0cf1f6bc478a7172bf207eef1e201a18ba02","FileName":"powershell.exe","FilePath":"C:\\Windows\\System32\\WindowsPowerShell\\v1.0","FullId":"636624704596718787_-1432181296:pIowU8hnFCqca1Yu67Fb1QkZ37n2G+W4B8IJ71IBdKo=","InternalIPv4List":"172.31.46.90;127.0.0.1","InternalIPv6List":"fe80::b115:c8a8:8598:c183;::1;2001:0:9d38:953c:3451:14c8:53e0:d1a5;fe80::3451:14c8:53e0:d1a5","IoaDefinitionId":"11111111-1111-1111-1111-111111111111","IocName":"","IocUniqueId":"pIowU8hnFCqca1Yu67Fb1QkZ37n2G+W4B8IJ71IBdKo=","IocValue":"","IpAddress":"","LastProcessedTimeUtc":"2018-05-21T03:34:21.2135617Z","LinkToWDATP":"https://securitycenter.windows.com/alert/636624704596718787_-1432181296","LogOnUsers":"EC2AMAZ-E8ONGPC\\Administrator","MachineDomain":"","MachineGroup":"","MachineName":"ec2amaz-e8ongpc","Md5":"097ce5761c89434367598b34fe32893b","RemediationAction":"","RemediationIsSuccess":null,"Severity":"Informational","Sha1":"044a0cf1f6bc478a7172bf207eef1e201a18ba02","Sha256":"ba4038fd20e474c047be8aad5bfacdb1bfc1ddbe12f803f473b7918d8d819436","Source":"EDR","ThreatCategory":"","ThreatFamily":"","ThreatName":"","Url":"","UserDomain":"","UserName":"","WasExecutingWhileDetected":null}]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\[Windows-Defender-ATP\]]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\[Windows-Defender-ATP\]\s+\[<phCustId:gPatInt>\](?:\[<reptDevName:gPatStrRightSB>\]\[<reptDevIpAddr:gPatStrRightSB>\])?:<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="extEventRecvProto">WindowsDefenderATP_ALERT_REST_API</setEventAttribute>
+    <collectAndSetAttrByJSON src="$_body">
+      <attrKeyMap attr="eventDesc" key="AlertTitle"/>
+      <attrKeyMap attr="fqdnName" key="ComputerDnsName"/>
+      <attrKeyMap attr="_domain" key="MachineDomain"/>
+      <attrKeyMap attr="hostName" key="MachineName"/>
+      <attrKeyMap attr="_level" key="Severity"/>
+      <attrKeyMap attr="attackName" key="ThreatName"/>
+      <attrKeyMap attr="azureEventId" key="AlertId"/>
+      <attrKeyMap attr="_eventtime" key="AlertTime"/>
+      <attrKeyMap attr="fileName" key="FileName"/>
+      <attrKeyMap attr="filePath" key="FilePath"/>
+      <attrKeyMap attr="hostIpAddr" key="IpAddress"/>
+      <attrKeyMap attr="infoURL" key="Url"/>
+      <attrKeyMap attr="infoURL" key="LinkToWDATP"/>
+      <attrKeyMap attr="user" key="UserName"/>
+      <attrKeyMap attr="hashCode" key="FileHash"/>
+      <attrKeyMap attr="alertCategory" key="Category"/>
+      <attrKeyMap attr="hashSHA1" key="Sha1"/>
+      <attrKeyMap attr="hashSHA256" key="Sha256"/>
+      <attrKeyMap attr="eventSource" key="Source"/>
+      <attrKeyMap attr="description" key="Description"/>
+      <attrKeyMap attr="deviceIdentification" key="DeviceID"/>
+      <attrKeyMap attr="logonUserList" key="LogOnUsers"/>
+      <attrKeyMap attr="_ipv4" key="InternalIPv4List"/>
+      <attrKeyMap attr="_ipv6" key="InternalIPv6List"/>
+      <attrKeyMap attr="remedyAction" key="RemediationAction"/>
+      <attrKeyMap attr="_remedyIsSuccess" key="RemediationIsSuccess"/>
+    </collectAndSetAttrByJSON>
+
+    <when test="exist _remedyIsSuccess">
+      <choose>
+        <when test="$_remedyIsSuccess = true">
+          <setEventAttribute attr="status">Success</setEventAttribute>
+        </when>
+        <otherwise>
+          <setEventAttribute attr="status">Failed</setEventAttribute>
+        </otherwise>
+      </choose>
+    </when>
+
+    <when test="exist _eventtime">
+      <collectFieldsByRegex src="$_eventtime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <setEventAttribute attr="eventType">Microsoft-WinDefATP-Alert-Generic</setEventAttribute>
+    <when test="exist alertCategory">
+      <setEventAttribute attr="eventType">combineMsgId("Microsoft-WinDefATP-Alert-", $alertCategory)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist _level"/>
+      <when test="$_level = Informational">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_level = Low">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$_level = Medium">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_level = High">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist logonUserList">
+      <!-- pick the first user in list -->
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$logonUserList">
+            <regex><![CDATA[^<domain:gPatMesgBodyMin>[\\]<user:gPatMesgBodyMin>(?:;|$)]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$logonUserList">
+            <regex><![CDATA[^<user:gPatMesgBodyMin>(?:;|$)]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _ipv4">
+      <setEventAttribute attr="hostIpAddrList">$_ipv4</setEventAttribute>
+      <when test="not_exist hostIpAddr">
+        <collectFieldsByRegex src="$_ipv4">
+          <regex><![CDATA[^<hostIpAddr:gPatIpAddr>]]></regex>
+        </collectFieldsByRegex>
+      </when>
+    </when>
+
+    <when test="exist _ipv6">
+      <choose>
+        <when test="exist hostIpAddrList">
+          <setEventAttribute attr="hostIpAddrList">combineMsgId($hostIpAddrList, ";", $_ipv6)</setEventAttribute>
+        </when>
+        <otherwise>
+          <setEventAttribute attr="hostIpAddrList">$_ipv6</setEventAttribute>
+        </otherwise>
+      </choose>
+      <when test="not_exist hostIpAddr">
+        <collectFieldsByRegex src="$_ipv6">
+          <regex><![CDATA[^<hostIpAddr:gPatIpAddr>]]></regex>
+        </collectFieldsByRegex>
+      </when>
+    </when>
+
+    <when test="exist _domain">
+      <setEventAttribute attr="domain">$_domain</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="exist hashSHA256">
+        <setEventAttribute attr="hashAlgo">SHA256</setEventAttribute>
+        <setEventAttribute attr="hashCode">$hashSHA256</setEventAttribute>
+      </when>
+      <when test="exist hashSHA1">
+        <setEventAttribute attr="hashAlgo">SHA1</setEventAttribute>
+        <setEventAttribute attr="hashCode">$hashSHA1</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>
+

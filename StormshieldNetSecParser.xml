@@ -1,0 +1,144 @@
+<eventParser name="StormshieldNetSecParser">
+  <deviceType>
+    <Vendor>Stormshield</Vendor>
+    <Model>Network Security</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[id=firewall time="2019-02-24 16:38:01" fw="SN310A17B0323A7" tz=+0100 startime="2019-02-24 16:38:00" pri=5 confid=00 slotlevel=2 ruleid=4 rulename="1690fb96019_7" srcif="Ethernet0" srcifname="out" ipproto=udp proto=ssdp src=10.11.11.11 srcport=49907 srcportname=ephemeral_fw_udp srcname=skywalker srcmac=11:11:11:11:11:11 dst=10.10.10.10 dstport=1900 dstportname=ssdp ipv=4 sent=0 rcvd=0 duration=0.00 action=pass logtype="filter"]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[^id=firewall\s+time="[^"]*"\s+fw="[^"]*"\s+]]></eventFormatRecognizer>
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">Stormshield-Generic</setEventAttribute>
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_rawmsg">
+      <attrKeyMap attr="type" key="id"/>
+      <attrKeyMap attr="_time" key="time"/>
+      <attrKeyMap attr="deviceIdentification" key="fw"/>
+      <attrKeyMap attr="_tz" key="tz"/>
+      <attrKeyMap attr="_starttime" key="startime"/>
+      <attrKeyMap attr="_pri" key="pri"/>
+      <attrKeyMap attr="configValue" key="confid"/>
+      <attrKeyMap attr="patternRuleStatus" key="slotlevel"/>
+      <attrKeyMap attr="ruleId" key="ruleid"/>
+      <attrKeyMap attr="ruleName" key="rulename"/>
+      <attrKeyMap attr="srcIntfAlias" key="srcif"/>
+      <attrKeyMap attr="srcIntfName" key="srcifname"/>
+      <attrKeyMap attr="srcMACAddr" key="srcmac"/>
+      <attrKeyMap attr="_proto" key="ipproto"/>
+      <attrKeyMap attr="ipVersion" key="ipv"/>
+      <attrKeyMap attr="appTransportProto" key="proto"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="srcIpPort" key="srcport"/>
+      <attrKeyMap attr="srcProto" key="srcportname"/>
+      <attrKeyMap attr="srcName" key="srcname"/>
+      <attrKeyMap attr="postNATSrcIpAddr" key="modsrc"/>
+      <attrKeyMap attr="postNATSrcIpPort" key="modsrcport"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="destIpPort" key="dstport"/>
+      <attrKeyMap attr="destProto" key="dstportname"/>
+      <attrKeyMap attr="destName" key="dstname"/>
+      <attrKeyMap attr="preNATDestIpAddr" key="origdst"/>
+      <attrKeyMap attr="preNATDestIpPort" key="origdstport"/>
+      <attrKeyMap attr="destIntfName" key="dstif"/>
+      <attrKeyMap attr="destIntfAlias" key="dstifname"/>
+      <attrKeyMap attr="user" key="user"/>
+      <attrKeyMap attr="destGeoContinentCodeStr" key="dstcontinent"/>
+      <attrKeyMap attr="destGeoCountryCodeStr" key="dstcountry"/>
+      <attrKeyMap attr="destGeoHostReputation" key="dsthostrep"/>
+      <attrKeyMap attr="destIpReputationStr" key="dstiprep"/>
+      <attrKeyMap attr="srcGeoContinentCodeStr" key="srccontinent"/>
+      <attrKeyMap attr="srcGeoCountryCodeStr" key="srccountry"/>
+      <attrKeyMap attr="srcGeoHostReputation" key="srchostrep"/>
+      <attrKeyMap attr="srcIpReputationStr" key="srciprep"/>
+      <attrKeyMap attr="destMACAddr" key="dstmac"/>
+      <attrKeyMap attr="_etherproto" key="etherproto"/>
+      <attrKeyMap attr="sentBytes" key="sent"/>
+      <attrKeyMap attr="fwAction" key="action"/>
+      <attrKeyMap attr="icmpCode" key="icmpcode"/>
+      <attrKeyMap attr="icmpType" key="icmptype"/>
+      <attrKeyMap attr="recvBytes" key="rcvd"/>
+      <attrKeyMap attr="targetType" key="target"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="categoryType" key="class"/>
+      <attrKeyMap attr="code" key="classification"/>
+      <attrKeyMap attr="_pktlen" key="pktlen"/>
+      <attrKeyMap attr="_pktdumplen" key="pktdumplen"/>
+      <attrKeyMap attr="ipsTriggerPacket" key="pktdump"/>
+      <attrKeyMap attr="alarm" key="alarmid"/>
+      <attrKeyMap attr="totalNum" key="repeat"/>
+      <attrKeyMap attr="domain" key="domain"/>
+      <attrKeyMap attr="ipsEvRR" key="risk"/>
+      <attrKeyMap attr="_durationSec" key="duration"/>
+      <attrKeyMap attr="appClientVersion" key="clientappid"/>
+      <attrKeyMap attr="appServerVersion" key="serverappid"/>
+      <attrKeyMap attr="errorNo" key="error_class"/>
+      <attrKeyMap attr="errorNoInt" key="error_code"/>
+      <attrKeyMap attr="format" key="format"/>
+      <attrKeyMap attr="s7group" key="group"/>
+      <attrKeyMap attr="unitId" key="unit_id"/>
+      <attrKeyMap attr="cipServiceCode" key="cipservicecode"/>
+      <attrKeyMap attr="cipClassId" key="cipclassid"/>
+      <attrKeyMap attr="version" key="version"/>
+      <attrKeyMap attr="requestedBy" key="requestmode"/>
+      <attrKeyMap attr="respondedBy" key="responsemode"/>
+      <attrKeyMap attr="groupID" key="groupid"/>
+      <attrKeyMap attr="command" key="op"/>
+      <attrKeyMap attr="dbRetCode" key="result"/>
+      <attrKeyMap attr="paraName" key="arg"/>
+      <attrKeyMap attr="caller" key="caller"/>
+      <attrKeyMap attr="calledStationId" key="callee"/>
+      <attrKeyMap attr="subtype" key="media"/>
+      <attrKeyMap attr="vulnId" key="vulnid"/>
+      <attrKeyMap attr="vulnProducts" key="product"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist _time">
+      <collectFieldsByRegex src="$_time">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>]]></regex>
+      </collectFieldsByRegex>
+
+      <choose>
+        <when test="exist _tz">
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </when>
+        <otherwise>
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </otherwise>
+      </choose>
+    </when>
+
+    <when test="exist _starttime">
+      <collectFieldsByRegex src="$_starttime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>]]></regex>
+      </collectFieldsByRegex>
+      <choose>
+        <when test="exist _tz">
+          <setEventAttribute attr="startTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </when>
+        <otherwise>
+          <setEventAttribute attr="startTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </otherwise>
+      </choose>
+    </when>
+
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+
+    <when test="exist _durationSec">
+      <setEventAttribute attr="durationMSec">scale($_durationSec, 1000)</setEventAttribute>
+    </when>
+
+    <when test="exist fwAction">
+      <when test="matches($fwAction, 'pass')">
+        <setEventAttribute attr="eventType">Stormshield-Traffic-Pass</setEventAttribute>
+      </when>
+
+      <when test="matches($fwAction, 'block')">
+        <setEventAttribute attr="eventType">Stormshield-Traffic-Block</setEventAttribute>
+      </when>
+    </when>
+  </parsingInstructions>
+</eventParser>

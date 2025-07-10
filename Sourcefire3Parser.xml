@@ -1,0 +1,75 @@
+<eventParser name="Sourcefire3Parser">
+  <deviceType>
+    <Vendor>Cisco</Vendor>
+    <Model>FirePOWER</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patAt"><![CDATA[[^@]+]]></pattern>
+    <pattern name="patPath"><![CDATA[[^,]+(?: > [^,]+)+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatStr>:\s+\[DCauditLogs\]\s]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<46>Mar 09 10:35:56 ActionQueueScrape.pl: [DCauditLogs] example.com: Default User@Default User IP, System > Local > Registration > High Availability, Synchronization - Update IPRepVersion]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatStr>:\s+\[DCauditLogs\]\s+<:gPatStr>:\s+<user:patAt>@<_host:gPatStrComma>,\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">Sourcefire-Audit-Generic</setEventAttribute>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_host">
+          <regex><![CDATA[^<hostIpAddr:gPatIpAddr>$]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_host">
+          <regex><![CDATA[^<hostName:gPatHostName>$]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^Log<_action:gPatWord>, Log\w+ <_result:gPatWord>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId("Sourcefire-Audit-Log", $_action, "-", $_result)</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^<osObjAction:patPath>,\s+<_action:gPatMesgBodyMin>\s*$]]></regex>
+        </collectFieldsByRegex>
+
+        <choose>
+          <when test="$_action = 'Page View'">
+            <setEventAttribute attr="eventType">Sourcefire-Audit-View</setEventAttribute>
+          </when>
+
+          <when test="$_action = 'Apply'">
+            <setEventAttribute attr="eventType">Sourcefire-Audit-Apply</setEventAttribute>
+          </when>
+
+          <when test="$_action = 'Synchronization - Update IPRepVersion'">
+            <setEventAttribute attr="eventType">Sourcefire-Audit-Synchronization</setEventAttribute>
+          </when>
+
+          <otherwise>
+          </otherwise>
+        </choose>
+      </case>
+      <default>
+      </default>
+    </switch>
+  </parsingInstructions>
+</eventParser>

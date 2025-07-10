@@ -1,0 +1,55 @@
+<eventParser name="SendMailPopImapParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Sendmail.org</Vendor>
+    <Model>Sendmail Mail Server</Model>
+    <Version>ANY</Version>
+    <Name>Sendmail Mail Server</Name>
+  </appType>
+
+  <patternDefinitions>
+    <pattern name="patMailProto"><![CDATA[POP|IMAP]]></pattern>
+    <pattern name="patStr"><![CDATA[[^\s\t]*]]></pattern>
+    <pattern name="patNoTabStr"><![CDATA[[^\t]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[POP\.USER|IMAP\.USER|MAILBOX\.MESSAGE\.IMAPFETCH]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<21>Mar 10 19:29:45 2.2.2.2 1938172504  POP.USER.LOGOUT        clr[1.1.1.1]:              dswinn plaintext              210]]></testEvent>
+    <testEvent><![CDATA[<21>Mar 10 19:33:17 2.2.2.2 1938176090  IMAP.USER.LOGIN ssl[1.1.1.1]:             neblanch             plaintext]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<reptDevIpAddr:gPatIpAddr>\s+\d+\s+<_mailproto:patMailProto>\.USER\.<_type:gPatStr>\s+<_crypto:gPatStr>\[<srcIpAddr:gPatIpAddr>\]:\s+<_user:patStr>.*]]></regex>
+        </collectFieldsByRegex>
+
+        <setEventAttribute attr="eventType">combineMsgId("SENDMAIL","_",$_mailproto,"_",$_type)</setEventAttribute>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+        <setEventAttribute attr="user">$_user</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<reptDevIpAddr:gPatIpAddr>\s+\d+\s+MAILBOX\.MESSAGE\.IMAPFETCH\t<:patNoTabStr>\t<_user:patStr>.*]]></regex>
+        </collectFieldsByRegex>
+
+        <setEventAttribute attr="eventType">SENDMAIL_IMAP_FETCH</setEventAttribute>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+        <setEventAttribute attr="user">$_user</setEventAttribute>
+      </case>
+
+    </switch>
+
+  </parsingInstructions>
+
+</eventParser>

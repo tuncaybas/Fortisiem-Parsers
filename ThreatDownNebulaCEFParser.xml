@@ -1,0 +1,213 @@
+<eventParser name="ThreatDownNebulaCEFParser">
+  <deviceType>
+    <Vendor>ThreatDown</Vendor>
+    <Model>Nebula</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+
+  <testEvents>
+    <testEvent><![CDATA[2024-08-30T12:32:06Z lab01 CEF:0|Malwarebytes|Malwarebytes Endpoint Protection|Endpoint Protection 1.2.0.1207|Detection|Website blocked|1|deviceExternalId=aaaa386d7f3e9aaf80db056bf48e6edd9d495d90 dvchost=lab01 deviceDnsDomain= dvcmac=0050568BBBD8 dvc=192.168.1.25 rt=Aug 30 2024 12:32:06 Z fileType=InboundConnection cat=Website act=blocked msg=Website blocked\nProcess name: System filePath=(1.1.1.1:443) cs1Label=Detection name cs1=Compromised cs3Label=Detection ID cs3=11111111-1111-1111-1111-111111111111]]></testEvent>
+    <testEvent><![CDATA[2024-08-30T11:14:00Z lab02 CEF:0|Malwarebytes|Malwarebytes Endpoint Protection|Endpoint Protection 1.2.0.1207|Detection|PUP found|1|deviceExternalId=111ace112aae8c3a3fcea9c629b941658fade8d2 dvchost=lab02 deviceDnsDomain=example.com dvcmac=00090FFD0003 dvc=192.168.1.25 rt=Aug 30 2024 11:14:00 Z fileType=file cat=PUP act=found msg=PUP found\nFile: C:\\Users\\myuser\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Sync Data\\LevelDB\\CURRENT\nMD5: 46295CAC801E5D4857D09837238A6394\nSHA256: 0F1BAD70C7BD1E0A69562853EC529355462FCD0423263A3D39D6D0D70B780443 filePath=C:\\Users\\myuser\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Sync Data\\LevelDB\\CURRENT cs1Label=Detection name cs1=PUP.Optional.SearchAlgo cs3Label=Detection ID cs3=11111111-1111-1111-1111-111111111111 cs4Label=Parent Detection ID cs4=11111111-1111-1111-1111-111111111111]]></testEvent>
+  </testEvents>
+
+
+  <patternDefinitions>
+    <pattern name="patStrEndSep"><![CDATA[[^|]+]]></pattern>
+    <pattern name="patProductStr"><![CDATA[(?:Malwarebytes Endpoint Protection|Malwarebytes Endpoint Detection and Response|Malwarebytes Incident Response)]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\s*CEF\s*:\d+\|Malwarebytes\|<:patProductStr>\|]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime><_zone:gPatTimeZone>\s+(?:<reptDevName:gPatHostName>|<reptDevIpAddr:gPatIpAddr>)\s+CEF:\d+\|Malwarebytes\|<eventSource:patProductStr>\|<appVersion:patStrEndSep>\|<type:patStrEndSep>\|<subtype:patStrEndSep>\|<eventSeverity:gPatInt>\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_zone)</setEventAttribute>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_body">
+      <attrKeyMap attr="_eventTime" key="rt"/>
+      <attrKeyMap attr="deviceIdentification" key="deviceExternalId"/>
+      <attrKeyMap attr="hostName" key="devhost"/>
+      <attrKeyMap attr="_hostMac" key="dvcmac"/>
+      <attrKeyMap attr="hostIpAddr" key="dvc"/>
+      <attrKeyMap attr="domain" key="deviceDnsDomain"/>
+      <attrKeyMap attr="_fileType" key="fileType"/>
+      <attrKeyMap attr="_filePath" key="filePath"/>
+      <attrKeyMap attr="subtype" key="cat"/>
+      <attrKeyMap attr="fwAction" key="act"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="user" key="user"/>
+      <attrKeyMap attr="_label1" key="cs1Label"/>
+      <attrKeyMap attr="_value1" key="cs1"/>
+      <attrKeyMap attr="_label2" key="cs2Label"/>
+      <attrKeyMap attr="_value2" key="cs2"/>
+      <attrKeyMap attr="_label3" key="cs3Label"/>
+      <attrKeyMap attr="_value3" key="cs3"/>
+      <attrKeyMap attr="_value4" key="cs4"/>
+      <attrKeyMap attr="_label4" key="cs4Label"/>
+      <attrKeyMap attr="_value5" key="cs5"/>
+      <attrKeyMap attr="_label5" key="cs5Label"/>
+    </collectFieldsByKeyValuePair>
+
+    <choose>
+      <when test="not_exist type">
+        <setEventAttribute attr="eventType">ThreatDown-Nebula-Generic</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">combineMsgId("ThreatDown-Nebula-", $type)</setEventAttribute>
+        <when test="exist subtype">
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $subtype)</setEventAttribute>
+        </when>
+      </otherwise>
+    </choose>
+
+    <when test="exist fwAction">
+      <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $fwAction)</setEventAttribute>
+    </when>
+
+    <when test="exist _eventTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_rawmsg">
+            <!-- Aug 30 2024 12:24:45 Z -->
+            <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>\s+<_tz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _hostMac">
+      <setEventAttribute attr="hostMACAddr">normalizeMAC($_hostMac)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist _label1"/>
+      <when test="not_exist _value1"/>
+      <when test="$_label1 = 'MalwareName'">
+        <setEventAttribute attr="virusName">$_value1</setEventAttribute>
+      </when>
+      <when test="$_label1 = 'Detection name'">
+        <setEventAttribute attr="virusName">$_value1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _label2"/>
+      <when test="not_exist _value2"/>
+      <when test="$_label2 = 'MalwareHash'">
+        <setEventAttribute attr="hashMD5">$_value2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _label3"/>
+      <when test="not_exist _value3"/>
+      <when test="$_label3 = 'SessionId'">
+        <setEventAttribute attr="sessionId">$_value3</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _label4"/>
+      <when test="not_exist _value4"/>
+      <when test="$_label4 = 'MalwareClass'">
+        <setEventAttribute attr="virusType">$_value4</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _label5"/>
+      <when test="not_exist _value5"/>
+      <when test="$_label5 = 'CmdLine'">
+        <setEventAttribute attr="command">$_value5</setEventAttribute>
+      </when>
+    </choose>
+
+    <!-- Sample Msg: PUP found\nFile: C:\\USERS\\example.user\\APPDATA\\LOCAL\\GOOGLE\\CHROME\\USER DATA\\Profile 2\\Sync Data\\LevelDB -->
+    <when test="exist msg">
+      <setEventAttribute attr="_msg">replaceStrInStr($msg, "\n", "::SEP::")</setEventAttribute>
+      <collectAndSetAttrByKeyValuePair sep="::SEP::" src="$_msg">
+        <attrKeyMap attr="fileName" key="File: "/>
+        <attrKeyMap attr="procName" key="Process name: "/>
+        <attrKeyMap attr="hashMD5" key="MD5: "/>
+        <attrKeyMap attr="hashSHA256" key="SHA256: "/>
+      </collectAndSetAttrByKeyValuePair>
+    </when>
+
+    <when test="exist _fileType">
+      <when test="$_fileType = 'InboundConnection'">
+        <setEventAttribute attr="direction">inbound</setEventAttribute>
+      </when>
+      <when test="$_fileType = 'OutboundConnection'">
+        <setEventAttribute attr="direction">outbound</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="fileType">$_fileType</setEventAttribute>
+      </otherwise>
+    </when>
+
+    <when test="exist _filePath">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_filePath">
+            <!-- (1.1.1.1:443) -->
+            <regex><![CDATA[\(<_ip:gPatIpAddr>:<_port:gPatIpPort>\)]]></regex>
+          </collectFieldsByRegex>
+          <choose>
+            <when test="not_exist direction">
+              <!-- default to destination if direction not specified -->
+              <setEventAttribute attr="destIpAddr">$_ip</setEventAttribute>
+              <setEventAttribute attr="destIpPort">$_port</setEventAttribute>
+              <setEventAttribute attr="srcIpAddr">$hostIpAddr</setEventAttribute>
+            </when>
+            <when test="$direction = 'inbound'">
+              <setEventAttribute attr="srcIpAddr">$_ip</setEventAttribute>
+              <setEventAttribute attr="srcIpPort">$_port</setEventAttribute>
+              <setEventAttribute attr="destIpAddr">$hostIpAddr</setEventAttribute>
+            </when>
+            <otherwise>
+              <!-- if outbound, set ip as destination -->
+              <setEventAttribute attr="destIpAddr">$_ip</setEventAttribute>
+              <setEventAttribute attr="destIpPort">$_port</setEventAttribute>
+              <setEventAttribute attr="srcIpAddr">$hostIpAddr</setEventAttribute>
+            </otherwise>
+          </choose>
+        </case>
+        <default>
+          <setEventAttribute attr="filePath">$_filePath</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+    <choose>
+      <when test="not_exist type"/>
+      <when test="$type = 'Detection'">
+        <choose>
+          <when test="not_exist subtype"/>
+          <when test="$subtype = 'Website'">
+
+          </when>
+          <when test="$subtype = 'PUP'">
+
+          </when>
+          <when test="$subtype = 'Malware'">
+
+          </when>
+        </choose>
+      </when>
+    </choose>
+
+    <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "\s+", "-")</setEventAttribute>
+
+    <choose>
+      <when test="not_exist eventSeverity"/>
+      <when test="$eventSeverity = '0'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

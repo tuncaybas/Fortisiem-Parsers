@@ -1,0 +1,202 @@
+<eventParser name="TrendMicroVisionOneCEFParser">
+  <deviceType>
+    <Vendor>TrendMicro</Vendor>
+    <Model>Vision One</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[\s*CEF:\d+\|Trend Micro\|Vision One\|]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<132>Apr 17 2024 13:45:04 192.168.2.1 CEF:0|Trend Micro|Vision One|1.0.0|900002|Vision One Observed Attack Technique|5|rt=Apr 17 2024 13:31:22 act= app= cat=Device Access Violation cs1= cs2= dpt= dst= msg=A device access policy was violated. spt= src= dhost= shost= dvchost=AB00012345 request= cs1Label=MITRE Tactics IDs cs2Label=MITRE Technique IDs externalId=100112 deviceFacility=Standard Endpoint Protection deviceDirection= deviceExternalId= deviceProcessName=]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patExceptPipe"><![CDATA[[^|]+]]></pattern>
+  </patternDefinitions>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>?\s*<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>\s+(?:<:gPatStr>|<:gPatIpAddr>\s+)?CEF\s*:\d+\|Trend Micro\|Vision One\|<version:patExceptPipe>\|<logID:gPatInt>\|<_event:patExceptPipe>\|<_severity:patExceptPipe>\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+
+    <setEventAttribute attr="eventType">combineMsgId("Trend_Vision_One", "-", $logID)</setEventAttribute>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="fwAction" key="act"/>
+      <attrKeyMap attr="_rt" key="rt"/>
+      <attrKeyMap attr="company" key="customerExternalId"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="srcUser" key="suser"/>
+      <attrKeyMap attr="destUser" key="duser"/>
+      <attrKeyMap attr="_proto" key="proto"/>
+      <attrKeyMap attr="appTransportProto" key="app"/>
+      <attrKeyMap attr="count" key="cnt"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="srcIpPort" key="spt"/>
+      <attrKeyMap attr="destIpPort" key="dpt"/>
+      <attrKeyMap attr="downloadURL" key="request"/>
+      <attrKeyMap attr="threatCategory" key="cat"/>
+      <attrKeyMap attr="httpMethod" key="requestMethod"/>
+      <attrKeyMap attr="hostName" key="dvchost"/>
+      <attrKeyMap attr="srcName" key="shost"/>
+      <attrKeyMap attr="destName" key="dhost"/>
+      <attrKeyMap attr="destUser" key="duser"/>
+      <attrKeyMap attr="srcUser" key="suser"/>
+      <attrKeyMap attr="fileName" key="fname"/>
+      <attrKeyMap attr="fileType" key="fType"/>
+      <attrKeyMap attr="fileSize" key="fsize"/>
+      <attrKeyMap attr="parentFileHashCode" key="fileHash"/>
+      <attrKeyMap attr="testResult" key="type"/>
+      <attrKeyMap attr="reason" key="reason"/>
+      <attrKeyMap attr="requestContext" key="requestContext"/>
+      <attrKeyMap attr="httpMethod" key="requestMethod"/>
+      <attrKeyMap attr="appClientVersion" key="requestClientApplication"/>
+      <attrKeyMap attr="httpStatusCode" key="outcome"/>
+      <attrKeyMap attr="userId" key="suid"/>
+      <attrKeyMap attr="procName" key="deviceProcessName"/>
+      <attrKeyMap attr="extEventId" key="externalId"/>
+      <attrKeyMap attr="product" key="deviceFacility"/>
+      <!-- cs labels -->
+      <attrKeyMap attr="_cs1" key="cs1"/>
+      <attrKeyMap attr="_cs2" key="cs2"/>
+      <attrKeyMap attr="_cs3" key="cs3"/>
+      <attrKeyMap attr="_cs4" key="cs4"/>
+      <attrKeyMap attr="_cs5" key="cs5"/>
+      <attrKeyMap attr="_cs6" key="cs6"/>
+      <attrKeyMap attr="_cs1Label" key="cs1Label"/>
+      <attrKeyMap attr="_cs2Label" key="cs2Label"/>
+      <attrKeyMap attr="_cs3Label" key="cs3Label"/>
+      <attrKeyMap attr="_cs4Label" key="cs4Label"/>
+      <attrKeyMap attr="_cs5Label" key="cs5Label"/>
+      <attrKeyMap attr="_cs6Label" key="cs6Label"/>
+      <!-- cn labels -->
+      <attrKeyMap attr="_cn1" key="cn1"/>
+      <attrKeyMap attr="_cn2" key="cn2"/>
+      <attrKeyMap attr="_cn3" key="cn3"/>
+      <attrKeyMap attr="_cn1Label" key="cn1Label"/>
+      <attrKeyMap attr="_cn2Label" key="cn2Label"/>
+      <attrKeyMap attr="_cn3Label" key="cn3Label"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist _rt">
+      <collectFieldsByRegex src="$_rt">
+        <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="_tz">UTC</setEventAttribute>
+      <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist _event"/>
+      <when test="$_event = 'Vision One Workbench'">
+        <setEventAttribute attr="eventType">Trend_Vision_One_Workbench</setEventAttribute>
+      </when>
+      <when test="$_event = 'Vision One Observed Attack Technique'">
+        <setEventAttribute attr="eventType">Trend_Vision_One_Observed_Attack_Technique</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs1Label"/>
+      <when test="not_exist _cs1"/>
+      <when test="$_cs1Label = 'MITRE Tactics IDs'">
+        <setEventAttribute attr="attackTactic">$_cs1</setEventAttribute>
+      </when>
+      <when test="$_cs1Label = 'Malware name'">
+        <setEventAttribute attr="virusName">$_cs1</setEventAttribute>
+      </when>
+      <when test="$_cs1Label = 'Workbench link'">
+        <setEventAttribute attr="infoURL">$_cs1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs2Label"/>
+      <when test="not_exist _cs2"/>
+      <when test="$_cs2Label = 'MITRE Technique IDs'">
+        <setEventAttribute attr="attackTechniqueId">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label = 'Policy name'">
+        <setEventAttribute attr="policyName">$_cs2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs3Label"/>
+      <when test="not_exist _cs3"/>
+      <when test="$_cs3Label = 'Profile name'">
+        <setEventAttribute attr="profileName">$_cs3</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs4Label"/>
+      <when test="not_exist _cs4"/>
+      <when test="$_cs4Label = 'Data Loss Prevention template name'">
+        <setEventAttribute attr="dlpCategory">$_cs4</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs5Label"/>
+      <when test="not_exist _cs5"/>
+      <when test="$_cs5Label = 'File SHA-256'">
+        <setEventAttribute attr="hashSHA256">$_cs5</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs6Label"/>
+      <when test="not_exist _cs6"/>
+      <when test="$_cs6Label = 'User group name'">
+        <setEventAttribute attr="userGrp">$_cs6</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cn1Label"/>
+      <when test="not_exist _cn1"/>
+      <when test="$_cn1Label = 'Malware type'">
+        <setEventAttribute attr="virusType">$_cn1</setEventAttribute>
+      </when>
+      <when test="$_cn1Label = 'Impact Score Count'">
+        <setEventAttribute attr="count">$_cn1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cn2Label"/>
+      <when test="not_exist _cn2"/>
+      <when test="$_cn2Label = 'Web Reputation Services score'">
+        <setEventAttribute attr="clientReputationScore">$_cn2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cn3Label"/>
+      <when test="not_exist _cn3"/>
+      <when test="$_cn3Label = 'Detection type'">
+        <setEventAttribute attr="threatScore">$_cn3</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _severity"/>
+      <when test="$_severity IN '1,2,3'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$_severity IN '5,7'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_severity = '9'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+    </choose>
+
+  </parsingInstructions>
+</eventParser>
+

@@ -1,0 +1,150 @@
+<eventParser name="SophosXGFirewallParser">
+  <deviceType>
+    <Vendor>Sophos</Vendor>
+    <Model>XG Firewall</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<30>device=SFW" date=2019-03-08 time=11:31:37 timezone="WET" device_name="XG310" device_id=C320ABC48D7MTC6 log_id=123526618031 log_type="System Health" log_component="Interface" log_subtype="Usage" priority=Information interface=Port7 receivedkbits=0.00 transmittedkbits=0.00 receivederrors=0.00 transmitteddrops=0.00 collisions=0.00 transmittederrors=0.00 receiveddrops=0.00"]]></testEvent>
+    <testEvent><![CDATA[<14>device="SFW" date=2020-02-14 time=12:06:34 timezone="MST" device_name="XG650" device_id=C610293DX96GF0F log_id=010101600001 log_type="Firewall" log_component="Firewall Rule" log_subtype="Allowed" status="Allow" priority=Information duration=0 fw_rule_id=3 policy_type=1 user_name="" user_gp="" iap=0 ips_policy_id=5 appfilter_policy_id=7 application="DNS" application_risk=1 application_technology="Network Protocol" application_category="Infrastructure" in_interface="PortE3.2000" out_interface="PortE1" src_mac=00:00:00:00:00:00 src_ip=172.16.136.25 src_country_code=R1 dst_ip=1.1.1.1 dst_country_code=USA protocol="UDP" src_port=53468 dst_port=53 sent_pkts=0 recv_pkts=0 sent_bytes=0 recv_bytes=0 tran_src_ip=1.1.1.2 tran_src_port=0 tran_dst_ip= tran_dst_port=0 srczonetype="LAN" srczone="LAN" dstzonetype="WAN" dstzone="WAN" dir_disp="" connevent="Start" connid="515531360" vconnid="" hb_health="No Heartbeat" message="" appresolvedby="Signature" app_is_cloud=0]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>(?:device|device_name)="?SFW"?\s]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">"SophosXG-Generic"</setEventAttribute>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_body">
+      <attrKeyMap attr="_date" key="date"/>
+      <attrKeyMap attr="_time" key="time"/>
+      <attrKeyMap attr="_timestamp" key="timestamp"/>
+      <attrKeyMap attr="_tz" key="timezone"/>
+      <attrKeyMap attr="reptDevName" key="device_name"/>
+      <attrKeyMap attr="deviceIdentification" key="device_serial_id"/>
+      <attrKeyMap attr="deviceIdentification" key="device_id"/>
+      <attrKeyMap attr="idleTimePct" key="idle"/>
+      <attrKeyMap attr="logID" key="log_id"/>
+      <attrKeyMap attr="_type" key="log_type"/>
+      <attrKeyMap attr="_severity" key="priority"/>
+      <attrKeyMap attr="sysCpuUtil" key="system"/>
+      <attrKeyMap attr="componentName" key="log_component"/>
+      <attrKeyMap attr="fwRule" key="fw_rule_id"/>
+      <attrKeyMap attr="fwAction" key="log_subtype"/>
+      <attrKeyMap attr="userCpuUtil" key="user"/>
+      <attrKeyMap attr="user" key="user_name"/>
+      <attrKeyMap attr="group" key="user_gp"/>
+      <attrKeyMap attr="infoURL" key="url"/>
+      <attrKeyMap attr="_ipProto" key="protocol"/>
+      <attrKeyMap attr="srcIpPort" key="src_port"/>
+      <attrKeyMap attr="destIpPort" key="dst_port"/>
+      <attrKeyMap attr="srcIpAddr" key="src_ip"/>
+      <attrKeyMap attr="srcIpAddr" key="sourceip"/>
+      <attrKeyMap attr="destIpAddr" key="dst_ip"/>
+      <attrKeyMap attr="destIpAddr" key="destinationip"/>
+      <attrKeyMap attr="serverIpAddr" key="ipaddress"/>
+      <attrKeyMap attr="msg" key="message"/>
+      <attrKeyMap attr="msg" key="signature_msg"/>
+      <attrKeyMap attr="newStatus" key="status"/>
+      <attrKeyMap attr="hostMACAddr" key="client_physical_address"/>
+      <attrKeyMap attr="statusDetailedReason" key="classification"/>
+      <attrKeyMap attr="riskName" key="threatname"/>
+      <attrKeyMap attr="srcIntfName" key="in_interface"/>
+      <attrKeyMap attr="destIntfName" key="out_interface"/>
+      <attrKeyMap attr="riskName" key="threatname"/>
+      <attrKeyMap attr="srcIntfName" key="interface"/>
+      <attrKeyMap attr="recvBitsPerSec" key="receivedkbits"/>
+      <attrKeyMap attr="sentBitsPerSec" key="transmittedkbits"/>
+      <attrKeyMap attr="inIntfPktErr" key="receivederrors"/>
+      <attrKeyMap attr="sentPktDrop" key="transmitteddrops"/>
+      <attrKeyMap attr="outIntfPktErr" key="transmittederrors"/>
+      <attrKeyMap attr="recvPktDrop" key="receiveddrops"/>
+      <attrKeyMap attr="durationMSec" key="duration"/>
+      <attrKeyMap attr="srcMACAddr" key="src_mac"/>
+      <attrKeyMap attr="startTime" key="starttime"/>
+      <attrKeyMap attr="_totMem" key="total_memory"/>
+      <attrKeyMap attr="_freeMem" key="free"/>
+      <attrKeyMap attr="_usedMem" key="used"/>
+    </collectFieldsByKeyValuePair>
+
+    <!-- toDateTime cannot handle timezone abbreviations such like "WET", need to enhance it. -->
+    <!-- <setEventAttribute attr="scanEnd">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute> -->
+    <choose>
+      <when test="exist _date">
+        <collectFieldsByRegex src="$_date">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </when>
+
+      <when test="exist _timestamp">
+        <!-- 2023-09-11T10:48:16+0000 -->
+        <collectFieldsByRegex src="$_timestamp">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime><_tz:gPatTimeZone>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _ipProto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_ipProto)</setEventAttribute>
+    </when>
+
+    <when test="exist _totMem">
+      <setEventAttribute attr="memTotalMB">divide($_totMem, 1048576)</setEventAttribute>
+    </when>
+
+    <when test="exist _freeMem">
+      <setEventAttribute attr="freeMemKB">divide($_freeMem, 1024)</setEventAttribute>
+    </when>
+
+    <when test="exist _usedMem">
+      <setEventAttribute attr="usedMemKB">divide($_usedMem, 1024)</setEventAttribute>
+    </when>
+
+    <when test="exist _usedMem">
+      <when test="exist _totMem">
+        <setEventAttribute attr="_scale">scale($_usedMem, 100)</setEventAttribute>
+        <setEventAttribute attr="memUtil">divide($_scale, $_totMem)</setEventAttribute>
+      </when>
+    </when>
+
+    <setEventAttribute attr="_type">replaceStrInStr($_type, " ", "")</setEventAttribute>
+    <setEventAttribute attr="_component">replaceStrInStr($componentName, " ", "")</setEventAttribute>
+    <setEventAttribute attr="eventType">combineMsgId("SophosXG-",$_type,"-",$_component,"-",$fwAction)</setEventAttribute>
+
+    <when test="$fwAction IN 'Denied, Deny'">
+      <setEventAttribute attr="eventAction">1</setEventAttribute>
+    </when>
+
+    <when test="$fwAction = 'Authentication'">
+      <when test="$newStatus IN 'Successful, Failed'">
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $newStatus)</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _severity">
+      <choose>
+        <when test="$_severity = 'Critical'">
+          <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        </when>
+        <when test="$_severity = 'Error'">
+          <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        </when>
+        <when test="$_severity = 'Warning'">
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </when>
+        <when test="$_severity = 'Notice'">
+          <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+        </when>
+        <when test="$_severity = 'Information'">
+          <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+  </parsingInstructions>
+</eventParser>

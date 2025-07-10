@@ -1,0 +1,90 @@
+<eventParser name="VMwareVCNSParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>VMware</Vendor>
+    <Model>vCNS Manager</Model>
+    <Version>ANY</Version>
+    <Name>Generic</Name>
+  </appType>
+
+  <patternDefinitions>
+    <pattern name="patStrEndWithRightSquareBracket"><![CDATA[[^\]]*]]></pattern>
+    <pattern name="patStrEndBrack"><![CDATA[[^\]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatStr>\s+\[<:gPatWord>\]\s+<:gPatWord>:']]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<14>Jun  4 17:00:08 abc.com [SystemEvent] Time:'Wed Jun 04 17:00:08.023 GMT 2014', Severity:'Informational', Event Source:'Take Backup', Code:'9009', Event Message:'Backup of vShield Manager successfully completed.', Module:'vShield DB Backup']]></testEvent>
+    <testEvent><![CDATA[<14>Jun  4 19:10:50 abc.com [AuditLog] UserName:'host\user', ModuleName:'APPLICATION_GROUP', Operation:'CREATE', Resource:'res', Time:'Wed Jun 04 19:10:50.607 GMT 2014']]></testEvent>
+    <testEvent><![CDATA[<14>Jun  4 19:09:19 abc.com [AuditLog] UserName:'System', ModuleName:'ACCESS_CONTROL', Operation:'LOGIN', Resource:'host\user', Time:'Wed Jun 04 19:09:19.911 GMT 2014']]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<destName:gPatStr>\s+\[<_type:gPatWord>\]\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <collectAndSetAttrByKeyValuePair sep=", " src="$_body">
+      <attrKeyMap attr="_eventTime" key="Time:"/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <collectFieldsByRegex src="$_eventTime">
+      <regex><![CDATA[<:gPatWord>\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\.\d{3}\s+GMT\s+<_year:gPatYear>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventType">VMware-VCNS-Generic</setEventAttribute>
+
+    <choose>
+      <when test="$_type = 'SystemEvent'">
+        <collectAndSetAttrByKeyValuePair sep=", " src="$_body">
+          <attrKeyMap attr="componentName" key="Module:"/>
+          <attrKeyMap attr="msg" key="Event Message:"/>
+          <attrKeyMap attr="_source" key="Event Source:"/>
+        </collectAndSetAttrByKeyValuePair>
+
+        <when test="$msg = 'Backup of vShield Manager successfully completed.'">
+          <setEventAttribute attr="eventType">VMware-VCNS-BACKUP-SUCCESS</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$_type = 'AuditLog'">
+        <collectAndSetAttrByKeyValuePair sep=", " src="$_body">
+          <attrKeyMap attr="user" key="UserName:"/>
+          <attrKeyMap attr="componentName" key="ModuleName:"/>
+          <attrKeyMap attr="resourceName" key="Resource:"/>
+          <attrKeyMap attr="_operation" key="Operation:"/>
+        </collectAndSetAttrByKeyValuePair>
+
+        <setEventAttribute attr="eventType">combineMsgId("VMware-VCNS-", $componentName, "-", $_operation)</setEventAttribute>
+
+        <when test="exist resourceName">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$resourceName">
+                <regex><![CDATA[<domain:gPatStr>[\\]]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+        </when>
+
+        <when test="exist user">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$user">
+                <regex><![CDATA[<domain:gPatStr>[\\]<user:gPatStr>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+        </when>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

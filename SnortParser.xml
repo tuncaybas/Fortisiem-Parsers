@@ -1,0 +1,239 @@
+<eventParser name="SnortParser">
+
+  <deviceType>
+    <Vendor>Snort-org</Vendor>
+    <Model>Snort IPS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <!-- pattern definitions -->
+  <patternDefinitions>
+    <pattern name="patStrEndWithRightSquareBracket"><![CDATA[[^\]]*]]></pattern>
+    <pattern name="patMesgA"><![CDATA[[^\[]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[snort\[\d+\]|snort:|\[Snort-\d+\]|\[SNORT_JDBC_\w+\]]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<161>snort[2242]: [1:206:9] BACKDOOR DeepThroat 3.1 CD ROM Open Client Request [Classification: Misc activity] [Priority: 3]: {UDP} 192.168.19.1:6555 -> 172.16.2.5:514]]></testEvent>
+    <testEvent><![CDATA[<161>snort[5774]: [1:1560:6] WEB-MISC /doc/ access [Classification: access to a potentially vulnerable web application] [Priority: 2]: {TCP} 192.168.20.53:41218 -> 192.168.0.26:80]]></testEvent>
+    <testEvent><![CDATA[<161>snort[5774]: [1:466:4] ICMP L3retriever Ping [Classification: Attempted Information Leak] [Priority: 2]: {ICMP} 192.168.20.49 -> 192.168.0.10]]></testEvent>
+    <testEvent><![CDATA[<161>snort[5774]: [1:1417:9] SNMP request udp [Classification: Attempted Information Leak] [Priority: 2]: {UDP} 192.168.20.40:1061 -> 192.168.20.2:161]]></testEvent>
+    <testEvent><![CDATA[<38>Jan 17 02:28:51 idp snort[17437]: [1:75000001:0] UDP Packet Seen. {UDP} 172.16.100.13:1043 -> 234.0.72.96:6363]]></testEvent>
+    <testEvent><![CDATA[<134>Jul 27 13:49:58 10.1.20.51 java: [Snort-3]:[eventSeverity]=PHL_INFO,[hostIpAddr]=10.1.20.51,[sensorId]=1,[eventId]=3974178,[signatureId]=3,[signatureName]=ICMP Echo Reply,[signaturePri]=3,[eventTime]=2012-07-27 13:48:23.0,[srcIpAddr]=10.1.2.99,[destIpAddr]=10.1.20.51,[icmpType]=0,[icmpCode]=0,[icmpChecksum]=33238,[icmpId]=9275,[icmpSeq]=5,[dataPayload]=A72B125000000000E19A000000000000101112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F3031323334353637]]></testEvent>
+    <testEvent><![CDATA[<134>Jul 27 13:52:18 10.1.20.51 java: [Snort-4]:[eventSeverity]=PHL_INFO,[hostIpAddr]=10.1.20.51,[sensorId]=1,[eventId]=3619991,[signatureId]=4,[signatureName]=Snort Alert [1:1000001:0],[signaturePri]=null,[eventTime]=2012-07-27 11:41:22.0,[srcIpAddr]=10.1.2.99,[destIpAddr]=10.1.20.51,[srcIpPort]=53295,[destIpPort]=80,[tcpSeqNum]=650432151,[tcpAckNum]=2447395754,[tcpOffset]=5,[tcpReserved]=0,[tcpFlags]=24,[tcpWin]=16695,[checksum]=55694,[tcpUrgentPointer]=0,[dataPayload]=474554202F66617669636F6E2E69636F20485454502F312E310D0A486F73743A2031302E312E32302E35310D0A436F6E6E656374696F6E3A206B6565702D616C6976650D0A4163636570743A202A2F2A0D0A557365722D4167656E743A204D6F7A696C6C612F352E30202857696E646F7773204E5420362E313B20574F57363429204170706C655765624B69742F3533362E313120284B48544D4C2C206C696B65204765636B6F29204368726F6D652F32302E302E313133322E3537205361666172692F3533362E31310D0A4163636570742D456E636F64696E673A20677A69702C6465666C6174652C736463680D0A4163636570742D4C616E67756167653A207A682D434E2C7A683B713D302E382C656E2D55533B713D302E362C656E3B713D302E340D0A4163636570742D436861727365743A2049534F2D383835392D312C7574662D383B713D302E372C2A3B713D302E330D0A0D0A]]></testEvent>
+    <testEvent><![CDATA[<33>Jan 22 11:38:27 clids01 snort[18016]: [1:30000922:1] HD Sensor NRPE Traffic [Classification: Not Suspicious Traffic] [Priority: 3]: <br0> {TCP} 1.2.3.4:5666 -> 4.3.2.1:33526]]></testEvent>
+    <testEvent><![CDATA[<134>Oct 27 17:38:10 10.1.2.36 java: [SNORT_JDBC_PULL_ERROR]:[eventSeverity]=PHL_ERROR,[phLogDetail]=[rptIp]=10.1.2.36, [reptVendor]= Generic, [reptModel]= Java App Server, [reason]=JDBC Pull SQL Error]]></testEvent>
+    <testEvent><![CDATA[<177>Mar 13 10:52:11 sec-sensor-ps snort: [1:2009475:11] ET POLICY TeamViewer Dyngate User-Agent [Classification: Potential Corporate Privacy Violation] [Priority: 1]: <sec-sensor-ps-eth1> {TCP} 10.8.2.55:55195 -> 1.2.3.4:80]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <setEventAttribute attr="eventAction">0</setEventAttribute>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>snort(?:\[<:gPatInt>\])?: \[<:gPatInt>:<_evTypeId:gPatInt>:<:gPatInt>\] <msg:patMesgA>\[\d+\]\s+\[<_name:gPatStr>\s*: <_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>snort(?:\[<:gPatInt>\])?: \[<:gPatInt>:<_evTypeId:gPatInt>:<:gPatInt>\] <msg:patMesgA>\[<_name:gPatStr>\s*: <_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <!-- always put this case above the one below -->
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_NGHeader:gPatSyslogNGHeader> snort(?:\[<:gPatInt>\])?: \[<:gPatInt>:<_evTypeId:gPatInt>:<:gPatInt>\] <msg:patMesgA>\[<_name:gPatStr>\s*: <_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <collectFieldsByRegex src="$_NGHeader">
+          <regex><![CDATA[<:gPatMon>\s+<:gPatDay>\s<:gPatTime>\s<reptDevIpAddr:gPatIpAddr>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay> <_time:gPatTime> <:gPatStr>?\s*snort(?:\[<:gPatInt>\])?: \[<:gPatInt>:<_evTypeId:gPatInt>:<:gPatInt>\] <msg:patMesgA>\[<_name:gPatStr>\s*: <_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay> <_time:gPatTime> <:gPatStr>?\s*snort\[<:gPatInt>\]: \[<:gPatInt>:<_evTypeId:gPatInt>:<:gPatInt>\] <msg:patMesgA>\. <_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <!-- Snort events from database-->
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_altMon:gPatMon>\s+<_altDay:gPatDay>\s+<_altTime:gPatTime>\s+<:gPatStr>\s+java:\s+\[<eventType:patStrEndWithRightSquareBracket>\]<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="_eventSource">database</setEventAttribute>
+        <setEventAttribute attr="extEventRecvProto">JDBC</setEventAttribute>
+      </case>
+    </switch>
+
+    <setEventAttribute attr="devEventTypeGrp">Generic</setEventAttribute>
+
+    <choose>
+      <when test="exist _eventSource">
+        <when test="$_eventSource = 'database'">
+          <collectAndSetAttrByKeyValuePair sep="," src="$_body">
+            <attrKeyMap attr="dbName" key="[dbName]="/>
+            <attrKeyMap attr="relayDevIpAddr" key="[relayDevIpAddr]="/>
+            <attrKeyMap attr="ipsSensorId" key="[ipsSensorId]="/>
+            <attrKeyMap attr="snortEventId" key="[snortEventId]="/>
+            <attrKeyMap attr="_sensorHostname" key="[sensorHostname]="/>
+            <attrKeyMap attr="ipsSignatureId" key="[ipsSignatureId]="/>
+            <attrKeyMap attr="ipsGeneratorId" key="[ipsGeneratorId]="/>
+            <attrKeyMap attr="ipsEventName" key="[ipsEventName]="/>
+            <attrKeyMap attr="eventSeverity" key="[snortEventSeverity]="/>
+            <attrKeyMap attr="_eventTime" key="[eventTime]="/>
+            <attrKeyMap attr="srcIpAddr" key="[srcIpAddr]="/>
+            <attrKeyMap attr="destIpAddr" key="[destIpAddr]="/>
+            <attrKeyMap attr="ipVersion" key="[ipVersion]="/>
+            <attrKeyMap attr="ipHeaderLength" key="[ipHeaderLength]="/>
+            <attrKeyMap attr="tos" key="[tos]="/>
+            <attrKeyMap attr="ipTotalLength" key="[ipTotalLength]="/>
+            <attrKeyMap attr="ipId" key="[ipId]="/>
+            <attrKeyMap attr="ipFlags" key="[ipFlags]="/>
+            <attrKeyMap attr="ipFragOffset" key="[ipFragOffset]="/>
+            <attrKeyMap attr="ipTtl" key="[ipTtl]="/>
+            <attrKeyMap attr="ipProto" key="[ipProto]="/>
+            <attrKeyMap attr="ipChecksum" key="[ipChecksum]="/>
+            <attrKeyMap attr="icmpType" key="[icmpType]="/>
+            <attrKeyMap attr="icmpCode" key="[icmpCode]="/>
+            <attrKeyMap attr="icmpId" key="[icmpId]="/>
+            <attrKeyMap attr="dataPayload" key="[dataPayload]="/>
+            <attrKeyMap attr="srcIpPort" key="[srcIpPort]="/>
+            <attrKeyMap attr="destIpPort" key="[destIpPort]="/>
+            <attrKeyMap attr="seqNum" key="[seqNum]="/>
+            <attrKeyMap attr="tcpAckNum" key="[tcpAckNum]="/>
+            <attrKeyMap attr="tcpOffset" key="[tcpOffset]="/>
+            <attrKeyMap attr="tcpReserved" key="[tcpReserved]="/>
+            <attrKeyMap attr="tcpFlags" key="[tcpFlags]="/>
+            <attrKeyMap attr="tcpWindow" key="[tcpWindow]="/>
+            <attrKeyMap attr="checksum" key="[checksum]="/>
+            <attrKeyMap attr="tcpUrgentPointer" key="[tcpUrgentPointer]="/>
+            <attrKeyMap attr="tcpOptions" key="[tcpOptions]="/>
+            <attrKeyMap attr="udpLen" key="[udpLen]="/>
+          </collectAndSetAttrByKeyValuePair>
+          <when test="$eventSeverity = '0'">
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+          </when>
+          <!-- parse this 2009-03-26 19:27:52.0 -->
+          <choose>
+            <when test="exist _eventTime">
+              <collectFieldsByRegex src="$_eventTime">
+                <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>.*]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+            </when>
+            <otherwise>
+              <setEventAttribute attr="deviceTime">toDateTime($_altMon, $_altDay, $_altTime)</setEventAttribute>
+            </otherwise>
+          </choose>
+          <choose>
+            <when test="exist _sensorHostname">
+              <switch>
+                <case>
+                  <collectFieldsByRegex src="$_sensorHostname">
+                    <regex><![CDATA[^<reptDevIpAddr:gPatIpAddr>$]]></regex>
+                  </collectFieldsByRegex>
+                </case>
+                <default>
+                  <setEventAttribute attr="reptDevName">$_sensorHostname</setEventAttribute>
+                </default>
+              </switch>
+            </when>
+          </choose>
+        </when>
+      </when>
+      <otherwise>
+        <choose>
+          <when test="exist _name">
+            <when test="$_name = 'Classification'">
+              <collectAndSetAttrByRegex src="$_body">
+                <regex><![CDATA[<devEventTypeGrp:gPatMesgBody>\] \[Priority:\s*<_body2:gPatMesgBody>]]></regex>
+              </collectAndSetAttrByRegex>
+              <setEventAttribute attr="_body">$_body2</setEventAttribute>
+            </when>
+
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[<_severity:gPatInt>\]:? (?:\<<srcIntfName:gPatStr>\> )?\{<_proto:gPatStr>\} <_body2:gPatMesgBody>]]></regex>
+            </collectAndSetAttrByRegex>
+
+            <!-- event severity -->
+            <choose>
+              <when test="$_severity = '1'">
+                <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+              </when>
+              <when test="$_severity = '2'">
+                <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+              </when>
+              <when test="$_severity = '3'">
+                <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+              </when>
+              <when test="$_severity = '4'">
+                <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+              </when>
+              <when test="$_severity = '5'">
+                <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+              </when>
+              <when test="$_severity = '6'">
+                <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+              </when>
+              <when test="$_severity = '7'">
+                <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+              </when>
+              <when test="$_severity = '8'">
+                <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+              </when>
+              <when test="$_severity = '9'">
+                <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+              </when>
+              <otherwise>
+                <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+              </otherwise>
+            </choose>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[\{<_proto:gPatStr>\} <_body2:gPatMesgBody>]]></regex>
+            </collectAndSetAttrByRegex>
+          </otherwise>
+        </choose>
+
+        <choose>
+          <when test="$_proto IN 'TCP, UDP'">
+            <collectAndSetAttrByRegex src="$_body2">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr>(?::<srcIpPort:gPatInt>)? -> <destIpAddr:gPatIpAddr>(?::<destIpPort:gPatInt>)?]]></regex>
+            </collectAndSetAttrByRegex>
+          </when>
+
+          <when test="$_proto = 'ICMP'">
+            <collectAndSetAttrByRegex src="$_body2">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr>(?::0)? -> <destIpAddr:gPatIpAddr>(?::0)?]]></regex>
+            </collectAndSetAttrByRegex>
+          </when>
+
+          <when test="$_proto = 'PROTO:255'">
+            <collectAndSetAttrByRegex src="$_body2">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr> -> <destIpAddr:gPatIpAddr>]]></regex>
+            </collectAndSetAttrByRegex>
+          </when>
+        </choose>
+
+        <setEventAttribute attr="eventType">combineMsgId("Snort", "-", $_evTypeId)</setEventAttribute>
+        <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+
+  </parsingInstructions>
+
+</eventParser>

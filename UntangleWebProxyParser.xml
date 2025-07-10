@@ -1,0 +1,292 @@
+<eventParser name="UntangleWebProxyParser">
+
+  <deviceType>
+    <Vendor>Untangle</Vendor>
+    <Model>Untangle Security Gateway</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patUntangleMod" list="begin"><![CDATA[Web_Casing|uvm|Spam_Blocker|Virus_Blocker|]]></pattern>
+    <pattern name="patUntangleMod" list="continue"><![CDATA[Spyware_Blocker|Web_Filter|Protocol_Control|]]></pattern>
+    <pattern name="patUntangleMod" list="end"><![CDATA[Phish_Blocker|PipelineStats|PipelineEndpoints]]></pattern>
+    <pattern name="patJson"><![CDATA[\{.*\}]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:patUntangleMod>\[\d+\]]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<142>Aug 10 17:46:05 localhost node-15: [SyslogManagerImpl] <UDP96385007750455> INFO uvm[0]: {"timeStamp":"2016-08-10 17:46:05.651","flagged":false,"application":"DNS","protochain":"/UDP/DNS","blocked":false,"confidence":100,"detail":"","state":1,"tag":"uvm[0]: ","class":"class com.untangle.node.application_control.ApplicationControlLogEvent","sessionEvent":{"entitled":true,"partitionTablePostfix":"_2016_08_10","protocol":17,"hostname":"10.168.30.225","CServerPort":53,"protocolName":"UDP","tag":"uvm[0]: ","serverLatitude":37.3845,"class":"class com.untangle.uvm.node.SessionEvent","SServerAddr":"/10.8.8.8","serverIntf":1,"CClientAddr":"/10.168.30.225","serverCountry":"US","sessionId":96385007750455,"SClientAddr":"/10.50.13.17","CClientPort":62424,"policyRuleId":0,"timeStamp":"2016-08-10 17:44:55.546","serverLongitude":-122.0881,"clientIntf":4,"policyId":1,"SClientPort":62424,"bypassed":false,"SServerPort":53,"CServerAddr":"/10.8.8.8"},"partitionTablePostfix":"_2016_08_10"}]]></testEvent>
+    <testEvent><![CDATA[{"timeStamp":"2016-08-10 17:46:05.651","flagged":false,"application":"DNS","protochain":"/UDP/DNS","blocked":false,"confidence":100,"detail":"","state":1,"tag":"uvm[0]: ","class":"class com.untangle.node.application_control.ApplicationControlLogEvent","sessionEvent":{"entitled":true,"partitionTablePostfix":"_2016_08_10","protocol":17,"hostname":"10.168.30.225","CServerPort":53,"protocolName":"UDP","tag":"uvm[0]: ","serverLatitude":37.3845,"class":"class com.untangle.uvm.node.SessionEvent","SServerAddr":"/10.8.8.8","serverIntf":1,"CClientAddr":"/10.168.30.225","serverCountry":"US","sessionId":96385007750455,"SClientAddr":"/10.50.13.17","CClientPort":62424,"policyRuleId":0,"timeStamp":"2016-08-10 17:44:55.546","serverLongitude":-122.0881,"clientIntf":4,"policyId":1,"SClientPort":62424,"bypassed":false,"SServerPort":53,"CServerAddr":"/10.8.8.8"},"partitionTablePostfix":"_2016_08_10"}]]></testEvent>
+    <testEvent><![CDATA[<134>Jun  1 11:22:28 20.20.20.20 uvm[0]: System stat event # info:  #]]></testEvent>
+    <testEvent><![CDATA[<134>Jan 21 09:05:52 192.168.1.50 Web_Filter[3]: Block # endpoints: create-date=Wed Jan 21 09:05:51 PST 2009, session-id=1071047667, protocol=TCP, policy=Default Rack, client-iface=inside, client-addr=10.0.0.182, client-port=51591, server-addr=2.2.2.2, server-port=80, server-iface=outside, client-addr=10.1.1.127, client-port=10197, server-addr=2.2.2.2, server-port=80 # info: url=http://www.abc.com/, action=block, reason=BLOCK_CATEGORY, category=Pornography #]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <!-- parsing common fields -->
+    <!-- sample message
+             Jan 21 09:05:52 192.168.1.50 Web_Filter[3]: Block # endpoints: create-date=Wed Jan 21 09:05:51 PST 2009, session-id=1071047667, protocol=TCP, policy=Default Rack, client-iface=inside, client-addr=10.0.0.182, client-port=51591, server-addr=2.2.2.2, server-port=80, server-iface=outside, client-addr=10.1.1.127, client-port=10197, server-addr=2.2.2.2, server-port=80 # info: url=http://www.abc.com/, action=block, reason=BLOCK_CATEGORY, category=Pornography #
+            <134>Jun  1 11:22:28 192.168.1.50 uvm[0]: System stat event # info:  #
+	     -->
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>?<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatHostName>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </case>
+      <default>
+        <setEventAttribute attr="_body">$_rawmsg</setEventAttribute>
+      </default>
+    </switch>
+
+    <setEventAttribute attr="eventType">Untangle-Generic</setEventAttribute>
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+    <setEventAttribute attr="hostIpAddr">$reptDevIpAddr</setEventAttribute>
+    <!-- two cases - non-spam (RBL based) and others -->
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA["tag":"<_eventCat:patUntangleMod>\[\d*\]:\s*"]]></regex>
+        </collectFieldsByRegex>
+
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<_subBody:patJson>]]></regex>
+        </collectFieldsByRegex>
+        <collectAndSetAttrByJSON src="$_subBody">
+          <attrKeyMap attr="_actionTime" key="timeStamp"/>
+          <attrKeyMap attr="appName" key="application"/>
+          <attrKeyMap attr="appTransportProto" key="protochain"/>
+          <attrKeyMap attr="details" key="detail"/>
+          <attrKeyMap attr="_state" key="state"/>
+          <attrKeyMap attr="funName" key="class"/>
+          <attrKeyMap attr="ipProto" key="sessionEvent.protocol"/>
+          <attrKeyMap attr="hostName" key="sessionEvent.hostname"/>
+          <attrKeyMap attr="_proto" key="sessionEvent.protocolName"/>
+          <attrKeyMap attr="destGeoLatitude" key="sessionEvent.serverLatitude"/>
+          <attrKeyMap attr="destGeoCountryCode" key="sessionEvent.serverCountry"/>
+          <attrKeyMap attr="destGeoLongitude" key="sessionEvent.serverLongitude"/>
+          <attrKeyMap attr="srcIntfName" key="sessionEvent.clientIntf"/>
+          <attrKeyMap attr="destIntfName" key="sessionEvent.serverIntf"/>
+          <attrKeyMap attr="policyId" key="sessionEvent.policyId"/>
+          <attrKeyMap attr="sessionId" key="sessionEvent.sessionId"/>
+          <attrKeyMap attr="_srcIpAddr" key="sessionEvent.SClientAddr"/>
+          <attrKeyMap attr="srcIpPort" key="sessionEvent.SClientPort"/>
+          <attrKeyMap attr="_destIpAddr" key="sessionEvent.SServerAddr"/>
+          <attrKeyMap attr="destIpPort" key="sessionEvent.SServerPort"/>
+          <attrKeyMap attr="_postNATSrcIpAddr" key="sessionEvent.CClientAddr"/>
+          <attrKeyMap attr="postNATSrcIpPort" key="sessionEvent.CClientPort"/>
+          <attrKeyMap attr="_preNATDestIpAddr" key="sessionEvent.CServerAddr"/>
+          <attrKeyMap attr="preNATDestIpPort" key="sessionEvent.CServerPort"/>
+          <attrKeyMap attr="_blocked" key="blocked"/>
+        </collectAndSetAttrByJSON>
+        <when test="exist _actionTime">
+          <collectFieldsByRegex src="$_actionTime">
+            <!--2016-08-10 17:46:05.651-->
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </when>
+        <when test="exist _srcIpAddr">
+          <setEventAttribute attr="srcIpAddr">trimAttribute($_srcIpAddr, "/")</setEventAttribute>
+        </when>
+        <when test="exist _destIpAddr">
+          <setEventAttribute attr="destIpAddr">trimAttribute($_destIpAddr, "/")</setEventAttribute>
+        </when>
+        <when test="exist _postNATSrcIpAddr">
+          <setEventAttribute attr="postNATSrcIpAddr">trimAttribute($_postNATSrcIpAddr, "/")</setEventAttribute>
+        </when>
+        <when test="exist _preNATDestIpAddr">
+          <setEventAttribute attr="preNATDestIpAddr">trimAttribute($_preNATDestIpAddr, "/")</setEventAttribute>
+        </when>
+        <when test="exist _blocked">
+          <when test="matches($_blocked, '^true')">
+            <setEventAttribute attr="eventType">combineMsgId("Untangle", "-", $_eventCat, "-", "block")</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+          </when>
+          <when test="matches($_blocked, '^false')">
+            <setEventAttribute attr="eventType">combineMsgId("Untangle", "-", $_eventCat, "-", "pass")</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+          </when>
+        </when>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<_eventCat:gPatWord>\[?\d*\]?:.*endpoints:\s+create-date=<:gPatStr>\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatStr>\s+<_year:gPatYear>,\s+session-id=<_id:gPatInt>,\s+protocol=<_proto:gPatProto>,\s+policy=<_polName:gPatSentence>,\s+client-iface=<srcIntfName:gPatWord>,\s+client-addr=<srcIpAddr:gPatIpAddr>,\s+client-port=<srcIpPort:gPatIpPort>,\s+server-addr=<preNATDestIpAddr:gPatIpAddr>,\s+server-port=<preNATDestIpPort:gPatIpPort>,\s+server-iface=<destIntfName:gPatWord>,\s+client-addr=<postNATSrcIpAddr:gPatIpAddr>,\s+client-port=<postNATSrcIpPort:gPatIpPort>,\s+server-addr=<destIpAddr:gPatIpAddr>,\s+server-port=<destIpPort:gPatIpPort>\s+<_info:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<_eventCat:gPatWord>\[\d+\]:\s+SMTP_RBL\s+<_info:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<_eventCat:gPatWord>\[?\d*\]?:\s+<_info:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+    <!-- parse the info part -->
+    <when test="exist _info">
+      <collectAndSetAttrByKeyValuePair src="$_info" sep=",">
+        <attrKeyMap attr="uriStem" key="url="/>
+        <attrKeyMap attr="uriStem" key="location="/>
+        <attrKeyMap attr="_action" key="action="/>
+        <attrKeyMap attr="httpContentType" key="content-type="/>
+        <attrKeyMap attr="httpContentLen64" key="content-length="/>
+        <attrKeyMap attr="_reason" key="reason="/>
+        <attrKeyMap attr="_infected" key="infected="/>
+        <attrKeyMap attr="_spam" key="spam="/>
+        <attrKeyMap attr="virusName" key="virus-name="/>
+        <attrKeyMap attr="sentBytes64" key="c2pBytes="/>
+        <attrKeyMap attr="recvBytes64" key="p2cBytes="/>
+        <attrKeyMap attr="webCategory" key="category="/>
+        <attrKeyMap attr="vendor" key="vendor="/>
+        <attrKeyMap attr="senderMailAddr" key="sender="/>
+        <attrKeyMap attr="receiverMailAddr" key="receiver="/>
+        <attrKeyMap attr="mailSubject" key="subject="/>
+        <attrKeyMap attr="spamScore" key="score="/>
+        <attrKeyMap attr="_blocked" key="blocked="/>
+        <attrKeyMap attr="_ipaddrSpam" key="ipaddr="/>
+        <attrKeyMap attr="_skippedSpam" key="skipped="/>
+        <attrKeyMap attr="_vendorSpam" key="hostname="/>
+        <attrKeyMap attr="_appProto" key="protocol="/>
+      </collectAndSetAttrByKeyValuePair>
+    </when>
+
+    <!-- special handling based on event category -->
+    <choose>
+
+      <when test="matches($_eventCat, '^Web_Filter')">
+        <choose>
+          <when test="matches($_action, '^block')">
+            <setEventAttribute attr="eventType">combineMsgId("Untangle", "-", $_eventCat, "-", "block")</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+          </when>
+          <when test="matches($_action, '^pass')">
+            <setEventAttribute attr="eventType">combineMsgId("Untangle", "-", $_eventCat, "-", "pass")</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <when test="matches($_eventCat, '^Virus_Blocker')">
+        <choose>
+          <when test="matches($_action, '^block')">
+            <setEventAttribute attr="eventType">combineMsgId("Untangle", "-", $_eventcat, "-", "block")</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+          </when>
+          <when test="matches($_action, '^pass')">
+            <setEventAttribute attr="eventType">combineMsgId("Untangle", "-", $_eventCat, "-", "pass")</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+          </when>
+          <when test="matches($_action, '^remove')">
+            <setEventAttribute attr="eventType">combineMsgId("Untangle", "-", $_eventCat, "-", "remove")</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <when test="matches($_eventCat, '^Spam_Blocker')">
+        <when test="exist _action">
+          <choose>
+            <when test="matches($_action, '^block')">
+              <setEventAttribute attr="eventType">combineMsgId("Untangle", "-", $_eventCat, "-", "blocked")</setEventAttribute>
+              <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+            </when>
+            <when test="matches($_action, '^pass')">
+              <setEventAttribute attr="eventType">combineMsgId("Untangle", "-", $_eventCat, "-", "pass")</setEventAttribute>
+              <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+            </when>
+            <when test="matches($_action, '^mark')">
+              <setEventAttribute attr="eventType">combineMsgId("Untangle", "-", $_eventCat, "-", "mark")</setEventAttribute>
+              <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+            </when>
+            <when test="matches($_action, '^quarantine')">
+              <setEventAttribute attr="eventType">combineMsgId("Untangle", "-", $_eventCat, "-", "quarantine")</setEventAttribute>
+              <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+            </when>
+          </choose>
+        </when>
+        <when test="exist _ipaddrSpam">
+          <setEventAttribute attr="srcIpAddr">$_ipaddrSpam</setEventAttribute>
+        </when>
+        <when test="exist _vendorSpam">
+          <setEventAttribute attr="vendor">$_vendorSpam</setEventAttribute>
+        </when>
+        <when test="exist _skippedSpam">
+          <when test="matches($_skippedSpam, '^false')">
+            <setEventAttribute attr="eventType">combineMsgId("Untangle", "-", $_eventCat, "-", "blocked")</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+          </when>
+          <when test="matches($_skippedSpam, '^true')">
+            <setEventAttribute attr="eventType">combineMsgId("Untangle", "-", $_eventCat, "-", "pass")</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+          </when>
+        </when>
+      </when>
+
+      <when test="matches($_eventCat, '^Spyware_Blocker')">
+        <when test="exist _action">
+          <when test="matches($_action, '^block')">
+            <setEventAttribute attr="eventType">combineMsgId("Untangle", "-", $_eventCat, "-", "block")</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+          </when>
+        </when>
+        <when test="exist _blocked">
+          <when test="matches($_blocked, '^true')">
+            <setEventAttribute attr="eventType">combineMsgId("Untangle", "-", $_eventCat, "-", "block")</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+          </when>
+          <when test="matches($_blocked, '^false')">
+            <setEventAttribute attr="eventType">combineMsgId("Untangle", "-", $_eventCat, "-", "pass")</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+          </when>
+        </when>
+      </when>
+
+      <when test="matches($_eventCat, '^Phish_Blocker')">
+        <choose>
+          <when test="matches($_action, '^block')">
+            <setEventAttribute attr="eventType">combineMsgId("Untangle", "-", $_eventCat, "-", "block")</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+          </when>
+          <when test="matches($_action, '^pass')">
+            <setEventAttribute attr="eventType">combineMsgId("Untangle", "-", $_eventCat, "-", "pass")</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <when test="matches($_eventCat, '^PipelineStats')">
+        <setEventAttribute attr="eventType">combineMsgId("Untangle", "-", $_eventCat)</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+
+      <when test="matches($_eventCat, '^Web_Casing')">
+        <setEventAttribute attr="eventType">combineMsgId("Untangle", "-", $_eventCat)</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+
+      <when test="matches($_eventCat, '^Protocol_Control')">
+        <setEventAttribute attr="eventType">combineMsgId("Untangle", "-", $_eventCat)</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+
+    </choose>
+
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+
+    <when test="exist sentBytes64">
+      <when test="exist recvBytes64">
+        <setEventAttribute attr="totBytes64">add($sentBytes64, $recvBytes64)</setEventAttribute>
+      </when>
+    </when>
+  </parsingInstructions>
+</eventParser>

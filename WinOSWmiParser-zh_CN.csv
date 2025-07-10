@@ -1,0 +1,299 @@
+A user account was locked out,
+Access Request Information,访问请求信息
+Accesses,访问
+Account Domain,帐户域
+Account Expires,帐户过期
+Account For Which Logon Failed,登录失败的帐户
+Account Information,帐户信息
+Account Name,帐户名
+Account Name,帐户名称
+Account Session Identifier,帐户会话标识符
+Account That Was Locked Out,已锁定的帐户
+Account Whose Credentials Were Used,使用了哪个帐户的凭据
+Additional Information,其他信息
+Additional Information,附加信息
+Advanced Options,高级选项
+Allowed To Delegate To,允许委托给
+AllowedToDelegateTo,允许委派给
+Application Correlation ID,应用程序相关性 ID
+Application Information,应用程序信息
+Application Name,应用程序名称
+Attribute,属性
+Attributes,属性
+Audit Failure,审核失败
+Audit Success,审核成功
+Auditing Settings,审核设置
+Authentication Details,身份验证详细信息
+Authentication Package Name,身份验证数据包
+Authentication Package,身份验证数据包
+Authentication Provider,身份验证提供程序
+Authentication Server,身份验证服务器
+Authentication Type,身份验证类型
+Called Station Identifier,被调用站标识符
+Caller Computer Name,调用方计算机名
+Caller Domain,调用方域
+Caller Logon ID,调用方登录 ID
+Caller Process ID,调用方进程 ID
+Caller Process Name,调用方进程名
+Caller User Name,调用方用户名
+Calling Station Identifier,调用站标识符
+Certificate Information,证书信息
+Certificate Issuer Name,证书颁发者名称
+Certificate Serial Number,证书序列号
+Certificate Thumbprint,证书指纹
+Change Type,更改类型
+Changed Attributes,已更改的属性
+Class ID,类 ID
+Class Name,类名称
+Class,类
+Client Address,客户端地址
+Client Domain,客户端域
+Client Friendly Name,客户端友好名称
+Client IP Address,客户端 IP 地址
+Client Logon ID,客户端登录 ID
+Client Machine,客户端计算机
+Client Name,客户端名
+Client Port,客户端端口
+Client User Name,客户端用户名
+Compatible IDs,兼容 ID
+Computer Account That Was Changed,已更改的计算机帐户
+Configuration Access Policy,配置访问策略
+Configured Names,配置的名称
+Connection Request Policy Name,连接请求策略名称
+Correlation ID,相关性 ID
+Creator Process ID,创建者进程 ID
+Creator Process Name,创建者进程名称
+Creator Subject,创建者主题
+Deleted Group,删除的组
+Destination Address,目标地址
+Destination Port,目标端口
+Detailed Authentication Information,详细的身份验证信息
+Detailed Authentication Information,详细身份验证信息
+Device ID,设备 ID
+Device Name,设备名称
+Direction,方向
+Directory Service,目录服务
+Disable Integrity Checks,禁用完整性检查
+Disabled Privileges,禁用的特权
+Display Name,显示名称
+DNS Host Name,DNS 主机名
+Domain Behavior Version,域行为版本
+Domain ID,域 ID
+Domain Name,域名
+Domain,域
+EAP Type,EAP 类型
+Elevated Token,提升的令牌
+Enabled Privileges,启用的特权
+Error Code,错误代码
+Event in sequence,事件顺序
+Expiration time,到期时间
+Expiration Time,过期时间
+Extended-Result,扩展结果
+Failed test code,失败测试代码
+Failure Code,失败代码
+Failure Code,故障代码
+Failure Information,失败信息
+Failure Reason,失败原因
+Filter Information,筛选器信息
+Filter Run-Time ID,筛选器运行时 ID
+Flight Signing,检测签名
+Force Logoff,强制注销
+Fully Qualified Account Name,完全限定的帐户名称
+General Settings,常规设置
+Group Domain,组域
+Group Membership,组成员身份
+Group Name,组名
+Group,组
+Handle ID,句柄 ID
+Handle ID,处理 ID
+Hardware IDs,硬件 ID
+Help URL,帮助 URL
+Home Directory,主目录
+Home Drive,主驱动器
+HyperVisor Debugging,虚拟机监控程序调试
+HyperVisor Launch Type,虚拟机监控程序启动类型
+HyperVisor Load Options,虚拟机监控程序加载选项
+HyperVisor Settings,虚拟机监控程序设置
+Image File Name,图像文件名称
+Image File,图像文件
+Impersonation Level,模拟级别
+IP Addresses,IP 地址
+Kernel Debugging,内核调试
+Key Length,密钥长度
+Layer Name,层名称
+Layer Run-Time ID,层运行时 ID
+LDAP Display Name,LDAP 显示名称
+Linked Logon ID,链接的登录 ID
+Load Options,加载选项
+Location Information,位置信息
+Lockout Duration,锁定持续时间
+Lockout Observation Window,锁定观察窗口
+Lockout Threshold,锁定阈值
+Logging Results,日志记录结果
+Logon Account,登录帐户
+Logon GUID,登录 GUID
+Logon Hours,登录时间(以小时计)
+Logon ID,登录 ID
+Logon Information,登录信息
+Logon Process Name,登录过程
+Logon Process,登录进程
+Logon Type,登录类型
+Machine Account Quota,计算机帐户配额
+Mandatory Label,强制性标签
+Max. Password Age,密码最大存留期
+Member,使用者
+Member,成员
+Min. Password Age,密码最小存留期
+Min. Password Length,密码最小长度
+Mixed Domain Mode,混合域模式
+Name,名称
+NAS Identifier,NAS 标识符
+NAS IPv4 Address,NAS IPv4 地址
+NAS IPv6 Address,NAS IPv6 地址
+NAS Port,NAS 端口
+NAS Port-Type,NAS 端口类型
+Network Account Domain,网络帐户域
+Network Account Name,网络帐户名称
+Network Address,网络地址
+Network Information,网络信息
+Network Policy Name,网络策略名称
+New Account Name,新帐户名
+New Account,新帐户
+New Computer Account,新计算机帐户
+New DN,新 DN
+New Group,新组
+New Handle ID,新的句柄 ID
+New Logon,新登录
+New Maxusers,新最大用户数
+New Process ID,新进程 ID
+New Process Name,新进程名称
+New Remark,新备注
+New SD,新 SD
+New Security Descriptor,新安全描述符
+New ShareFlags,新共享标志数
+New State,新状态
+New Time,新时间
+New Token Information,新令牌信息
+New UAC Value,新 UAC 值
+Object Handle,对象句柄
+Object Name,对象名
+Object Name,对象名称
+Object Server,对象服务器
+Object Type,对象类型
+Object,对象
+OEM Information,OEM 信息
+Old Account Name,旧帐户名
+Old DN,旧 DN
+Old MaxUsers,旧最大用户数
+Old Remark,旧备注
+Old SD,旧 SD
+Old ShareFlags,旧共享标志数
+Old UAC Value,旧 UAC 值
+Operation,操作
+Original Security Descriptor,原始安全描述符
+OS-Version,OS 版本
+Package Name (NTLM only),数据包名(仅限 NTLM)
+Password History Length,密码历史长度
+Password Last Set,上次设置的密码
+Password Properties,密码属性
+Permissions Change,权限更改
+Port,端口
+Pre-Authentication Type,预身份验证类型
+Previous Time,上一时间
+Previous Time,以前的时间
+Primary Domain,主要域
+Primary Group ID,主要组 ID
+Primary Logon ID,主要的登录 ID
+Primary User Name,主要用户名
+Privileges,特权
+Process Command Line,进程命令行
+Process ID,进程 ID
+Process Information,进程信息
+Process Name,处理名称
+Process Name,进程名
+Process Name,进程名称
+Process,进程
+Profile Path,配置文件路径
+Protocol,协议
+Proxy Policy Name,代理策略名称
+Quarantine Grace Time,隔离宽限期
+Quarantine Information,隔离信息
+RADIUS Client,RADIUS 客户端
+Read Operation,读取操作
+Reason Code,原因代码
+Reason,原因
+Resource Manager,资源管理器
+Restricted Admin Mode,受限制的管理员模式
+Result Code,结果代码
+Result,结果
+RM Transaction ID,RM 事务 ID
+SAM Account Name,SAM 帐户名
+Script Path,脚本路径
+Security ID,安全 ID
+Security ID,安全性 ID
+Server Information,服务器信息
+Server Names,服务器名称
+Service ID,服务 ID
+Service Information,服务信息
+Service Name,服务名称
+Service Principal Names,服务主体名称
+Session ID,会话 ID
+Session Identifier,会话标识符
+Share Information,共享信息
+Share Name,共享名称
+Share Path,共享路径
+SID History,SID 历史
+SID List,SID 列表
+Signature Settings,签名设置
+Source Address,源地址
+Source Network Address,源网络地址
+Source Port,源端口
+Source Workstation,源工作站
+SPN Name,SPN 名称
+Status,状态
+Sub Status,子状态
+Subject,主题
+Subject,使用者
+Supplied Realm Name,已提供的领域名称
+Syntax (OID),语法(OID)
+System Event Logging,系统事件日志记录
+System Health Validator Result(s),系统健康验证程序结果
+Target Account ID,目标帐户 ID
+Target Account Name,目标帐户名
+Target Account,目标帐户
+Target Computer,目标计算机
+Target Domain,目标域
+Target Process ID,目标进程 ID
+Target Process Name,目标进程名
+Target Process,目标进程
+Target Server Name,目标服务器名
+Target Server,目标服务器
+Target Subject,目标主题
+Target User Name,目标用户名
+Test Signing,测试签名
+The domain controller attempted to validate the credentials for an account,
+The workstation was locked,
+The workstation was unlocked,
+Ticket Encryption Type,票证加密类型
+Ticket Options,票证选项
+Token Elevation Type,令牌提升类型
+Transaction ID,事务 ID
+Transaction Information,事务信息
+Transited Services,传递服务
+Transited Services,传递的服务
+Tree Delete,树删除
+Type,类型
+User Account Control,用户帐户控制
+User Domain,用户域
+User ID,用户 ID
+User Name,用户名
+User Parameters,用户参数
+User Principal Name,用户主体名称
+User Workstations,用户工作站
+User,用户
+Value,值
+Vendor IDs,供应商 ID
+Virtual Account,虚拟帐户
+VSM Launch Type,VSM 启动类型
+Workstation Name,工作站名
+Workstation Name,工作站名称

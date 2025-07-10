@@ -1,0 +1,72 @@
+<eventParser name="TaniumConnectParser">
+  <deviceType>
+    <Vendor>Tanium</Vendor>
+    <Model>Tanium Connect</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patStrEndSep"><![CDATA[[^|]*]]></pattern>
+    <pattern name="patAt"><![CDATA[[^@]*]]></pattern>
+    <pattern name="patDot"><![CDATA[[^.]*]]></pattern>
+  </patternDefinitions>
+
+  <testEvents>
+    <testEvent><![CDATA[<134>1 2018-09-06T00:13:28.549000+00:00 tanium-server-1 Tanium 7844 - [Tanium-IOC-Detect@017472 Event-Name=security.user.authenticated Timestamp=2018-09-06T00:13:26.095Z Priority=low Severity=info User-Id=7 User-Name=csoc-tanium-user-1 User-Domain= Other-Parameters=]]]></testEvent>
+    <testEvent><![CDATA[<134>1 2018-09-06T02:50:02.762000+00:00 tanium-server-1 Tanium 7020 - [Comply-Deployment-Status---Deployment-5@017472 Installed=true Version=3.0.45 Type=full Installed1=true Version1=8u131-e1 Comply---Has-Latest-Tools=true Count=2]]]></testEvent>
+    <testEvent><![CDATA[<134>1 2018-09-06T03:11:46.018000+00:00 tanium-server-1 Tanium 5252 - [Connect@017472 connection_name=SavedQuestion_patch_statistics connection_id=7 timestamp=2018-09-06T03:11:45.699Z message=Connection-failed.-operation-timed-out-after-95014-ms,-10-tries-with-error:-ERROR:-400-Bad-Request--RBAC-Exception-(Ref#-2a2eb5b48fcb33ae):-RBACInsufficientPrivilege--See-log-for-more-details.-log-file-name:-7-8158-2018-09-06T03_10_00.790000+0000.log]]]></testEvent>
+    <testEvent><![CDATA[<134>1 2018-09-06T03:11:53.055000+00:00 tanium-server-1 Tanium 5252 - [Connect@017472 connection_name=FortiISEM-r1 connection_id=5 timestamp=2018-09-06T03:11:52.580Z message=Connection-run-finished-successfully.-Data-Transferred:-273.00-B]]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\s+Tanium\s+\d+\s+-\s+\[<:patAt>@\d+\s+<:gPatStrRightSB>\]]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>\d+\s+<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<:gPatTimeZone>\s+<hostName:gPatStr>\s+Tanium\s+<:gPatInt>\s+-\s+\[<type:patAt>@<:gPatInt>\s+<_body:gPatStrRightSB>\]]]></regex>
+    </collectFieldsByRegex>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_body">
+      <attrKeyMap attr="_eventType" key="Event-Name"/>
+      <attrKeyMap attr="_timestamp" key="Timestamp"/>
+      <attrKeyMap attr="_timestamp" key="timestamp"/>
+      <attrKeyMap attr="_priority" key="Priority"/>
+      <attrKeyMap attr="_severity" key="Severity"/>
+      <attrKeyMap attr="userId" key="User-Id"/>
+      <attrKeyMap attr="user" key="User-Name"/>
+      <attrKeyMap attr="domain" key="User-Domain"/>
+      <attrKeyMap attr="profileName" key="connection_name"/>
+      <attrKeyMap attr="flowConnId" key="connection_id"/>
+      <attrKeyMap attr="msg" key="message"/>
+      <attrKeyMap attr="count" key="Count"/>
+    </collectFieldsByKeyValuePair>
+    <choose>
+      <when test="exist _eventType">
+        <setEventAttribute attr="_eventType">replaceStrInStr($_eventType, ".", "-")</setEventAttribute>
+      </when>
+      <when test="exist msg">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[<_eventType:patDot>\.]]></regex>
+        </collectFieldsByRegex>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="_eventType">Generic</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <setEventAttribute attr="eventType">combineMsgId("TaniumConnect-", $_eventType)</setEventAttribute>
+
+    <when test="exist _timestamp">
+      <collectFieldsByRegex src="$_timestamp">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist _severity"/>
+      <when test="$_severity = 'info'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,79 @@
+<eventParser name="ZscalerJsonParser">
+  <deviceType>
+    <Vendor>Zscaler</Vendor>
+    <Model>Cloud Firewall</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[[PH_DEV_MON_CUSTOM_JSON]:[reptVendor]=Zscaler,[reptModel]=CloudUncompressed,[reptDevName]=ZSCALERCloud,[reptDevIpAddr]=1.1.1.1,[json]={"sourcetype":"zscalernss-web","event":{"datetime":"2022-04-28 19:55:36","reason":"Allowed","event_id":"7091869481737125890","protocol":"SSL","action":"Allowed","transactionsize":"54444","responsesize":"53375","requestsize":"1069","urlcategory":"AHMOTA_URL_Category","serverip":"172.253.115.94","clienttranstime":"199000","requestmethod":"NA","refererURL":"None","useragent":"Linux%20Ubuntu%2021.10%20ZTunnel/1.0","product":"NSS","location":"Road%20Warrior","ClientIP":"10.11.11.11","status":"NA","user":"example@nswseclab2.org","url":"example.gstatic.com","vendor":"Zscaler","hostname":"example.gstatic.com","clientpublicIP":"10.11.11.11","threatcategory":"None","threatname":"None","filetype":"None","appname":"General Browsing","pagerisk":"0","department":"Unknown","urlsupercategory":"User-defined","appclass":"General Browsing","dlpengine":"None","urlclass":"Bandwidth Loss","threatclass":"None","dlpdictionaries":"None","fileclass":"None","bwthrottle":"NO","servertranstime":"199000","contenttype":"Other","unscannabletype":"None","deviceowner":"vikram","devicehostname":"vikram-HP-ENVY-x360-Convertible"}}]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\[PH_DEV_MON_CUSTOM_JSON]\:\[reptVendor\]=Zscaler,\[reptModel\]=CloudUncompressed,]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\[PH_DEV_MON_CUSTOM_JSON\]:.*,\[json\]=<_json:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <collectAndSetAttrByJSON src="$_json">
+      <attrKeyMap attr="srcType" key="sourcetype"/>
+      <attrKeyMap attr="_datetime" key="event.datetime"/>
+      <attrKeyMap attr="reason" key="event.reason"/>
+      <attrKeyMap attr="uuid" key="event.event_id"/>
+      <attrKeyMap attr="appTransportProto" key="event.protocol"/>
+      <attrKeyMap attr="action" key="event.action"/>
+      <attrKeyMap attr="totBytes64" key="event.transactionsize"/>
+      <attrKeyMap attr="recvBytes64" key="event.responsesize"/>
+      <attrKeyMap attr="sentBytes64" key="event.requestsize"/>
+      <attrKeyMap attr="webCategory" key="event.urlcategory"/>
+      <attrKeyMap attr="destIpAddr" key="event.serverip"/>
+      <attrKeyMap attr="_clienttranstime" key="event.clienttranstime"/>
+      <attrKeyMap attr="httpMethod" key="event.requestmethod"/>
+      <attrKeyMap attr="httpReferrer" key="event.refererURL"/>
+      <attrKeyMap attr="httpUserAgent" key="event.useragent"/>
+      <attrKeyMap attr="product" key="event.product"/>
+      <attrKeyMap attr="hostLocation" key="event.location"/>
+      <attrKeyMap attr="srcIpAddr" key="event.ClientIP"/>
+      <attrKeyMap attr="status" key="event.status"/>
+      <attrKeyMap attr="user" key="event.user"/>
+      <attrKeyMap attr="infoURL" key="event.url"/>
+      <attrKeyMap attr="_vendor" key="event.vendor"/>
+      <attrKeyMap attr="destName" key="event.hostname"/>
+      <attrKeyMap attr="postNATSrcIpAddr" key="event.clientpublicIP"/>
+      <attrKeyMap attr="threatCategory" key="event.threatcategory"/>
+      <attrKeyMap attr="threatType" key="event.threatname"/>
+      <attrKeyMap attr="fileType" key="event.filetype"/>
+      <attrKeyMap attr="appName" key="event.appname"/>
+      <attrKeyMap attr="riskScore" key="event.pagerisk"/>
+      <attrKeyMap attr="userGrp" key="event.department"/>
+      <attrKeyMap attr="_urlsupercategory" key="event.urlsupercategory"/>
+      <attrKeyMap attr="appGroupName" key="event.appclass"/>
+      <attrKeyMap attr="_dlpengine" key="event.dlpengine"/>
+      <attrKeyMap attr="categoryType" key="event.urlclass"/>
+      <attrKeyMap attr="_threatClass" key="event.threatclass"/>
+      <attrKeyMap attr="_dlpdictionaries" key="event.dlpdictionaries"/>
+      <attrKeyMap attr="fileDesc" key="event.fileclass"/>
+      <attrKeyMap attr="_bwthrottle" key="event.bwthrottle"/>
+      <attrKeyMap attr="_servertranstime" key="event.servertranstime"/>
+      <attrKeyMap attr="httpContentType" key="event.contenttype"/>
+      <attrKeyMap attr="_unscannabletype" key="event.unscannabletype"/>
+      <attrKeyMap attr="deviceOwner" key="event.deviceowner"/>
+      <attrKeyMap attr="deviceIdentification" key="event.devicehostname"/>
+    </collectAndSetAttrByJSON>
+
+    <collectAndSetAttrByRegex src="$_datetime">
+      <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay> <_time:gPatTime>]]></regex>
+    </collectAndSetAttrByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventType">combineMsgId("Zscaler-", $srcType, "-Event")</setEventAttribute>
+    <when test="$srcType = 'zscalernss-web'">
+      <setEventAttribute attr="eventType">combineMsgId("Zscaler-Web-", $action)</setEventAttribute>
+    </when>
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+
+  </parsingInstructions>
+</eventParser>
+

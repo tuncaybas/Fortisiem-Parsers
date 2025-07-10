@@ -1,0 +1,53 @@
+<eventParser name="SyslogNGParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <!-- parse IP and/or host name from the syslog header
+<134>May 21 14:29:18 2015 host 1.2.3.4
+<134>May 21 14:29:18 2015 [1.2.3.4]
+<134>May 21 14:29:18 2015 1.2.3.4
+<134>May 21 2015 14:29:18 1.2.3.4
+<134>May 21 14:29:18 1.2.3.4
+  Also
+Wed May 21 ...
+  -->
+
+  <patternDefinitions>
+    <pattern name="patYear"><![CDATA[\d{4}]]></pattern>
+    <!-- the strict version of host name pattern (RFC952) -->
+    <pattern name="patHostName"><![CDATA[[A-Za-z](?:[0-9A-Za-z.-]*[0-9A-Za-z])?]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[^\s*<:gPatSyslogPRI>?(?:<:gPatWeekday>\s+)?<:gPatMon>\s+<:gPatDay>\s+(?:<:gPatTime>\s+<:patYear>|<:patYear>\s+<:gPatTime>|<:gPatTime>)\s+(?:<:patHostName>\s+<:gPatIpAddr>|\[<:gPatIpAddr>\]|<:gPatIpAddr>|<:patHostName>)\s]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<134>May 21 14:29:18 10.4.2.9 May 21 2007 14:00:34 : %-6-302020: Built ICMP connection for faddr 10.2.3.14/0 gaddr asa70/0 laddr asa70/0]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatMon>\s+<:gPatDay>\s+(?:<:gPatTime>\s+<:patYear>|<:patYear>\s+<:gPatTime>|<:gPatTime>)\s+(?:<reptDevName:patHostName>\s+<_reptIp:gPatIpAddr>|\[<_reptIp:gPatIpAddr>\]|<_reptIp:gPatIpAddr>|<reptDevName:patHostName>)\b]]></regex>
+        </collectFieldsByRegex>
+
+        <setEventAttribute attr="_syslogNGHeader">yes</setEventAttribute>
+      </case>
+
+      <default/>
+    </switch>
+
+    <when test="exist _reptIp">
+      <when test="$_reptIp != '127.0.0.1'">
+        <when test="$_reptIp != '0.0.0.0'">
+          <when test="$_reptIp != '255.255.255.255'">
+            <setEventAttribute attr="reptDevIpAddr">$_reptIp</setEventAttribute>
+          </when>
+        </when>
+      </when>
+    </when>
+  </parsingInstructions>
+</eventParser>

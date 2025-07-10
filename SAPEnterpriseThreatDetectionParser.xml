@@ -1,0 +1,67 @@
+<eventParser name="SAPEnterpriseThreatDetectionParser">
+  <deviceType>
+    <Vendor>SAP</Vendor>
+    <Model>Enterprise Threat Detection</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[[PH_DEV_MON_CUSTOM_JSON]:[reptVendor]=SAP,[reptModel]=ETD,[reptDevName]=sap.edt.device,[reptDevIpAddr]=192.168.1.25,[json]={ "alerts": [ { "Version": "1.0", "AlertCreationTimestamp": "2021-09-21T07:45:45.420Z", "AlertId": 812125, "AlertSeverity": "MEDIUM", "AlertStatus": "FORWARDED", "AlertSource": { "EventLogType": "SystemLog", "SystemIdActor": "System25" }, "AlertSystemIds": [ "System25" ], "HostNames": [ "lab1" ], "Category": "Log Failure", "PatternId": "624F0A8BB948854F997942AC0EDB2102", "PatternType": "FLAB", "PatternName": "Low Log Amount per system", "PatternNameSpace": "http://demo", "PatternDescription": "", "MinTimestamp": "2021-09-21T07:44:39.522Z", "MaxTimestamp": "2021-09-21T07:44:39.522Z", "Text": "Measurement 48 exceeded threshold 50 for ('Event, Log Type' = 'SystemLog' / 'System ID, Actor' = 'System25')", "Score": 50, "UiLink": "http://192.168.1.10:80/sap/hana/uis/clients/ushell-app/shells/fiori/FioriLaunchpad.html?siteId=sap.secmon.ui.mobile.launchpad|ETDLaunchpad#AlertDetails-show?alert=62037185B38D5449999D57F465F1BBF6", "TriggeringEvents": [ { "Id": "C60C48EF7B4E4D848F45F1904820C2CC", "Timestamp": "2021-09-21T07:44:39.522Z", "TechnicalLogEntryType": "SM21_D01", "TechnicalNumber": "481537", "TechnicalTimestampOfInsertion": "2021-09-21T07:44:40.681Z", "CorrelationId": "120CD18982991EEA9AB8F87143C8DE88", "CorrelationSubId": "00000000000000000000000000000000", "EventCode": "D01", "EventSemantic": "Executable, Run, Cancel", "EventLogType": "SystemLog", "EventMessage": "LMDB_UPLOAD_ERRORS 011", "EventSeverityCode": "50", "EventSourceId": "192.168.30.104", "EventSourceType": "IP Address", "GenericRiskLevel": "3", "NetworkHostnameActor": "test-1", "NetworkHostnameInitiator": "0.0.0.0", "NetworkHostnameReporter": "test-1", "NetworkIPAddressInitiator": "0.0.0.0", "ServiceExecutableName": "00016", "ServiceExecutableType": "B", "ServiceInstanceName": "lab1_BLK_00", "ServiceProgramName": "RLMDB_UPLOAD_BACKGROUND", "ServiceTransactionName": "S000", "SystemIdActor": "System25", "SystemGroupIdActor": "BLN", "SystemGroupIdInitiator": "BLN", "SystemGroupIdIntermediary": "BLN", "SystemIdReporter": "System25", "SystemGroupIdReporter": "BLN", "SystemGroupIdTarget": "BLN", "SystemTypeActor": "ABBA", "SystemGroupTypeActor": "SAP", "SystemGroupTypeInitiator": "SAP", "SystemGroupTypeIntermediary": "SAP", "SystemTypeReporter": "ABBA", "SystemGroupTypeReporter": "SAP", "SystemGroupTypeTarget": "SAP", "UsernameDomainNameActing": "System25", "UsernameDomainTypeActing": "ABBA", "UserPseudonymActing": "BLK_BTC_SMP", "EventName": "ExecutableRunCancel", "EventNamespace": "http://sap.com/secmon", "TechnicalTimestampInteger": "1632210279522" }, { "Id": "765451B9772A4FA580059A7BAD7D149C", "Timestamp": "2021-09-21T07:44:39.522Z", "TechnicalLogEntryType": "SM21_E0A", "TechnicalNumber": "481536", "TechnicalTimestampOfInsertion": "2021-09-21T07:44:40.681Z", "CorrelationId": "120CD18982991EEA9AB8F87143C8DE88", "CorrelationSubId": "00000000000000000000000000000000", "EventCode": "E0A", "EventLogType": "SystemLog", "EventMessage": "&aRLMDB_UPLOAD_DISPLAY_LOG&b00000000000011498140", "EventSeverityCode": "9", "EventSourceId": "192.168.30.104", "EventSourceType": "IP Address", "GenericRiskLevel": "0", "NetworkHostnameActor": "test-1", "NetworkHostnameInitiator": "0.0.0.0", "NetworkHostnameReporter": "test-1", "NetworkIPAddressInitiator": "0.0.0.0", "ServiceExecutableName": "00016", "ServiceExecutableType": "B", "ServiceInstanceName": "lab1_BLK_00", "ServiceProgramName": "RLMDB_UPLOAD_BACKGROUND", "ServiceTransactionName": "S000", "SystemIdActor": "System25", "SystemGroupIdActor": "BLN", "SystemGroupIdInitiator": "BLN", "SystemGroupIdIntermediary": "BLN", "SystemIdReporter": "System25", "SystemGroupIdReporter": "BLN", "SystemGroupIdTarget": "BLN", "SystemTypeActor": "ABBA", "SystemGroupTypeActor": "SAP", "SystemGroupTypeInitiator": "SAP", "SystemGroupTypeIntermediary": "SAP", "SystemTypeReporter": "ABBA", "SystemGroupTypeReporter": "SAP", "SystemGroupTypeTarget": "SAP", "UsernameDomainNameActing": "System25", "UsernameDomainTypeActing": "ABBA", "UserPseudonymActing": "BLK_BTC_SMP", "TechnicalTimestampInteger": "1632210279522" } ] } ] } ]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patExceptBracket"><![CDATA[[^\[\]]*]]></pattern>
+  </patternDefinitions>
+  <eventFormatRecognizer><![CDATA[\[PH_DEV_MON_CUSTOM_JSON\]:\[reptVendor\]=SAP,\[reptModel\]=ETD,]]></eventFormatRecognizer>
+  <parsingInstructions>
+
+    <switch>
+      <case>
+        <!-- Individual event format, process like normal -->
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[\[PH_DEV_MON_CUSTOM_JSON\]:\[reptVendor\]=SAP,\[reptModel\]=ETD,SAP_Individual_Event,json=<_json:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">SAP-ETD-Generic</setEventAttribute>
+        <when test="exist _json">
+          <collectAndSetAttrByJSON src="$_json">
+            <attrKeyMap attr="alertIdStr" key="alerts.AlertId"/>
+            <attrKeyMap attr="eventSeverityCat" key="alerts.AlertSeverity"/>
+            <attrKeyMap attr="status" key="alerts.AlertStatus"/>
+            <attrKeyMap attr="srcName" key="alerts.AlertSystemIds[0]"/>
+            <attrKeyMap attr="hostName" key="alerts.HostNames[0]"/>
+            <attrKeyMap attr="alertCategory" key="alerts.Category"/>
+            <attrKeyMap attr="type" key="alerts.PatternType"/>
+            <attrKeyMap attr="alertName" key="alerts.PatternName"/>
+            <attrKeyMap attr="namespace" key="alerts.PatternNameSpace"/>
+            <attrKeyMap attr="description" key="alerts.PatternDescription"/>
+            <attrKeyMap attr="_minStamp" key="alerts.MinTimestamp"/>
+            <attrKeyMap attr="_maxStamp" key="alerts.MaxTimestamp"/>
+            <attrKeyMap attr="msg" key="alerts.Text"/>
+            <attrKeyMap attr="riskScore" key="alerts.Score"/>
+            <attrKeyMap attr="infoURL" key="alerts.UiLink"/>
+          </collectAndSetAttrByJSON>
+        </when>
+        <when test="exist alertName">
+          <setEventAttribute attr="_eventName">replaceStrInStr($alertName, " ", "-")</setEventAttribute>
+          <setEventAttribute attr="eventType">combineMsgId("SAP-ETD-", $_eventName)</setEventAttribute>
+        </when>
+      </case>
+      <case>
+        <!-- monolithic event format, split into individual events -->
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[\[PH_DEV_MON_CUSTOM_JSON\]:\[reptVendor\]=SAP,\[reptModel\]=ETD,]]></regex>
+        </collectFieldsByRegex>
+        <collectFieldsByKeyValuePair kvsep="]=" sep=",[" src="$_rawmsg">
+          <attrKeyMap attr="reptDevName" key="reptDevName"/>
+          <attrKeyMap attr="reptDevIpAddr" key="reptDevIpAddr"/>
+          <attrKeyMap attr="_json" key="json"/>
+        </collectFieldsByKeyValuePair>
+        <!-- input json, path, header, trailer, isDropBool -->
+        <setEventAttribute attr="_resultCount">splitJsonEvent($_json, "alerts", "[PH_DEV_MON_CUSTOM_JSON]:[reptVendor]=SAP,[reptModel]=ETD,SAP_Individual_Event,json=", "", "true")</setEventAttribute>
+      </case>
+
+    </switch>
+
+  </parsingInstructions>
+
+</eventParser>

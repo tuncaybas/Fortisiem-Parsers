@@ -1,0 +1,130 @@
+<eventParser name="VMwareNSXvSphereParser">
+  <deviceType>
+    <Vendor>VMware</Vendor>
+    <Model>NSX</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<182>1 2021-11-12T07:00:00.084Z nsxmgr03-ars.company.local NSXV 5956 - [nsxv@6876 comp="nsx-manager" level="INFO" subcomp="manager"] The task core.services.fabric.stateUpdaterTaskName [id:task-994995] is added to the SchedulerQueue]]></testEvent>
+    <testEvent><![CDATA[<182>1 2021-11-12T06:59:49.339Z nsxmgr03-ars.company.local NSXV 5420 - [nsxv@6876 comp="nsx-manager" level="INFO" subcomp="manager"] [AuditLog] UserName:'admin', Originated IP:'10.11.63.33', ModuleName:'ACCESS_CONTROL', Operation:'LOGIN', Resource Name:'NSX Appliance Manager', Time:'Fri Nov 12 06:59:49.338 WET 2021', Status:'SUCCESS']]></testEvent>
+    <testEvent><![CDATA[<182>1 2021-11-12T07:00:00.103Z nsxmgr03-ars.company.local NSXV 5956 - [nsxv@6876 comp="nsx-manager" level="INFO" subcomp="manager"] [SystemEvent] Time:'Fri Nov 12 07:00:00.101 WET 2021', Severity:'Critical', Event Source:'null', Code:'30051', Event Message:'Missing or deleted resources: [datastore-339487] found used in NSX Edge(s): [edge-142]. Please reconfigure these NSX Edges to use existing resources. Please refer to NSX Manager logs for the complete list of missing resources.', Module:'NSX Edge Appliance', Universal Object:'false']]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patRecog" list="begin"><![CDATA[(?:NSX|NSXV) \d+ (?:-|\w+) |]]></pattern>
+    <pattern name="patRecog" list="continue"><![CDATA[(?:kernel|sudo) - - - |]]></pattern>
+    <pattern name="patRecog" list="end"><![CDATA[(?:CRON|dbus-daemon|systemd) \d+ - - ]]></pattern>
+    <pattern name="patProc"><![CDATA[[\w-]+]]></pattern>
+    <pattern name="patStrEndWithRightSquareBracket"><![CDATA[[^\]]*]]></pattern>
+    <pattern name="patStrEndBrack"><![CDATA[[^\]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatYear>-<:gPatMonNum>-<:gPatDay>T<:gPatTime>\.\d+<:gPatTimeZone>\s+<:gPatHostName>\s+<:patRecog>]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">VMware-NSX-Generic</setEventAttribute>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^NSXV?\s+\d+\s+\S+\s+\[[^]]*\](?:\s+(?:\[\w+\])?\[<_type:gPatWord>\])?\s+<_body:gPatMesgBodyMin>\s*$]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^<_proc:patProc>(?:\s+\S+){3}\s+<_body2:gPatMesgBodyMin>\s*$]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+
+    <when test="exist _type">
+      <setEventAttribute attr="eventType">combineMsgId("VMware-NSX-", $_type)</setEventAttribute>
+
+      <choose>
+        <when test="$_type = 'SystemEvent'">
+          <collectAndSetAttrByKeyValuePair sep=", " src="$_body">
+            <attrKeyMap attr="msg" key="Event Message:"/>
+            <attrKeyMap attr="_source" key="Event Source:"/>
+            <attrKeyMap attr="componentName" key="Module:"/>
+            <attrKeyMap attr="_eventTime" key="Time:"/>
+            <attrKeyMap attr="oid" key="Universal Object"/>
+          </collectAndSetAttrByKeyValuePair>
+
+          <when test="exist componentName">
+            <setEventAttribute attr="_comp">replaceStringByRegex($componentName, "\s+", "-")</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $_comp)</setEventAttribute>
+          </when>
+        </when>
+
+        <when test="$_type = 'AuditLog'">
+          <collectAndSetAttrByKeyValuePair sep=", " src="$_body">
+            <attrKeyMap attr="componentName" key="ModuleName:"/>
+            <attrKeyMap attr="_operation" key="Operation:"/>
+            <attrKeyMap attr="resourceName" key="Resource:"/>
+            <attrKeyMap attr="resultType" key="Status:"/>
+            <attrKeyMap attr="_eventTime" key="Time:"/>
+            <attrKeyMap attr="id" key="Universal Object"/>
+            <attrKeyMap attr="user" key="UserName:"/>
+          </collectAndSetAttrByKeyValuePair>
+
+          <when test="exist componentName">
+            <setEventAttribute attr="_comp">replaceStringByRegex($componentName, "\s+", "-")</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $_comp)</setEventAttribute>
+            <when test="exist _operation">
+              <setEventAttribute attr="_comp">replaceStringByRegex($_operation, "\s+", "-")</setEventAttribute>
+              <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $_operation)</setEventAttribute>
+            </when>
+          </when>
+
+          <when test="exist user">
+            <switch>
+              <case>
+                <collectFieldsByRegex src="$user">
+                  <regex><![CDATA[<domain:gPatStr>[\\]<user:gPatStr>]]></regex>
+                </collectFieldsByRegex>
+              </case>
+              <default/>
+            </switch>
+          </when>
+
+          <when test="not_exist domain">
+            <when test="exist resourceName">
+              <switch>
+                <case>
+                  <collectFieldsByRegex src="$resourceName">
+                    <regex><![CDATA[<domain:gPatStr>[\\]]]></regex>
+                  </collectFieldsByRegex>
+                </case>
+                <default/>
+              </switch>
+            </when>
+          </when>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist _body2">
+      <choose>
+        <when test="$_proc = 'sudo'">
+          <collectAndSetAttrByKeyValuePair sep=" ; " src="$_body2">
+            <attrKeyMap attr="user" key="USER="/>
+            <attrKeyMap attr="commandPath" key="PWD="/>
+            <attrKeyMap attr="command" key="COMMAND="/>
+          </collectAndSetAttrByKeyValuePair>
+        </when>
+
+        <otherwise>
+          <setEventAttribute attr="msg">$_body2</setEventAttribute>
+        </otherwise>
+      </choose>
+    </when>
+  </parsingInstructions>
+</eventParser>

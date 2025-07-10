@@ -1,0 +1,417 @@
+<eventParser name="SentinelOneParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>SentinelOne</Vendor>
+    <Model>Endpoint Protection Service</Model>
+    <Version>ANY</Version>
+    <Name>SentinelOne Endpoint Protection Service</Name>
+  </appType>
+
+  <patternDefinitions>
+    <pattern name="patMess"><![CDATA[[^|]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[CEF:\d+\|SentinelOne\||\<\d+\>SentinelOne\s+Syslog\s+connection]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<14>SentinelOne Syslog connection established successfully!]]></testEvent>
+    <testEvent><![CDATA[<14>CEF:0|SentinelOne|Mgmt|1.1.1.1|65|dtomic initiated a fetch full report command to the agent DT-Virus7|1|rt=#arcsightDate(Jun 06 2017 09:29:17) suser=xyz duid=c29ca0cee8a0a989321495b78b1d256ab7189144 cat=SystemEvent]]></testEvent>
+    <testEvent><![CDATA[<14>CEF:0|SentinelOne|Mgmt|Windows 7|21|Threat marked as resolved|1|rt=Jun 05 2017 09:29:17 uuid=586e7cc578207a3f75361073 fileHash=4b9c5fe8ead300a0be2dbdbcdbd193591451c8b4 filePath=\Device\HarddiskVolume2\Windows\AutoKMS\AutoKMS.exe]]></testEvent>
+    <testEvent><![CDATA[<14>CEF:0|SentinelOne|Mgmt|Windows 7|61|Disconnect from network alert - Machine DT-Virus7|1|rt=#arcsightDate(Jun 06 2017 09:29:17) uuid=59305bd178207a42cb028e92 suser=xyz ip=1.1.1.1 cat=SystemEvent]]></testEvent>
+    <testEvent><![CDATA[<14>CEF:0|SentinelOne|Mgmt|Windows 10|43|Machine nzddd-pc updated successfully|1|rt=#arcsightDate(Mon, 12 Nov 2018, 16:39:27 UTC) duid=a14c4235d3abfd0ae2533df943b3700826e565c0 cat=SystemEvent]]></testEvent>
+    <testEvent><![CDATA[<14>2022-09-22 17:12:43,325   sentinel -  CEF:0|SentinelOne|Mgmt|ip=1.1.1.1 eventID=5126 eventDesc=SentinelOne: Device Control connected USB Logitech USB Headset Logitech USB Headset on lab-01 (example_user) eventSeverity=1 rt=2022-09-22 17:11:11.735068 endpointDeviceControlRuleId=-1  endpointDeviceControlInterface=USB  endpointDeviceControlClass=01h endpointDeviceControlVendor=46D endpointDeviceControlProduct=A8F endpointDeviceControlSerial= endpointDeviceControlDeviceName=Logitech USB Headset Logitech USB Headset endpointDeviceControlBluetoothVersion=N/A endpointDeviceControlBluetoothMinorClass=N/A deviceRuleBluetoothLmpVersion=N/A endpointDeviceControlBluetoothProfileUuids=N/A endpointDeviceControlEventType=connected bluetoothAddress= gattServices= manufacturerName= deviceInformationServiceInfoKey= deviceInformationServiceInfoValue= cat=EndpointDeviceControlEvent sourceAgentLastActivityTimestamp=2022-09-22 17:11:03.104684 sourceAgentRegisterTimestamp=2022-06-08 15:03:00.702525 sourceNetworkState=connected sourceOsRevision=19044 sourceOsType=windows sourceAgentUuid=5f862d06b0a8417e9a9a511181ac1111 sourceFqdn=lab-01.example_domain sourceThreatCount=0 sourceMgmtPrecievedAddress=1.1.1.1 sourceDnsDomain=example_domain sourceHostName=lab-01 sourceUserName=example_user sourceUserId=S-1-5-21-1441063431-1111111-363484563-6172 sourceAgentId=143840951111171944 sourceGroupId=143698111110597 sourceGroupName=Windows Workstations sourceIpAddresses=['2001:0:2801:f634:1451:3091:d031:400d', 'fe80::1111:3091:d031:400d', '192.168.1.25', 'fe80::c100:d575:7ebe:b4ee'] sourceMacAddresses=['00:00:00:00:00:00', '08:3a:88:61:32:dd'] activityID=15153012345805914 activityType=5126 siteId=14369611111340758 siteName=Corp Site accountId=11111111111111 accountName=Fortinet notificationScope=SITE]]></testEvent>
+  </testEvents>
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">"SentinelOne-EPP-Generic"</setEventAttribute>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[CEF:\d+\|SentinelOne\|<:gPatStr>\|(?:<hostIpAddr:gPatIpAddr>|<osType:patMess>)\|<logID:gPatInt>\|<msg:patMess>\|<eventSeverity:gPatInt>\|<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <!-- When OS Type is not present in CEF log -->
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[CEF:\d+\|SentinelOne\|<:gPatStr>\|<logID:gPatInt>\|<msg:patMess>\|<eventSeverity:gPatInt>\|<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[CEF:\d+\|SentinelOne\|<:gPatStr>\|<osType:patMess>\|<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <!-- CEF:0|SentinelOne|Mgmt|ip=x.x.x.x ... -->
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[CEF:\d+\|SentinelOne\|<:gPatStr>\|<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>SentinelOne\s+Syslog\s+connection\s+established\s+successfully]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Syslog_Test"</setEventAttribute>
+      </case>
+      <default/>
+    </switch>
+
+    <when test="exist _body">
+      <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+        <attrKeyMap attr="_datetime" key="rt"/>
+        <attrKeyMap attr="hashCode" key="fileHash"/>
+        <attrKeyMap attr="fileName" key="fileName"/>
+        <attrKeyMap attr="filePath" key="filePath"/>
+        <attrKeyMap attr="siteId" key="siteId"/>
+        <attrKeyMap attr="site" key="siteName"/>
+        <attrKeyMap attr="accountName" key="accountName"/>
+        <attrKeyMap attr="logID" key="eventID"/>
+        <attrKeyMap attr="eventDesc" key="eventDesc"/>
+        <attrKeyMap attr="hostName" key="sourceHostName"/>
+        <attrKeyMap attr="srcUser" key="sourceUserName"/>
+        <attrKeyMap attr="srcIpAddrList" key="sourceIpAddresses"/>
+        <attrKeyMap attr="srcMACAddr" key="sourceMacAddresses"/>
+        <attrKeyMap attr="threatType" key="threatClassification"/>
+        <attrKeyMap attr="scanEngine" key="threatDetectingEngine"/>
+        <attrKeyMap attr="remedyStatus" key="threatMitigationStatus"/>
+        <attrKeyMap attr="threatLevel" key="threatConfidenceLevel"/>
+        <attrKeyMap attr="paraName" key="threatCommandLineArguments"/>
+        <attrKeyMap attr="iocValue" key="threatIndicatorsList"/>
+        <attrKeyMap attr="_collectorTime" key="threatDetectionTime"/>
+        <attrKeyMap attr="appCategory" key="cat"/>
+        <attrKeyMap attr="eventSeverity" key="eventSeverity"/>
+        <attrKeyMap attr="uuid" key="duid"/>
+        <attrKeyMap attr="uuid" key="sourceAgentUuid"/>
+        <attrKeyMap attr="uuid" key="uuid"/>
+        <attrKeyMap attr="srcDomain" key="sourceDnsDomain"/>
+        <attrKeyMap attr="groupName" key="sourceGroupName"/>
+        <attrKeyMap attr="hostIpAddr" key="deviceAddress"/>
+        <attrKeyMap attr="hostName" key="deviceHostName"/>
+        <attrKeyMap attr="accountId" key="accountId"/>
+        <attrKeyMap attr="srcIpAddr" key="ip"/>
+        <attrKeyMap attr="srcUser" key="suser"/>
+        <attrKeyMap attr="appCategory" key="cat"/>
+        <attrKeyMap attr="deviceIdentification" key="endpointDeviceControlDeviceName"/>
+        <attrKeyMap attr="securityId" key="sourceUserId"/>
+      </collectFieldsByKeyValuePair>
+    </when>
+
+    <when test="exist _datetime">
+      <switch>
+        <case>
+          <collectAndSetAttrByRegex src="$_datetime">
+            <regex><![CDATA[\w+,\s+<_day:gPatDay>\s+<_mon:gPatMon>\s+<_year:gPatYear>,\s+<_time:gPatTime>\s+<_tz:gPatTimeZone>]]></regex>
+          </collectAndSetAttrByRegex>
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </case>
+        <case>
+          <collectAndSetAttrByRegex src="$_datetime">
+            <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>]]></regex>
+          </collectAndSetAttrByRegex>
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <!--2020-07-13 20:08:53.905404-->
+    <when test="exist _collectorTime">
+      <switch>
+        <case>
+          <collectAndSetAttrByRegex src="$_collectorTime">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>]]></regex>
+          </collectAndSetAttrByRegex>
+          <setEventAttribute attr="collectorTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <choose>
+      <when test="not_exist logID"/>
+      <when test="$logID = '2'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-New_Immune"</setEventAttribute>
+      </when>
+      <when test="$logID = '5'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Agent_ Software_Update_Downloaded"</setEventAttribute>
+      </when>
+      <when test="$logID = '7'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Agent_Online"</setEventAttribute>
+      </when>
+      <when test="$logID = '8'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Agent_Offline"</setEventAttribute>
+      </when>
+      <when test="$logID = '16'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Software_Update_Added"</setEventAttribute>
+      </when>
+      <when test="$logID = '17'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Agent_Subscribed"</setEventAttribute>
+      </when>
+      <when test="$logID = '18'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-New_Threat_Mitigated"</setEventAttribute>
+      </when>
+      <when test="$logID = '19'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-New_Threat_Not_Mitigated"</setEventAttribute>
+      </when>
+      <when test="$logID = '20'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-New_Threat_Preemptive_Block"</setEventAttribute>
+      </when>
+      <when test="$logID = '21'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Threat_Resolved"</setEventAttribute>
+      </when>
+      <when test="$logID = '22'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Threat_Benign"</setEventAttribute>
+      </when>
+      <when test="$logID = '23'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-User_Added"</setEventAttribute>
+      </when>
+      <when test="$logID = '24'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-User_Modified"</setEventAttribute>
+      </when>
+      <when test="$logID = '25'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-User_Deleted"</setEventAttribute>
+      </when>
+      <when test="$logID = '26'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Management_Updated"</setEventAttribute>
+      </when>
+      <when test="$logID = '27'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Console_Login_Success"</setEventAttribute>
+      </when>
+      <when test="$logID = '33'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Console_Logout"</setEventAttribute>
+      </when>
+      <when test="$logID = '38'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Immune_Settings_Modified"</setEventAttribute>
+      </when>
+      <when test="$logID = '39'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Research_Settings_Modified"</setEventAttribute>
+      </when>
+      <when test="$logID = '40'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Cloud_Intelligence_Settings_Modified"</setEventAttribute>
+      </when>
+      <when test="$logID = '41'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Learning_Mode_Settings_Modified"</setEventAttribute>
+      </when>
+      <when test="$logID = '42'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Global_Two_Fa_Modified"</setEventAttribute>
+      </when>
+      <when test="$logID = '43'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Agent_Updated"</setEventAttribute>
+      </when>
+      <when test="$logID = '44'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Auto_Decommission_On"</setEventAttribute>
+      </when>
+      <when test="$logID = '45'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Auto_Decommission_Off"</setEventAttribute>
+      </when>
+      <when test="$logID = '46'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Auto_Decommission_Period_Modified"</setEventAttribute>
+      </when>
+      <when test="$logID = '47'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Agent_Decommissioned"</setEventAttribute>
+      </when>
+      <when test="$logID = '48'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Agent_Recommissioned"</setEventAttribute>
+      </when>
+      <when test="$logID = '49'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Agent_Requested_Uninstall"</setEventAttribute>
+      </when>
+      <when test="$logID = '50'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Uninstall_Added"</setEventAttribute>
+      </when>
+      <when test="$logID = '51'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Agent_Uninstalled"</setEventAttribute>
+      </when>
+      <when test="$logID = '52'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-User_Approved_Agent_Uninstall_Request"</setEventAttribute>
+      </when>
+      <when test="$logID = '53'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-User_Rejected_Agent_Uninstall_Request"</setEventAttribute>
+      </when>
+      <when test="$logID = '54'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-User_Decommissioned_Agent"</setEventAttribute>
+      </when>
+      <when test="$logID = '55'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-User_Recommissioned_Agent"</setEventAttribute>
+      </when>
+      <when test="$logID = '56'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Auto_Mitigation_Actions_Modified"</setEventAttribute>
+      </when>
+      <when test="$logID = '57'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Quarantine_Network_Settings_Modified"</setEventAttribute>
+      </when>
+      <when test="$logID = '58'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Notification_Option_Level_Modified"</setEventAttribute>
+      </when>
+      <when test="$logID = '59'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Event_Severity_Level_Modified"</setEventAttribute>
+      </when>
+      <when test="$logID = '60'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Recipients_Configuration_Modified"</setEventAttribute>
+      </when>
+      <when test="$logID = '61'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-User_Quarantine_Agent_Network"</setEventAttribute>
+      </when>
+      <when test="$logID = '62'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-User_Unquarantine_Agent_Network"</setEventAttribute>
+      </when>
+      <when test="$logID = '63'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-User_Shutdown_Agent"</setEventAttribute>
+      </when>
+      <when test="$logID = '64'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-User_Requested_Passphrase"</setEventAttribute>
+      </when>
+      <when test="$logID = '65'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-User_Requested_Full_Log_Report"</setEventAttribute>
+      </when>
+      <when test="$logID = '66'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Agent_Uploaded_Full_Log_Report"</setEventAttribute>
+      </when>
+      <when test="$logID = '67'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-User_Two_Fa_Modified"</setEventAttribute>
+      </when>
+      <when test="$logID = '90'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Full_Disk_Scan_Started"</setEventAttribute>
+      </when>
+      <when test="$logID = '92'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Full_Disk_Scan_Completed"</setEventAttribute>
+      </when>
+      <when test="$logID = '133'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Console_Login_Failed"</setEventAttribute>
+      </when>
+      <when test="$logID = '1001'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Agent_Network_Quarantined"</setEventAttribute>
+      </when>
+      <when test="$logID = '1002'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Agent_Network_Unquarantined"</setEventAttribute>
+      </when>
+      <when test="$logID = '2001'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Threat_Mitigation_Report_Kill_Success"</setEventAttribute>
+      </when>
+      <when test="$logID = '2002'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Threat_Mitigation_Report_Remediate_Success"</setEventAttribute>
+      </when>
+      <when test="$logID = '2003'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Threat_Mitigation_Report_Rollback_Success"</setEventAttribute>
+      </when>
+      <when test="$logID = '2004'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Threat_Mitigation_Report_Quarantine_Success"</setEventAttribute>
+      </when>
+      <when test="$logID = '2005'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Agent_Mitigation_Report_Quarantine_Network_Success"</setEventAttribute>
+      </when>
+      <when test="$logID = '2006'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Threat_Mitigation_Report_Kill_Failed"</setEventAttribute>
+      </when>
+      <when test="$logID = '2007'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Threat_Mitigation_Report_Remediate_Failed"</setEventAttribute>
+      </when>
+      <when test="$logID = '2008'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Threat_Mitigation_Report_Rollback_Failed"</setEventAttribute>
+      </when>
+      <when test="$logID = '2009'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Threat_Mitigation_Report_Quarantine_Failed"</setEventAttribute>
+      </when>
+      <when test="$logID = '2010'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Agent_Mitigation_Report_Quarantine_Network_Failed"</setEventAttribute>
+      </when>
+      <when test="$logID = '3001'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-User_Added_White_Hash"</setEventAttribute>
+      </when>
+      <when test="$logID = '3002'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-User_Added_Black_Hash"</setEventAttribute>
+      </when>
+      <when test="$logID = '3003'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-User_Modified_Hash"</setEventAttribute>
+      </when>
+      <when test="$logID = '3004'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-User_Deleted_Hash"</setEventAttribute>
+      </when>
+      <when test="$logID = '4001'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Threat_Mark_As_Threat"</setEventAttribute>
+      </when>
+      <when test="$logID = '4002'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Threat_Suspicious_Resolved"</setEventAttribute>
+      </when>
+      <when test="$logID = '4003'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-New_Threat_Suspicious"</setEventAttribute>
+      </when>
+      <when test="$logID = '4004'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Show_Suspicious_On"</setEventAttribute>
+      </when>
+      <when test="$logID = '4005'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Show_Suspicious_Off"</setEventAttribute>
+      </when>
+      <when test="$logID = '4006'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Remember_Me_Length_Modified"</setEventAttribute>
+      </when>
+      <when test="$logID = '5000'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Ad_Sync_Started"</setEventAttribute>
+      </when>
+      <when test="$logID = '5001'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Ad_Sync_Finished"</setEventAttribute>
+      </when>
+      <when test="$logID = '5002'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Dynamic_Group_Creation_Started"</setEventAttribute>
+      </when>
+      <when test="$logID = '5003'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Dynamic_Group_Creation_Finished"</setEventAttribute>
+      </when>
+      <when test="$logID = '5004'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Dynamic_Group_Update_Started"</setEventAttribute>
+      </when>
+      <when test="$logID = '5005'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Dynamic_Group_Update_Finished"</setEventAttribute>
+      </when>
+      <when test="$logID = '5006'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Group_Deleted"</setEventAttribute>
+      </when>
+      <when test="$logID = '5007'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Group_Info_Changed"</setEventAttribute>
+      </when>
+      <when test="$logID = '5008'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Static_Group_Created"</setEventAttribute>
+      </when>
+      <when test="$logID = '5009'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Group_Content_Changed"</setEventAttribute>
+      </when>
+      <when test="$logID = '5010'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Group_Ranking_Changed"</setEventAttribute>
+      </when>
+      <when test="$logID = '5126'">
+        <setEventAttribute attr="eventType">"SentinelOne-EPP-Device_Control_Connected_USB"</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">combineMsgId("SentinelOne-EPP-Event-", $logID)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+
+    <when test="exist msg">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$msg">
+            <regex><![CDATA[\b[Mm]achine\s+<computer:gPatHostName>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="hostName">$computer</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist filePath">
+      <setEventAttribute attr="fileName">replaceStringByRegex($filePath, ".*[/\\]", "")</setEventAttribute>
+    </when>
+
+    <when test="not_exist user">
+      <when test="exist srcUser">
+        <setEventAttribute attr="user">$srcUser</setEventAttribute>
+      </when>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

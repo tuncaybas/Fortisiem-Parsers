@@ -1,0 +1,910 @@
+<eventParser name="SophosUTMParser">
+  <deviceType>
+    <Vendor>Sophos</Vendor>
+    <Model>UTM</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patStrLeftSB"><![CDATA[[^\[]*]]></pattern>
+    <pattern name="patStrRightSB"><![CDATA[[^\]]*]]></pattern>
+    <pattern name="patSingleQuo"><![CDATA[[^']*]]></pattern>
+    <pattern name="patDoubleQuo"><![CDATA[[^"]*]]></pattern>
+    <pattern name="patStrSpaceAndEndColon"><![CDATA[[^ :]*]]></pattern>
+    <pattern name="patSophosUTMMod" list="begin"><![CDATA[waf-reporter|httpd|dhcrelay|snort|aua|cluster_sync|dhcpd|eplog|epsecd|exim-in|exim-out|middleware|openvpn|pluto|red_server|ulogd|]]></pattern>
+    <pattern name="patSophosUTMMod" list="continue"><![CDATA[audld|auisys|confd|confd-sync|ha_daemon|ha_mode|httpproxy|notifier|repctl|rrdcached|smtpd|watch_path|]]></pattern>
+    <pattern name="patSophosUTMMod" list="continue"><![CDATA[/usr/sbin/cron|sshd|ad-sid-sync.plx|afcd|kernel|nwd|]]></pattern>
+    <pattern name="patSophosUTMMod" list="continue"><![CDATA[awelogger|hostapd|\[ctipd\]|ad-sync.plx|awed|cssd|dns-resolver|named|redctl|reverseproxy|syslog-ng|]]></pattern>
+    <pattern name="patSophosUTMMod" list="end"><![CDATA[postfix/(?:cleanup|master|pickup|qmgr|smtp|postfix-script)|ulogd]]></pattern>
+    <pattern name="patSophosUTMMod1"><![CDATA[httpd]]></pattern>
+    <pattern name="patQuote"><![CDATA[[^\"]*]]></pattern>
+    <pattern name="patURL"><![CDATA[\w+://\S+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatYear>:<:gPatMonNum>:<:gPatDay>-<:gPatTime>\s+<:gPatHostName>\s+(?:<:patSophosUTMMod>(?:\[\d+\])?:|<:patSophosUTMMod1>(?:\[\d+\])?:\s*<:gPatIpAddr>)\s*]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<29>2016:03:11-05:07:34 portal-1 cluster_sync[11111]: Args = , called by  1111 /usr/local/bin/ha_daemon ]]></testEvent>
+    <testEvent><![CDATA[<29>2016:03:11-05:07:34 portal-1 cluster_sync[11111]: delete-missing: nothing todo ]]></testEvent>
+    <testEvent><![CDATA[<29>2016:03:11-05:07:34 portal-1 cluster_sync[11111]: rsync --include /etc/ssh/ssh_host_* --exclude /etc/ssh/** --include /root/.ssh/known_hosts --include /root/.ssh/config --exclude /root/.ssh/** --include /home/login/.ssh/known_hosts --include /home/login/.ssh/config --exclude /home/login/.ssh/** --include /var/sec/chroot-openvpn/var/run/ipp.txt --exclude /var/sec/chroot-openvpn/var/run/** --exclude /var/storage/chroot-http/etc/adsync/*.~!~ --include /var/storage/chroot-smtp/spx/auth/spx-auth-v1.ks --exclude /var/storage/chroot-smtp/spx/auth/* --sockopts=SO_KEEPALIVE --archive --protect-args --delete --relative --no-implied-dirs /etc/ssh /root/.ssh /var/lib/postgresql/.ssh /etc/logremote /etc/krb1.keytab /etc/krb1.conf /var/confd/var/storage/snapshots /var/sec/chroot-openvpn/var/run /etc/guid /var/log/reporting/accu /var/log/reporting/exec /var/storage/chroot-http/etc/adsync /var/storage/chroot-smtp/spx/auth ClusterSyncUser@111.11.111.1::cluster_sync/ ]]></testEvent>
+    <testEvent><![CDATA[<29>2016:03:11-05:07:34 portal-1 cluster_sync[11111]: rsync --sockopts=SO_KEEPALIVE --archive --protect-args --delete --relative --no-implied-dirs /var/log/reporting/meta/1 ClusterSyncUser@111.11.111.1::cluster_sync/]]></testEvent>
+    <testEvent><![CDATA[<29>2016:03:11-05:07:34 portal-1 dhcpd: DHCPACK on 11.11.111.111 to 11:1d:c1:11:1f:11 (GainSpan111f11) via reds1]]></testEvent>
+    <testEvent><![CDATA[<29>2016:03:11-05:07:34 portal-1 epsecd[1111]: W main::_log:111() =>  severity="warn" sys="System" sub="eplog" name="unusable batch line: [[v=1	tz=Central Daylight Time	t=1111111111	cat=111	sxl=y	act=a	rsk=b	rsn=?	meth=OPTIONS	H=CARLTDL1PP11	h=11.11.111.11	target_ip=111.11.111.111	dom=example.com	u=PEACOCK\GNava	req=OPTIONS http://example.com/c.gif HTTP/1.1	ref=	s=111	ua=Mozilla/1.1 (Windows NT 1.1; WOW11; Trident/1.1; rv:11.1) like Gecko	ctype=text/plain	type=	filetype=	in=111	out=111	]]"]]></testEvent>
+    <testEvent><![CDATA[<29>2016:03:11-05:07:34 portal-1 middleware[1111]: T core::Config::Changed:111() => configversion=11111]]></testEvent>
+    <testEvent><![CDATA[<29>2016:03:11-05:07:34 portal-1 openvpn[1111]: 11.11.111.11:11111 VERIFY OK: depth=1, C=us, L=Geneva, O=example.com, CN=Janet Banuelos, emailAddress=user@example.com]]></testEvent>
+    <testEvent><![CDATA[<29>2016:03:11-05:07:34 ActiveUTM-2 confd-sync[8588]: id="3850" severity="info" sys="System" sub="ha" name="Change synced to slave 1.1.1.1"]]></testEvent>
+    <testEvent><![CDATA[<30>2016:07:05-16:57:39 c-server-1 httpproxy[15760]: id="0001" severity="info" sys="SecureWeb" sub="http" name="http access" action="pass" method="GET" srcip="10.10.10.10" dstip="1.1.1.1" user="" group="" ad_domain="" statuscode="302" cached="0" profile="REF_DefaultHTTPProfile (Default Web Filter Profile)" filteraction="REF_HttCffCustoConteFilte (Custom_Default content filter action)" size="0" request="0xdc871600" url="http://a.com" referer="http://foo.com/bar/" error="" authtime="0" dnstime="1" cattime="24080" avscantime="0" fullreqtime="52627" device="0" auth="0" ua="Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko" exceptions="" category="154" reputation="unverified" categoryname="Web Ads"]]></testEvent>
+  </testEvents>
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_year:gPatYear>:<_mon:gPatMonNum>:<_day:gPatDay>-<_time:gPatTime>\s+<reptDevName:gPatHostName>\s+(?:<procName:patSophosUTMMod1>|<procName:patSophosUTMMod>)(?:\[\d+\])?:\s*<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<reptDevName:gPatHostName>\s+(?:<procName:patSophosUTMMod1>|<procName:patSophosUTMMod>)(?:\[\d+\])?:\s*<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </case>
+    </switch>
+
+    <setEventAttribute attr="eventType">Sophos-UTM-Generic</setEventAttribute>
+    <choose>
+      <when test="not_exist _body"/>
+      <!--
+<29>2016:03:11-05:07:34 A1E1FA1 awelogger[1]: id="1" severity="info" sys="System" sub="WiFi" name="STA association" ssid="1" ssid_id="WLAN1.1" bssid="1:1a:1c:aa:1a:1e" sta="b1:e1:c1:e1:ca:1" status_code="1"
+<29>2016:03:11-05:07:34 A1E1FA1 awelogger[1]: id="1" severity="info" sys="System" sub="WiFi" name="STA authentication" ssid="1" ssid_id="WLAN1.1" bssid="1:1a:1c:aa:1a:1e" sta="b1:e1:c1:e1:ca:1" status_code="1"
+<29>2016:03:11-05:07:34 A1E1FA1 awelogger[1]: id="1" severity="info" sys="System" sub="WiFi" name="STA connected" ssid="1" ssid_id="WLAN1.1" bssid="1:1a:1c:aa:1a:1e" sta="b1:e1:c1:e1:ca:1"
+<29>2016:03:11-05:07:34 A1E1FA1 awelogger[1]: id="1" severity="info" sys="System" sub="WiFi" name="STA disconnected" ssid="1" ssid_id="WLAN1.1" bssid="1:1a:1c:aa:1a:1" sta="b1:e1:c1:e1:ca:1"
+<29>2016:03:11-05:07:34 A1E1FA1 awelogger[1]: id="1" severity="info" sys="System" sub="WiFi" name="STA WPA failure" ssid="1" ssid_id="WLAN1.1" bssid="1:1a:1c:aa:1a:1" sta="b1:e1:c1:e1:ca:1" reason_code="1"
+<29>2016:03:11-05:07:34 A1E1FA1 awelogger[1]: id="1" severity="info" sys="System" sub="WiFi" name="STA association" ssid="1" ssid_id="WLAN1.1" bssid="1:1a:1c:aa:1a:1e" sta="b1:e1:c1:e1:ca:1" status_code="1"
+<25>2017:11:29-12:22:36 thor-1 snort[13644]: id="2101" severity="warn" sys="SecureNet" sub="ips" name="Intrusion protection alert" action="alert" reason="MALWARE-CNC example.com outbound connection attempt with unique User-Agent" group="500" srcip="10.1.1.1" dstip="1.1.1.1" proto="6" srcport="51878" dstport="9091" sid="42079" class="A Network Trojan was Detected" priority="1" generator="1" msgid="0"
+-->
+
+      <!--
+ <25>2017:11:29-12:22:36 thor-1 snort[13644]: id="2101" severity="warn" sys="SecureNet" sub="ips" name="Intrusion protection alert" action="alert" reason="MALWARE-CNC example.com outbound connection attempt with unique User-Agent" group="500" srcip="10.1.1.1" dstip="1.1.1.1" proto="6" srcport="51878" dstport="9091" sid="42079" class="A Network Trojan was Detected" priority="1" generator="1" msgid="0"
+<30>2017:11:29-15:24:29 thor-1 ulogd[26818]: id="2002" severity="info" sys="SecureNet" sub="packetfilter" name="Packet accepted" action="accept" fwrule="133" initf="lag0.1108" outitf="lag0.1106" srcmac="60:9c:9f:1e:77:00" dstmac="00:1a:8c:f0:b5:28" srcip="10.1.1.1" dstip="1.1.1.1" proto="6" length="93" tos="0x00" prec="0x00" ttl="126" srcport="57157" dstport="3389" tcpflags="ACK PSH"
+<22>2017:11:29-15:32:10 thor-1 exim-in[15635]: 2017-11-29 15:32:10 [1.1.1.1] F=<msprvs1=17506EQrt7z7i=bounces-59236@example.com> R=<myexample@example1.com> Verifying recipient address with callout
+-->
+      <when test="matches($_body, '\bid=')">
+        <collectAndSetAttrByKeyValuePair sep=" " src="$_body">
+          <attrKeyMap attr="fwAction" key="action="/>
+          <attrKeyMap attr="webCategory" key="categoryname="/>
+          <attrKeyMap attr="destIpAddr" key="dstip="/>
+          <attrKeyMap attr="destMACAddr" key="dstmac="/>
+          <attrKeyMap attr="destIpPort" key="dstport="/>
+          <attrKeyMap attr="fileName" key="file="/>
+          <attrKeyMap attr="funName" key="function="/>
+          <attrKeyMap attr="fwRule" key="fwrule="/>
+          <attrKeyMap attr="srcIntfName" key="initf="/>
+          <attrKeyMap attr="lineNumber" key="line="/>
+          <attrKeyMap attr="msg" key="message="/>
+          <attrKeyMap attr="httpMethod" key="method="/>
+          <attrKeyMap attr="_name" key="name="/>
+          <attrKeyMap attr="destIntfName" key="outitf="/>
+          <attrKeyMap attr="ipProto" key="proto="/>
+          <attrKeyMap attr="reputation" key="reputation="/>
+          <attrKeyMap attr="_severity" key="severity="/>
+          <attrKeyMap attr="srcIpAddr" key="srcip="/>
+          <attrKeyMap attr="srcMACAddr" key="srcmac="/>
+          <attrKeyMap attr="srcIpPort" key="srcport="/>
+          <attrKeyMap attr="httpStatusCode" key="statuscode="/>
+          <attrKeyMap attr="ipTtl" key="ttl="/>
+          <attrKeyMap attr="infoURL" key="url="/>
+          <attrKeyMap attr="user" key="user="/>
+          <attrKeyMap attr="cookie" key="cookie="/>
+          <attrKeyMap attr="serverName" key="server="/>
+          <attrKeyMap attr="hostIpAddr" key="host="/>
+          <attrKeyMap attr="errReason" key="reason="/>
+          <attrKeyMap attr="type" key="sys="/>
+          <attrKeyMap attr="subtype" key="sub="/>
+          <attrKeyMap attr="wlanSsid" key="ssid_id="/>
+          <attrKeyMap attr="destMACAddr" key="bssid="/>
+          <attrKeyMap attr="srcMACAddr" key="sta="/>
+          <attrKeyMap attr="_class" key="class="/>
+          <attrKeyMap attr="senderMailAddr" key="from='"/>
+          <attrKeyMap attr="receiverMailAddr" key="to='"/>
+          <attrKeyMap attr="uriQuery" key="query='"/>
+          <attrKeyMap attr="uuid" key="uid='"/>
+          <attrKeyMap attr="destIpPort" key="port='"/>
+          <attrKeyMap attr="destIpAddr" key="localip='"/>
+        </collectAndSetAttrByKeyValuePair>
+        <choose>
+          <when test="not_exist _name"/>
+
+          <when test="matches($_name, 'forbidden category detected\b')">
+            <setEventAttribute attr="_eventType">forbidden-category-detected</setEventAttribute>
+          </when>
+          <when test="matches($_name, '^Packet dropped\b')">
+            <setEventAttribute attr="_eventType">Packet-dropped</setEventAttribute>
+          </when>
+          <when test="matches($_name, '^Change synced to slave ')">
+            <setEventAttribute attr="_eventType">sync-change</setEventAttribute>
+          </when>
+
+          <when test="matches($_name, '^Executing ')">
+            <setEventAttribute attr="_eventType">execute</setEventAttribute>
+          </when>
+
+          <when test="matches($_name, '^Starting change sync to slave ')">
+            <setEventAttribute attr="_eventType">sync-change-started</setEventAttribute>
+          </when>
+
+          <when test="matches($_name, '^Successfully installed .+ package')">
+            <setEventAttribute attr="_eventType">install-package</setEventAttribute>
+          </when>
+
+          <when test="matches($_name, '^timeout: ')">
+            <setEventAttribute attr="_eventType">timeout</setEventAttribute>
+          </when>
+
+          <when test="matches($_name, '^trimmed version \d+ from changelog')">
+            <setEventAttribute attr="_eventType">version-change</setEventAttribute>
+          </when>
+
+          <when test="matches($_name, ' Package Installer finished')">
+            <setEventAttribute attr="_eventType">install-package</setEventAttribute>
+          </when>
+
+          <when test="matches($_name, 'Version changed: \d+')">
+            <setEventAttribute attr="_eventType">version-change</setEventAttribute>
+          </when>
+
+          <when test="matches($_name, 'email quarantined')">
+            <setEventAttribute attr="_eventType">email-quarantined</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\s+subject=\"<mailSubject:patQuote>]]></regex>
+            </collectFieldsByRegex>
+          </when>
+
+          <otherwise>
+            <setEventAttribute attr="_eventType">replaceStringByRegex($_name, "\s+", "-")</setEventAttribute>
+          </otherwise>
+        </choose>
+
+        <choose>
+          <when test="exist _eventType">
+            <setEventAttribute attr="eventType">combineMsgId("Sophos-UTM-", $_eventType)</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">combineMsgId("Sophos-UTM-", $procName, "-Generic")</setEventAttribute>
+          </otherwise>
+        </choose>
+
+        <choose>
+          <when test="not_exist _severity"/>
+
+          <!-- DH -->
+          <when test="exist fwAction">
+            <choose>
+              <when test="$procName = 'snort'">
+                <setEventAttribute attr="attackName">$errReason</setEventAttribute>
+                <choose>
+                  <when test="$fwAction = 'alert'">
+                    <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+                  </when>
+                </choose>
+              </when>
+            </choose>
+          </when>
+          <when test="$_severity = 'warn'">
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+          </when>
+
+          <when test="$_severity = 'error'">
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+          </when>
+        </choose>
+
+        <when test="exist infoURL">
+          <setEventAttribute attr="destName">extractHostFromURL($infoURL)</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$procName IN 'afcd, auisys, notifier, nwd, repctl, smtpd, watch_path, [ctipd], ad-sync.plx, awed, cssd, dns-resolver, named, redctl, syslog-ng, rrdcached'">
+        <setEventAttribute attr="eventType">combineMsgId("Sophos-UTM-", $procName, "-Generic")</setEventAttribute>
+        <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "[\[\]]", "")</setEventAttribute>
+      </when>
+
+      <when test="$procName = 'waf-reporter'">
+        <!--
+         <188>2017:11:29-12:20:06 thor-1 waf-reporter[15734]: Invalid Event Logline!
+         <188>2017:11:29-12:20:06 thor-1 waf-reporter[15734]: Invalid Request Logline!
+         <188>2017:11:29-12:20:06 thor-1 waf-reporter[15734]: UPL could not parse logline
+         <187>2017:11:29-12:20:06 thor-1 waf-reporter[15734]: waf_log_entry must not be Null
+       -->
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Invalid\s+Event\s+Logline]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-waf-reporter-Invalid-Event</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Invalid\s+Request\s+Logline]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-waf-reporter-Invalid-Request</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[UPL\s+could\s+not\s+parse\s+logline]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-waf-reporter-UPL-Parsed-Failed</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[waf_log_entry\s+must\s+not\s+be\s+Null]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-waf-reporter-Log-Not-Null</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">Sophos-waf-reporter-Generic</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+
+      <when test="$procName = 'pluto'">
+        <!--
+         "S_REF_IpsSitAnahePfsFinal_1" #1111: ignoring Delete SA payload: PROTO_IPSEC_ESP SA(1x1111f111) not found (maybe expired)
+         "S_REF_IpsSitAnahePfsFinal_1" #1111: ignoring informational payload, type IPSEC_RESPONDER_LIFETIME
+         "S_REF_IpsSitAnahePfsFinal_1" #1111: initiating Quick Mode PSK+ENCRYPT+TUNNEL+UP to replace #1111 {using isakmp#1111}
+         "S_REF_IpsSitAnahePfsFinal_1" #1111: received Delete SA payload: replace IPSEC State #1111 in 11 seconds
+         "S_REF_IpsSitAnahePfsFinal_1" #1111: sent QI1, IPsec SA established {ESP=>1xd1111111 <1x1f1ed11b DPD}
+       -->
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[ignoring\s+informational\s+payload]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-Pluto-Ignoring-Informational-Payload</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[initiating\s+Quick\s+Mode\s+]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-Pluto-Initiating-Quick-Mode</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[IPsec\s+SA\s+established.*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-Pluto-SA-Established</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[#\d+:\s+<_action:gPatStr>\s+(?:Delete|delete)\s+SA\s+payload:]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Sophos-UTM-Pluto-", $_action,"-Delete-SA-Payload")</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">Sophos-UTM-Pluto-Generic</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+      <when test="$procName = 'red_server'">
+        <!--
+     A1111E1C1111111: command 'NKEY'
+     A1111E1C1111111: PING remote_tx=1 local_rx=1 diff=1
+     A1111E1C1111111: PONG local_tx=1
+     A1111E1C1111111: PORTSTATE LAN1: 1Gb/s,LAN1: Down,LAN1: Down,LAN1: Down
+    Self: SSL accept attempt failed with unknown error error:111111FC:SSL routines:SSL11_GET_CLIENT_HELLO:unknown protocol
+     -->
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[command\s+'<command:patSingleQuo>']]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-Red-Server-Command</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[.*:\s*(?:PING|PONG).*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-Red-Server-Ping</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[.*:\s*PORTSTATE\s.*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-Red-Server-Port-State</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[SSL\s+accept\s+attempt\s+failed\s+with\s+unknown\s+error]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-SSL-Accept-Attempt-error</setEventAttribute>
+          </case>
+        </switch>
+      </when>
+      <when test="$procName = 'openvpn'">
+        <switch>
+          <case>
+            <!--JBanuelos/11.11.111.111:11111 SENT CONTROL [JBanuelos]: 'PUSH_REPLY,route 11.11.111.1 111.111.111.1,route 11.11.111.1 111.111.111.1,route 11.11.111.1 111.111.111.1,route 111.111.111.1-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>\s+SENT\s+CONTROL.*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-VPN-Send-Control</setEventAttribute>
+          </case>
+          <case>
+            <!--JBanuelos/11.11.111.111:11111 send_push_reply(): safe_cap=111-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>\s+send_push_reply.*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-VPN-Send-Push-Reply</setEventAttribute>
+          </case>
+          <case>
+            <!--JBanuelos/11.11.111.111:11111 PUSH: Received control message: 'PUSH_REQUEST'-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>\s+PUSH:\s+Received\s+control\s+message:\s*'<msg:patSingleQuo>']]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-VPN-Control-Message-Received</setEventAttribute>
+          </case>
+          <case>
+            <!--JBanuelos/11.11.111.111:11111 OPTIONS IMPORT: reading client specific options from: /etc/openvpn/conf.d/JBanuelos-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>\s+OPTIONS\s+IMPORT.*options\s+from:\s*<srcFilePath:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-VPN-Options-Import</setEventAttribute>
+          </case>
+          <case>
+            <!--JBanuelos/11.11.111.111:11111 MULTI_sva: pool returned IPv1=11.111.11.11, IPv1=(Not enabled)-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>\s+MULTI_sva:\s+pool\s+returned.*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-VPN-Pool-Returned</setEventAttribute>
+          </case>
+          <case>
+            <!--JBanuelos/11.11.111.111:11111 MULTI: primary virtual IP for JBanuelos/11.11.111.111:11111: 11.111.11.11-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>\s+MULTI:\s+primary\s+virtual\s+IP\s+for.*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-VPN-Initial-Device</setEventAttribute>
+          </case>
+          <case>
+            <!--11.11.111.11:11111 SIGUSR1[soft,connection-reset] received, client-instance restarting-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>\s+<_action:patStrLeftSB>\[.*\]\s+received.*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Sophos-UTM-VPN-", $_action,"-received")</setEventAttribute>
+          </case>
+          <case>
+            <!--11.11.111.11:11111 Non-OpenVPN client protocol detected-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>\s+Non-OpenVPN\s+client\s+protocol\s+detected]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-Non-OpenVPN-Detected</setEventAttribute>
+          </case>
+          <case>
+            <!--11.11.111.11:11111 Connection reset, restarting [1]-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>\s+Connection\s+reset.*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-VPN-Connection-Reset</setEventAttribute>
+          </case>
+          <case>
+            <!--11.11.111.11:11111 VERIFY OK: depth=1, C=us, L=Geneva, O=example.com, CN=Janet Banuelos, emailAddress=user@example.com-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>\s+VERIFY\s+OK:.*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-VPN-Verify-OK</setEventAttribute>
+          </case>
+          <case>
+            <!--11.11.111.11:11111 TLS: Username/Password authentication deferred for username 'jbanuelos' [CN SET]-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>\s+TLS:\s+Username/Password\s+authentication\s+deferred.*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-VPN-TLS-Authentication-Deferred</setEventAttribute>
+          </case>
+          <case>
+            <!--11.11.111.11:11111 TLS: Initial packet from [AF_INET]11.11.111.111:11111 (via [AF_INET]11.11.111.111:111), sid=1a1e11ce 11111111-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>\s+TLS:\s+Initial\s+packet\s+from .*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-VPN-TLS-Initial</setEventAttribute>
+          </case>
+          <case>
+            <!--11.11.111.11:11111 PLUGIN_CALL: POST /usr/lib/openvpn/plugins/openvpn-plugin-utm.so/PLUGIN_AUTH_USER_PASS_VERIFY status=1-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>\s+PLUGIN_CALL:\s*<httpMethod:gPatStr>.*status=<status:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-VPN-Plugin-Call</setEventAttribute>
+          </case>
+          <case>
+            <!--11.11.111.11:11111 [jbanuelos] Peer Connection Initiated with [AF_INET]11.11.111.111:11111 (via [AF_INET]11.11.111.111:111)-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>\s+\[.*\]\s+Peer\s+Connection\s+Initiated\s+with.*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-VPN-Connection-Initiated</setEventAttribute>
+          </case>
+          <case>
+            <!--11.11.111.11:11111 Control Channel: TLSv1, cipher TLSv1/SSLv1 DHE-RSA-AES111-SHA, 1111 bit RSA-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>\s+Control\s+Channel.*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-VPN-Control-Channel</setEventAttribute>
+          </case>
+          <case>
+            <!--11.11.111.11:11111 Data Channel Decrypt: Cipher 'AES-111-CBC' initialized with 111 bit key-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>\s+Data\s+Channel\s+Decrypt.*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-VPN-Data-Channel-Decrypt</setEventAttribute>
+          </case>
+          <case>
+            <!--11.11.111.11:11111 Data Channel Encrypt: Cipher 'AES-111-CBC' initialized with 111 bit key-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>\s+Data\s+Channel\s+Encrypt:.*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-VPN-Data-Channel-Encrypt</setEventAttribute>
+          </case>
+          <case>
+            <!--TCP connection established with [AF_INET]11.11.111.111:11111 (via [AF_INET]11.11.111.111:111)-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[TCP\s+connection\s+established\s+with\s+\[AF_INET\]<destIpAddr:gPatIpAddr>:<destIpPort:gPatInt>\s+\(via\s+\[AF_INET\]<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>\)]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-TCP-connection-established</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">Sophos-UTM-Openvpn-Generic</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+      <when test="$procName = 'middleware'">
+        <!--
+         T core::Config::load:111() => modules=1,1
+         T main::top-level:111() => ending cycle 11111, caught 1 signals, 1 children still running
+       -->
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<_action:gPatStr>:\d+\(\)\s+=\>\s+<_info:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Sophos-UTM-", $_action)</setEventAttribute>
+            <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "::", "-")</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">Sophos-UTM-Middleware-Generic</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+
+      <when test="$procName = 'dhcrelay'">
+        <!--
+       <27>2017:11:29-12:46:03 thor-1 dhcrelay: Packet to bogus giaddr 10.1.1.1.
+     -->
+        <setEventAttribute attr="eventType">Sophos-UTM-dhcrelay-Generic</setEventAttribute>
+        <setEventAttribute attr="msg">$_body</setEventAttribute>
+      </when>
+      <when test="$procName = 'exim-out'">
+        <!--1111-11-11 11:11:11 Start queue run: pid=11111 -->
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<_action:gPatStr>\s+queue\s+run:\s+pid=<procId:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Sophos-UTM-", $_action,"-Queue")</setEventAttribute>
+          </case>
+          <!--
+         2017-11-29 15:32:12 1eK1X9-0003cp-PJ => fffff@ssss.sss.tsssr P=<msprvs1=17506eqrt7z7i=bounces-59236@fff.bulutffffilo.com> R=static_route_hostlist T=static_smtp H=192.168.1.25 [192.168.1.25]:25 X=TLSv1.2:ECDHE-RSA-AES256-SHA384:256 C="250 2.6.0 <454ecb5b27deac01a04062db083109c9@ffff.generated> [InternalId=18833431593408, Hostname=SR"
+        -->
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+<emailId:gPatStr>\s+=\\>\s+<receiverMailAddr:gPatStr>\s+<_eximOutBody:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <collectAndSetAttrByKeyValuePair sep=" " src="$_eximOutBody">
+              <attrKeyMap attr="authenMethod" key="A="/>
+              <attrKeyMap attr="_connectionOutcome" key="C="/>
+              <attrKeyMap attr="certInfo" key="CV="/>
+              <attrKeyMap attr="userDN" key="DN="/>
+              <attrKeyMap attr="_dnsSecLookup" key="DS="/>
+              <attrKeyMap attr="runTime" key="DT="/>
+              <attrKeyMap attr="senderMailAddr" key="F="/>
+              <attrKeyMap attr="targetHostName" key="H="/>
+              <attrKeyMap attr="totBytes64" key="S="/>
+              <attrKeyMap attr="exchTransport" key="T="/>
+              <attrKeyMap attr="_route" key="R="/>
+              <attrKeyMap attr="senderMailAddr" key="P="/>
+              <attrKeyMap attr="encryptAlgo" key="X="/>
+            </collectAndSetAttrByKeyValuePair>
+            <setEventAttribute attr="eventType">Sophos-UTM-exim-out-Generic</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">Sophos-UTM-exim-out-Generic</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+
+      <when test="$procName = 'exim-in'">
+        <!--
+        <22>2017:11:29-15:33:16 thor-1 exim-in[17284]: 2017-11-29 15:33:16 SMTP connection from fixed-1-1-1-1.exampleset.net (mail.usexample.co.uk) [1.1.1.1]:32599 closed by QUIT
+     -->
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+\[<serverIpAddr:gPatStr>\]\s+<_eximInBody:gPatMesgBody>]]></regex>
+              <!--
+             2017-11-29 15:32:10 [1.1.1.1] F=<msprvs1=17506EQrt7z7i=example.com> R=<myexample@example.com> Verifying recipient address with callout
+             -->
+            </collectFieldsByRegex>
+            <collectAndSetAttrByKeyValuePair sep=" " src="$_eximInBody">
+              <attrKeyMap attr="authenMethod" key="A="/>
+              <attrKeyMap attr="_connectionOutcome" key="C="/>
+              <attrKeyMap attr="certInfo" key="CV="/>
+              <attrKeyMap attr="userDN" key="DN="/>
+              <attrKeyMap attr="_dnsSecLookup" key="DS="/>
+              <attrKeyMap attr="runTime" key="DT="/>
+              <attrKeyMap attr="senderMailAddr" key="F="/>
+              <attrKeyMap attr="targetHostName" key="H="/>
+              <attrKeyMap attr="totBytes64" key="S="/>
+              <attrKeyMap attr="exchTransport" key="T="/>
+              <attrKeyMap attr="receiverMailAddr" key="R="/>
+              <attrKeyMap attr="senderMailAddr" key="P="/>
+              <attrKeyMap attr="encryptAlgo" key="X="/>
+            </collectAndSetAttrByKeyValuePair>
+            <setEventAttribute attr="eventType">Sophos-UTM-exim-in-Generic</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+<emailId:gPatStr>\s+\<=\s+<senderMailAddr:gPatStr>\s+<_eximInBody:gPatMesgBody>]]></regex>
+              <!--
+              2017-11-29 15:33:13 4mF1Z8-0102Qy-1X <= n04999a78ad-1134aa32f408db89eee2834513e9f-sgm===mylab.test.example.com H=example.com [1.1.1.1]:59013 P=esmtps X=TLSv1.2:AES128-GCM-SHA256:128 S=105691 id=8A.68.25272.FF8AE1A5@example.com
+             -->
+            </collectFieldsByRegex>
+            <collectAndSetAttrByKeyValuePair sep=" " src="$_eximInBody">
+              <attrKeyMap attr="authenMethod" key="A="/>
+              <attrKeyMap attr="_connectionOutcome" key="C="/>
+              <attrKeyMap attr="certInfo" key="CV="/>
+              <attrKeyMap attr="userDN" key="DN="/>
+              <attrKeyMap attr="_dnsSecLookup" key="DS="/>
+              <attrKeyMap attr="runTime" key="DT="/>
+              <attrKeyMap attr="senderMailAddr" key="F="/>
+              <attrKeyMap attr="targetHostName" key="H="/>
+              <attrKeyMap attr="totBytes64" key="S="/>
+              <attrKeyMap attr="exchTransport" key="T="/>
+              <attrKeyMap attr="receiverMailAddr" key="R="/>
+              <attrKeyMap attr="_proto" key="P="/>
+              <attrKeyMap attr="encryptAlgo" key="X="/>
+            </collectAndSetAttrByKeyValuePair>
+            <setEventAttribute attr="eventType">Sophos-UTM-exim-in-Generic</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <!-- 2017-11-29 15:32:08 H=example.com [1.1.1.1]:21841 Warning: example.com profile excludes greylisting: Skipping greylisting for this message -->
+              <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+H=<targetHostName:gPatStr>\s+\[<serverIpAddr:gPatStr>\]:\d+\s+<msg:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-exim-in-Warning</setEventAttribute>
+            <setEventAttribute attr="emailId">""</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">Sophos-UTM-exim-in-Generic</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+
+      <when test="$procName = 'epsecd'">
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[ sys="<osType:patDoubleQuo>" sub="<subtype:patDoubleQuo>" name=".*?\s+\[\[<_subbody:gPatMesgBody>\s+<infoURL:patURL>]]></regex>
+        </collectFieldsByRegex>
+        <collectAndSetAttrByKeyValuePair sep="\t\\| " src="$_subbody">
+          <attrKeyMap attr="domain" key="dom="/>
+          <attrKeyMap attr="srcIpAddr" key="h="/>
+          <attrKeyMap attr="srcName" key="H="/>
+          <attrKeyMap attr="httpMethod" key="meth="/>
+          <attrKeyMap attr="httpReferrer" key="ref="/>
+          <attrKeyMap attr="recvBytes64" key="in="/>
+          <attrKeyMap attr="sentBytes64" key="out="/>
+          <attrKeyMap attr="deviceTime" key="t="/>
+          <attrKeyMap attr="destIpAddr" key="target_ip="/>
+          <attrKeyMap attr="user" key="u="/>
+        </collectAndSetAttrByKeyValuePair>
+        <setEventAttribute attr="eventType">Sophos-UTM-Epsecd-Generic</setEventAttribute>
+        <when test="exist user">
+          <setEventAttribute attr="user">replaceStringByRegex($user, ".*\\", "")</setEventAttribute>
+        </when>
+      </when>
+      <when test="$procName = 'dhcpd'">
+        <!--
+      DHCPOFFER on 11.11.111.111 to 11:1d:c1:11:1f:11 (GainSpan111f11) via reds1
+      DHCPREQUEST for 11.11.111.111 from d1:11:11:ee:11:11 via reds1
+      reuse_lease: lease age 1111 (secs) under 11% threshold, reply with unaltered, existing lease
+     -->
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^(?:All rights reserved\.|Copyright |For info, please visit )]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-DHCP-Generic</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<_action:patStrSpaceAndEndColon>:?(?:.*for\s+<_destDevice:gPatStr>)?(?:.*from\s+<_srcDevice:gPatStr>)?(?:.*on\s+<_srcDevice:gPatStr>)?(?:.*to\s+<_destDevice:gPatStr>)?]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Sophos-UTM-DHCP-", $_action)</setEventAttribute>
+            <when test="exist _srcDevice">
+              <switch>
+                <case>
+                  <collectFieldsByRegex src="$_srcDevice">
+                    <regex><![CDATA[<srcIpAddr:gPatIpAddr>]]></regex>
+                  </collectFieldsByRegex>
+                </case>
+                <default>
+                  <setEventAttribute attr="srcMACAddr">$_srcDevice</setEventAttribute>
+                </default>
+              </switch>
+            </when>
+            <when test="exist _destDevice">
+              <switch>
+                <case>
+                  <collectFieldsByRegex src="$_destDevice">
+                    <regex><![CDATA[<destIpAddr:gPatIpAddr>]]></regex>
+                  </collectFieldsByRegex>
+                </case>
+                <default>
+                  <setEventAttribute attr="destMACAddr">$_destDevice</setEventAttribute>
+                </default>
+              </switch>
+            </when>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<_action:gPatStr>:.*)]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Sophos-UTM-DHCP-", $_action)</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">Sophos-UTM-DHCP-Generic</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+      <when test="$procName = 'cluster_sync'">
+        <switch>
+          <case>
+            <!--Args = , called by  1111 /usr/local/bin/ha_daemon-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Args\s*=.*called\s+by\s+\d+\s+<clusterPath:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-Cluster-Called</setEventAttribute>
+          </case>
+          <case>
+            <!--delete-missing: nothing todo -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[delete-missing:\s+nothing\s+todo]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-Cluster-Delete-Missing</setEventAttribute>
+          </case>
+          <case>
+            <!--done without errors-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[done\s+without\s+errors]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-Cluster-Done</setEventAttribute>
+          </case>
+          <case>
+            <!--### handle 'ASG_serial' -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[###\s+handle\s+'<procName:patSingleQuo>']]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-Cluster-Handle</setEventAttribute>
+          </case>
+          <case>
+            <!--no source path(s), do nothing -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[no\s+source\s+path\(s\),\s+do\s+nothing]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-Cluster-Do-Nothing</setEventAttribute>
+          </case>
+          <case>
+            <!--only_new: empty filelist -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[only_new:\s+empty\s+filelist]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-Cluster-Empty-Filelist</setEventAttribute>
+          </case>
+          <case>
+
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[rsync\s+--.*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-Cluster-Rsync</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">Sophos-UTM-Cluster-Generic</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+
+      <when test="$procName = '/usr/sbin/cron'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^\(<user:gPatStr>\)\s+CMD\s+\(\s*<command:gPatMesgBody>\)]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Sophos-UTM-cron-command</setEventAttribute>
+      </when>
+
+      <when test="$procName = 'sshd'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^Did not receive identification string from <destIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-sshd-no-ident</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">Sophos-UTM-sshd</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+
+      <when test="$procName = 'ad-sid-sync.plx'">
+        <setEventAttribute attr="eventType">Sophos-UTM-sync</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[ Syncing \d+ .+ from <srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$procName = 'audld'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^Could not connect to (?:Authentication )?Server\s+<destName:gPatHostName>\s+\((?:code|status)=<httpStatusCode:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-audld-connect-failure</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">Sophos-UTM-audld</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+
+      <when test="$procName = 'httpd'">
+
+        <!--dh -->
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^<destIpAddr:gPatIpAddr>\s+<:gPatStr>\s+<:gPatStr>\s+\[<_day:gPatDay>/<_mon:gPatMon>/<_year:gPatYear>:<_time:gPatTime>\s+<_tz:gPatTimeZone>\]\s+"<httpMethod:gPatWord>\s+<uriStem:gPatStr>\s+[^"]*"\s+<httpStatusCode:gPatInt>\s+<_recvBytes:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-http-request</setEventAttribute>
+            <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+            <when test="$_recvBytes != '-'">
+              <setEventAttribute attr="recvBytes64">$_recvBytes</setEventAttribute>
+            </when>
+          </case>
+          <case>
+            <!--
+          [cookie:warn] [pid 29709:tid 3744009072] [client 1.1.1.1:50979] Dropping cookie '_ga' from request due to missing/invalid signature, referer: https://example.com/random/
+          [cookie:error] [pid 29709:tid 4020968304] [client 1.1.1.1:4928] No signature found, cookie: _gid, referer: https://example.com/random/
+         -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[cookie:<_severity:gPatStr>\]\s+\[<:patStrRightSB>\]\s+\[<:gPatStr>\s+<srcIpAddr:gPatIpAddr>:\d+\]\s+<msg:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <choose>
+              <when test="$_severity = 'warn'">
+                <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+              </when>
+              <when test="$_severity = 'error'">
+                <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+              </when>
+            </choose>
+            <setEventAttribute attr="eventType">combineMsgId("Sophos-UTM-httpd-cookie-", $_severity)</setEventAttribute>
+          </case>
+        </switch>
+      </when>
+
+      <when test="$procName = 'kernel'">
+        <setEventAttribute attr="eventType">combineMsgId("Sophos-UTM-", $procName, "-Generic")</setEventAttribute>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^\[\d+\.\d+\]\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^IPv4:\s+host\s+<hostIpAddr:gPatIpAddr>/<intfName:gPatStr>\s+ignores redirects for <srcIpAddr:gPatIpAddr> to <destIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^IPv4:\s+martian source <destIpAddr:gPatIpAddr> from <srcIpAddr:gPatIpAddr>, on dev <intfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$procName = 'openvpn'">
+        <setEventAttribute attr="eventType">combineMsgId("Sophos-UTM-", $procName, "-Generic")</setEventAttribute>
+        <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+          <attrKeyMap attr="_event" key="event"/>
+          <attrKeyMap attr="srcIpAddr" key="srcip"/>
+          <attrKeyMap attr="user" key="username"/>
+          <attrKeyMap attr="destIpAddr" key="virtual_ip"/>
+        </collectFieldsByKeyValuePair>
+        <choose>
+          <when test="exist _event">
+            <setEventAttribute attr="_event">replaceStringByRegex($_event, "\s+", "-")</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $_event)</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+      <!--
+hostapd:
+<29>2016:03:11-05:07:34 A1E1FA1 hostapd: wlan1: STA 1:1:b1:d1:1c:a1 WPA: group key handshake completed (RSN)
+<29>2016:03:11-05:07:34 A1E1FA1 hostapd: wlan1: STA b1:e1:c1:e1:ca:1 IEEE 1.1: associated (aid 1)
+<29>2016:03:11-05:07:34 A1E1FA1 hostapd: wlan1: STA b1:e1:c1:e1:ca:1 IEEE 1.1: authenticated
+<29>2016:03:11-05:07:34 A1E1FA1 hostapd: wlan1: STA b1:e1:c1:e1:ca:1 IEEE 1.1: deauthenticated due to local deauth request
+<29>2016:03:11-05:07:34 A1E1FA1 hostapd: wlan1: STA b1:e1:c1:e1:ca:1 IEEE 1.1: disconnected due to excessive missing ACKs
+<29>2016:03:11-05:07:34 A1E1FA1 hostapd: wlan1: STA b1:e1:c1:e1:ca:1 WPA: pairwise key handshake completed (RSN)
+-->
+      <when test="$procName = 'hostapd'">
+        <setEventAttribute attr="eventType">combineMsgId("Sophos-UTM-", $procName, "-Generic")</setEventAttribute>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<wlanName:patStrSpaceAndEndColon>:\s*STA\s+<srcMACAddr:gPatStr>\s+<wlanProtocol:gPatStrEndColon>:\s+<_subbody:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_subbody">
+              <regex><![CDATA[^\S+ key handshake completed]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-hostapd-Handshake-Completed</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_subbody">
+              <regex><![CDATA[associated]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-hostapd-Wlan-Associated</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_subbody">
+              <regex><![CDATA[^authenticated]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Sophos-UTM-hostapd-Wlan-Authenticated</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_subbody">
+              <regex><![CDATA[<_action:gPatStr>\s+due\s+to\s+<errReason:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Sophos-UTM-hostapd-Wlan-",$_action)</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$procName = 'reverseproxy'">
+        <setEventAttribute attr="eventType">Sophos-UTM-reverseproxy</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[<:gPatStrRightSB>\]\s+\[security2:<:gPatStrRightSB>\]\s+\[pid<:gPatStrRightSB>\]\s+\[client\s+<srcIpAddr:gPatIpAddr>\]\s+ModSecurity:<msg:patStrLeftSB>\[<_subBody:gPatMesgBody>\]]]></regex>
+            </collectFieldsByRegex>
+            <collectFieldsByKeyValuePair sep="] [" kvsep=" " src="$_subBody">
+              <attrKeyMap attr="eventId" key="id"/>
+              <attrKeyMap attr="filePath" key="file"/>
+              <attrKeyMap attr="msg" key="msg"/>
+              <attrKeyMap attr="hostName" key="hostname"/>
+              <attrKeyMap attr="infoURL" key="uri"/>
+            </collectFieldsByKeyValuePair>
+          </case>
+          <default/>
+        </switch>
+      </when>
+    </choose>
+    <!-- dh  this should only appear in IDS events-->
+    <choose>
+      <when test="exist _class">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<:gPatMesgBody>\s+class=\"<devEventTypeGrp:patDoubleQuo>]]></regex>
+        </collectFieldsByRegex>
+      </when>
+    </choose>
+    <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "\W", "-")</setEventAttribute>
+  </parsingInstructions>
+</eventParser>

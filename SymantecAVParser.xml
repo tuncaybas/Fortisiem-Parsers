@@ -1,0 +1,1004 @@
+<eventParser name="SymantecAVParser">
+
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Symantec</Vendor>
+    <Model>Endpoint Protection Service</Model>
+    <Version>ANY</Version>
+    <Name>Symantec Endpoint Protection Service</Name>
+  </appType>
+
+  <patternDefinitions>
+    <pattern name="patStrEndWithComma"><![CDATA[[^,]*]]></pattern>
+    <pattern name="patStrEndWithColon"><![CDATA[[^:]*]]></pattern>
+    <pattern name="patStrLocal"><![CDATA[(?:Local:[^,]*,)+]]></pattern>
+    <pattern name="patStrRemote"><![CDATA[(?:Remote:[^,]*,)+]]></pattern>
+    <pattern name="patMAC"><![CDATA[[0-9A-Fa-f]{12}]]></pattern>
+    <pattern name="patField"><![CDATA[[^,:]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>?<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatStr>?\s*(SymAntiVirus|SymantecServer)]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<54>Nov 2 09:33:45 PA-PANDORA SymantecServer: Site: Site PA-PANDORA,Server: PA-PANDORA,Domain: Default,The client has downloaded globalindex.dax,PA4LJFKZF12,dpawlak,example.com]]></testEvent>
+    <testEvent><![CDATA[<13>Feb 23 12:36:37 example.com SymAntiVirus  0       2701170C2410,3,2,1,QA-V-WIN03-APP1,Administrator,,,,,,,16777216,"Scan started on selected drives and folders and all extensions.",1235421384,,0,,,,,0,,,,,,,,,,,{11111111-1111-1111-1111-111111111111},,(IP)-0.0.0.0,,ABC,00:50:56:A3:30:2F,11.0.1000.1112,,,,,,,,,,,,,,,,0,,,,,]]></testEvent>
+    <testEvent><![CDATA[<54>Jun 11 12:24:38 SymantecServer sjdevswinapp05: Site: Site sjdevswinapp05,Server: sjdevswinapp05,Domain: Default,Admin: admin,Administrator  log on failed]]></testEvent>
+    <testEvent><![CDATA[<51>Sep  3 11:14:00 SymantecServer geisep1: A2462,Category: 2,REP,Cannot assign a client authentication token. There was a general communication failure.]]></testEvent>
+    <testEvent><![CDATA[<52>Sep  3 20:32:53 SymantecServer geisep1: a2780,Category: 2,SONAR,[SONAR heuristic Submission] Submitting file to Symantec failed.  File : 'c:\program files (x86)\microsoft silverlight\4.1.10111.0\system.dll'.]]></testEvent>
+    <testEvent><![CDATA[<51>Sep  3 16:37:07 SymantecServer geisep1: A2926,Category: 2,Symantec Endpoint Protection,SONAR has generated an error: code 0: description: Definition Failure]]></testEvent>
+    <testEvent><![CDATA[Oct 4 12:28:22 10.1.107.21 Oct 4 12:20:13 SymantecServer ORGSEP001: Virus found,IP Address: 10.100.1.164,Computer name: ORG-USER-PC,Source: Real Time Scan,Risk name: ALS.Kenilfe,Occurrences: 1,C:\Windows\Temp\506caddf.qsp,"",Actual action: Left alone,Requested action: Cleaned,Secondary action: Quarantined,Event time: 2012-10-04 09:01:36,Inserted: 2012-10-04 09:20:13,End: 2012-10-04 09:01:35,Last update time: 2012-10-04 09:20:13,Domain: ORG-COM,Group: My Company\Desktops_SEP_12,Server: ORGSEP002,User: SYSTEM,Source computer: ,Source IP: ,Disposition: Reputation was not used in this detection.,Download site: ,Web domain: ,Downloaded by: ,Prevalence: Reputation was not used in this detection.,Confidence: Reputation was not used in this detection.,URL Tracking Status: Off,,First Seen: Reputation was not used in this detection.,Sensitivity: ,0,Application hash: 97B94A2B0916FB933F9E4BBC9EAB9BB48B5237AB3151993010768249332021D0,Hash type: SHA2,Company name: ,Application name: 506188d3.qsp,Application version: ,Application type: Trojan Worm,File size (bytes): 9922]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_pri:gPatSyslogPRI>?<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventType">Symantec-AV-Generic</setEventAttribute>
+    <when test="exist _pri">
+      <setEventAttribute attr="eventSeverity">getEventSeverityFromSyslogPriority($_pri)</setEventAttribute>
+    </when>
+
+    <!-- message group specific parsing -->
+
+    <switch>
+
+      <!-- the first type
+           <13>Feb 23 12:36:37 example.com SymAntiVirus  0       2701170C2410,3,2,1,QA-V-WIN03-APP1,Administrator,,,,,,,16777216,"Scan started on selected drives and folders and all extensions.",1235421384,,0,,,,,0,,,,,,,,,,,{11111111-1111-1111-1111-111111111111},,(IP)-0.0.0.0,,ABC,00:50:56:A3:30:2F,11.0.1000.1112,,,,,,,,,,,,,,,,0,,,,,
+       -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^<reptDevName:gPatStr>\s+SymAntiVirus(?:\t|\s)+<:gPatInt>(?:\t|\s)+<_body2:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+
+        <collectAndSetAttrByPosWithQuotes src="$_body2" sep="," quo="&quot;">
+          <attrPosMap attr="_eventType" pos="2"/>
+          <attrPosMap attr="_eventCat" pos="3"/>
+          <attrPosMap attr="hostName" pos="5"/>
+          <attrPosMap attr="user" pos="6"/>
+          <attrPosMap attr="virusName" pos="7"/>
+          <attrPosMap attr="fileName" pos="8"/>
+          <attrPosMap attr="_configAction1" pos="9"/>
+          <attrPosMap attr="_configAction2" pos="10"/>
+          <attrPosMap attr="virusAction" pos="11"/>
+          <attrPosMap attr="virusType" pos="12"/>
+          <attrPosMap attr="_symAVMsg" pos="14"/>
+          <attrPosMap attr="_symAV8efstMsg" pos="18"/>
+          <attrPosMap attr="virusQuarantStatus" pos="21"/>
+          <attrPosMap attr="hostIpAddr" pos="35"/>
+          <attrPosMap attr="domain" pos="37"/>
+          <attrPosMap attr="_hostMACAddr" pos="38"/>
+        </collectAndSetAttrByPosWithQuotes>
+
+
+        <choose>
+
+          <when test="$_eventType = '5'">
+
+            <choose>
+              <when test="$virusAction IN '2,3,5,6'">
+                <setEventAttribute attr="eventType">combineMsgId("Symantec-AV-",$_eventType,"-remedy-success")</setEventAttribute>
+              </when>
+
+              <when test="$virusAction IN '12'">
+                <setEventAttribute attr="eventType">combineMsgId("Symantec-AV-",$_eventType,"-remedy-failure")</setEventAttribute>
+              </when>
+
+              <when test="$virusAction IN '4,7,8,9,10,11,13'">
+                <setEventAttribute attr="eventType">combineMsgId("Symantec-AV-",$_eventType,"-found-pass")</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+
+          <when test="$_eventType = '1'">
+            <choose>
+              <when test="$virusQuarantineStatus = '1'">
+                <setEventAttribute attr="eventType">combineMsgId("Symantec-AV-",$_eventType,"-remedy-failure")</setEventAttribute>
+              </when>
+              <when test="$virusQuarantineStatus = '2'">
+                <setEventAttribute attr="eventType">combineMsgId("Symantec-AV-",$_eventType,"-remedy-success")</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+
+          <otherwise>
+            <setEventAttribute attr="eventType">combineMsgId("Symantec-AV-",$_eventType)</setEventAttribute>
+          </otherwise>
+        </choose>
+      </case>
+
+
+      <!-- the second kind
+	   <54>Jun 11 12:24:38 SymantecServer sjdevswinapp05: Site: Site sjdevswinapp05,Server: sjdevswinapp05,Domain: Default,Admin: admin,Administrator  log on failed
+	   <54>Jun 11 12:27:11 SymantecServer sjdevswinapp05: Site: Site sjdevswinapp05,Server: sjdevswinapp05,Domain: Unknown domain (),Admin: hacker,Administrator  log on failed
+	   Format note:
+	     Following two formats are equivalent. So we need to support both, for all cases
+	     <54>Jun 11 12:24:38 SymantecServer sjdevswinapp05: xxxxxxx
+	     <54>Jun 11 12:24:38 sjdevswinapp05 SymantecServer: xxxxxxx 
+	   <54>Sep 6 07:41:15 WIN-T6IFP8HJCCV SymantecServer: Site: Site WIN-T6IFP8HJCCV,Server: WIN-T6IFP8HJCCV,Domain: Unknown domain (),Admin: hacker,Administrator log on failed
+      -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^(?:SymantecServer\s+<reptDevName:patStrEndWithColon>|<reptDevName:gPatHostName>\s+SymantecServer):\s+Site:\s+<:patStrEndWithComma>,Server:\s+<destName:patStrEndWithComma>,Domain:\s+<domain:patStrEndWithComma>,Admin:\s+<user:patStrEndWithComma>,Administrator\s+log\s+on\s+failed]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId("Symantec-AV-","Admin-Login-Failure")</setEventAttribute>
+      </case>
+
+      <!-- logout
+           <54>Jun 11 12:26:42 SymantecServer sjdevswinapp05: Site: Site sjdevswinapp05,Server: sjdevswinapp05,Domain: Default,Admin: admin,Administrator logout
+      -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^(?:SymantecServer\s+<reptDevName:patStrEndWithColon>|<reptDevName:gPatHostName>\s+SymantecServer):\s+Site:\s+<:patStrEndWithComma>,Server:\s+<destName:patStrEndWithComma>,Domain:\s+<domain:patStrEndWithComma>,Admin:\s+<user:patStrEndWithComma>,Administrator\s+logout]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId("Symantec-AV-","Admin-Logout")</setEventAttribute>
+      </case>
+
+
+      <!-- the third kind
+	  <54>Jun 11 12:24:51 SymantecServer sjdevswinapp05: Site: Site sjdevswinapp05,Server: sjdevswinapp05,Domain: Default,Admin: admin,Administrator  log on succeeded
+      -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^(?:SymantecServer\s+<reptDevName:patStrEndWithColon>|<reptDevName:gPatHostName>\s+SymantecServer):\s+Site:\s+<:patStrEndWithComma>,Server:\s+<destName:patStrEndWithComma>,Domain:\s+<domain:patStrEndWithComma>,Admin:\s+<user:patStrEndWithComma>,Administrator\s+log\s+on\s+succeeded]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId("Symantec-AV-","Admin-Login-Success")</setEventAttribute>
+      </case>
+
+      <!-- the fourth kind
+	 <54>Feb 23 13:08:29 SymantecServer sjdevswinapp05: Virus found,Computer name: Filer,Source: Real Time Scan,Risk name: EICAR Test String,Occurrences: 1,C:/Documents and Settings/Administrator.ABC/Local Settings/Temp/vpqz3cxj.com,"",Actual action: Cleaned by deletion,Requested action: Cleaned,Secondary action: Quarantined,Event time: 2009-02-23 21:06:51,Inserted: 2009-02-23 21:08:29,End: 2009-02-23 21:06:51,Domain: Default,Group: Global\ABC,Server: sjdevswinapp05,User: Administrator,Source computer:  ,Source IP: 0.0.0.0
+         <54>Apr 20 15:18:03 ws01 SymantecServer: Virus found,IP Address: 10.180.177.106,Computer name: MPS1-1,Source: Scheduled Scan,Risk name: Trojan.Kotver!bat,Occurrences: 1,c:\d3564b\b407f8.bat,'',Actual action: No repair available - Power Eraser recommended for repair,Requested action: Cleaned,Secondary action: Quarantined,Event time: 2017-04-20 19:13:10,Inserted: 2017-04-20 19:18:03,End: 2017-04-20 19:13:13,Last update time: 2017-04-20 19:18:03,Domain: Default,Group: My Company\Workstations,Server: ws03,User: CopyCenter,Source computer: ,Source IP: ,Disposition: Reputation was not used in this detection.,Download site: ,Web domain: ,Downloaded by: ,Prevalence: Reputation was not used in this detection.,Confidence: Reputation was not used in this detection.,URL Tracking Status: Off,,First Seen: Reputation was not used in this detection.,Sensitivity: ,MDS,Application hash: 57647964C39E849EED2D212EA12C5584D294A505C62F7BEB50AA2BFAD866BB83,Hash type: SHA2,Company name: ,Application name: b407f8.bat,Application version: ,Application type: 127,File size (bytes): 61,Category set: Malware,Category type: Heuristic Virus
+      -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^(?:SymantecServer\s+<reptDevName:patStrEndWithColon>|<reptDevName:gPatHostName>\s+SymantecServer):\s+Virus\s+found,(?:IP\s+Address:\s+<hostIpAddr:gPatIpAddr>,)?Computer\s+name:\s+<hostName:patStrEndWithComma>,Source:\s+<eventSource:patStrEndWithComma>,Risk name:\s+<riskName:patStrEndWithComma>,Occurrences:\s+<count:gPatInt>,<fileName:patStrEndWithComma>,<:patStrEndWithComma>,Actual\s+action:\s+<fwAction:patStrEndWithComma>,Requested action:\s+<:patStrEndWithComma>,Secondary action:\s+<secAction:patStrEndWithComma>,Event\s+time:\s+<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>\s+<_time:gPatTime>,Inserted:\s+<:patStrEndWithComma>,End:\s+<:patStrEndWithComma>,(?:Last update time:<:patStrEndWithComma>,)?Domain:<domain:patStrEndWithComma>,Group:\s+<userGrp:patStrEndWithComma>,Server:\s+<reptDevName:patStrEndWithComma>,User:\s+<user:patStrEndWithComma>,.*(?:Application name:\s+<appName:patStrEndWithComma>)?]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        <choose>
+          <when test="matches($_body, 'Trojan Worm')">
+            <setEventAttribute attr="eventType">Symantec-AV-Trojan-Worm</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">Symantec-AV-Virus-Found</setEventAttribute>
+          </otherwise>
+        </choose>
+      </case>
+
+      <!--
+<52>Apr 11 13:08:22 SymantecServer CMSEPM: host,[SID: 55000] IRC Identification Signature attack detected but not blocked. Application path: \DEVICE\HARDDISKVOLUME2\PROGRAM FILES (X86)\PIDGIN\PIDGIN.EXE,Local: 172.16.205.166,Local: 000000000000,Remote: ,Remote: 1.2.3.4,Remote: 000000000000,Outbound,TCP,Intrusion ID: 0,Begin: 2013-12-18 14:01:58,End: 2013-12-18 14:01:58,Occurrences: 1,Application: /DEVICE/HARDDISKVOLUME2/PROGRAM FILES (X86)/PIDGIN/PIDGIN.EXE,Location: Default,User: abc,Domain: domain,Local Port 58055,Remote Port 6667,CIDS Signature ID: 55000,CIDS Signature string: IRC Identification Signature,CIDS Signature SubID: 65606,Intrusion URL: ,Intrusion Payload URL:
+<52>Apr 11 13:08:22 SymantecServer CMSEPM: host,[SID: 26876] Web Attack: Exploit Toolkit Website 50 attack blocked. Traffic has been blocked for this application: \DEVICE\HARDDISKVOLUME1\PROGRAM FILES (X86)\INTERNET EXPLORER\IEXPLORE.EXE,Local: 192.168.1.91,Local: 000000000000,Remote: ,Remote: 1.2.3.4,Remote: 000000000000,Inbound,TCP,Intrusion ID: 0,Begin: 2014-02-06 22:04:54,End: 2014-02-06 22:04:54,Occurrences: 1,Application: /DEVICE/HARDDISKVOLUME1/PROGRAM FILES (X86)/INTERNET EXPLORER/IEXPLORE.EXE,Location: Default,User: abc,Domain: domain,Local Port 52280,Remote Port 80,CIDS Signature ID: 26876,CIDS Signature string: Web Attack: Exploit Toolkit Website 50,CIDS Signature SubID: 67086,Intrusion URL: example.com/sandbags.html,Intrusion Payload URL:
+<52>Apr 11 13:08:22 SymantecServer CMSEPM: host,"[SID: 23928] Malicious Site: Malicious Web Site, Domain, or URL (1) attack blocked. Traffic has been blocked for this application: \DEVICE\HARDDISKVOLUME1\PROGRAM FILES (X86)\YOUTUBE ACCELERATOR\UPDATER.EXE",Local: 192.168.1.38,Local: 000000000000,Remote: ,Remote: 1.2.3.4,Remote: 000000000000,Inbound,TCP,Intrusion ID: 0,Begin: 2014-02-07 05:00:04,End: 2014-02-07 05:00:04,Occurrences: 1,Application: /DEVICE/HARDDISKVOLUME1/PROGRAM FILES (X86)/YOUTUBE ACCELERATOR/UPDATER.EXE,Location: Default,User: abc,Domain: domain,Local Port 54446,Remote Port 80,CIDS Signature ID: 23928,"CIDS Signature string: Malicious Site: Malicious Web Site, Domain, or URL (1)",CIDS Signature SubID: 72423,Intrusion URL: example.com/rnd/afgytdrp_401973_setup.exe,Intrusion Payload URL:
+<52>Apr 11 13:08:22 SymantecServer CMSEPM: host,[SID: 50317] Fake App Attack: Misleading Application Suspicious Notification 5 attack blocked. Traffic has been blocked for this application: C:\Program Files (x86)\Internet Explorer\iexplore.exe,Local: 0.0.0.0,Local: 000000000000,Remote: ,Remote: 0.0.0.0,Remote: 000000000000,Inbound,OTHERS,,Begin: 2014-02-14 06:22:01,End: 2014-02-14 06:22:01,Occurrences: 1,Application: C:/Program Files (x86)/Internet Explorer/iexplore.exe,Location: Default,User: abc,Domain: domain,Local Port 0,Remote Port 0,CIDS Signature ID: 50317,CIDS Signature string: Fake App Attack: Misleading Application Suspicious Notification 5,CIDS Signature SubID: 0,Intrusion URL: http://example.com/index.php?key=1d1d9cfd4dd6dbdea5de3523a6bfa1e1,Intrusion Payload URL:
+-->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[SymantecServer\s+<reptDevName:gPatStrEndColon>:\s+<hostName:gPatStr>,<eventDesc:gPatMesgBodyMin>,<_localEndPt:patStrLocal><_remoteEndPt:patStrRemote><direction:gPatStrComma>,<_proto:gPatWord>,<:gPatStrComma>,Begin:<:gPatStrComma>,End:<:gPatStrComma>,Occurrences:\s+<count:gPatInt>,Application:\s+<swProcName:gPatStrComma>,Location:<:gPatStrComma>,User:\s+<user:gPatStrComma>,Domain:\s+<domain:gPatStrComma>,Local Port <_locVal4:gPatInt>,Remote Port <_remVal4:gPatInt>,CIDS Signature ID:\s+<ipsSignatureId:gPatInt>,CIDS Signature string:\s+<ipsEventName:gPatMesgBody>,CIDS Signature SubID:<:gPatStrComma>,Intrusion URL:<infoURL:gPatStrComma>,]]></regex>
+        </collectFieldsByRegex>
+
+        <choose>
+          <when test="$ipsSignatureId = '0'">
+            <choose>
+              <when test="matches($eventDesc, 'The device was disabled successfully')">
+                <setEventAttribute attr="eventType">Symantec-CIDS-The-device-was-disabled-successfully</setEventAttribute>
+              </when>
+              <otherwise>
+                <setEventAttribute attr="eventType">Symantec-CIDS-Generic</setEventAttribute>
+              </otherwise>
+            </choose>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="_et">replaceStringByRegex($ipsEventName, "\s+", "")</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId("Symantec-CIDS-", $ipsSignatureId, "-", $_et)</setEventAttribute>
+          </otherwise>
+        </choose>
+
+        <choose>
+          <when test="matches($eventDesc, 'not blocked')">
+            <setEventAttribute attr="eventAction">0</setEventAttribute>
+          </when>
+          <when test="matches($eventDesc, 'blocked')">
+            <setEventAttribute attr="eventAction">1</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventAction">0</setEventAttribute>
+          </otherwise>
+        </choose>
+      </case>
+
+      <!-- the fifth kind
+	 Mar 16 15:11:06 SymantecServer aschq97: NF77088-PCA,Local: 192.168.128.255,Local: 138,Local: FFFFFFFFFFFF,Remote: 192.168.128.86,Remote: ,Remote: 138,Remote: 0015C53B9216,UDP,Inbound,Begin: 2009-03-16 15:05:02,End: 2009-03-16 15:05:02,Occurrences: 1,Application: C:/WINDOWS/system32/ntoskrnl.exe,Rule: Allow local file sharing,Location: Default,User: ,Domain: ASC
+        Mar 13 20:57:44 SymantecServer aschq97: CH103408-JT,Local: 172.23.255.255,Local: 138,Local: FFFFFFFFFFFF,Remote: 172.23.4.98,Remote: ,Remote: 138,Remote: 0019D1E04486,UDP,Inbound,Begin: 2009-03-13 19:56:27,End: 2009-03-13 19:56:27,Occurrences: 1,Application: C:/WINDOWS/system32/ntoskrnl.exe,Rule: Allow local file sharing,Location: Default,User: JTaff,Domain: ASC
+<50>Sep 9 08:31:31 SymantecServer USEA-SEPMAS: inblg-test,Local: 172.31.2.3,Local: 2869,Local: 0018B90802CC,Remote: 1.1.1.1,Remote: i.com,Remote: 443,Remote: 001907FB3349,TCP,Outbound,Begin: 2013-09-08 10:27:00,End: 2013-09-08 10:27:05,Occurrences: 3,Application: C:/Program Files/Google/Chrome/Application/chrome.exe,Rule: Block SSDP,Location: Office,User: KS,Domain: EU,Action: Blocked
+      -->
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[SymantecServer\s+<reptDevName:gPatStrEndColon>:\s+<hostName:gPatStrComma>,<_localEndPt:patStrLocal><_remoteEndPt:patStrRemote><_ipProto:gPatStrComma>,<direction:gPatStrComma>,<:gPatStrComma>,<:gPatStrComma>,Occurrences:\s+<count:gPatInt>,Application:\s+<swProcName:gPatStrComma>,Rule:\s+<ruleName:gPatMesgBody>,Location:\s+<:gPatStrComma>,User:\s+<user:gPatStrComma>,Domain:\s+<domain:gPatStrComma>(?:,Action:\s+<fwAction:gPatStrComma>)?]]></regex>
+        </collectFieldsByRegex>
+
+        <choose>
+          <when test="matches($_ipProto, '^\d+$')">
+            <setEventAttribute attr="ipProto">$_ipProto</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="_proto">$_ipProto</setEventAttribute>
+          </otherwise>
+        </choose>
+
+        <setEventAttribute attr="eventType">Symantec-AV-Traffic</setEventAttribute>
+        <when test="exist fwAction">
+          <choose>
+            <when test="$fwAction = 'Allowed'">
+              <setEventAttribute attr="eventType">Symantec-AV-Traffic-Permit</setEventAttribute>
+            </when>
+            <when test="$fwAction = 'Blocked'">
+              <setEventAttribute attr="eventType">Symantec-AV-Traffic-Deny</setEventAttribute>
+            </when>
+          </choose>
+          <setEventAttribute attr="phEventCategory">4</setEventAttribute>
+        </when>
+      </case>
+
+      <case>
+        <!--
+<54>Nov  5 23:49:48 SymantecServer APP-SEP-01: S-RNDR-05-TPA,Local: 224.0.0.1,Local: 8612,Remote: 10.61.10.67,Remote: ,Remote: 62518,Inbound,Application: ,Action: Allowed
+      -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[SymantecServer\s+<reptDevName:gPatStrEndColon>:\s+<hostName:gPatStrComma>,<_localEndPt:patStrLocal><_remoteEndPt:patStrRemote><direction:gPatStrComma>,Application:\s+<swProcName:gPatStrComma>,Action:\s+<fwAction:gPatStrComma>]]></regex>
+        </collectFieldsByRegex>
+
+        <choose>
+          <when test="not_exist fwAction">
+            <setEventAttribute attr="eventType">Symantec-AV-Traffic</setEventAttribute>
+          </when>
+          <when test="$fwAction = 'Allowed'">
+            <setEventAttribute attr="eventType">Symantec-AV-Traffic-Permit</setEventAttribute>
+          </when>
+          <when test="$fwAction = 'Blocked'">
+            <setEventAttribute attr="eventType">Symantec-AV-Traffic-Deny</setEventAttribute>
+          </when>
+        </choose>
+      </case>
+
+      <!-- the sixth kind
+	<54>Feb 24 11:51:19 SymantecServer sjdevswinapp05: QA-V-Win03-App2,[SID: 20352] HTTP Whisker/Libwhisker Scan (1) detected.  Traffic has been allowed from this application: C:\WINDOWS\system32 toskrnl.exe,Local: 0.0.0.0,Local: 000000000000,Remote: ,Remote: 192.168.1.4,Remote: 000000000000,Inbound,TCP,Intrusion ID: 0,Begin: 2009-02-24 11:50:01,End: 2009-02-24 11:50:01,Occurrences: 1,Application: C:/WINDOWS/system32/ntoskrnl.exe,Location: Default,User: Administrator,Domain: ABC
+	 <54>Feb 24 12:01:43 SymantecServer sjdevswinapp05: QA-V-Win03-App2,Active Response that started at 02/24/2009 11:50:01 is disengaged. The traffic from IP address 192.168.1.4 was blocked for 600 second(s).,Local: 0.0.0.0,Local: 000000000000,Remote: ,Remote: 192.168.1.4,Remote: 000000000000,Unknown,OTHERS,,Begin: 2009-02-24 12:00:02,End: 2009-02-24 12:00:02,Occurrences: 1,Application: ,Location: Default,User: Administrator,Domain: ABC
+	    <54>Feb 24 11:51:19 SymantecServer sjdevswinapp05: QA-V-Win03-App2,Traffic from IP address 192.168.1.4 is blocked from 2/24/2009 11:50:01 AM to 2/24/2009 12:00:01 PM.,Local: 0.0.0.0,Local: 000000000000,Remote: ,Remote: 192.168.1.4,Remote: 000000000000,Inbound,OTHERS,,Begin: 2009-02-24 11:50:01,End: 2009-02-24 11:50:01,Occurrences: 1,Application: ,Location: Default,User: Administrator,Domain: ABC
+      -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[(?:SymantecServer\s+<reptDevName:patStrEndWithColon>|<reptDevName:gPatHostName>\s+SymantecServer):\s+<hostName:patStrEndWithComma>,<_desc:patStrEndWithComma>,<_localEndPt:patStrLocal><_remoteEndPt:patStrRemote><direction:patStrEndWithComma>,<_proto:gPatProto>,<:patStrEndWithComma>,<:patStrEndWithComma>,<:patStrEndWithComma>,Occurrences:\s+<count:gPatInt>,Application:\s+<swProcName:patStrEndWithComma>,<:patStrEndWithComma>,User:\s+<user:patStrEndWithComma>,Domain:\s+<domain:patStrEndWithComma>]]></regex>
+        </collectFieldsByRegex>
+        <choose>
+          <when test="matches($_desc, 'allowed')">
+            <setEventAttribute attr="eventType">Symantec-AV-Traffic-Permit</setEventAttribute>
+          </when>
+          <when test="matches($_desc, 'blocked')">
+            <setEventAttribute attr="eventType">Symantec-AV-Traffic-Deny</setEventAttribute>
+          </when>
+          <when test="matches($_desc, 'Host Integrity check failed')">
+            <setEventAttribute attr="eventType">Symantec-AV-HostIntegrity-Failed</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">Symantec-AV-Traffic</setEventAttribute>
+          </otherwise>
+        </choose>
+      </case>
+
+      <!-- the seventh kind
+      <54>Jul 28 08:08:52 SymantecServer corpepp01: 6910p-X751008R,Category: 2,Symantec AntiVirus,New virus definition file loaded. Version: 130727ag.
+      <54>Mar  3 10:16:02 SymantecServer usbb-sepm: inblr-bashasy,Category: 2,Symantec AntiVirus,Previous virus definition file loaded. Version: 140302b.
+      -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[(?:SymantecServer\s+<reptDevName:patStrEndWithColon>|<reptDevName:gPatHostName>\s+SymantecServer):\s+<hostName:patStrEndWithComma>,Category:\s+<:patStrEndWithComma>,<:patStrEndWithComma>,New virus definition file loaded\. Version: <virdbVer:gPatStr>\.]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Symantec-AV-Virus-Loaded</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[(?:SymantecServer\s+<reptDevName:patStrEndWithColon>|<reptDevName:gPatHostName>\s+SymantecServer):\s+<hostName:patStrEndWithComma>,Category:\s+<:patStrEndWithComma>,<:patStrEndWithComma>,Previous virus definition file loaded\. Version: <virdbVer:gPatStr>\.]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Symantec-AV-Virus-Loaded</setEventAttribute>
+      </case>
+
+      <!-- the eighth kind
+      <54>Jul 28 08:09:32 SymantecServer corpepp01: CORPMIO-H4VYWB1,Category: 2,Symantec AntiVirus,Symantec Endpoint Protection services shutdown was successful.
+      <54>Jul 28 08:09:32 SymantecServer corpepp01: CORPMIO-H4VYWB1,Category: 2,Symantec AntiVirus,Symantec Endpoint Protection services startup was successful.
+      -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[(?:SymantecServer\s+<reptDevName:patStrEndWithColon>|<reptDevName:gPatHostName>\s+SymantecServer):\s+<hostName:patStrEndWithComma>,Category:\s+<:patStrEndWithComma>,<:patStrEndWithComma>,Symantec Endpoint Protection services <_desc:gPatStr> was successful\.]]></regex>
+        </collectFieldsByRegex>
+        <choose>
+          <when test="matches($_desc, 'shutdown')">
+            <setEventAttribute attr="eventType">Symantec-AV-Endpoint-Protection-Shutdown</setEventAttribute>
+          </when>
+          <when test="matches($_desc, 'startup')">
+            <setEventAttribute attr="eventType">Symantec-AV-Endpoint-Protection-Startup</setEventAttribute>
+          </when>
+        </choose>
+      </case>
+
+      <!-- the tenth kind
+      <52>Jul 28 08:10:13 SymantecServer corpepp01: TEMPEXP02,Category: 0,Smc,Failed to disable Windows firewall
+      -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[(?:SymantecServer\s+<reptDevName:patStrEndWithColon>|<reptDevName:gPatHostName>\s+SymantecServer):\s+<hostName:patStrEndWithComma>,Category:\s+<:patStrEndWithComma>,<:patStrEndWithComma>,Failed to disable Windows firewall]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Symantec-AV-Disable-Firewall-Failed</setEventAttribute>
+      </case>
+
+      <!-- the eleventh kind
+      <50>Jul 28 08:10:13 SymantecServer corpepp01: TEMPEXP02,Category: 0,Smc,Failed to install teefer driver
+      -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[(?:SymantecServer\s+<reptDevName:patStrEndWithColon>|<reptDevName:gPatHostName>\s+SymantecServer):\s+<computer:patStrEndWithComma>,Category:\s+<:patStrEndWithComma>,<:patStrEndWithComma>,Failed to install teefer driver]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Symantec-AV-Install-Driver-Failed</setEventAttribute>
+      </case>
+
+      <!-- the twelvth kind
+      <54>Jul 28 08:08:52 SymantecServer corpepp01: 8440p-X0491JYR,Category: 0,Smc,Connected to Symantec Endpoint Protection Manager (10.0.11.17)
+      <54>Jul 28 08:08:52 SymantecServer corpepp01: 8440p-X0491JYR,Category: 0,Smc,Disconnected from Symantec Endpoint Protection Manager (10.0.11.17)
+      <54>Jul 28 08:09:52 SymantecServer corpepp01: CORPES-3042,Category: 0,Smc,Connected to Symantec Endpoint Protection Manager (corphqepp01)
+      <54>Jul 28 08:09:52 SymantecServer corpepp01: CORPES-3042,Category: 0,Smc,Disconnected from Symantec Endpoint Protection Manager (corpepp01)
+      -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[(?:SymantecServer\s+<reptDevName:patStrEndWithColon>|<reptDevName:gPatHostName>\s+SymantecServer):\s+<computer:patStrEndWithComma>,Category:\s+<:patStrEndWithComma>,<:patStrEndWithComma>,<_desc:gPatMesgBody>\s+Symantec Endpoint Protection Manager \(<_dest:gPatStr>\)]]></regex>
+        </collectFieldsByRegex>
+        <choose>
+          <when test="matches($_desc, 'Connected to')">
+            <setEventAttribute attr="eventType">Symantec-AV-Endpoint-Protection-Manager-Connected</setEventAttribute>
+          </when>
+          <when test="matches($_desc, 'Disconnected from')">
+            <setEventAttribute attr="eventType">Symantec-AV-Endpoint-Protection-Manager-Disconnected</setEventAttribute>
+          </when>
+        </choose>
+        <when test="exist _dest">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_dest">
+                <regex><![CDATA[^<destIpAddr:gPatIpAddr>$]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default>
+              <setEventAttribute attr="destName">$_dest</setEventAttribute>
+            </default>
+          </switch>
+        </when>
+      </case>
+
+      <!-- the thirtenth kind
+      <54>Jul 28 08:09:52 SymantecServer corpepp01: CORPES-3042,Category: 0,Smc,Location has been changed to Default.
+      -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[(?:SymantecServer\s+<reptDevName:patStrEndWithColon>|<reptDevName:gPatHostName>\s+SymantecServer):\s+<computer:patStrEndWithComma>,Category:\s+<:patStrEndWithComma>,<:patStrEndWithComma>,Location has been changed to Default\.]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Symantec-AV-Location-Default</setEventAttribute>
+      </case>
+
+      <!-- the fourtenth kind
+      <54>Jul 28 08:09:52 SymantecServer corpepp01: CORPES-3042,Category: 0,Smc,Stopping Symantec Management Client....
+      -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[(?:SymantecServer\s+<reptDevName:patStrEndWithColon>|<reptDevName:gPatHostName>\s+SymantecServer):\s+<computer:patStrEndWithComma>,Category:\s+<:patStrEndWithComma>,<:patStrEndWithComma>,Stopping Symantec Management Client.*]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Symantec-AV-Stopping-Client</setEventAttribute>
+      </case>
+
+      <!-- the fiftenth kind
+      <54>Jul 28 08:09:52 SymantecServer corpepp01: CORPES-3042,Category: 0,Smc,Symantec Management Client has been activated.
+      <54>Jul 28 08:09:52 SymantecServer corpepp01: CORPES-3042,Category: 0,Smc,Symantec Management Client has been started.
+      <54>Jul 28 08:09:52 SymantecServer corpepp01: CORPES-3042,Category: 0,Smc,Symantec Management Client is stopped.
+      -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[(?:SymantecServer\s+<reptDevName:patStrEndWithColon>|<reptDevName:gPatHostName>\s+SymantecServer):\s+<computer:patStrEndWithComma>,Category:\s+<:patStrEndWithComma>,<:patStrEndWithComma>,Symantec Management Client <_desc:gPatMesgBody>\.]]></regex>
+        </collectFieldsByRegex>
+        <choose>
+          <when test="matches($_desc, 'has been activated')">
+            <setEventAttribute attr="eventType">Symantec-AV-Client-Activated</setEventAttribute>
+          </when>
+          <when test="matches($_desc, 'has been started')">
+            <setEventAttribute attr="eventType">Symantec-AV-Client-Started</setEventAttribute>
+          </when>
+          <when test="matches($_desc, 'is stopped')">
+            <setEventAttribute attr="eventType">Symantec-AV-Client-Stopped</setEventAttribute>
+          </when>
+        </choose>
+      </case>
+
+      <!-- the sixtenth kind
+      <54>Jul 28 08:09:32 SymantecServer corpepp01: CORPMIO-H4VYWB1,Category: 0,Smc,Network Threat Protection - - Engine version: 11.0.480  Windows Version info:  Operating System: Windows XP (5.1.2600 Service Pack 3)  Network  info:  No.0  "Local Area Connection 3"  00-15-c5-46-58-1e  "Broadcom NetXtreme 57xx Gigabit Controller" 10.0.208.66
+      -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[(?:SymantecServer\s+<reptDevName:patStrEndWithColon>|<reptDevName:gPatHostName>\s+SymantecServer):\s+<computer:patStrEndWithComma>,Category:\s+<:patStrEndWithComma>,<:patStrEndWithComma>,<:gPatMesgBody>\s+Engine version: <:gPatStr>\s+Windows Version info:\s+<_osInfo:gPatMesgBody>\s+Network\s+info:<_netInfo:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Symantec-AV-Threat-Protection</setEventAttribute>
+        <when test="exist _osInfo">
+          <collectFieldsByRegex src="$_osInfo">
+            <regex><![CDATA[Operating\s+System:\s+<osType:gPatMesgBody>\s+\(<osVersion:gPatMesgBody>\)]]></regex>
+          </collectFieldsByRegex>
+        </when>
+        <when test="matches($_netInfo, '\d+\.\d+\.\d+\.\d+')">
+          <collectFieldsByRegex src="$_netInfo">
+            <regex><![CDATA[\s+<:gPatStr>\s+"<:gPatMesgBody>"\s+<_mac:gPatStr>\s+"<:gPatMesgBody>"\s+<hostIpAddr:gPatIpAddr>.*]]></regex>
+          </collectFieldsByRegex>
+          <when test="exist _mac">
+            <setEventAttribute attr="hostMACAddr">replaceStrInStr($_mac, "-", ":")</setEventAttribute>
+          </when>
+        </when>
+      </case>
+
+      <!-- the sevententh kind
+      <51>Jul 28 08:08:13 SymantecServer corpepp01: CORPBT-22148,Category: 0,SYLINK,Failed to contact server for more than 10 times.
+      -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[(?:SymantecServer\s+<reptDevName:patStrEndWithColon>|<reptDevName:gPatHostName>\s+SymantecServer):\s+<computer:patStrEndWithComma>,Category:\s+<:patStrEndWithComma>,<:patStrEndWithComma>,Failed to contact server for more than <:gPatInt> times\.]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Symantec-AV-Server-Contact-Failed</setEventAttribute>
+      </case>
+
+      <!-- the eigthteenth kind
+      <54>Jul 28 08:09:32 SymantecServer corpepp01: CORPSAL-25499,Category: 0,SYLINK,Reconnected to server after server was unreacheable.
+      -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[(?:SymantecServer\s+<reptDevName:patStrEndWithColon>|<reptDevName:gPatHostName>\s+SymantecServer):\s+<computer:patStrEndWithComma>,Category:\s+<:patStrEndWithComma>,<:patStrEndWithComma>,Reconnected to server after server was unreacheable\.]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Symantec-AV-Server-Reconnected</setEventAttribute>
+      </case>
+
+      <!-- the ninteenth kind
+      <54>Jul 28 08:02:14 SymantecServer corpepp01: Site: HWAYEPP,Server: corpepp01,Domain: abc,23,rducwrk-1014,user,example.com
+      <54>Jul 28 08:00:51 SymantecServer corpepp01: Site: HWAYEPP,Server: corpepp01,Domain: abc,The client has downloaded the content package successfully,baltbrnhrt-xplt,user,example.com
+      <54>Jul 28 08:09:03 SymantecServer corpepp01: Site: HWAYEPP,Server: corpepp01,Domain: abc,The client has reconnected with the management server,8000e-X0481MZM,user,example.com
+      <54>Jul 28 08:03:28 SymantecServer corpepp01: Site: HWAYEPP,Server: corpepp01,Domain: abc,The management server received the client log successfully,2510p-X82447B9,user,example.com
+      <54>Nov 2 09:33:50 PA-PANDORA SymantecServer: Site: Site PA-PANDORA,Server: PA-PANDORA,Domain: Default,The client has downloaded globalindex.dax,SLVDI6PRD006,user,example.com
+      <54>Nov 2 09:33:45 PA-PANDORA SymantecServer: Site: Site PA-PANDORA,Server: PA-PANDORA,Domain: Default,The client has downloaded globalindex.dax,PA4LJFKZF12,user,example.com
+     -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[(?:SymantecServer\s+<reptDevName:patStrEndWithColon>|<reptDevName:patStrEndWithColon>\s+SymantecServer):\s+Site:\s+<:patStrEndWithComma>,Server:\s+<destName:patStrEndWithComma>,Domain:\s+<domain:patStrEndWithComma>,<description:patStrEndWithComma>,<hostName:patStrEndWithComma>,<user:patStrEndWithComma>,<domain:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <choose>
+          <when test="matches($description, 'downloaded the content package successfully')">
+            <setEventAttribute attr="eventType">Symantec-AV-Package-Downloaded</setEventAttribute>
+          </when>
+          <when test="matches($description, 'reconnected')">
+            <setEventAttribute attr="eventType">Symantec-AV-Client-Reconnected</setEventAttribute>
+          </when>
+          <when test="matches($description, 'received the client log successfully')">
+            <setEventAttribute attr="eventType">Symantec-AV-Client-Log-Received</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">Symantec-AV-Client</setEventAttribute>
+          </otherwise>
+        </choose>
+      </case>
+
+      <!-- the twentith kind
+      <54>Jul 28 07:55:32 SymantecServer corpepp01: host1,Blocked,Unauthorized NT call rejected by protection driver.,System,Begin: 2011-07-27 15:29:57,End: 2011-07-27 15:29:57,Rule: Built-in rule,6092,AcroRd32.exe,0,None,"FuncID=74H, RetAddr=18005CH",User: user1,Domain: ABC
+      <52>Mar 16 16:15:34 SRVAV02 SymantecServer: host2,10.2.15.50,Blocked,[AC3-1.1] Block writing to removable drives - Caller MD5=619a67c9f617b7e69315bb28ecd5e1df,File Write,Begin: 2020-03-16 15:32:00,End: 2020-03-16 15:32:00,Rule: Block writing to removable media | [AC3-1.1] Block writing to all files and folders,7180,C:/Windows/System32/wbem/WmiPrvSE.exe,0,No Module Name,D:/,User: John Smith,Domain: dom1,Action Type: ,File size (bytes): 0,Device ID: SCSI\CdRom&Ven_HL-DT-ST&Prod_DVD+-RW_GU90N
+      -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^(?:SymantecServer\s+<reptDevName:gPatHostName>|<reptDevName:gPatHostName>\s+SymantecServer):\s+<computer:gPatStrComma>,(?:<hostIpAddr:gPatIpAddr>,)?<fwAction:gPatWord>,<:gPatStrComma>,<:gPatStrComma>,Begin:<:gPatStrComma>,End:<:gPatStrComma>,Rule:\s+<fwRule:gPatStrComma>,<:gPatStrComma>,<procName:gPatStrComma>,<:gPatStrComma>,<:gPatStrComma>,<:gPatMesgBody>,User:\s+<user:gPatStrComma>,Domain:\s+<domain:gPatStrComma>]]></regex>
+        </collectFieldsByRegex>
+        <choose>
+          <when test="$fwAction IN 'Allowed, Continue'">
+            <setEventAttribute attr="eventType">Symantec-AV-Traffic-Permit</setEventAttribute>
+            <setEventAttribute attr="eventAction">0</setEventAttribute>
+          </when>
+          <when test="$fwAction = 'Blocked'">
+            <setEventAttribute attr="eventType">Symantec-AV-Traffic-Deny</setEventAttribute>
+            <setEventAttribute attr="eventAction">1</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">Symantec-AV-Traffic</setEventAttribute>
+          </otherwise>
+        </choose>
+      </case>
+
+      <!--
+      <54>Mar  4 03:15:01 SymantecServer usbb-sepm: FRPAR-HUBINY,"Contrle de lintgrit de lhte russi   Condition: ""Default Deny Check"" russi   Condition: ""Disable Windows Autoplay features on all device types (Windows 2000)"" russi   Condition: ""Disable Windows Autoplay features on all device types ( Windows XP, Windows2003)"" russi   Condition: ""Disable Windows Autoplay features on all device types (Windows Vista, Windows 7, Windows2008)"" russi   Condition: ""System Event Notification Service Start XP-Srv2003"" russi   Condition: ""System Event Notification Service Start Vista-Win7-Srv2008"" russi   Condition: ""Windows XP Service Pack Check"" russi   Condition: ""Windows XP 64 Bit Service Pack Check"" russi   Condition: ""Windows 2000 Service Pack Check"" russi   Condition: ""Windows 2003 Service Pack Check"" russi   Condition: ""Windows Vista Service Pack Check"" russi   Condition: ""SCCM Installed Check"" russi   Condition: ""SCCM Service Start"" russi   Condition: ""SEP Antivirus Definitions Update 32 Bit"" russi   Condition: ""SEP Antivirus Definitions Update 64 Bit"" russi   Condition: ""SEP NetworkThreat Protection Installed Check"" russi   Condition: ""SEP Network Threat Protection Running Check"" russi   Condition: ""SEP Antivirus Installed Check"" russi   Condition: ""SEP Antivirus Running Check"" russi   Condition: ""SEP Antivirus Definitions Check"" russi   Condition: ""SCCM Running Check"" russi",Local: 192.168.1.12,Local: 00226894F18C,Remote: ,Remote: 0.0.0.0,Remote: 000000000000,Unknown,OTHERS,,Begin: 2012-03-04 03:13:31,End: 2012-03-04 03:13:31,Occurrences: 1,Application: ,Location: VPN,User: joeUser,Domain: ABC
+      -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[(?:SymantecServer\s+<reptDevName:patStrEndWithColon>|<reptDevName:gPatHostName>\s+SymantecServer):\s+<computer:patStrEndWithComma>,<_body2:gPatMesgBody>,<_localEndPt:patStrLocal><_remoteEndPt:patStrRemote><direction:patStrEndWithComma>,<_proto:patStrEndWithComma>,<:patStrEndWithComma>,<:patStrEndWithComma>,<:patStrEndWithComma>,Occurrences:\s+<count:gPatInt>,Application:\s+<swProcName:patStrEndWithComma>,Location:\s+<:patStrEndWithComma>,User:\s+<user:patStrEndWithComma>,Domain:\s+<domain:patStrEndWithComma>]]></regex>
+        </collectFieldsByRegex>
+        <choose>
+          <when test="matches($_body2, 'Host Integrity check passed')">
+            <setEventAttribute attr="eventType">Symantec-AV-HostIntegrity-Passed</setEventAttribute>
+          </when>
+          <when test="matches($_body2, 'Verificao da integridade do host passou')">
+            <setEventAttribute attr="eventType">Symantec-AV-HostIntegrity-Passed</setEventAttribute>
+          </when>
+          <when test="matches($_body2, 'Contrle de lintgrit de lhte russi')">
+            <setEventAttribute attr="eventType">Symantec-AV-HostIntegrity-Passed</setEventAttribute>
+          </when>
+          <when test="matches($_body2, 'Host Integrity check failed')">
+            <setEventAttribute attr="eventType">Symantec-AV-HostIntegrity-Failed</setEventAttribute>
+          </when>
+          <when test="matches($_body2, 'Application has changed')">
+            <setEventAttribute attr="eventType">Symantec-AV-Application-Changed</setEventAttribute>
+          </when>
+          <when test="matches($_body2, 'Device Manager Message The device was disabled successfully')">
+            <setEventAttribute attr="eventType">Symantec-AV-Device-Disabled</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">Symantec-AV-Generic</setEventAttribute>
+          </otherwise>
+        </choose>
+
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body2">
+              <regex><![CDATA[\[name\]:<hostModel:gPatMesgBodyMin>\s+\[class\]:<type:gPatMesgBodyMin>\s+\[guid\]:<:gPatStr>\s+\[deviceID\]:<uuid:gPatStrComma>,]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[.*IP Fragmentation Overlap.*\",<_body2:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <collectFieldsByRegex src="$_body2">
+          <regex><![CDATA[<_localEndPt:patStrLocal><_remoteEndPt:patStrRemote><direction:patStrEndWithComma>,<_proto:patStrEndWithComma>,.*,Begin:\s+<_eventTime:patStrEndWithComma>,End:\s+<:patStrEndWithComma>,Occurrences:\s+<:patStrEndWithComma>,Application:\s+<:patStrEndWithComma>,Location:\s+<:patStrEndWithComma>,User:\s+<user:patStrEndWithComma>,Domain:\s+<domain:patStrEndWithComma>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Symantec-AV-IP-Fragmentation-Overlap</setEventAttribute>
+        <when test="exist _eventTime">
+          <collectFieldsByRegex src="$_eventTime">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>\s+<_time:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </when>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[.*\[SID:\s+<symEventId:gPatInt>\]\s+Malicious Site:.*\",<_body2:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <collectFieldsByRegex src="$_body2">
+          <regex><![CDATA[<_localEndPt:patStrLocal><_remoteEndPt:patStrRemote><direction:patStrEndWithComma>,<_proto:patStrEndWithComma>,.*,Begin:\s+<_eventTime:patStrEndWithComma>,End:\s+<:patStrEndWithComma>,Occurrences:\s+<:patStrEndWithComma>,Application:\s+<:patStrEndWithComma>,Location:\s+<:patStrEndWithComma>,User:\s+<user:patStrEndWithComma>,Domain:\s+<domain:patStrEndWithComma>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Symantec-AV-Malicious-Site</setEventAttribute>
+        <when test="exist _eventTime">
+          <collectFieldsByRegex src="$_eventTime">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>\s+<_time:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </when>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[LiveUpdate Manager,.*The new sequence number is\s+<seqNum:gPatInt>\.]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Symantec-AV-Updated</setEventAttribute>
+      </case>
+
+      <case>
+        <!--
+<54>Oct  7 06:36:38 SymantecServer APP-SEP-01: Scan ID: 1412663721,Begin: 2014-10-07 09:38:37,End: 2014-10-07 09:40:36,Completed,Duration (seconds): 119,User1: SYSTEM,User2: SYSTEM,"Scan started on selected drives and folders and all extensions.","Scan Complete:  Risks: 0   Scanned: 860   Files/Folders/Drives Omitted: 0 Trusted Files Skipped: 858",Command: Not a command scan (),Threats: 0,Infected: 0,Total files: 860,Omitted: 0,Computer: L-18095-1,IP Address: 192.168.0.61,Domain: abc.lan,Group: My Company\abc.lan\Administration,Server: APP-SEP-01
+<54>Oct  7 05:22:58 SymantecServer APP-SEP-01: Scan ID: 1412100841,Begin: 2014-10-07 09:38:51,End: ,Started,Duration (seconds): 0,User1: SYSTEM,User2: ,"Scan started on selected drives and folders and all extensions.",,Command: Not a command scan (),Threats: 0,Infected: 0,Total files: 0,Omitted: 0,Computer: W-9684-SHRD-10,IP Address: 10.3.30.59,Domain: abc.lan,Group: My Company\abc.lan\Manufacturing,Server: APP-SEP-01
+        -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[(?:SymantecServer\s+<reptDevName:patStrEndWithColon>|<reptDevName:gPatHostName>\s+SymantecServer|SymantecServer): Scan ID: \d+,Begin: <:gPatStrComma>,End(?: Time)?: <:gPatStrComma>,<_status:gPatStrComma>,Duration <:gPatStrComma>,User\d+: <user:gPatStrComma>,.*,Threats: <threatFiles:gPatInt>,Infected: <infectedFiles:gPatInt>,Total files: <scannedFiles:gPatInt>,Omitted: <omittedFiles:gPatInt>,Computer: <hostName:gPatStrComma>,IP Address: <hostIpAddr:gPatIpAddr>,Domain(?: Name)?:\s+<domain:gPatStrComma>,Group(?: Name)?:\s+<userGrp:gPatStrComma>]]></regex>
+        </collectFieldsByRegex>
+
+        <choose>
+          <when test="$_status = 'Completed'">
+            <setEventAttribute attr="eventType">Symantec-AV-Scan-Completed</setEventAttribute>
+          </when>
+          <when test="$_status = 'Started'">
+            <setEventAttribute attr="eventType">Symantec-AV-Scan-Started</setEventAttribute>
+          </when>
+          <when test="$_status = 'Cancelled'">
+            <setEventAttribute attr="eventType">Symantec-AV-Scan-Cancelled</setEventAttribute>
+          </when>
+        </choose>
+
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!--
+<54>Sep 16 22:12:30 SymantecServer APP-SEP-01: Security risk found,IP Address: 10.1.202.71,Computer name: L-16714-1,Source: Real Time Scan,Risk name: MyPCBackup,Occurrences: 1,C:\Users\jwilkin\AppData\Local\Temp\BackupSetup.exe,"",Actual action: Partially repaired,Requested action: Quarantined,Secondary action: Deleted,Event time: 2014-09-17 02:40:15,Inserted: 2014-09-17 03:12:30,End: 2014-09-17 02:40:15,Last update time: 2014-09-17 03:12:30,Domain: abc.lan,Group: My Company\Asia.abc.lan\Workstation Clients\Standard Workstations,Server: APP-SEP-01,User: SYSTEM,Source computer: ,Source IP: ,Disposition: Good,Download site: ,Web domain: ,Downloaded by: ,Prevalence: This file is used by millions of Symantec users.,Confidence: There is a lot of evidence that this file is trustworthy.,URL Tracking Status: Off,,First Seen: Symantec has known about this file approximately 1 year.,Sensitivity: ,MDS,Application hash: 00D468FA26813736CD14FF91E84F5E31FE30EAEF6B35AF44CAFE540870EA7873,Hash type: SHA2,Company name: ,Application name: CloudBackup1952.exe,Application version: ,Application type: 127,File size (bytes): 10372136
+        -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[(?:SymantecServer\s+<reptDevName:patStrEndWithColon>|<reptDevName:gPatHostName>\s+SymantecServer):\s+Security risk found,IP Address:\s+<hostIpAddr:gPatIpAddr>,Computer name:\s+<hostName:gPatStrComma>,Source:\s+<:gPatStrComma>,Risk name:\s+<riskName:gPatStrComma>,Occurrences:\s+<count:gPatInt>,.*,Domain: <domain:gPatStrComma>,.*,User: <user:gPatStrComma>,.*,Application name: <fileName:gPatStrComma>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Symantec-AV-File-Quarantined</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+      <case>
+        <!--
+<54>Oct 17 13:37:49 SymantecServer APP-SEP-01: SONAR detection now permitted,IP Address: 10.2.12.89,Computer name: L-04711-1,Source: Real Time Scan,Risk name: WS.Reputation.1,Occurrences: 1,c:\users\user1\downloads\firefoxsetup.exe,"",Actual action: Left alone,Requested action: Process terminate pending restart,Secondary action: 102,Event time: 2014-10-17 17:08:04,Inserted: 2014-10-17 18:37:49,End: 2014-10-17 17:08:04,Last update time: 2014-10-17 18:37:49,Domain: abc.lan,Group: My Company\abc.lan\Software Development,Server: APP-SEP-01,User: user1,Source computer: ,Source IP: ,Disposition: Good,Download site: ,Web domain: ,Downloaded by: c:/program files (x86)/google/chrome/application/chrome.exe,Prevalence: Unknown,Confidence: There is some evidence that this file is trustworthy.,URL Tracking Status: Off,,First Seen: Symantec has known about this file approximately 2 days.,Sensitivity: ,102,Application hash: B6B4894B70CF38DDF490F6277ECDBD867B67FBFD5FBF18B95D73F618A699C2BD,Hash type: SHA2,Company name: ,Application name: firefoxsetup.exe,Application version: ,Application type: 127,File size (bytes): 831592
+        -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[(?:SymantecServer\s+<reptDevName:patStrEndWithColon>|<reptDevName:gPatHostName>\s+SymantecServer):\s+SONAR detection now permitted,IP Address:\s+<hostIpAddr:gPatIpAddr>,Computer name:\s+<hostName:gPatStrComma>,Source:\s+<:gPatStrComma>,Risk name:\s+<riskName:gPatStrComma>,Occurrences:\s+<count:gPatInt>,.*,Domain: <domain:gPatStrComma>,.*,User: <user:gPatStrComma>,.*,Application name: <fileName:gPatStrComma>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Symantec-AV-Sonar-Detection</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[(?:SymantecServer\s+<reptDevName:patStrEndWithColon>|<reptDevName:gPatHostName>\s+SymantecServer):\s+<computer:patStrEndWithComma>,Category:\s+<:gPatInt>,<_body2:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <switch>
+          <case>
+            <!-- <51>Sep  3 11:14:00 SymantecServer geisep1: A2462,Category: 2,REP,Cannot assign a client authentication token. There was a general communication failure. -->
+            <!-- <51>Sep  3 16:33:07 SymantecServer geisep1: A2836,Category: 2,REP,Cannot assign a client authentication token. The returned error code was 86. -->
+            <!-- <51>Sep  3 20:32:53 SymantecServer geisep1: a2780,Category: 2,REP,Cannot assign a client authentication token. This client is over the maximum allocation of client authentication tokens. -->
+            <collectFieldsByRegex src="$_body2">
+              <regex><![CDATA[REP,Cannot assign a client authentication token\.\s+<_desc:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <choose>
+              <when test="matches($_desc, '^There was a general communication failure')">
+                <setEventAttribute attr="eventType">Symantec-AV-REP-Authentication-General-Failure</setEventAttribute>
+              </when>
+              <when test="matches($_desc, '^The returned error code')">
+                <setEventAttribute attr="eventType">Symantec-AV-REP-Authentication-Error-Code</setEventAttribute>
+              </when>
+              <when test="matches($_desc, '^This client is over the maximum allocation')">
+                <setEventAttribute attr="eventType">Symantec-AV-REP-Authentication-Over-Maximum</setEventAttribute>
+              </when>
+            </choose>
+          </case>
+          <case>
+            <!-- <52>Sep  3 11:48:01 SymantecServer geisep1: A2103,Category: 2,IPS,[Intrusion prevention submission] Submitting file to Symantec failed.  File : '\Windows\system32\MSHTML.dll'. -->
+            <collectFieldsByRegex src="$_body2">
+              <regex><![CDATA[IPS,\[Intrusion prevention submission\] Submitting file to Symantec failed]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Symantec-AV-IPS-Submission-Failure</setEventAttribute>
+          </case>
+          <case>
+            <!-- <52>Sep  3 20:32:53 SymantecServer geisep1: a2780,Category: 2,SONAR,[SONAR heuristic Submission] Submitting file to Symantec failed.  File : 'c:\program files (x86)\microsoft silverlight\4.1.10111.0\system.dll'. -->
+            <collectFieldsByRegex src="$_body2">
+              <regex><![CDATA[SONAR,\[SONAR heuristic Submission\] Submitting file to Symantec failed]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Symantec-AV-SONAR-Submission-Failure</setEventAttribute>
+          </case>
+          <case>
+            <!-- <51>Sep  3 14:19:04 SymantecServer geisep1: A2623,Category: 0,Smc,The Symantec Endpoint Protection is unable to download the newest policy from the Symantec Endpoint Protection Manager. -->
+            <collectFieldsByRegex src="$_body2">
+              <regex><![CDATA[Symantec Endpoint Protection is unable to download the newest policy from the Symantec Endpoint Protection Manager]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Symantec-AV-Smc-Policy-Download-Failure</setEventAttribute>
+          </case>
+          <case>
+            <!-- <52>Sep  3 17:27:30 SymantecServer geisep1: a2780,Category: 0,Smc,Please restart your computer to enable Application Control Policy changes. -->
+            <collectFieldsByRegex src="$_body2">
+              <regex><![CDATA[Smc,Please restart your computer to enable Application Control Policy changes]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Symantec-AV-Smc-Restart-Prompt</setEventAttribute>
+          </case>
+          <case>
+            <!-- <51>Sep  5 10:32:06 SymantecServer geisep1: a2105,Category: 0,Smc,Manager cannot load the backup client policy (prodcltdef.dat) -->
+            <collectFieldsByRegex src="$_body2">
+              <regex><![CDATA[Smc,Manager cannot load the backup client policy]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Symantec-AV-Smc-ClientPolicy-Load-Failure</setEventAttribute>
+          </case>
+          <case>
+            <!-- <51>Sep  3 16:37:07 SymantecServer geisep1: A2926,Category: 2,Symantec Endpoint Protection,SONAR has generated an error: code 0: description: Definition Failure -->
+            <collectFieldsByRegex src="$_body2">
+              <regex><![CDATA[Symantec Endpoint Protection,SONAR has generated an error:\s+<:gPatMesgBody>\s+Definition Failure]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Symantec-AV-EndpointProtection-Definition-Failure</setEventAttribute>
+          </case>
+          <case>
+            <!-- <51>Sep  4 09:17:46 SymantecServer geisep1: A2926,Category: 2,Symantec Endpoint Protection,Symantec Endpoint Protection Auto-Protect failed to load. -->
+            <collectFieldsByRegex src="$_body2">
+              <regex><![CDATA[Symantec Endpoint Protection,Symantec Endpoint Protection Auto-Protect failed to load]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Symantec-AV-EndpointProtection-AutoProtect-Failure</setEventAttribute>
+          </case>
+          <case>
+            <!-- <62>May 28 12:49:52 nah-s609 SymantecServer: CMS-LPE03C5BB,Category: 0,Smc,User is attempting to terminate Symantec Management Client....,Event time: 2018-05-28 12:48:41 -->
+            <collectFieldsByRegex src="$_body2">
+              <regex><![CDATA[User is attempting to terminate Symantec Management Client]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Symantec-AV-Client-Stopped</setEventAttribute>
+          </case>
+          <case>
+            <!-- <62>May 28 12:48:52 nah-s609 SymantecServer: GDL-LPC0C1JPB,Category: 2,Generic Exploit Mitigation Syste,Already running process (PID:8724) 'C:\Program Files\Internet Explorer\iexplore.exe' is affected by a change to the application rules.,Event time: 2018-05-28 12:47:55 -->
+            <collectFieldsByRegex src="$_body2">
+              <regex><![CDATA[^Generic Exploit Mitigation Syste]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Symantec-AV-Exploit-Mitigation-System</setEventAttribute>
+          </case>
+        </switch>
+      </case>
+
+      <case>
+        <!-- <51>Sep  4 01:00:37 SymantecServer geisep1: Site: Gables Engineering,Server: geisep1,Unexpected server error. -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[(?:SymantecServer\s+<reptDevName:patStrEndWithColon>|<reptDevName:gPatHostName>\s+SymantecServer):\s+<:patStrEndWithComma>\s+Gables Engineering,Server: geisep1,Unexpected server error]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Symantec-AV-Generic-Error</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <51>Feb 12 10:34:15 host1 SymantecServer: PF0P56J5,Event Description: [SID: 32311] Malicious Site: Malicious Domain Request 42 attack blocked. Traffic has been blocked for this application: C:\PROGRAM FILES (X86)\GOOGLE\CHROME\APPLICATION\CHROME.EXE,Local Host IP: 192.168.1.71,Local Host MAC: 000000000000,Remote Host Name: ,Remote Host IP: 1.1.1.1,Remote Host MAC: 000000000000,Inbound,TCP,Intrusion ID: 0,Begin: 2021-02-11 23:30:51,End Time: 2021-02-11 23:30:53,Occurrences: 2,Application: C:/PROGRAM FILES (X86)/GOOGLE/CHROME/APPLICATION/CHROME.EXE,Location: l1,User Name: u1,Domain Name: d1,Local Port: 60021,Remote Port: 443,CIDS Signature ID: 32311,CIDS Signature string: Malicious Site: Malicious Domain Request 42,CIDS Signature SubID: 73264,Intrusion URL: https://example.com,Intrusion Payload URL: ,SHA-256: 10C927274F54CC9EE0ECC30871D6173506AB24A51ECA8470231ABB43C50FF857,MD-5: -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[(?:SymantecServer\s+<reptDevName:gPatHostName>|<reptDevName:gPatHostName>\s+SymantecServer):\s+<:gPatStrComma>,Event Description:\s+<msg:gPatStrComma>,<_body2:gPatMesgBodyMin>,<direction:patField>,<_proto:patField>,<_body3:gPatMesgBodyMin>\s*$]]></regex>
+        </collectFieldsByRegex>
+
+        <choose>
+          <when test="matches($msg, 'Device Manager Message Disabled the device')">
+            <setEventAttribute attr="eventType">Symantec-AV-Device-Disabled</setEventAttribute>
+          </when>
+          <when test="matches($msg, 'Malicious Site:')">
+            <setEventAttribute attr="eventType">Symantec-AV-Malicious-Site</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">Symantec-AV-Generic</setEventAttribute>
+          </otherwise>
+        </choose>
+
+        <collectAndSetAttrByKeyValuePair src="$_body2" sep=",">
+          <attrKeyMap attr="_locIp" key="Local Host IP: "/>
+          <attrKeyMap attr="_locMAC" key="Local Host MAC: "/>
+          <attrKeyMap attr="_remIp" key="Remote Host IP: "/>
+          <attrKeyMap attr="_remMAC" key="Remote Host MAC: "/>
+          <attrKeyMap attr="_remName" key="Remote Host Name: "/>
+        </collectAndSetAttrByKeyValuePair>
+
+        <collectAndSetAttrByKeyValuePair src="$_body3" sep=",">
+          <attrKeyMap attr="procName" key="Application: "/>
+          <attrKeyMap attr="domain" key="Domain Name: "/>
+          <attrKeyMap attr="infoURL" key="Intrusion URL: "/>
+          <attrKeyMap attr="_locPort" key="Local Port: "/>
+          <attrKeyMap attr="hashMD5" key="MD-5: "/>
+          <attrKeyMap attr="count" key="Occurrences: "/>
+          <attrKeyMap attr="_remPort" key="Remote Port: "/>
+          <attrKeyMap attr="hashSHA256" key="SHA-256: "/>
+          <attrKeyMap attr="user" key="User Name: "/>
+        </collectAndSetAttrByKeyValuePair>
+      </case>
+
+      <default>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[(?:SymantecServer\s+<reptDevName:gPatStrEndColon>|<reptDevName:gPatHostName>\s+SymantecServer):\s+<computer:gPatStr>,]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+
+        <collectAndSetAttrByKeyValuePair src="$_body" sep=",">
+          <attrKeyMap attr="computer" key="Computer name: "/>
+          <attrKeyMap attr="fwAction" key="Actual action: "/>
+          <attrKeyMap attr="secAction" key="Secondary action: "/>
+          <attrKeyMap attr="_eventTime" key="Event time: "/>
+          <attrKeyMap attr="domain" key="Domain: "/>
+          <attrKeyMap attr="userGrp" key="Group: "/>
+          <attrKeyMap attr="user" key="User: "/>
+          <attrKeyMap attr="hostIpAddr" key="IP Address: "/>
+          <attrKeyMap attr="riskName" key="Risk name: "/>
+          <attrKeyMap attr="cookie" key="Cookie:"/>
+          <attrKeyMap attr="appName" key="Application name: "/>
+          <attrKeyMap attr="destName" key="Server: "/>
+          <attrKeyMap attr="eventSource" key=",Source: "/>
+          <attrKeyMap attr="count" key="Occurrences: "/>
+        </collectAndSetAttrByKeyValuePair>
+        <when test="exist _eventTime">
+          <collectFieldsByRegex src="$_eventTime">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>\s+<_time:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </when>
+        <choose>
+          <when test="matches($_body, 'Trojan Worm')">
+            <setEventAttribute attr="eventType">Symantec-AV-Trojan-Worm</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Tracking Cookies')">
+            <setEventAttribute attr="eventType">Symantec-AV-Tracking-Cookies</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Virus found')">
+            <setEventAttribute attr="eventType">Symantec-AV-Virus-Found</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Commercial application detected')">
+            <setEventAttribute attr="eventType">Symantec-AV-Commercial-Application</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Compressed File')">
+            <setEventAttribute attr="eventType">Symantec-AV-Compressed-File</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Failed to connect to ')">
+            <setEventAttribute attr="eventType">Symantec-AV-Connection-Failed</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Connection reset')">
+            <setEventAttribute attr="eventType">Symantec-AV-Connection-Reset</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Database maintenance started')">
+            <setEventAttribute attr="eventType">Symantec-AV-DB-Maintenance-Started</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Database maintenance finished successfully')">
+            <setEventAttribute attr="eventType">Symantec-AV-DB-Maintenance-Succeed</setEventAttribute>
+          </when>
+          <when test="matches($_body, ' swept')">
+            <setEventAttribute attr="eventType">Symantec-AV-Sweep-Info</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'AgentGUID')">
+            <setEventAttribute attr="eventType">Symantec-AV-AgentGUID-Info</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'LiveUpdate')">
+            <setEventAttribute attr="eventType">Symantec-AV-LiveUpdate-Info</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'LUALL.EXE')">
+            <setEventAttribute attr="eventType">Symantec-AV-LiveUpdate-Info</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'up-to-date')">
+            <setEventAttribute attr="eventType">Symantec-AV-UpToDate-Info</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Network Threat Protection')">
+            <setEventAttribute attr="eventType">Symantec-AV-NTP-Info</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Stop Symantec Network Access Control client')">
+            <setEventAttribute attr="eventType">Symantec-AV-Stop-NAC</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Location has been changed to ')">
+            <setEventAttribute attr="eventType">Symantec-AV-Location-Changed</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Host Integrity check is enabled')">
+            <setEventAttribute attr="eventType">Symantec-AV-HostIntegrity-Enabled</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Using Group Update Provider type')">
+            <setEventAttribute attr="eventType">Symantec-AV-Group-Update</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Network Intrusion Protection Sys')">
+            <setEventAttribute attr="eventType">Symantec-AV-Threat-Protection</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Downloaded content from ')">
+            <setEventAttribute attr="eventType">Symantec-AV-Download-Success</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Downloaded new content update from .* successfully')">
+            <setEventAttribute attr="eventType">Symantec-AV-Download-Success</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Downloaded new content update from .* failed')">
+            <setEventAttribute attr="eventType">Symantec-AV-Download-Failed</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Failed to download ')">
+            <setEventAttribute attr="eventType">Symantec-AV-Download-Failed</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Information submitted to ')">
+            <setEventAttribute attr="eventType">Symantec-AV-Info-Submitted</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Submitting information to .* failed')">
+            <setEventAttribute attr="eventType">Symantec-AV-Submit-Failed</setEventAttribute>
+          </when>
+          <otherwise/>
+        </choose>
+
+        <when test="matches($_body, 'Trojan Worm|Virus found')">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_body">
+                <regex><![CDATA[,Occurrences:\s+<count:gPatInt>,<fileName:patStrEndWithComma>,]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+        </when>
+      </default>
+    </switch>
+
+    <when test="exist computer">
+      <setEventAttribute attr="hostName">$computer</setEventAttribute>
+    </when>
+
+    <!-- collect local values ip, mac port -->
+    <when test="exist direction">
+      <when test="exist _localEndPt">
+        <case>
+          <collectFieldsByRegex src="$_localEndPt">
+            <regex><![CDATA[(?:,Local:\s+(?:<_locIp:gPatIpAddr>|<_locPort:gPatIpPort>|<_locMAC:patMAC>|<_locName:gPatHostName>))*]]></regex>
+          </collectFieldsByRegex>
+        </case>
+      </when>
+
+      <when test="exist _remoteEndPt">
+        <case>
+          <collectFieldsByRegex src="$_remoteEndPt">
+            <regex><![CDATA[(?:,Remote:\s+(?:<_remIp:gPatIpAddr>|<_remPort:gPatIpPort>|<_locMAC:patMAC>|<_locName:gPatHostName>))*]]></regex>
+          </collectFieldsByRegex>
+        </case>
+      </when>
+
+      <choose>
+        <when test="$direction = 'Outbound'">
+          <when test="exist _locIp">
+            <setEventAttribute attr="srcIpAddr">$_locIp</setEventAttribute>
+          </when>
+          <when test="exist _locPort">
+            <setEventAttribute attr="srcIpPort">$_locPort</setEventAttribute>
+          </when>
+          <when test="exist _locMAC">
+            <setEventAttribute attr="_srcMACAddr">$_locMAC</setEventAttribute>
+          </when>
+          <when test="exist _locName">
+            <setEventAttribute attr="srcName">$_locName</setEventAttribute>
+          </when>
+
+          <when test="exist _remIp">
+            <setEventAttribute attr="destIpAddr">$_remIp</setEventAttribute>
+          </when>
+          <when test="exist _remPort">
+            <setEventAttribute attr="destIpPort">$_remPort</setEventAttribute>
+          </when>
+          <when test="exist _remMAC">
+            <setEventAttribute attr="_destMACAddr">$_remMAC</setEventAttribute>
+          </when>
+          <when test="exist _remName">
+            <setEventAttribute attr="destName">$_remName</setEventAttribute>
+          </when>
+        </when>
+        <when test="$direction = 'Inbound'">
+          <when test="exist _locIp">
+            <setEventAttribute attr="destIpAddr">$_locIp</setEventAttribute>
+          </when>
+          <when test="exist _locPort">
+            <setEventAttribute attr="destIpPort">$_locPort</setEventAttribute>
+          </when>
+          <when test="exist _locMAC">
+            <setEventAttribute attr="_destMACAddr">$_locMAC</setEventAttribute>
+          </when>
+          <when test="exist _locName">
+            <setEventAttribute attr="destName">$_locName</setEventAttribute>
+          </when>
+
+          <when test="exist _remIp">
+            <setEventAttribute attr="srcIpAddr">$_remIp</setEventAttribute>
+          </when>
+          <when test="exist _remPort">
+            <setEventAttribute attr="srcIpPort">$_remPort</setEventAttribute>
+          </when>
+          <when test="exist _remMAC">
+            <setEventAttribute attr="_srcMACAddr">$_remMAC</setEventAttribute>
+          </when>
+          <when test="exist _remName">
+            <setEventAttribute attr="srcName">$_remName</setEventAttribute>
+          </when>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist _hostMACAddr">
+      <setEventAttribute attr="hostMACAddr">normalizeMAC($_hostMACAddr)</setEventAttribute>
+    </when>
+    <when test="exist _srcMACAddr">
+      <setEventAttribute attr="srcMACAddr">normalizeMAC($_srcMACAddr)</setEventAttribute>
+    </when>
+    <when test="exist _destMACAddr">
+      <setEventAttribute attr="destMACAddr">normalizeMAC($_destMACAddr)</setEventAttribute>
+    </when>
+    <when test="exist _proto">
+      <when test="$_proto != 'OTHERS'">
+        <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+      </when>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

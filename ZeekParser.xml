@@ -1,0 +1,936 @@
+<eventParser name="ZeekParser">
+
+  <deviceType>
+    <Vendor>Zeek</Vendor>
+    <Model>Network Security Monitor</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<13>May 2 10:43:27 sec-sensor-ps bro_known_devices: {"ts":"2019-05-02T10:23:30.392726Z","mac":"00:15:5d:5d:51:12","dhcp_host_name":"minikube"}]]></testEvent>
+    <testEvent><![CDATA[<13>Mar 25 11:06:24 sec-sensor-ps bro_dns: {"ts":"2019-03-25T11:06:23.076747Z","uid":"CNYb362G6lbeZHXSSf","id.orig_h":"10.8.2.14","id.orig_p":59623,"id.resp_h":"10.8.1.203","id.resp_p":53,"proto":"udp","trans_id":21885,"rtt":0.000484,"query":"mobile.pipe.aria.microsoft.com","qclass":1,"qclass_name":"C_INTERNET","qtype":1,"qtype_name":"A","rcode":0,"rcode_name":"NOERROR","AA":false,"TC":false,"RD":true,"RA":true,"Z":0,"answers":["prd.col.aria.mobile.skypedata.akadns.net","pipe.skype.com","pipe.prd.skypedata.akadns.net","pipe.cloudapp.aria.akadns.net","52.114.76.34"],"TTLs":[1961.0,12.0,2990.0,6.0,6.0],"rejected":false}]]></testEvent>
+    <testEvent><![CDATA[<13>Mar 25 13:23:50 sec-sensor-ps bro_dhcp: {"ts":"2019-03-25T13:23:48.776550Z","uid":"CSKI9c2hhfDC9AR1md","id.orig_h":"10.8.3.1","id.orig_p":67,"id.resp_h":"10.8.1.204","id.resp_p":67,"mac":"88:44:77:49:ba:05","assigned_ip":"10.8.3.107","lease_time":14400.0,"trans_id":1277826018}]]></testEvent>
+    <testEvent><![CDATA[<190>Jun 16 18:02:10 test-sensor zeek_ssh: {"ts":1623862924.685552,"uid":"CxGYKu1AMo1mGSNwCi","id.orig_h":"192.168.77.99","id.orig_p":41896,"id.resp_h":"192.168.77.115","id.resp_p":22,"auth_attempts":0,"client":"SSH-2.0-libssh-0.6.3"}]]></testEvent>
+    <testEvent><![CDATA[<190>Jun 16 18:02:10 test-sensor zeek_conn: {"ts":1623862588.052524,"uid":"C4zrCf3SK3go0KNZce","id.orig_h":"192.168.77.115","id.orig_p":58808,"id.resp_h":"1.1.1.1","id.resp_p":443,"proto":"tcp","duration":35.34182286262512,"orig_bytes":0,"resp_bytes":3714,"conn_state":"RSTRH","local_orig":true,"local_resp":false,"missed_bytes":0,"history":"^hCacdfCr","orig_pkts":0,"orig_ip_bytes":0,"resp_pkts":10,"resp_ip_bytes":1876}]]></testEvent>
+    <testEvent><![CDATA[<13>Dec 10 11:21:14 bro bro-conn: 1575976862.702131	CRt3eU2vSrTz7kDK7k	192.168.1.71	40365	8.8.8.8	53	udp	dns	0.015469	43	107	SF	T	F	0	Dd	1	71	1	135	(empty)]]></testEvent>
+  </testEvents>
+
+  <!-- Zeek was formerly known as Bro -->
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>?<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+(?:bro|zeek)[-_]<:gPatWord>:\s+]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>?<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+<:gPatWord>[-_]<_type:gPatWord>:\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventType">combineMsgId("Zeek-", $_type)</setEventAttribute>
+    <!-- IDS no traffic is blocked only analyzed -->
+    <setEventAttribute attr="eventAction">0</setEventAttribute>
+
+    <!-- We assume json format -->
+    <choose>
+      <when test="matches($_body, '^\{')">
+        <choose>
+          <when test="$_type = 'dhcp'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="domain" key="domain"/>
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <!-- zeek will include multiple conn.log uids for DORA -->
+              <attrKeyMap attr="ipConnId" key="uids"/>
+              <attrKeyMap attr="srcIpAddr" key="client_addr"/>
+              <attrKeyMap attr="srcIpAddr" key="&quot;id.orig_h&quot;"/>
+              <attrKeyMap attr="srcIpPort" key="&quot;id.orig_p&quot;"/>
+              <attrKeyMap attr="destIpAddr" key="server_addr"/>
+              <attrKeyMap attr="destIpAddr" key="&quot;id.resp_h&quot;"/>
+              <attrKeyMap attr="destIpPort" key="&quot;id.resp_p&quot;"/>
+              <attrKeyMap attr="computer" key="host_name"/>
+              <attrKeyMap attr="hostName" key="host_name"/>
+              <attrKeyMap attr="hostMACAddr" key="mac"/>
+              <attrKeyMap attr="hostIpAddr" key="assigned_ip"/>
+              <attrKeyMap attr="srcName" key="client_fqdn"/>
+              <attrKeyMap attr="dhcpLeaseTime" key="lease_time"/>
+              <attrKeyMap attr="seqNum" key="trans_id"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type = 'conn'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="ipConnId" key="uid"/>
+              <attrKeyMap attr="srcIpAddr" key="&quot;id.orig_h&quot;"/>
+              <attrKeyMap attr="srcIpPort" key="&quot;id.orig_p&quot;"/>
+              <attrKeyMap attr="destIpAddr" key="&quot;id.resp_h&quot;"/>
+              <attrKeyMap attr="destIpPort" key="&quot;id.resp_p&quot;"/>
+              <attrKeyMap attr="_proto" key="proto"/>
+              <attrKeyMap attr="serviceName" key="service"/>
+              <!-- 0.0668 decimal in seconds-->
+              <attrKeyMap attr="duration" key="duration"/>
+              <!-- app layer sent and received bytes, counted sep from l3 bytes sent and received -->
+              <attrKeyMap attr="sentBytes64" key="orig_bytes"/>
+              <attrKeyMap attr="recvBytes64" key="resp_bytes"/>
+              <attrKeyMap attr="status" key="conn_state"/>
+              <attrKeyMap attr="duration" key="local_orig"/>
+              <attrKeyMap attr="_missed_bytes" key="missed_bytes"/>
+              <attrKeyMap attr="_history" key="history"/>
+              <attrKeyMap attr="sentPkts" key="orig_pkts"/>
+              <!-- L3 bytes sent and received -->
+              <attrKeyMap attr="_orig_ip_bytes" key="orig_ip_bytes"/>
+              <attrKeyMap attr="recvPkts" key="resp_pkts"/>
+              <attrKeyMap attr="_resp_ip_bytes" key="resp_ip_bytes"/>
+              <!-- tunnel parents is set of strings -->
+              <attrKeyMap attr="_tunnelParents" key="tunnel_parents"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type = 'radius'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="ipConnId" key="uid"/>
+              <attrKeyMap attr="srcIpAddr" key="&quot;id.orig_h&quot;"/>
+              <attrKeyMap attr="srcIpPort" key="&quot;id.orig_p&quot;"/>
+              <attrKeyMap attr="destIpAddr" key="&quot;id.resp_h&quot;"/>
+              <attrKeyMap attr="destIpPort" key="&quot;id.resp_p&quot;"/>
+              <attrKeyMap attr="user" key="username"/>
+              <attrKeyMap attr="hostMACAddr" key="mac"/>
+              <attrKeyMap attr="hostIpAddr" key="remote_ip"/>
+              <attrKeyMap attr="hostIpAddr" key="remote_ip"/>
+              <attrKeyMap attr="connMode" key="connect_info"/>
+              <attrKeyMap attr="msg" key="reply_msg"/>
+              <attrKeyMap attr="authResult" key="result"/>
+              <attrKeyMap attr="_logged" key="logged"/>
+            </collectAndSetAttrByJSON>
+
+            <when test="exist authResult">
+              <setEventAttribute attr="eventType">combineMsgId($eventType,"-", $authResult)</setEventAttribute>
+            </when>
+          </when>
+          <when test="$_type = 'dns'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="ipConnId" key="uid"/>
+              <attrKeyMap attr="srcIpAddr" key="&quot;id.orig_h&quot;"/>
+              <attrKeyMap attr="srcIpPort" key="&quot;id.orig_p&quot;"/>
+              <attrKeyMap attr="dnsServer" key="&quot;id.resp_h&quot;"/>
+              <attrKeyMap attr="destIpPort" key="&quot;id.resp_p&quot;"/>
+              <attrKeyMap attr="_proto" key="proto"/>
+              <attrKeyMap attr="dnsTransactionId" key="trans_id"/>
+              <attrKeyMap attr="dnsResponseTimeMs" key="rtt"/>
+              <attrKeyMap attr="targetHostName" key="query"/>
+              <attrKeyMap attr="dnsQueryType" key="qtype_name"/>
+              <attrKeyMap attr="_errorString" key="rcode_name"/>
+              <attrKeyMap attr="_answers" key="answers[0]"/>
+              <attrKeyMap attr="_TTLs" key="TTLs"/>
+              <attrKeyMap attr="_dnsQueryRejected" key="rejected"/>
+            </collectAndSetAttrByJSON>
+
+            <when test="exist _dnsQueryRejected">
+              <choose>
+                <when test="$_dnsQueryRejected = 'false'">
+                  <setEventAttribute attr="_result">success</setEventAttribute>
+                </when>
+                <otherwise>
+                  <setEventAttribute attr="_result">failed</setEventAttribute>
+                </otherwise>
+              </choose>
+            </when>
+            <when test="exist _errorString">
+              <choose>
+                <when test="$_errorString = 'NOERROR'">
+                  <setEventAttribute attr="_result">success</setEventAttribute>
+                </when>
+                <otherwise>
+                  <setEventAttribute attr="_result">failed</setEventAttribute>
+                </otherwise>
+              </choose>
+            </when>
+            <when test="exist _answers">
+              <!-- parse the first ip or name response out of list -->
+              <switch>
+                <case>
+                  <collectFieldsByRegex src="$_answers">
+                    <regex><![CDATA[^<destIpAddr:gPatIpAddr>]]></regex>
+                  </collectFieldsByRegex>
+                </case>
+                <case>
+                  <collectFieldsByRegex src="$_answers">
+                    <regex><![CDATA[^<destName:gPatHostName>]]></regex>
+                  </collectFieldsByRegex>
+                </case>
+                <default/>
+              </switch>
+            </when>
+            <when test="exist destName">
+              <when test="exist destIpAddr">
+                <when test="not_private_ip destIpAddr">
+                  <setEventAttribute attr="domainEntropy">calcDomainEntropy($destName)</setEventAttribute>
+                </when>
+              </when>
+            </when>
+            <when test="exist _TTLs">
+              <collectFieldsByRegex src="$_TTLs">
+                <regex><![CDATA[<cacheTTL:gPatInt>]]></regex>
+              </collectFieldsByRegex>
+            </when>
+            <when test="exist dnsQueryType">
+              <setEventAttribute attr="eventType">combineMsgId($eventType,"-query")</setEventAttribute>
+            </when>
+            <when test="exist _result">
+              <setEventAttribute attr="eventType">combineMsgId($eventType,"-", $_result)</setEventAttribute>
+            </when>
+          </when>
+          <when test="$_type = 'http'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="ipConnId" key="uid"/>
+              <attrKeyMap attr="srcIpAddr" key="&quot;id.orig_h&quot;"/>
+              <attrKeyMap attr="srcIpPort" key="&quot;id.orig_p&quot;"/>
+              <attrKeyMap attr="destIpAddr" key="&quot;id.resp_h&quot;"/>
+              <attrKeyMap attr="destIpPort" key="&quot;id.resp_p&quot;"/>
+              <attrKeyMap attr="httpMethod" key="method"/>
+              <attrKeyMap attr="destName" key="host"/>
+              <attrKeyMap attr="uriStem" key="uri"/>
+              <attrKeyMap attr="httpVersion" key="version"/>
+              <attrKeyMap attr="httpUserAgent" key="user_agent"/>
+              <attrKeyMap attr="_reqLength" key="request_body_len"/>
+              <attrKeyMap attr="httpContentLen" key="response_body_len"/>
+              <attrKeyMap attr="httpStatusCode" key="status_code"/>
+              <attrKeyMap attr="msg" key="status_msg"/>
+              <attrKeyMap attr="fileId" key="resp_fuids"/>
+              <attrKeyMap attr="mimeType" key="resp_mime_types[0]"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type IN 'file, files'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="fileId" key="fuid"/>
+              <attrKeyMap attr="ipConnId" key="conn_uids[0]"/>
+              <attrKeyMap attr="srcIpAddr" key="tx_hosts[0]"/>
+              <attrKeyMap attr="destIpAddr" key="rx_hosts[0]"/>
+              <attrKeyMap attr="srcProto" key="source"/>
+              <attrKeyMap attr="_depth" key="depth"/>
+              <attrKeyMap attr="_analyzers" key="analyzers[0]"/>
+              <attrKeyMap attr="mimeType" key="mime_type"/>
+              <attrKeyMap attr="duration" key="duration"/>
+              <attrKeyMap attr="totBytes64" key="total_bytes"/>
+              <attrKeyMap attr="fileName" key="extracted"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type = 'ftp'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="ipConnId" key="uid"/>
+              <attrKeyMap attr="srcIpAddr" key="&quot;id.orig_h&quot;"/>
+              <attrKeyMap attr="srcIpPort" key="&quot;id.orig_p&quot;"/>
+              <attrKeyMap attr="destIpAddr" key="&quot;id.resp_h&quot;"/>
+              <attrKeyMap attr="destIpPort" key="&quot;id.resp_p&quot;"/>
+              <attrKeyMap attr="_proto" key="proto"/>
+              <attrKeyMap attr="duration" key="duration"/>
+              <attrKeyMap attr="sentBytes64" key="orig_bytes"/>
+              <attrKeyMap attr="recvBytes64" key="resp_bytes"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type = 'ssl'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="ipConnId" key="uid"/>
+              <attrKeyMap attr="srcIpAddr" key="&quot;id.orig_h&quot;"/>
+              <attrKeyMap attr="srcIpPort" key="&quot;id.orig_p&quot;"/>
+              <attrKeyMap attr="destIpAddr" key="&quot;id.resp_h&quot;"/>
+              <attrKeyMap attr="destIpPort" key="&quot;id.resp_p&quot;"/>
+              <attrKeyMap attr="tlsVersion" key="version"/>
+              <attrKeyMap attr="tlsCipher" key="cipher"/>
+              <attrKeyMap attr="tlsServerX509KeyCurve" key="curve"/>
+              <attrKeyMap attr="destName" key="server_name"/>
+              <!-- established true or false -->
+              <attrKeyMap attr="tlsEstablished" key="established"/>
+              <!-- CSV of certs referenced in x509 log -->
+              <attrKeyMap attr="fileId" key="cert_chain_fuids[0]"/>
+              <attrKeyMap attr="tlsServerSubject" key="subject"/>
+              <attrKeyMap attr="tlsServerIssuer" key="issuer"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type = 'x509'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="fileId" key="id"/>
+              <attrKeyMap attr="tlsVersion" key="&quot;certificate.version&quot;"/>
+              <attrKeyMap attr="tlsServerX509SerialNumber" key="&quot;certificate.serial&quot;"/>
+              <attrKeyMap attr="tlsServerSubject" key="&quot;certificate.subject&quot;"/>
+              <attrKeyMap attr="tlsServerIssuer" key="&quot;certificate.issuer&quot;"/>
+              <attrKeyMap attr="tlsServerNotBefore" key="&quot;certificate.not_valid_before&quot;"/>
+              <attrKeyMap attr="tlsServerNotAfter" key="&quot;certificate.not_valid_after&quot;"/>
+              <attrKeyMap attr="tlsServerX509KeyAlgo" key="&quot;certificate.key_alg&quot;"/>
+              <attrKeyMap attr="size" key="&quot;certificate.key_length&quot;"/>
+              <attrKeyMap attr="tlsServerX509Exponent" key="&quot;certificate.exponent&quot;"/>
+              <attrKeyMap attr="tlsServerX509AltNames" key="&quot;san.dns&quot;[0]"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type = 'smtp'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="ipConnId" key="uid"/>
+              <attrKeyMap attr="srcIpAddr" key="&quot;id.orig_h&quot;"/>
+              <attrKeyMap attr="srcIpPort" key="&quot;id.orig_p&quot;"/>
+              <attrKeyMap attr="destIpAddr" key="&quot;id.resp_h&quot;"/>
+              <attrKeyMap attr="destIpPort" key="&quot;id.resp_p&quot;"/>
+              <attrKeyMap attr="senderMailAddr" key="mailfrom"/>
+              <attrKeyMap attr="receiverMailAddr" key="rcptto[0]"/>
+              <attrKeyMap attr="destIpPort" key="msg_id"/>
+              <attrKeyMap attr="mailSubject" key="subject"/>
+              <attrKeyMap attr="details" key="last_reply"/>
+              <attrKeyMap attr="returnPathMailAddr" key="path[0]"/>
+              <attrKeyMap attr="httpUserAgent" key="user_agent"/>
+              <attrKeyMap attr="tlsEstablished" key="tls"/>
+              <attrKeyMap attr="fileId" key="fuids[0]"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type = 'ssh'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="ipConnId" key="uid"/>
+              <attrKeyMap attr="srcIpAddr" key="&quot;id.orig_h&quot;"/>
+              <attrKeyMap attr="srcIpPort" key="&quot;id.orig_p&quot;"/>
+              <attrKeyMap attr="destIpAddr" key="&quot;id.resp_h&quot;"/>
+              <attrKeyMap attr="destIpPort" key="version"/>
+              <attrKeyMap attr="authResult" key="auth_success"/>
+              <attrKeyMap attr="authAttempts" key="auth_attempts"/>
+              <attrKeyMap attr="appClientVersion" key="client"/>
+              <attrKeyMap attr="appServerVersion" key="server"/>
+              <attrKeyMap attr="tlsCipher" key="cipher_alg"/>
+              <attrKeyMap attr="macAlgo" key="mac_alg"/>
+              <attrKeyMap attr="kexAlgo" key="kex_alg"/>
+              <attrKeyMap attr="hostKeyAlgo" key="host_key_alg"/>
+              <attrKeyMap attr="hostKey" key="host_key"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type = 'pe'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="fileId" key="id"/>
+              <attrKeyMap attr="osType" key="os"/>
+              <attrKeyMap attr="subtype" key="subsystem"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type = 'ntp'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="ipConnId" key="uid"/>
+              <attrKeyMap attr="srcIpAddr" key="&quot;id.orig_h&quot;"/>
+              <attrKeyMap attr="srcIpPort" key="&quot;id.orig_p&quot;"/>
+              <attrKeyMap attr="destIpAddr" key="&quot;id.resp_h&quot;"/>
+              <attrKeyMap attr="destIpPort" key="&quot;id.resp_p&quot;"/>
+              <attrKeyMap attr="version" key="version"/>
+              <attrKeyMap attr="connMode" key="mode"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type = 'dce_rpc'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="ipConnId" key="uid"/>
+              <attrKeyMap attr="srcIpAddr" key="&quot;id.orig_h&quot;"/>
+              <attrKeyMap attr="srcIpPort" key="&quot;id.orig_p&quot;"/>
+              <attrKeyMap attr="destIpAddr" key="&quot;id.resp_h&quot;"/>
+              <attrKeyMap attr="destIpPort" key="&quot;id.resp_p&quot;"/>
+              <attrKeyMap attr="pipeName" key="named_pipe"/>
+              <attrKeyMap attr="endpoint" key="endpoint"/>
+              <attrKeyMap attr="opName" key="operation"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type = 'kerberos'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="ipConnId" key="uid"/>
+              <attrKeyMap attr="srcIpAddr" key="&quot;id.orig_h&quot;"/>
+              <attrKeyMap attr="srcIpPort" key="&quot;id.orig_p&quot;"/>
+              <attrKeyMap attr="destIpAddr" key="&quot;id.resp_h&quot;"/>
+              <attrKeyMap attr="destIpPort" key="&quot;id.resp_p&quot;"/>
+              <attrKeyMap attr="requestType" key="request_type"/>
+              <attrKeyMap attr="srcApp" key="client"/>
+              <attrKeyMap attr="serviceName" key="service"/>
+              <attrKeyMap attr="_boolSuccess" key="success"/>
+              <attrKeyMap attr="errReason" key="err_msg"/>
+              <attrKeyMap attr="tlsCipher" key="cipher"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type = 'ntlm'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="ipConnId" key="uid"/>
+              <attrKeyMap attr="srcIpAddr" key="&quot;id.orig_h&quot;"/>
+              <attrKeyMap attr="srcIpPort" key="&quot;id.orig_p&quot;"/>
+              <attrKeyMap attr="destIpAddr" key="&quot;id.resp_h&quot;"/>
+              <attrKeyMap attr="destIpPort" key="&quot;id.resp_p&quot;"/>
+              <attrKeyMap attr="user" key="username"/>
+              <attrKeyMap attr="srcName" key="hostname"/>
+              <attrKeyMap attr="domain" key="domainname"/>
+              <attrKeyMap attr="destName" key="server_nb_computer_name"/>
+              <attrKeyMap attr="destName" key="server_dns_computer_name"/>
+              <attrKeyMap attr="_treeName" key="server_tree_name"/>
+              <attrKeyMap attr="authResult" key="success"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type = 'rdp'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="ipConnId" key="uid"/>
+              <attrKeyMap attr="srcIpAddr" key="&quot;id.orig_h&quot;"/>
+              <attrKeyMap attr="srcIpPort" key="&quot;id.orig_p&quot;"/>
+              <attrKeyMap attr="destIpAddr" key="&quot;id.resp_h&quot;"/>
+              <attrKeyMap attr="destIpPort" key="&quot;id.resp_p&quot;"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type = 'traceroute'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="srcIpAddr" key="src"/>
+              <attrKeyMap attr="destIpAddr" key="dst"/>
+              <attrKeyMap attr="_proto" key="proto"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type = 'tunnel'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="ipConnId" key="uid"/>
+              <attrKeyMap attr="srcIpAddr" key="&quot;id.orig_h&quot;"/>
+              <attrKeyMap attr="srcIpPort" key="&quot;id.orig_p&quot;"/>
+              <attrKeyMap attr="destIpAddr" key="&quot;id.resp_h&quot;"/>
+              <attrKeyMap attr="destIpPort" key="&quot;id.resp_p&quot;"/>
+              <attrKeyMap attr="type" key="tunnel_type"/>
+              <attrKeyMap attr="action" key="action"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type = 'dpd'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="ipConnId" key="uid"/>
+              <attrKeyMap attr="srcIpAddr" key="&quot;id.orig_h&quot;"/>
+              <attrKeyMap attr="srcIpPort" key="&quot;id.orig_p&quot;"/>
+              <attrKeyMap attr="destIpAddr" key="&quot;id.resp_h&quot;"/>
+              <attrKeyMap attr="destIpPort" key="&quot;id.resp_p&quot;"/>
+              <attrKeyMap attr="_proto" key="proto"/>
+              <attrKeyMap attr="errReason" key="failure_reason"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type = 'known_certs'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="srcIpAddr" key="host"/>
+              <attrKeyMap attr="srcIpPort" key="port_num"/>
+              <attrKeyMap attr="tlsServerSubject" key="subject"/>
+              <attrKeyMap attr="tlsServerIssuer" key="issuer_subject"/>
+              <attrKeyMap attr="tlsServerX509SerialNumber" key="serial"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type = 'known_hosts'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="srcIpAddr" key="host"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type = 'known_services'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="srcIpAddr" key="host"/>
+              <attrKeyMap attr="srcIpPort" key="port_num"/>
+              <attrKeyMap attr="_proto" key="port_proto"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type = 'software'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="srcIpAddr" key="host"/>
+              <attrKeyMap attr="type" key="software_type"/>
+              <attrKeyMap attr="appName" key="name"/>
+              <attrKeyMap attr="version" key="unparsed_version"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type = 'weird'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="ipConnId" key="uid"/>
+              <attrKeyMap attr="srcIpAddr" key="&quot;id.orig_h&quot;"/>
+              <attrKeyMap attr="srcIpPort" key="&quot;id.orig_p&quot;"/>
+              <attrKeyMap attr="destIpAddr" key="&quot;id.resp_h&quot;"/>
+              <attrKeyMap attr="destIpPort" key="&quot;id.resp_p&quot;"/>
+              <attrKeyMap attr="errReason" key="name"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type = 'notice'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="ipConnId" key="uid"/>
+              <attrKeyMap attr="srcIpAddr" key="&quot;id.orig_h&quot;"/>
+              <attrKeyMap attr="srcIpPort" key="&quot;id.orig_p&quot;"/>
+              <attrKeyMap attr="destIpAddr" key="&quot;id.resp_h&quot;"/>
+              <attrKeyMap attr="destIpPort" key="&quot;id.resp_p&quot;"/>
+              <attrKeyMap attr="fileId" key="fuid"/>
+              <attrKeyMap attr="_proto" key="proto"/>
+              <attrKeyMap attr="details" key="note"/>
+              <attrKeyMap attr="msg" key="msg"/>
+              <attrKeyMap attr="action" key="actions[0]"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type = 'capture_loss'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="failurePct" key="message"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type = 'reporter'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="msg" key="message"/>
+              <attrKeyMap attr="filePath" key="location"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <!-- legacy bro log files -->
+          <when test="$_type = 'known_devices'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="hostMACAddr" key="mac"/>
+              <attrKeyMap attr="computer" key="dhcp_host_name"/>
+            </collectAndSetAttrByJSON>
+          </when>
+          <when test="$_type = 'app_stats'">
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_eventTime" key="ts"/>
+              <attrKeyMap attr="ipConnId" key="ts_delta"/>
+              <attrKeyMap attr="appName" key="app"/>
+              <attrKeyMap attr="distinctSrcIpAddr" key="uniq_hosts"/>
+              <attrKeyMap attr="totHits" key="hits"/>
+              <attrKeyMap attr="totBytes" key="bytes"/>
+            </collectAndSetAttrByJSON>
+          </when>
+        </choose>
+      </when>
+
+      <otherwise>
+        <!-- non JSON, tab delimited -->
+        <choose>
+          <when test="$_type = 'conn'">
+            <collectAndSetAttrByPos sep="\t" src="$_body">
+              <attrPosMap attr="eventTime" pos="1"/>
+              <attrPosMap attr="ipConnId" pos="2"/>
+              <attrPosMap attr="srcIpAddr" pos="3"/>
+              <attrPosMap attr="srcIpPort" pos="4"/>
+              <attrPosMap attr="destIpAddr" pos="5"/>
+              <attrPosMap attr="destIpPort" pos="6"/>
+              <attrPosMap attr="_proto" pos="7"/>
+              <attrPosMap attr="serviceName" pos="8"/>
+              <attrPosMap attr="_connUseTime" pos="9"/>
+              <attrPosMap attr="sentBytes64" pos="10"/>
+              <attrPosMap attr="recvBytes64" pos="11"/>
+              <attrPosMap attr="_connState" pos="12"/>
+              <attrPosMap attr="droppedBytes" pos="15"/>
+              <attrPosMap attr="_connHistory" pos="16"/>
+              <attrPosMap attr="sentPkts" pos="17"/>
+              <attrPosMap attr="_srcIpBytes" pos="18"/>
+              <attrPosMap attr="recvPkts" pos="19"/>
+              <attrPosMap attr="_destIpBytes" pos="20"/>
+              <attrPosMap attr="_tunnelParents" pos="21"/>
+            </collectAndSetAttrByPos>
+          </when>
+
+          <when test="$_type = 'dhcp'">
+            <collectAndSetAttrByPos sep="\t" src="$_body">
+              <attrPosMap attr="eventTime" pos="1"/>
+              <attrPosMap attr="ipConnId" pos="2"/>
+              <attrPosMap attr="srcIpAddr" pos="3"/>
+              <attrPosMap attr="destIpAddr" pos="4"/>
+              <attrPosMap attr="hostMACAddr" pos="5"/>
+              <attrPosMap attr="hostName" pos="6"/>
+              <attrPosMap attr="srcName" pos="7"/>
+              <attrPosMap attr="domain" pos="8"/>
+              <attrPosMap attr="_requestedAddr" pos="9"/>
+              <attrPosMap attr="hostIpAddr" pos="10"/>
+              <attrPosMap attr="dhcpLeaseTime" pos="11"/>
+              <attrPosMap attr="_clientMsg" pos="12"/>
+              <attrPosMap attr="_serverMsg" pos="13"/>
+              <attrPosMap attr="_dhcpMsgTypes" pos="14"/>
+              <attrPosMap attr="_dhcpDuration" pos="15"/>
+            </collectAndSetAttrByPos>
+          </when>
+
+          <when test="$_type = 'dns'">
+            <collectAndSetAttrByPos sep="\t" src="$_body">
+              <attrPosMap attr="eventTime" pos="1"/>
+              <attrPosMap attr="ipConnId" pos="2"/>
+              <attrPosMap attr="srcIpAddr" pos="3"/>
+              <attrPosMap attr="srcIpPort" pos="4"/>
+              <attrPosMap attr="destIpAddr" pos="5"/>
+              <attrPosMap attr="destIpPort" pos="6"/>
+              <attrPosMap attr="_proto" pos="7"/>
+              <attrPosMap attr="dnsTransactionId" pos="8"/>
+              <attrPosMap attr="dnsResponseTimeMs" pos="9"/>
+              <attrPosMap attr="targetHostName" pos="10"/>
+              <attrPosMap attr="domain" pos="11"/>
+              <attrPosMap attr="_qclass" pos="12"/>
+              <attrPosMap attr="_qclassName" pos="13"/>
+              <attrPosMap attr="dnsQueryType" pos="15"/>
+            </collectAndSetAttrByPos>
+          </when>
+
+          <when test="$_type = 'files'">
+            <collectAndSetAttrByPos sep="\t" src="$_body">
+              <attrPosMap attr="eventTime" pos="1"/>
+              <attrPosMap attr="fileId" pos="2"/>
+              <attrPosMap attr="srcIpAddr" pos="3"/>
+              <attrPosMap attr="destIpAddr" pos="4"/>
+              <attrPosMap attr="ipConnId" pos="5"/>
+              <attrPosMap attr="srcProto" pos="6"/>
+              <attrPosMap attr="_depth" pos="7"/>
+              <attrPosMap attr="_analyzers" pos="8"/>
+              <attrPosMap attr="mimeType" pos="9"/>
+              <attrPosMap attr="fileName" pos="10"/>
+              <attrPosMap attr="recvBytes64" pos="14"/>
+              <attrPosMap attr="totBytes64" pos="15"/>
+              <attrPosMap attr="droppedBytes" pos="16"/>
+              <attrPosMap attr="_parentFileId" pos="19"/>
+              <attrPosMap attr="hashMD5" pos="20"/>
+              <attrPosMap attr="hashSHA1" pos="21"/>
+              <attrPosMap attr="hashSHA256" pos="22"/>
+            </collectAndSetAttrByPos>
+          </when>
+
+          <when test="$_type = 'ftp'">
+            <collectAndSetAttrByPos sep="\t" src="$_body">
+              <attrPosMap attr="eventTime" pos="1"/>
+              <attrPosMap attr="ipConnId" pos="2"/>
+              <attrPosMap attr="srcIpAddr" pos="3"/>
+              <attrPosMap attr="srcIpPort" pos="4"/>
+              <attrPosMap attr="destIpAddr" pos="5"/>
+              <attrPosMap attr="destIpPort" pos="6"/>
+              <attrPosMap attr="user" pos="7"/>
+              <attrPosMap attr="password" pos="8"/>
+              <attrPosMap attr="command" pos="9"/>
+              <attrPosMap attr="paraName" pos="10"/>
+              <attrPosMap attr="mimeType" pos="11"/>
+              <attrPosMap attr="fileSize" pos="12"/>
+              <attrPosMap attr="httpStatusCode" pos="13"/>
+              <attrPosMap attr="description" pos="14"/>
+              <attrPosMap attr="fileId" pos="19"/>
+            </collectAndSetAttrByPos>
+          </when>
+
+          <when test="$_type = 'http'">
+            <collectAndSetAttrByPos sep="\t" src="$_body">
+              <attrPosMap attr="eventTime" pos="1"/>
+              <attrPosMap attr="ipConnId" pos="2"/>
+              <attrPosMap attr="srcIpAddr" pos="3"/>
+              <attrPosMap attr="srcIpPort" pos="4"/>
+              <attrPosMap attr="destIpAddr" pos="5"/>
+              <attrPosMap attr="destIpPort" pos="6"/>
+              <attrPosMap attr="_transDepth" pos="7"/>
+              <attrPosMap attr="httpMethod" pos="8"/>
+              <attrPosMap attr="destName" pos="9"/>
+              <attrPosMap attr="uriStem" pos="10"/>
+              <attrPosMap attr="httpReferrer" pos="11"/>
+              <attrPosMap attr="httpVersion" pos="12"/>
+              <attrPosMap attr="httpUserAgent" pos="13"/>
+              <attrPosMap attr="_httpOrigin" pos="14"/>
+              <attrPosMap attr="_httpReqLen" pos="15"/>
+              <attrPosMap attr="httpContentLen" pos="16"/>
+              <attrPosMap attr="httpStatusCode" pos="17"/>
+              <attrPosMap attr="httpConnStatus" pos="18"/>
+              <attrPosMap attr="_infoCode" pos="19"/>
+              <attrPosMap attr="_infoMsg" pos="20"/>
+              <attrPosMap attr="_tags" pos="21"/>
+              <attrPosMap attr="user" pos="22"/>
+              <attrPosMap attr="password" pos="23"/>
+              <attrPosMap attr="mimeType" pos="27"/>
+              <attrPosMap attr="fileId" pos="29"/>
+              <attrPosMap attr="httpRequestHeaders" pos="31"/>
+              <attrPosMap attr="_httpResponseHeaders" pos="32"/>
+              <attrPosMap attr="httpCookie" pos="33"/>
+              <attrPosMap attr="uriStem" pos="34"/>
+            </collectAndSetAttrByPos>
+          </when>
+
+          <when test="$_type = 'intel'">
+            <collectAndSetAttrByPos sep="\t" src="$_body">
+              <attrPosMap attr="ipConnId" pos="3"/>
+              <attrPosMap attr="srcIpAddr" pos="4"/>
+              <attrPosMap attr="srcIpPort" pos="5"/>
+              <attrPosMap attr="destIpAddr" pos="6"/>
+              <attrPosMap attr="destIpPort" pos="7"/>
+              <attrPosMap attr="hostVLAN" pos="8"/>
+            </collectAndSetAttrByPos>
+          </when>
+
+          <when test="$_type = 'kerberos'">
+            <collectAndSetAttrByPos sep="\t" src="$_body">
+              <attrPosMap attr="eventTime" pos="1"/>
+              <attrPosMap attr="ipConnId" pos="2"/>
+              <attrPosMap attr="srcIpAddr" pos="3"/>
+              <attrPosMap attr="srcIpPort" pos="4"/>
+              <attrPosMap attr="destIpAddr" pos="5"/>
+              <attrPosMap attr="destIpPort" pos="6"/>
+              <attrPosMap attr="requestType" pos="7"/>
+              <attrPosMap attr="clientName" pos="8"/>
+              <attrPosMap attr="serviceName" pos="9"/>
+              <attrPosMap attr="errReason" pos="11"/>
+              <attrPosMap attr="_from" pos="12"/>
+              <attrPosMap attr="_till" pos="13"/>
+              <attrPosMap attr="tlsCipher" pos="14"/>
+            </collectAndSetAttrByPos>
+            <setEventAttribute attr="msg">$_body</setEventAttribute>
+          </when>
+
+          <when test="$_type = 'log4j'">
+            <collectAndSetAttrByPos sep="\t" src="$_body">
+              <attrPosMap attr="eventTime" pos="1"/>
+              <attrPosMap attr="ipConnId" pos="2"/>
+              <attrPosMap attr="uriStem" pos="3"/>
+              <attrPosMap attr="_uri" pos="4"/>
+              <attrPosMap attr="_stem" pos="5"/>
+              <attrPosMap attr="destIpAddr" pos="6"/>
+              <attrPosMap attr="destIpPort" pos="7"/>
+              <attrPosMap attr="httpMethod" pos="8"/>
+            </collectAndSetAttrByPos>
+          </when>
+
+          <when test="$_type = 'notice'">
+            <collectAndSetAttrByPos sep="\t" src="$_body">
+              <attrPosMap attr="eventTime" pos="1"/>
+              <attrPosMap attr="ipConnId" pos="2"/>
+              <attrPosMap attr="srcIpAddr" pos="3"/>
+              <attrPosMap attr="srcIpPort" pos="4"/>
+              <attrPosMap attr="destIpAddr" pos="5"/>
+              <attrPosMap attr="destIpPort" pos="6"/>
+              <attrPosMap attr="fileId" pos="7"/>
+              <attrPosMap attr="mimeType" pos="8"/>
+              <attrPosMap attr="fileDesc" pos="9"/>
+              <attrPosMap attr="_proto" pos="10"/>
+              <attrPosMap attr="description" pos="11"/>
+              <attrPosMap attr="reason" pos="12"/>
+              <attrPosMap attr="msg" pos="13"/>
+              <attrPosMap attr="ipPort" pos="14"/>
+              <attrPosMap attr="action" pos="17"/>
+              <attrPosMap attr="receiverMailAddr" pos="18"/>
+              <attrPosMap attr="destGeoCountryCodeStr" pos="20"/>
+              <attrPosMap attr="destGeoState" pos="21"/>
+              <attrPosMap attr="destGeoCity" pos="22"/>
+              <attrPosMap attr="destGeoLatitude" pos="23"/>
+              <attrPosMap attr="destGeoLongitude" pos="24"/>
+            </collectAndSetAttrByPos>
+          </when>
+
+          <when test="$_type = 'ntlm'">
+            <collectAndSetAttrByPos sep="\t" src="$_body">
+              <attrPosMap attr="eventTime" pos="1"/>
+              <attrPosMap attr="ipConnId" pos="2"/>
+              <attrPosMap attr="srcIpAddr" pos="3"/>
+              <attrPosMap attr="srcIpPort" pos="4"/>
+              <attrPosMap attr="destIpAddr" pos="5"/>
+              <attrPosMap attr="destIpPort" pos="6"/>
+              <attrPosMap attr="user" pos="7"/>
+              <attrPosMap attr="srcName" pos="8"/>
+              <attrPosMap attr="domain" pos="9"/>
+              <attrPosMap attr="destName" pos="10"/>
+              <attrPosMap attr="destName" pos="11"/>
+              <attrPosMap attr="authResult" pos="13"/>
+            </collectAndSetAttrByPos>
+          </when>
+
+          <when test="$_type = 'ntp'">
+            <collectAndSetAttrByPos sep="\t" src="$_body">
+              <attrPosMap attr="eventTime" pos="1"/>
+              <attrPosMap attr="ipConnId" pos="2"/>
+              <attrPosMap attr="srcIpAddr" pos="3"/>
+              <attrPosMap attr="srcIpPort" pos="4"/>
+              <attrPosMap attr="destIpAddr" pos="5"/>
+              <attrPosMap attr="destIpPort" pos="6"/>
+              <attrPosMap attr="version" pos="7"/>
+              <attrPosMap attr="connMode" pos="8"/>
+            </collectAndSetAttrByPos>
+          </when>
+
+          <when test="$_type = 'ocsp'">
+            <collectAndSetAttrByPos sep="\t" src="$_body">
+              <attrPosMap attr="eventTime" pos="1"/>
+              <attrPosMap attr="ipConnId" pos="2"/>
+              <attrPosMap attr="hashAlgo" pos="3"/>
+              <attrPosMap attr="_issuerNameHash" pos="4"/>
+              <attrPosMap attr="_issuerKeyHash" pos="5"/>
+              <attrPosMap attr="serialNumber" pos="6"/>
+              <attrPosMap attr="_certStatus" pos="7"/>
+              <attrPosMap attr="_revokeTime" pos="8"/>
+              <attrPosMap attr="_revokeReason" pos="9"/>
+              <attrPosMap attr="updateTime" pos="10"/>
+              <attrPosMap attr="_nextUpdateTime" pos="11"/>
+            </collectAndSetAttrByPos>
+          </when>
+
+          <when test="$_type = 'packetfilter'">
+            <collectAndSetAttrByPos sep="\t" src="$_body">
+              <attrPosMap attr="eventTime" pos="1"/>
+              <attrPosMap attr="queryFilter" pos="3"/>
+              <attrPosMap attr="init" pos="4"/>
+              <attrPosMap attr="isSuccess" pos="5"/>
+            </collectAndSetAttrByPos>
+          </when>
+
+          <when test="$_type = 'radius'">
+            <collectAndSetAttrByPos sep="\t" src="$_body">
+              <attrPosMap attr="eventTime" pos="1"/>
+              <attrPosMap attr="ipConnId" pos="2"/>
+              <attrPosMap attr="srcIpAddr" pos="3"/>
+              <attrPosMap attr="srcIpPort" pos="4"/>
+              <attrPosMap attr="destIpAddr" pos="5"/>
+              <attrPosMap attr="destIpPort" pos="6"/>
+              <attrPosMap attr="user" pos="7"/>
+              <attrPosMap attr="hostMACAddr" pos="8"/>
+              <attrPosMap attr="_framedAddr" pos="9"/>
+              <attrPosMap attr="localVpnIpAddr" pos="10"/>
+              <attrPosMap attr="httpConnStatus" pos="11"/>
+              <attrPosMap attr="msg" pos="12"/>
+              <attrPosMap attr="authResult" pos="13"/>
+              <attrPosMap attr="ipTtl" pos="14"/>
+            </collectAndSetAttrByPos>
+            <setEventAttribute attr="msg">$_body</setEventAttribute>
+          </when>
+
+          <when test="$_type = 'rdp'">
+            <collectAndSetAttrByPos sep="\t" src="$_body">
+              <attrPosMap attr="eventTime" pos="1"/>
+              <attrPosMap attr="ipConnId" pos="2"/>
+              <attrPosMap attr="srcIpAddr" pos="3"/>
+              <attrPosMap attr="srcIpPort" pos="4"/>
+              <attrPosMap attr="destIpAddr" pos="5"/>
+              <attrPosMap attr="destIpPort" pos="6"/>
+              <attrPosMap attr="cookie" pos="7"/>
+              <attrPosMap attr="isSuccess" pos="8"/>
+              <attrPosMap attr="_ipProto" pos="9"/>
+            </collectAndSetAttrByPos>
+          </when>
+
+          <when test="$_type = 'reporter'">
+            <collectAndSetAttrByPos sep="\t" src="$_body">
+              <attrPosMap attr="eventTime" pos="1"/>
+              <attrPosMap attr="_level" pos="2"/>
+              <attrPosMap attr="msg" pos="3"/>
+              <attrPosMap attr="filePath" pos="4"/>
+            </collectAndSetAttrByPos>
+          </when>
+
+          <when test="$_type = 'snmp'">
+            <collectAndSetAttrByPos sep="\t" src="$_body">
+              <attrPosMap attr="eventTime" pos="1"/>
+              <attrPosMap attr="ipConnId" pos="2"/>
+              <attrPosMap attr="srcIpAddr" pos="3"/>
+              <attrPosMap attr="srcIpPort" pos="4"/>
+              <attrPosMap attr="destIpAddr" pos="5"/>
+              <attrPosMap attr="destIpPort" pos="6"/>
+              <attrPosMap attr="duration" pos="7"/>
+              <attrPosMap attr="version" pos="8"/>
+              <attrPosMap attr="comm" pos="9"/>
+            </collectAndSetAttrByPos>
+          </when>
+
+          <when test="$_type = 'ssh'">
+            <collectAndSetAttrByPos sep="\t" src="$_body">
+              <attrPosMap attr="eventTime" pos="1"/>
+              <attrPosMap attr="ipConnId" pos="2"/>
+              <attrPosMap attr="srcIpAddr" pos="3"/>
+              <attrPosMap attr="srcIpPort" pos="4"/>
+              <attrPosMap attr="destIpAddr" pos="5"/>
+              <attrPosMap attr="destIpPort" pos="6"/>
+              <attrPosMap attr="tlsVersion" pos="7"/>
+              <attrPosMap attr="authResult" pos="8"/>
+              <attrPosMap attr="authAttempts" pos="9"/>
+              <attrPosMap attr="direction" pos="10"/>
+              <attrPosMap attr="appClientVersion" pos="11"/>
+              <attrPosMap attr="appServerVersion" pos="12"/>
+              <attrPosMap attr="tlsCipher" pos="13"/>
+              <attrPosMap attr="macAlgo" pos="14"/>
+              <attrPosMap attr="compressioncAlgo" pos="15"/>
+              <attrPosMap attr="kexAlgo" pos="16"/>
+              <attrPosMap attr="hostKeyAlgo" pos="17"/>
+              <attrPosMap attr="hostKey" pos="18"/>
+            </collectAndSetAttrByPos>
+          </when>
+
+          <when test="$_type = 'ssl'">
+            <collectAndSetAttrByPos sep="\t" src="$_body">
+              <attrPosMap attr="eventTime" pos="1"/>
+              <attrPosMap attr="ipConnId" pos="2"/>
+              <attrPosMap attr="srcIpAddr" pos="3"/>
+              <attrPosMap attr="srcIpPort" pos="4"/>
+              <attrPosMap attr="destIpAddr" pos="5"/>
+              <attrPosMap attr="destIpPort" pos="6"/>
+              <attrPosMap attr="tlsVersion" pos="7"/>
+              <attrPosMap attr="tlsCipher" pos="8"/>
+              <attrPosMap attr="tlsServerX509KeyCurve" pos="9"/>
+              <attrPosMap attr="destName" pos="10"/>
+              <attrPosMap attr="_resumed" pos="11"/>
+              <attrPosMap attr="_lastAlert" pos="12"/>
+              <attrPosMap attr="_nextProtocol" pos="13"/>
+              <attrPosMap attr="tlsEstablished" pos="14"/>
+              <attrPosMap attr="_sslHistory" pos="15"/>
+              <attrPosMap attr="_certChainFps" pos="16"/>
+              <attrPosMap attr="_clientCertChainFps" pos="17"/>
+              <attrPosMap attr="_sniMatchesCert" pos="18"/>
+            </collectAndSetAttrByPos>
+          </when>
+
+          <when test="$_type = 'weird'">
+            <collectAndSetAttrByPos sep="\t" src="$_body">
+              <attrPosMap attr="eventTime" pos="1"/>
+              <attrPosMap attr="ipConnId" pos="2"/>
+              <attrPosMap attr="srcIpAddr" pos="3"/>
+              <attrPosMap attr="srcIpPort" pos="4"/>
+              <attrPosMap attr="destIpAddr" pos="5"/>
+              <attrPosMap attr="destIpPort" pos="6"/>
+              <attrPosMap attr="msg" pos="7"/>
+              <attrPosMap attr="_addl" pos="8"/>
+              <attrPosMap attr="_notice" pos="9"/>
+              <attrPosMap attr="_peer" pos="10"/>
+              <attrPosMap attr="_source" pos="11"/>
+            </collectAndSetAttrByPos>
+          </when>
+
+          <when test="$_type = 'x509'">
+            <collectAndSetAttrByPos sep="\t" src="$_body">
+              <attrPosMap attr="eventTime" pos="1"/>
+              <attrPosMap attr="fingerprintId" pos="2"/>
+              <attrPosMap attr="tlsVersion" pos="3"/>
+              <attrPosMap attr="tlsServerX509SerialNumber" pos="4"/>
+              <attrPosMap attr="tlsServerSubject" pos="5"/>
+              <attrPosMap attr="tlsServerIssuer" pos="6"/>
+              <attrPosMap attr="tlsServerNotBefore" pos="7"/>
+              <attrPosMap attr="tlsServerNotAfter" pos="8"/>
+              <attrPosMap attr="tlsServerX509KeyAlgo" pos="9"/>
+              <attrPosMap attr="_tlsServerX509SigAlgo" pos="10"/>
+              <attrPosMap attr="_tlsServerX509KeyType" pos="11"/>
+              <attrPosMap attr="_tlsServerX509KeyLen" pos="12"/>
+              <attrPosMap attr="tlsServerX509Exponent" pos="13"/>
+              <attrPosMap attr="_tlsServerX509Curve" pos="14"/>
+              <attrPosMap attr="_tlsServerX509SanDNS" pos="15"/>
+              <attrPosMap attr="_tlsServerX509SanURI" pos="16"/>
+              <attrPosMap attr="_tlsServerX509SanEmail" pos="17"/>
+              <attrPosMap attr="_tlsServerX509SanIP" pos="18"/>
+              <attrPosMap attr="_tlsBasicConstraintsCa" pos="19"/>
+              <attrPosMap attr="_tlsHostCert" pos="21"/>
+              <attrPosMap attr="_tlsClientCert" pos="22"/>
+            </collectAndSetAttrByPos>
+          </when>
+
+        </choose>
+      </otherwise>
+    </choose>
+
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+    <when test="exist _eventTime">
+      <switch>
+        <case>
+          <!-- 2019-03-25T13:23:48.776550Z -->
+          <collectFieldsByRegex src="$_eventTime">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,186 @@
+<eventParser name="VMwarevShieldParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>VMware</Vendor>
+    <Model>vShield</Model>
+    <Version>ANY</Version>
+    <Name>Generic</Name>
+  </appType>
+
+  <patternDefinitions>
+    <pattern name="patEventId"><![CDATA[ACCEPT|DROP]]></pattern>
+    <pattern name="patEnd"><![CDATA[[^']*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+(?:vse-[0-9a-fA-F-]+|vShieldEdge)\s+(?:(?:firewall|ha|syslog-ng)\[\d*\]|kernel|vmtoolsd):]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<4>Jul 21 18:39:10 vse-11111111-1111-1111-1111-111111111111-0 firewall[]: [11111111-1111-1111-1111-111111111111]: ACCEPT_87IN= OUT=vNic_0 SRC=10.13.8.18 DST=10.23.0.12 LEN=52 TOS=0x02 PREC=0x00 TTL=127 ID=19364 DF PROTO=TCP SPT=59332 DPT=55004 WINDOW=8192 RES=0x00 CWR ECE SYN URGP=0 MARK=0x3]]></testEvent>
+    <testEvent><![CDATA[<43>Nov 10 16:03:35 vShieldEdge syslog-ng[169]: Initiating connection failed, reconnecting; time_reopen='10']]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_uuid:gPatStr>\s+<_event:gPatStrEndColon>:\s<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventType">VMware-vShield_Generic</setEventAttribute>
+
+    <when test="$_uuid = 'vShieldEdge'">
+      <setEventAttribute attr="uuid">$_uuid</setEventAttribute>
+    </when>
+
+    <!-- Firewall Events -->
+    <choose>
+      <when test="matches($_event, 'firewall\[\d*\]')">
+        <!--
+        <4>Jul 21 18:39:10 vse-11111111-1111-1111-1111-111111111111-0 firewall[]: [11111111-1111-1111-1111-111111111111]: ACCEPT_87IN= OUT=vNic_0 SRC=10.13.8.18 DST=10.23.0.12 LEN=52 TOS=0x02 PREC=0x00 TTL=127 ID=19364 DF PROTO=TCP SPT=59332 DPT=55004 WINDOW=8192 RES=0x00 CWR ECE SYN URGP=0 MARK=0x3
+        -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[\s<_eventid:patEventId>_<ruleId:gPatInt><_body2:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+
+        <collectAndSetAttrByKeyValuePair sep=" " src="$_body2">
+          <attrKeyMap attr="srcIntfName" key="IN="/>
+          <attrKeyMap attr="destIntfName" key="OUT="/>
+          <attrKeyMap attr="srcIpAddr" key="SRC="/>
+          <attrKeyMap attr="destIpAddr" key="DST="/>
+          <attrKeyMap attr="_len" key="LEN="/>
+          <attrKeyMap attr="_tos" key="TOS="/>
+          <attrKeyMap attr="_prec" key="PREC="/>
+          <attrKeyMap attr="_ttl" key="TTL="/>
+          <attrKeyMap attr="icmpType" key="TYPE="/>
+          <attrKeyMap attr="icmpCode" key="CODE="/>
+          <attrKeyMap attr="_id" key="ID="/>
+          <attrKeyMap attr="_proto" key="PROTO="/>
+          <attrKeyMap attr="srcIpPort" key="SPT="/>
+          <attrKeyMap attr="destIpPort" key="DPT="/>
+          <attrKeyMap attr="_mac" key="MAC="/>
+          <attrKeyMap attr="_window" key="WINDOW="/>
+        </collectAndSetAttrByKeyValuePair>
+
+        <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+
+        <choose>
+          <when test="$_eventid = 'ACCEPT'">
+            <setEventAttribute attr="eventType">VMware-vShield_Accepted_Connection</setEventAttribute>
+          </when>
+          <when test="$_eventid = 'DROP'">
+            <setEventAttribute attr="eventType">VMware-vShield_Dropped_Connection</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <when test="matches($_event, 'syslog-ng\[\d+]')">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Log statistics;]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">VMware-vShield_Log_Statistics</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Syslog connection established;]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">VMware-vShield_Syslog_Established</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Configuration reload request received, reloading configuration;]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">VMware-vShield_Configuration_Reload_Request</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Referenced filter rule not found;]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">VMware-vShield_Rule_Filter_Error</setEventAttribute>
+          </case>
+
+          <case>
+            <!--
+            <43>Nov 10 16:03:35 vShieldEdge syslog-ng[169]: Initiating connection failed, reconnecting; time_reopen='10'
+            <43>Nov 10 16:03:35 vShieldEdge syslog-ng[169]: Connection failed; fd='21', server='AF_INET(10.23.1.12:514)', local='AF_INET(0.0.0.0:0)', error='Network is unreachable (101)'
+            -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Initiating connection failed]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">VMware-vShield_Connection_Failed</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Connection failed; fd='\d+', server='AF_INET\(<destIpAddr:gPatIpAddr>:<destIpPort:gPatInt>\)', local='AF_INET\(<_srcIpAddr:gPatIpAddr>:<_srcIpPort:gPatInt>\)', error='<errReason:patEnd>']]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">VMware-vShield_Connection_Failed</setEventAttribute>
+          </case>
+        </switch>
+      </when>
+
+      <when test="$_event = 'kernel'">
+        <setEventAttribute attr="eventType">VMware-vShield_Informational</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\s(?:nethash|iphash)_retry: rehashing of set]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[physdev match: using --physdev-out in the OUTPUT, FORWARD and POSTROUTING chains for non-bridged traffic is not supported]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="matches($_event, 'ha\[\d*\]')">
+        <!--
+        <27>Nov 10 16:04:48 vse-11111111-1111-1111-1111-111111111111-1 ha[]: [11111111-1111-1111-1111-111111111111]: [10725]: ERROR: should_drop_message: attempted replay attack [vse-11111111-1111-1111-1111-111111111111-0]? [gen = 2, curgen = 3]
+        -->
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[ERROR: should_drop_message: attempted replay attack]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">VMware-vShield_Attempted_Replay_Attack</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">VMware-vShield_Informational</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+
+      <when test="$_event = 'vmtoolsd'">
+        <!--
+        <85>Nov 12 11:52:36 vse-11111111-1111-1111-1111-111111111111-1 vmtoolsd: pam_unix(vmtoolsd:auth): authentication failure; logname= uid=0 euid=0 tty=/dev/console ruser= rhost=  user=root
+        <85>Nov 12 11:52:37 vse-11111111-1111-1111-1111-111111111111-1 vmtoolsd: PAM 1 more authentication failure; logname= uid=0 euid=0 tty=/dev/console ruser= rhost=  user=root
+        -->
+        <setEventAttribute attr="eventType">VMware-vShield_Informational</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[pam_unix\(vmtoolsd:auth\): authentication failure; logname= uid=\d+ euid=\d+ tty=\S+ ruser= rhost=\s+user=<user:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">VMware-vShield_Console_Auth_Failure</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[PAM \d+ more authentication failures?; logname= uid=\d+ euid=\d+ tty=/dev/console ruser= rhost=\s+user=<user:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">VMware-vShield_Console_Auth_Failure</setEventAttribute>
+          </case>
+        </switch>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

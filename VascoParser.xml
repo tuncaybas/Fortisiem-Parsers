@@ -1,0 +1,167 @@
+<eventParser name="VascoParser">
+  <deviceType>
+    <Vendor>Vasco</Vendor>
+    <Model>DigiPass</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patRightCB"><![CDATA[[^}]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+ikeyserver\[\d+\]:\s+\{\w+\},]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[May 17 18:41:55 vascoservername ikeyserver[20663]: {Error}, {Communication}, {E-000001}, {A system error has occurred.}, {0xE54C52917A67AB0313FF0E16E716BCEA}, {Area:SEAL message processing}, {Operation:IdentikeySealMessage creation}, {Error Code:-3}, {Error Message:Memory error}, {Error Details:}]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">Vasco-DigiPass-KeyServer-Generic</setEventAttribute>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<reptDevName:gPatHostName>\s+ikeyserver\[\d+\]:\s+\{<_severity:gPatWord>\},\s+\{<:patRightCB>\},\s+\{<:patRightCB>\},\s+\{<msg:patRightCB>\},\s+\{<:patRightCB>\}(?:,\s+<_body:gPatMesgBody>)?]]></regex>
+    </collectFieldsByRegex>
+
+    <when test="exist _body">
+      <collectAndSetAttrByKeyValuePair sep="}" src="$_body">
+        <attrKeyMap attr="srcIpAddr" key="{Source Location:"/>
+        <attrKeyMap attr="user" key="{User ID:"/>
+        <attrKeyMap attr="user" key="{User ID :"/>
+        <attrKeyMap attr="user" key="{User Name :"/>
+        <attrKeyMap attr="domain" key="{Domain:"/>
+        <attrKeyMap attr="policyName" key="{Policy ID :"/>
+        <attrKeyMap attr="policyName" key="{Policy ID:"/>
+        <attrKeyMap attr="_dest" key="{Server Location:"/>
+        <attrKeyMap attr="errReason" key="{Reason:"/>
+      </collectAndSetAttrByKeyValuePair>
+    </when>
+
+    <when test="exist _dest">
+      <collectFieldsByRegex src="$_dest">
+        <regex><![CDATA[<destIpAddr:gPatIpAddr>:<destIpPort:gPatInt>]]></regex>
+      </collectFieldsByRegex>
+    </when>
+
+    <choose>
+      <when test="$msg = 'A system error has occurred.'">
+        <setEventAttribute attr="eventType">Vasco-DigiPass-KeyServer-SystemError</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$msg = 'A query for a single [Component] record was successful.'">
+        <setEventAttribute attr="eventType">Vasco-DigiPass-KeyServer-ComponentQuery-Success</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$msg = 'A query for [Digipass] records was successful.'">
+        <setEventAttribute attr="eventType">Vasco-DigiPass-KeyServer-DigiPassRecordQuery-Success</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$msg = 'A query for [User] records was successful.'">
+        <setEventAttribute attr="eventType">Vasco-DigiPass-KeyServer-UserRecordQuery-Success</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$msg = 'A command of type [User] [Unlock] was successful.'">
+        <setEventAttribute attr="eventType">Vasco-DigiPass-KeyServer-AccountUnlocked</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="$msg = 'User authentication failed.'">
+        <setEventAttribute attr="eventType">Vasco-DigiPass-KeyServer-UserAuth-Failed</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$msg = 'User authentication was successful.'">
+        <setEventAttribute attr="eventType">Vasco-DigiPass-KeyServer-UserAuth-Success</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+
+      <when test="$msg = 'An administrative logon was successful.'">
+        <setEventAttribute attr="eventType">Vasco-DigiPass-KeyServer-AdminLogon-Success</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+
+      <when test="$msg = 'An administrative logon was rejected.'">
+        <setEventAttribute attr="eventType">Vasco-DigiPass-KeyServer-AdminLogon-Failed</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$msg = 'An administrative session was closed.'">
+        <setEventAttribute attr="eventType">Vasco-DigiPass-KeyServer-AdminLogoff</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$msg = 'The RADIUS protocol handler has been initialized successfully.'">
+        <setEventAttribute attr="eventType">Vasco-DigiPass-KeyServer-RADIUS-Init</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$msg = 'The Replication library has been initialized successfully.'">
+        <setEventAttribute attr="eventType">Vasco-DigiPass-KeyServer-Repl-Init</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$msg = 'Initialization of a Replication destination server succeeded.'">
+        <setEventAttribute attr="eventType">Vasco-DigiPass-KeyServer-ReplDestServer-Init</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$msg IN 'The Authentication Server protocol handler has been initialized successfully., The SOAP protocol handler has been initialized successfully.'">
+        <setEventAttribute attr="eventType">Vasco-DigiPass-KeyServer-AuthServer-Init</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$msg = 'A Replication update was sent successfully.'">
+        <setEventAttribute attr="eventType">Vasco-DigiPass-KeyServer-ReplUpdate-Sent</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$msg = 'A Replication update received has been processed successfully.'">
+        <setEventAttribute attr="eventType">Vasco-DigiPass-KeyServer-ReplUpdate-Processed</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$msg = 'A connection attempt to a Replication destination server was successful.'">
+        <setEventAttribute attr="eventType">Vasco-DigiPass-KeyServer-ReplConnect-Success</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$msg = 'A connection to a Replication destination server has terminated due to an error.'">
+        <setEventAttribute attr="eventType">Vasco-DigiPass-KeyServer-ReplConnect-Failure</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$msg = 'Server configuration was successful.'">
+        <setEventAttribute attr="eventType">Vasco-DigiPass-KeyServer-ServerConfigSuccess</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$msg = 'A DIGIPASS Grace Period has been ended by the use of a One Time Password.'">
+        <setEventAttribute attr="eventType">Vasco-DigiPass-KeyServer-GracePeriod-End</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="$msg = 'A DIGIPASS User Account has become locked.'">
+        <setEventAttribute attr="eventType">Vasco-DigiPass-KeyServer-AccountLocked</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$msg = 'A DIGIPASS has been assigned to a DIGIPASS User Account by an Administrator'">
+        <setEventAttribute attr="eventType">Vasco-DigiPass-KeyServer-AccountAssigned</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$msg = 'A Replication update received has been ignored, as the local data is more up-to-date.'">
+        <setEventAttribute attr="eventType">Vasco-DigiPass-KeyServer-ReplUpdate-Ignore</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$msg = 'A connection to an ODBC data source has been made successfully.'">
+        <setEventAttribute attr="eventType">Vasco-DigiPass-KeyServer-ODBCConn-Success</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

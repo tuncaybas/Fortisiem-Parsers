@@ -1,0 +1,211 @@
+<eventParser name="WorkdayParser">
+  <deviceType>
+    <Vendor>Workday</Vendor>
+    <Model>Enterprise Suite</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[May 21 14:29:18 2015 host 1.2.3.4 Workday_HTTP_API Users: {"user_name": "lab_user", "integration": "1", "disabled_expired": "0", "implementer": "0", "workday_id": "1xxxxxxxxxxx12000", "account": "lab_user"}]]></testEvent>
+    <testEvent><![CDATA[May 21 14:29:18 2015 host 1.2.3.4 Workday_HTTP_API SystemAccountSignons: {"auth_type": "User Name Password", "active_session": "0", "failed_signon": "1", "disabled_expired": "0", "ip_address": "192.168.1.25", "account": "lab_user", "bad_credentials": "1", "signon_time": "2022-05-20T14:33:03-07:00", "err_message": "Invalid password"}]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patExceptColon"><![CDATA[[^:]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatYear>\s+<:gPatHostName>\s+<:gPatIpAddr>\s+Workday_HTTP_API(?:\s+<:patExceptColon>)?:]]></eventFormatRecognizer>
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>\s+<reptDevName:gPatHostName>\s+<reptDevIpAddr:gPatIpAddr>\s+Workday_HTTP_API\s+<_ET:patExceptColon>:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId("Workday-",$_ET)</setEventAttribute>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>\s+<reptDevName:gPatHostName>\s+<reptDevIpAddr:gPatIpAddr>\s+Workday_HTTP_API:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Workday-Generic</setEventAttribute>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+    </switch>
+    <collectAndSetAttrByJSON src="$_body">
+      <attrKeyMap attr="user" key="user_name"/>
+      <attrKeyMap attr="userFullName" key="full_name"/>
+      <!-- sometimes has format userId / User display name -->
+      <attrKeyMap attr="_account" key="account"/>
+      <attrKeyMap attr="_isIntegration" key="integration"/>
+      <attrKeyMap attr="_isDisabledOrExpired" key="disabled_expired"/>
+      <attrKeyMap attr="_isImplementer" key="implementer"/>
+      <attrKeyMap attr="userId" key="workday_id"/>
+      <attrKeyMap attr="emailId" key="email"/>
+      <attrKeyMap attr="authenMethod" key="auth_type"/>
+      <attrKeyMap attr="osType" key="os"/>
+      <attrKeyMap attr="activeSessions" key="active_session"/>
+      <attrKeyMap attr="_isFailedSignon" key="failed_signon"/>
+      <attrKeyMap attr="browserName" key="browser"/>
+      <attrKeyMap attr="sessionId" key="session_id"/>
+      <attrKeyMap attr="deviceType" key="device_type"/>
+      <attrKeyMap attr="srcIpAddr" key="ip_address"/>
+      <attrKeyMap attr="_isBadCredentials" key="bad_credentials"/>
+      <attrKeyMap attr="_signonTime" key="signon_time"/>
+      <attrKeyMap attr="msg" key="Description"/>
+      <attrKeyMap attr="subtype" key="Subtype"/>
+      <!-- SecurityGroups and others may use this for object ID -->
+      <attrKeyMap attr="_workdayID" key="workdayID"/>
+      <attrKeyMap attr="groupName" key="Security_Group"/>
+      <attrKeyMap attr="type" key="Type"/>
+      <attrKeyMap attr="_inactiveBool" key="Inactive"/>
+      <attrKeyMap attr="_inactiveBool" key="Policy_is_Active"/>
+      <attrKeyMap attr="_inactiveBool" key="Functional_Area_is_Enabled"/>
+      <attrKeyMap attr="isSystemOwned" key="Workday-Owned"/>
+      <attrKeyMap attr="memberName" key="Members"/>
+      <!-- Domains -->
+      <attrKeyMap attr="objDomain" key="Domain"/>
+      <attrKeyMap attr="allowedSecGroups" key="Allowed_Security_Group_Types"/>
+      <attrKeyMap attr="modifySecGroups" key="Modify_Security_Groups"/>
+      <attrKeyMap attr="readOnlySecGroups" key="View-Only_Security_Groups"/>
+      <!-- General fields seen in Organizations report -->
+      <attrKeyMap attr="_name" key="name"/>
+      <!-- Functional Area Report -->
+      <attrKeyMap attr="funName" key="Functional_Area_Name"/>
+      <!-- BusinessProcesses fields -->
+      <attrKeyMap attr="osObjName" key="Business_Process_Type"/>
+      <attrKeyMap attr="details" key="Initiating_Actions_for_Security_Configuration_group"/>
+      <attrKeyMap attr="funName" key="Functional_Area_s_"/>
+      <attrKeyMap attr="recommendedActions" key="Allowed_Actions_for_Security_Configuration_group"/>
+    </collectAndSetAttrByJSON>
+
+    <!-- Common reports have an active/inactive bool, try setting event type based on this -->
+    <choose>
+      <when test="not_exist _inactiveBool"/>
+      <when test="$_inactiveBool = '0'">
+        <setEventAttribute attr="eventType">combineMsgId($eventType,"-Active-List")</setEventAttribute>
+      </when>
+      <when test="$_inactiveBool = '1'">
+        <setEventAttribute attr="eventType">combineMsgId($eventType,"-Inactive-List")</setEventAttribute>
+      </when>
+    </choose>
+
+    <!-- Each event type represents a report entry log from a given workday api report -->
+    <when test="exist _ET">
+      <choose>
+        <when test="$_ET = 'FunctionalAreas'">
+          <when test="exist _workdayID">
+            <setEventAttribute attr="objId">$_workdayID</setEventAttribute>
+          </when>
+        </when>
+        <when test="$_ET = 'Organizations'">
+          <when test="exist _workdayID">
+            <setEventAttribute attr="inCustomerId">$_workdayID</setEventAttribute>
+          </when>
+          <when test="exist _name">
+            <setEventAttribute attr="inCustomerName">$_name</setEventAttribute>
+          </when>
+        </when>
+        <when test="$_ET = 'Domains'">
+          <when test="exist _workdayID">
+            <setEventAttribute attr="objId">$_workdayID</setEventAttribute>
+          </when>
+        </when>
+        <!-- When report defined called "SecurityGroups" exists in Workday. Lists all security group objects -->
+        <when test="$_ET IN 'SecurityGroups,SecurityGroup_Details'">
+          <when test="exist _workdayID">
+            <setEventAttribute attr="groupID">$_workdayID</setEventAttribute>
+          </when>
+        </when>
+        <!-- FN_Users?format=json API Call -->
+        <!-- Log Header in Generic HTTPS Poller is: Workday_HTTP_API Users: -->
+        <when test="$_ET = 'Users'">
+          <setEventAttribute attr="eventType">Workday-User-List</setEventAttribute>
+          <when test="exist _isDisabledOrExpired">
+            <when test="$_isDisabledOrExpired = '1'">
+              <setEventAttribute attr="eventType">Workday-DisabledOrExpired-User-List</setEventAttribute>
+            </when>
+          </when>
+        </when>
+        <!-- API Call: FN_SystemAccountSignons?to_moment=xxx&from_moment=xxx -->
+        <!-- Log Header in Generic HTTPS Poller is: Workday_HTTP_API SystemAccountSignons: -->
+        <when test="$_ET = 'SystemAccountSignons'">
+          <!-- Parse Sign On Time if existing -->
+          <when test="exist _signonTime">
+            <collectFieldsByRegex src="$_signonTime">
+              <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime><_tz:gPatTimeZone>?]]></regex>
+            </collectFieldsByRegex>
+            <choose>
+              <when test="exist _tz">
+                <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+              </when>
+              <otherwise>
+                <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+              </otherwise>
+            </choose>
+          </when>
+          <!-- Set event type and err reason for failure if specified -->
+          <setEventAttribute attr="eventType">Workday-Signon-</setEventAttribute>
+          <choose>
+            <when test="not_exist _isFailedSignon"/>
+            <when test="$_isFailedSignon = '1'">
+              <setEventAttribute attr="eventType">combineMsgId($eventType,"Failed")</setEventAttribute>
+              <choose>
+                <!-- both are expected to exist in signon record -->
+                <when test="not_exist _isDisabledOrExpired"/>
+                <when test="not_exist _isBadCredentials"/>
+                <when test="$_isDisabledOrExpired = '1'">
+                  <setEventAttribute attr="errReason">Account disabled or expired</setEventAttribute>
+                </when>
+                <when test="$_isBadCredentials = '1'">
+                  <setEventAttribute attr="errReason">Bad credentials</setEventAttribute>
+                </when>
+              </choose>
+            </when>
+            <when test="$_isFailedSignon = '0'">
+              <!-- May be sign off, sign in success, or other depends on auth type -->
+              <choose>
+                <when test="$authenMethod = 'Proxy Started'">
+                  <setEventAttribute attr="eventType">combineMsgId($eventType,"Proxy-Started")</setEventAttribute>
+                </when>
+                <when test="$authenMethod = 'Proxy Ended'">
+                  <setEventAttribute attr="eventType">combineMsgId($eventType,"Proxy-Ended")</setEventAttribute>
+                </when>
+                <otherwise>
+                  <setEventAttribute attr="eventType">combineMsgId($eventType,"Success")</setEventAttribute>
+                </otherwise>
+              </choose>
+            </when>
+            <otherwise>
+              <setEventAttribute attr="eventType">combineMsgId($eventType,"Success")</setEventAttribute>
+            </otherwise>
+          </choose>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist _account">
+      <switch>
+        <!-- user / User Full Name -->
+        <case>
+          <collectFieldsByRegex src="$_account">
+            <regex><![CDATA[<user:gPatStr>\s+\/\s+<userFullName:gPatMesgBody>\s+on behalf of <targetUser:gPatStr>\s\/\s<:gPatMesgBody>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_account">
+            <regex><![CDATA[<user:gPatStr>\s+\/\s+<userFullName:gPatMesgBody>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <!-- user -->
+        <case>
+          <collectFieldsByRegex src="$_account">
+            <regex><![CDATA[<user:gPatStr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

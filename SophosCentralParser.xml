@@ -1,0 +1,160 @@
+<eventParser name="SophosCentralParser">
+  <deviceType>
+    <Vendor>Sophos</Vendor>
+    <Model>Central</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[2018-10-18 15:34:56 FSM-Sophos-Central,[type]=Event::Endpoint::UpdateSuccess,[location]=User,[endpoint_id]=11111111-1111-1111-1111-111111111111,[endpoint_type]=computer,[customer_id]=11111111-1111-1111-1111-111111111111,[severity]=low,[created_at]=2018-10-18T02:49:30.702Z,[ip]=192.168.1.241,[user_id]=5987eb53599b13173d1edd4e,[when]=2018-10-18T02:49:30.682Z,[source]=Firstname Lastname,[group]=UPDATING,[name]=Update succeeded,[phCustId]=1]]></testEvent>
+    <testEvent><![CDATA[2018-10-18 15:31:56 FSM-Sophos-Central,[type]=Event::Endpoint::WebControlViolation,[location]=ExampleLocation,[endpoint_id]=11111111-1111-1111-1111-111111111111,[endpoint_type]=computer,[customer_id]=11111111-1111-1111-1111-111111111111,[severity]=low,[created_at]=2018-10-18T07:31:29.223Z,[ip]=192.168.0.222,[user_id]=5987eb53599b13173d1edd4e,[when]=2018-10-18T07:26:23.000Z,[source]=Firstname Lastname,[group]=WEB,[name]='http://fsm123.down.123ch.com/download/IDA%20Pro%207.0(%E5%8F%8D%E7%BC%96%E8%AF%91%E5%B7%A5%E5%85%B7)%20%E5%85%A8%E6%8F%92%E4%BB%B6%20%E5%AE%89%E8%A3%85%E7%A0%B4%E8%A7%A3%E7%89%88(%E9%99%84%E7%A0%B4%E8%A7%A3%E8%A1%A5%E4%B8%81+%E7%A0%B4%E8%A7%A3%E6%96%B9%E6%B3%95)%2064%E4%BD%8D_96@579900.exe' warned due to filetype 'Windows Executable (exe)',[phCustId]=1]]></testEvent>
+    <testEvent><![CDATA[2018-10-18 15:31:56 FSM-Sophos-Central,[type]=Event::Endpoint::Threat::PuaDetected,[location]=ExampleLocation,[endpoint_id]=11111111-1111-1111-1111-111111111111,[endpoint_type]=computer,[customer_id]=11111111-1111-1111-1111-111111111111,[severity]=medium,[created_at]=2018-10-18T07:26:36.671Z,[ip]=192.168.0.222,[user_id]=5987eb53599b13173d1edd4e,[threat]=Downloader,[when]=2018-10-18T07:26:32.000Z,[source]=Firstname Lastname,[group]=PUA,[name]=PUA detected: 'Downloader' at 'C:\Users\User\Downloads\IDA Pro 7.0(反编译工具) 全插件 安装破解版(附破解补丁+破解方法) 64位_96@579900.exe',[phCustId]=1]]></testEvent>
+  </testEvents>
+  <eventFormatRecognizer><![CDATA[FSM-Sophos-Central,\[type\]=Event::\w+::]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+    </switch>
+    <setEventAttribute attr="extEventRecvProto">SOPHOS_CENTRAL_API</setEventAttribute>
+    <collectAndSetAttrByKeyValuePair sep=",[" src="$_body">
+      <attrKeyMap attr="_type" key="[type]="/>
+      <attrKeyMap attr="origLocation" key="[location]="/>
+      <attrKeyMap attr="clusterId" key="[endpoint_id]="/>
+      <attrKeyMap attr="deviceType" key="[endpoint_type]="/>
+      <attrKeyMap attr="groupID" key="[customer_id]="/>
+      <attrKeyMap attr="_severity" key="[severity]="/>
+      <attrKeyMap attr="_createTime" key="[created_at]="/>
+      <attrKeyMap attr="srcIpAddr" key="[ip]="/>
+      <attrKeyMap attr="reptDevIpAddr" key="[ip]="/>
+      <attrKeyMap attr="hostIpAddr" key="[ip]="/>
+      <attrKeyMap attr="userId" key="[user_id]="/>
+      <attrKeyMap attr="riskName" key="[threat]="/>
+      <attrKeyMap attr="_eventTime" key="[when]="/>
+      <attrKeyMap attr="accessKeyId" key="[appSha256]="/>
+      <attrKeyMap attr="certInfo" key="[appCerts]="/>
+      <attrKeyMap attr="actionName" key="[name]="/>
+      <attrKeyMap attr="groupName" key="[group]="/>
+      <attrKeyMap attr="serialNumber" key="[items]="/>
+      <attrKeyMap attr="cpuCore" key="[totalItems]="/>
+      <attrKeyMap attr="filePath" key="[filePath]="/>
+      <attrKeyMap attr="customer" key="[detection_identity_name]="/>
+      <attrKeyMap attr="userName" key="[user]="/>
+      <attrKeyMap attr="ruleName" key="[rule]="/>
+      <attrKeyMap attr="osObjAction" key="[user_action]="/>
+      <attrKeyMap attr="srcApp" key="[app_name]="/>
+      <attrKeyMap attr="serviceType" key="[action]="/>
+      <attrKeyMap attr="fileType" key="[file_type]="/>
+      <attrKeyMap attr="fileSize" key="[file_size]="/>
+      <attrKeyMap attr="phCustId" key="[phCustId]="/>
+      <attrKeyMap attr="reptDevName" key="[reptDevName]="/>
+      <attrKeyMap attr="hostName" key="[reptDevName]="/>
+      <attrKeyMap attr="osType" key="[endpoint_platform]="/>
+      <attrKeyMap attr="objType" key="[datastream]="/>
+      <attrKeyMap attr="srcUser" key="[suser]="/>
+      <attrKeyMap attr="destName" key="[dhost]="/>
+      <attrKeyMap attr="user" key="[source]="/>
+      <attrKeyMap attr="servicePath" key="[apiPath]="/>
+      <attrKeyMap attr="_json" key="[json]="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <when test="exist _type">
+      <setEventAttribute attr="_type">replaceStringByRegex($_type, "::", "-")</setEventAttribute>
+      <collectFieldsByRegex src="$_type">
+        <regex><![CDATA[Event<_type:gPatMesgBody>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="eventType">combineMsgId("Sophos-Central",$_type)</setEventAttribute>
+    </when>
+
+    <when test="exist _json">
+      <collectAndSetAttrByJSON src="$_body">
+        <attrKeyMap attr="" key=""/>
+      </collectAndSetAttrByJSON>
+    </when>
+
+    <choose>
+      <when test="$_severity = 'very_high'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+      <when test="$_severity = 'high'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$_severity = 'medium'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_severity = 'low'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_severity = 'none'">
+        <setEventAttribute attr="eventSeverity">0</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _eventTime">
+      <collectFieldsByRegex src="$_eventTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+
+    <when test="exist _createTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_createTime">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="createTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_createTime">
+            <regex><![CDATA[^<_createTime:gPatInt>$]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="createTime">divide($_createTime, 1000)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist actionName">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_body">
+            <regex><![CDATA[,\[name\]=<actionName:gPatMesgBodyMin>\s*(?:,\[|$)]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+
+      <choose>
+        <when test="not_exist groupName"/>
+
+        <when test="$groupName = 'DATA_LOSS_PREVENTION'">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$actionName">
+                <regex><![CDATA[^An?\s+(?:'|′|"|″)<fwAction:gPatMesgBodyMin>(?:'|′|"|″) action was taken\.\s+Username:\s+<domain:gPatStr>[\\]<user:gPatStr>\s+Rule names:\s+(?:'|′|"|″)<fwRule:gPatMesgBodyMin>(?:'|′|"|″)\s+User action:\s+<action:gPatMesgBodyMin>\s+Application Name:\s+<appName:gPatMesgBodyMin>\s+Data Control action:\s+<:gPatMesgBodyMin>\s+File type:\s+<fileType:gPatMesgBodyMin>\s+File size:\s+<fileSize:gPatInt>\s+Source path:\s+<filePath:gPatMesgBodyMin>\s*$]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+        </when>
+
+        <when test="$groupName = 'PUA'">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$actionName">
+                <regex><![CDATA[^PUA detected:\s+(?:'|′|"|″).*?(?:'|′|"|″) at (?:'|′|"|″)<filePath:gPatMesgBodyMin>(?:'|′|"|″)\s*$]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+        </when>
+      </choose>
+    </when>
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,71 @@
+<eventParser name="ZscalerParser">
+  <deviceType>
+    <Vendor>Zscaler</Vendor>
+    <Model>Cloud Firewall</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <!-- examples
+    "Mon Jan 01 01:01:01 2001","example","HTTP","1.2.3.4/","Allowed","General Browsing","General Browsing","123","321","78","78","General Surfing","Miscellaneous","Miscellaneous or Unknown","Clean Transaction","None","0","None","None","Example","Default Department","4.3.2.1","1.2.3.4","head","403 - Forbidden","example ua","None"
+  -->
+  <!-- pattern definitions -->
+
+  <eventFormatRecognizer><![CDATA["<:gPatWeekday>\s+<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatYear>",(?:".+?",){6}(?:"\d+",){4}]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA["Mon Jan 01 01:01:01 2001","example","HTTP","1.2.3.4/","Allowed","General Browsing","General Browsing","123","321","78","78","General Surfing","Miscellaneous","Miscellaneous or Unknown","Clean Transaction","None","0","None","None","Example","Default Department","4.3.2.1","1.2.3.4","head","403 - Forbidden","example ua","None"]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">Zscaler-Generic</setEventAttribute>
+    <collectAndSetAttrByPos src="$_rawmsg" sep="&quot;,&quot;">
+      <attrPosMap attr="_timeString" pos="1"/>
+      <attrPosMap attr="user" pos="2"/>
+      <attrPosMap attr="appTransportProto" pos="3"/>
+      <attrPosMap attr="infoURL" pos="4"/>
+      <attrPosMap attr="actionName" pos="5"/>
+      <attrPosMap attr="appName" pos="6"/>
+      <attrPosMap attr="appGroupName" pos="7"/>
+      <attrPosMap attr="sentBytes64" pos="8"/>
+      <attrPosMap attr="recvBytes64" pos="9"/>
+      <attrPosMap attr="latency" pos="11"/>
+      <attrPosMap attr="webCategory" pos="12"/>
+      <attrPosMap attr="appCategory" pos="13"/>
+      <attrPosMap attr="appSubcategory" pos="14"/>
+      <attrPosMap attr="virusType" pos="15"/>
+      <attrPosMap attr="virusName" pos="16"/>
+      <attrPosMap attr="threatScore" pos="17"/>
+      <attrPosMap attr="dlpEngineVer" pos="18"/>
+      <attrPosMap attr="dlpCategory" pos="19"/>
+      <attrPosMap attr="hostLocation" pos="20"/>
+      <attrPosMap attr="srcIpAddr" pos="22"/>
+      <attrPosMap attr="destIpAddr" pos="23"/>
+      <attrPosMap attr="httpMethod" pos="24"/>
+      <attrPosMap attr="httpStatusCode" pos="25"/>
+      <attrPosMap attr="httpUserAgent" pos="26"/>
+      <attrPosMap attr="httpReferrer " pos="27"/>
+    </collectAndSetAttrByPos>
+
+    <when test="exist actionName">
+      <setEventAttribute attr="eventType">combineMsgId("Zscaler-CloudFirewall-",$actionName)</setEventAttribute>
+    </when>
+
+    <when test="exist httpStatusCode">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$httpStatusCode">
+            <regex><![CDATA[<httpStatusCode:gPatInt>\s+-\s+<errorString:gPatMesgBody>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _timeString">
+      <collectFieldsByRegex src="$_timeString">
+        <regex><![CDATA[<:gPatWeekday>\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>

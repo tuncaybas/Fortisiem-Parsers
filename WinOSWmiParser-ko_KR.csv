@@ -1,0 +1,294 @@
+A user account was locked out,
+Access Request Information,
+Accesses,
+Account Domain,계정 도메인
+Account Domain,도메인
+Account Expires,계정 만료
+Account For Which Logon Failed,로그온을 실패한 계정
+Account Information,계정 정보
+Account Name,계정 이름
+Account Name,계정이름
+Account Name,사용자 이름
+Account Session Identifier,계정 세션 식별자
+Account That Was Locked Out,잠근 계정
+Account Whose Credentials Were Used,자격 증명이 사용된 계정
+Additional Information,추가 정보
+Advanced Options,고급 옵션
+Allowed To Delegate To,위임하도록 허용된 대상
+AllowedToDelegateTo,위임하도록 허용된 대상
+Application Correlation ID,응용 프로그램 관계 ID
+Application Correlation ID,응용 프로그램 상관 관계 ID
+Application Information,응용 프로그램 정보
+Application Name,응용 프로그램 이름
+Attribute,특성
+Attributes,특성
+Audit Failure,감사 실패
+Audit Success,감사 성공
+Auditing Settings,감사 설정
+Authentication Details,인증 정보
+Authentication Package Name,
+Authentication Package,인증 패키지
+Authentication Provider,인증 공급자
+Authentication Server,인증 서버
+Authentication Type,인증 유형
+Called Station Identifier,호출된 스테이션 식별자
+Caller Computer Name,호출자 컴퓨터 이름
+Caller Domain,
+Caller Logon ID,
+Caller Process ID,호출자 프로세스 ID
+Caller Process Name,호출자 프로세스 이름
+Caller User Name,
+Calling Station Identifier,호출 스테이션 식별자
+Certificate Information,인증서 정보
+Certificate Issuer Name,인증서 발급자 이름
+Certificate Serial Number,인증서 일련 번호
+Certificate Thumbprint,인증서 지문
+Change Type,변경 유형
+Changed Attributes,변경된 특성
+Class ID,클래스 ID
+Class Name,클래스 이름
+Class,클래스
+Client Address,클라이언트 주소
+Client Domain,
+Client Friendly Name,클라이언트 이름
+Client IP Address,클라이언트 IP 주소
+Client Logon ID,
+Client Machine,클라이언트 컴퓨터
+Client Name,
+Client Port,클라이언트 포트
+Client User Name,
+Compatible IDs,호환 가능 ID
+Computer Account That Was Changed,변경된 컴퓨터 계정
+Configuration Access Policy,구성 액세스 정책
+Configured Names,구성된 이름
+Connection Request Policy Name,연결 요청 정책 이름
+Correlation ID,관계 ID
+Correlation ID,상관 관계 ID
+Creator Process ID,만든 이 프로세스 ID
+Creator Process ID,생성자 프로세스 ID
+Creator Process Name,생성자 프로세스 이름
+Creator Subject,생성자 주체
+Deleted Group,삭제된 그룹
+Destination Address,대상 주소
+Destination Port,대상 포트
+Detailed Authentication Information,인증 세부 정보
+Device ID,장치 ID
+Device Name,장치 이름
+Direction,방향
+Directory Service,디렉터리 서비스
+Disable Integrity Checks,무결성 확인 사용 안 함
+Disabled Privileges,사용할 수 없는 권한
+Display Name,표시 이름
+DNS Host Name,DNS 호스트 이름
+Domain Behavior Version,도메인 동작 버전
+Domain ID,도메인 ID
+Domain Name,도메인 이름
+Domain,도메인
+EAP Type,EAP 종류
+Elevated Token,상승된 토큰
+Enabled Privileges,사용 권한
+Error Code,오류 코드
+Event in sequence,이벤트 순서
+Expiration time,만료 시간
+Extended-Result,확장된 결과
+Failed test code,실패한 테스트 코드
+Failure Code,오류 코드
+Failure Information,오류 정보
+Failure Reason,오류 이유
+Filter Information,필터 정보
+Filter Run-Time ID,필터 런타임 ID
+Flight Signing,플라이트 서명
+Force Logoff,강제 로그오프
+Fully Qualified Account Name,정규화된 계정 이름
+General Settings,일반 설정
+Group Domain,그룹 도메인
+Group Membership,그룹 구성원
+Group Name,그룹 이름
+Group,그룹
+Handle ID,핸들 ID
+Hardware IDs,하드웨어 ID
+Help URL,도움말 URL
+Home Directory,홈 디렉터리
+Home Drive,홈 드라이브
+HyperVisor Debugging,하이퍼바이저 디버깅
+HyperVisor Launch Type,하이퍼바이저 시작 유형
+HyperVisor Load Options,하이퍼바이저 로드 옵션
+HyperVisor Settings,하이퍼바이저 설정
+Image File Name,
+Image File,
+Impersonation Level,가장 수준
+IP Addresses,IP 주소
+Kernel Debugging,커널 디버깅
+Key Length,키 길이
+Layer Name,계층 이름
+Layer Run-Time ID,계층 런타임 ID
+LDAP Display Name,LDAP 표시 이름
+Linked Logon ID,연결된 로그온 ID
+Load Options,로드 옵션
+Location Information,위치 정보
+Lockout Duration,잠금 기간
+Lockout Observation Window,잠금 관찰 창
+Lockout Threshold,잠금 임계값
+Logging Results,로깅 결과
+Logon Account,로그온 계정
+Logon GUID,로그온 GUID
+Logon Hours,로그온 시간
+Logon ID,로그온 ID
+Logon Information,로그온 정보
+Logon Process Name,
+Logon Process,로그온 프로세스
+Logon Type,로그온 유형
+Machine Account Quota,컴퓨터 계정 할당량
+Mandatory Label,필수 레이블
+Max. Password Age,최대 암호 사용 기간
+Member,구성원
+Min. Password Age,최소 암호 사용 기간
+Min. Password Length,최소 암호 길이
+Mixed Domain Mode,혼합 도메인 모드
+Name,이름
+NAS Identifier,NAS 식별자
+NAS IPv4 Address,NAS IPv4 주소
+NAS IPv6 Address,NAS IPv6 주소
+NAS Port,NAS 포트
+NAS Port-Type,NAS 포트 종류
+Network Account Domain,네트워크 계정 도메인
+Network Account Name,네트워크 계정 이름
+Network Address,네트워크 주소
+Network Information,네트워크 정보
+Network Policy Name,네트워크 정책 이름
+New Account Name,새 계정 이름
+New Account,새 계정
+New Computer Account,새 컴퓨터 계정
+New DN,새 DN
+New Group,새 그룹
+New Handle ID,
+New Logon,새 로그온
+New Maxusers,새 최대 사용자
+New Process ID,새 프로세스 ID
+New Process Name,새 프로세스 이름
+New Remark,새 설명
+New SD,새 SD
+New Security Descriptor,새 보안 설명자
+New ShareFlags,새 공유 플래그
+New State,새 상태
+New Time,새 시간
+New Token Information,새 토큰 정보
+New UAC Value,새 UAC 값
+Object Handle,
+Object Name,개체 이름
+Object Server,개체 서버
+Object Type,개체 유형
+Object,개체
+OEM Information,OEM 정보
+Old Account Name,이전 계정 이름
+Old DN,이전 DN
+Old MaxUsers,이전 최대 사용자
+Old Remark,이전 설명
+Old SD,이전 SD
+Old ShareFlags,이전 공유 플래그
+Old UAC Value,이전 UAC 값
+Operation,작업
+Original Security Descriptor,원래 보안 설명자
+OS-Version,OS 버전
+Package Name (NTLM only),패키지 이름(NTLM 전용)
+Password History Length,암호 기록 길이
+Password Last Set,마지막 암호 설정
+Password Properties,암호 속성
+Permissions Change,권한 변경
+Port,포트
+Pre-Authentication Type,사전 인증 유형
+Previous Time,이전 시간
+Primary Domain,
+Primary Group ID,기본 그룹 ID
+Primary Logon ID,
+Primary User Name,
+Privileges,권한
+Process Command Line,프로세스 명령줄
+Process ID,프로세스 ID
+Process ID,프로세스ID
+Process Information,프로세스 정보
+Process Name,프로세스 이름
+Process,프로세스
+Profile Path,프로필 경로
+Protocol,프로토콜
+Proxy Policy Name,프록시 정책 이름
+Quarantine Grace Time,격리 유예 기간
+Quarantine Information,격리 정보
+RADIUS Client,RADIUS 클라이언트
+Read Operation,읽기 작업
+Reason Code,이유 코드
+Reason,이유
+Resource Manager,리소스 관리자
+Restricted Admin Mode,제한된 관리 모드
+Result Code,결과 코드
+Result,결과
+RM Transaction ID,RM 트랜잭션 ID
+SAM Account Name,SAM 계정 이름
+Script Path,스크립트 경로
+Security ID,보안 ID
+Security ID,사용자 SID
+Security ID,주체 보안 ID
+Server Information,서버 정보
+Server Names,서버 이름
+Service ID,서비스 ID
+Service Information,서비스 정보
+Service Name,서비스 이름
+Service Principal Names,서비스 사용자 이름
+Session ID,세션 ID
+Session Identifier,세션 식별자
+Share Information,공유 정보
+Share Name,공유 이름
+Share Path,공유 경로
+SID History,SID 기록
+SID List,SID 목록
+Signature Settings,서명 설정
+Source Address,원본 주소
+Source Network Address,원본 네트워크 주소
+Source Port,원본 포트
+Source Workstation,원본 워크스테이
+SPN Name,SPN 이름
+Status,상태
+Sub Status,하위 상태
+Subject,주체
+Supplied Realm Name,제공된 영역 이름
+Syntax (OID),구문(OID)
+System Event Logging,시스템 이벤트 로깅
+System Health Validator Result(s),시스템 상태 검사기 결과
+Target Account ID,
+Target Account Name,
+Target Account,대상 계정
+Target Computer,대상 컴퓨터
+Target Domain,
+Target Process ID,대상 프로세스 ID
+Target Process Name,대상 프로세스 이름
+Target Process,대상 프로세스
+Target Server Name,대상 서버 이름
+Target Server,대상 서버
+Target Subject,대상 주체
+Target User Name,
+Test Signing,테스트 서명
+The domain controller attempted to validate the credentials for an account,
+The workstation was locked,
+The workstation was unlocked,
+Ticket Encryption Type,암호화 유형
+Ticket Encryption Type,티켓 암호화 유형
+Ticket Options,티켓 옵션
+Token Elevation Type,토큰 상승 유형
+Transaction ID,트랜잭션 ID
+Transaction Information,트랜잭션 정보
+Transited Services,전송된 서비스
+Tree Delete,트리 삭제
+Type,유형
+User Account Control,사용자 계정 컨트롤
+User Domain,
+User ID,사용자 ID
+User Name,사용자 이름
+User Parameters,사용자 매개 변수
+User Principal Name,UPN(사용자 계정 이름)
+User Workstations,사용자 워크스테이션
+User,사용자
+Value,값
+Vendor IDs,공급업체 ID
+Virtual Account,가상 계정
+VSM Launch Type,VSM 시작 유형
+Workstation Name,워크스테이션 이름
