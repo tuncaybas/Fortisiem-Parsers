@@ -1,0 +1,109 @@
+<eventParser name="InfoBloxAuditParser">
+  <deviceType>
+    <Vendor>InfoBlox</Vendor>
+    <Model>NiOS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+  <patternDefinitions>
+    <pattern name="patQuote"><![CDATA[[^"]*]]></pattern>
+    <pattern name="patSpaceColon"><![CDATA[[^: ]*]]></pattern>
+  </patternDefinitions>
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+(?:<:gPatStr>|<:gPatIpAddr>|<:gPatStr>\s+<:gPatIpAddr>)\s+httpd:\s+<:gPatYear>-<:gPatMonNum>-<:gPatDay>\s+<:gPatTime>\.\d+Z\s+\[<:gPatStrRightSB>\]:\s]]></eventFormatRecognizer>
+  <testEvents>
+    <testEvent><![CDATA[<29>May 17 06:07:01 10.10.10.10 httpd: 2016-05-17 10:07:01.919Z [adminflast]: Called - ClearLease: Args v6_prefix_bits=0,network_view=NetworkView:default,address="10.1.2.3"]]></testEvent>
+    <testEvent><![CDATA[<29>May 17 04:41:20 10.10.10.10 httpd: 2016-05-17 08:41:20.238Z [adminflast]: Created FixedAddress 10.1.2.3 network_view=default: Set comment="Created by Vulcan - Change ID: 8555, Solution ID: 1017 | User: flast| Time: May 17 2016  8:07AM",disabled=False,ip_address="10.1.2.3",mac_address="00:50:56:00:00:00",match_option="MAC_ADDRESS",name="example.com"]]></testEvent>
+    <testEvent><![CDATA[<29>May 17 06:06:59 10.10.10.10 httpd: 2016-05-17 10:06:59.157Z [adminflast]: Deleted ARecord example.com DnsView=Internal address=10.100.33.117]]></testEvent>
+    <testEvent><![CDATA[<29>May 17 00:41:31 10.10.10.10 httpd: 2016-05-17 04:41:31.766Z [adminflast]: Login_Allowed - - to=AdminConnector ip=10.1.2.3 auth=RADIUS group=InfoBloxAdmins apparently_via=GUI]]></testEvent>
+    <testEvent><![CDATA[<29>May 17 06:46:08 10.10.10.10 httpd: 2016-05-17 10:46:08.703Z [adminname]: Login_Denied - - to=AdminConnector ip=10.3.2.1 info=Local\054RADIUS apparently_via=GUI]]></testEvent>
+    <testEvent><![CDATA[<29>May 17 01:03:14 10.10.10.10 httpd: 2016-05-17 05:03:14.721Z [user001]: Logout - - ip=10.3.2.1 group=InfoBloxAdmins trigger_event=Normal\040Logout]]></testEvent>
+    <testEvent><![CDATA[<29>May 17 02:02:08 10.10.10.10 httpd: 2016-05-17 06:02:08.017Z [adminflast]: Modified FixedAddress 10.2.3.4 network_view=default: Changed ip_address:"10.2.3.5"->"10.2.3.6",ms_server:MsServer:NULL->NULL]]></testEvent>
+    <testEvent><![CDATA[<29>May 17 01:00:10 10.10.10.10 httpd: 2016-05-17 05:00:10.432Z [username]: Modified HostRecord example.com DnsView=Internal address=10.1.2.3: Changed addresses:[HostAddress:10.15.23.15]->[HostAddress:10.1.2.3]]]></testEvent>
+    <testEvent><![CDATA[<173>Jan 30 10:06:59 example.com 10.1.1.1 httpd: 2020-01-30 18:06:59.651Z [adoradea]: Login_Allowed - - to=AdminConnector ip=10.1.1.2 auth=LOCAL group=admin-group apparently_via=GUI]]></testEvent>
+    <testEvent><![CDATA[<173>Jan 30 10:06:59 example.com httpd: 2020-01-30 18:06:59.651Z [adoradea]: Login_Allowed - - to=AdminConnector ip=10.1.1.2 auth=LOCAL group=admin-group apparently_via=GUI]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[^\s*<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevName:gPatStr>|<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatStr>\s+<reptDevIpAddr:gPatIpAddr>)\s+httpd:\s+<_year2:gPatYear>-<_mon2:gPatMonNum>-<_day2:gPatDay>\s+<_time2:gPatTime>\.\d+Z\s+\[<user:gPatStrRightSB>\]:\s+<_method:gPatStr>\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon2, $_day2, $_year2, $_time2,"UTC")</setEventAttribute>
+    <setEventAttribute attr="eventType">InfoBlox-Audit-Generic</setEventAttribute>
+    <choose>
+      <when test="$_method = 'Called'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[\s+<_funName:patSpaceColon>(?:\s+<:gPatStrEndColon>)?:\s+Args\s+<_lastBody:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <collectAndSetAttrByKeyValuePair sep="," src="$_lastBody">
+          <attrKeyMap attr="destIpAddr" key="address="/>
+          <attrKeyMap attr="msg" key="message="/>
+          <attrKeyMap attr="webCategory" key="category="/>
+        </collectAndSetAttrByKeyValuePair>
+        <setEventAttribute attr="eventType">combineMsgId("InfoBlox-Audit-",$_funName,"-Called")</setEventAttribute>
+      </when>
+      <when test="$_method = 'Created'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^FixedAddress\s+<destIpAddr:gPatIpAddr>\s+<:gPatStrEndColon>:\s+Set\s+<_lastBody:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <collectAndSetAttrByKeyValuePair sep="," src="$_lastBody">
+          <attrKeyMap attr="comment" key="comment="/>
+          <attrKeyMap attr="destMACAddr" key="mac_address="/>
+          <attrKeyMap attr="destName" key="name="/>
+        </collectAndSetAttrByKeyValuePair>
+        <setEventAttribute attr="eventType">InfoBlox-Audit-FixedAddress-Created</setEventAttribute>
+      </when>
+      <when test="$_method = 'Deleted'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^<dnsQueryType:gPatStr>Record\s+<destName:gPatStr>\s+<:gPatStr>\s+address=<destIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("InfoBlox-Audit-",$dnsQueryType,"Record-Deleted")</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^<dnsQueryType:gPatStr>Record\s+<:gPatStr>\s+<destName:gPatStr>\s+<:gPatStr>\s+address=<destIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("InfoBlox-Audit-",$dnsQueryType,"Record-Deleted")</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^<dnsQueryType:gPatStr>Record\s+<destName:gPatStr>\s+<:gPatStr>\s+<:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("InfoBlox-Audit-",$dnsQueryType,"Record-Deleted")</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">combineMsgId("InfoBlox-Audit-Record-Deleted")</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+      <when test="$_method IN 'Login_Allowed, Login_Denied, Logout'">
+        <collectAndSetAttrByKeyValuePair sep=" " src="$_body">
+          <attrKeyMap attr="administratorName" key="to="/>
+          <attrKeyMap attr="srcIpAddr" key="ip="/>
+          <attrKeyMap attr="authenMethod" key="auth="/>
+          <attrKeyMap attr="groupName" key="group="/>
+        </collectAndSetAttrByKeyValuePair>
+        <setEventAttribute attr="eventType">combineMsgId("InfoBlox-Audit-",$_method)</setEventAttribute>
+      </when>
+      <when test="$_method = 'Modified'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^HostRecord\s+<:gPatStrEndColon>:\s+Changed\s+addresses:\[HostAddress:<:gPatIpAddr>\]->\[HostAddress:<destIpAddr:gPatIpAddr>\](?:,fqdn:\"<:patQuote>\"-\>\"<destName:patQuote>\")?]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("InfoBlox-Audit-HostRecord-",$_method)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^FixedAddress\s+<:gPatStrEndColon>:\s+Changed\s+ip_address:\"<:gPatIpAddr>\"-\>\"<destIpAddr:gPatIpAddr>\"]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("InfoBlox-Audit-FixedAddress-",$_method)</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">combineMsgId("InfoBlox-Audit-Generic-",$_method)</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

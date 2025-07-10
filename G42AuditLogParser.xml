@@ -1,0 +1,65 @@
+<eventParser name="G42AuditLogParser">
+  <deviceType>
+    <Vendor>G42</Vendor>
+    <Model>Cloud</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[^G42_AUDIT_LOG:phCustId=\d+,reptDevIpAddr=<:gPatIpAddr>,reptDevName=[^,]+,msg=]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[G42_AUDIT_LOG:phCustId=1,reptDevIpAddr=10.10.10.11,reptDevName=g42cloud.com,msg={"api_version":"v1.0","code":200,"record_time":1690385983175,"request":"{\"tracker_name\":\"system\",\"tracker_type\":\"system\",\"is_support_validate\":false,\"is_support_trace_files_encryption\":false,\"is_lts_enabled\":false,\"obs_info\":{\"bucket_name\":\"databuckettest\",\"file_prefix_name\":\"\",\"is_obs_created\":false,\"bucket_lifecycle\":0,\"is_authorized_bucket\":false,\"bucket_location\":\"ae-ad-1\"}}","resource_name":"system","resource_type":"tracker","response":"{\"create_time\":1683013750868,\"domain_id\":\"1159168f06005a040f29c008cc6cd6e0\",\"enterprise_project_id\":\"0\",\"id\":\"11111111-1111-1111-1111-111111111111\",\"is_organization_tracker\":false,\"is_support_trace_files_encryption\":false,\"is_support_validate\":false,\"lts\":{\"is_lts_enabled\":false,\"log_group_name\":\"CTS\",\"log_topic_name\":\"system-trace\"},\"obs_info\":{\"bucket_lifecycle\":0,\"bucket_location\":\"\",\"bucket_name\":\"databuckettest\",\"domain_type\":\"\",\"file_prefix_name\":\"\",\"is_authorized_bucket\":false,\"is_obs_created\":false,\"is_sort_by_service\":true},\"project_id\":\"1159168f11805a042f2cc008f041033c\",\"status\":\"enabled\",\"tag\":{},\"tracker_name\":\"system\",\"tracker_type\":\"system\"}","service_type":"CTS","source_ip":"10.10.10.10","time":1690385983175,"trace_id":"11111111-1111-1111-1111-111111111111","trace_name":"updateTracker","trace_rating":"normal","trace_type":"ConsoleAction","user":"{\"name\":\"Example_user\",\"id\":\"6f4a969a36474f7ca3ec25f4cee9aead\",\"domain\":{\"name\":\"Example_user\",\"id\":\"1159168f06005a040f29c008cc6cd6e0\"}}"}]]></testEvent>
+  </testEvents>
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[^G42_AUDIT_LOG:phCustId=<phCustId:gPatInt>,reptDevIpAddr=<reptDevIpAddr:gPatIpAddr>,reptDevName=<reptDevName:gPatStr>,msg=<_json:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <collectAndSetAttrByJSON src="$_json">
+      <attrKeyMap attr="eventAction" key="trace_name"/>
+      <attrKeyMap attr="_severity" key="trace_rating"/>
+      <attrKeyMap attr="type" key="trace_type"/>
+      <attrKeyMap attr="requestBody" key="request"/>
+      <attrKeyMap attr="responseBody" key="response"/>
+      <attrKeyMap attr="httpStatusCode" key="code"/>
+      <attrKeyMap attr="httpVersion" key="api_version"/>
+      <attrKeyMap attr="msg" key="message"/>
+      <attrKeyMap attr="eventTime" key="record_time"/>
+      <attrKeyMap attr="uuid" key="trace_id"/>
+      <attrKeyMap attr="deviceTime" key="time"/>
+      <attrKeyMap attr="_userJson" key="user"/>
+      <attrKeyMap attr="serviceType" key="service_type"/>
+      <attrKeyMap attr="resourceType" key="resource_type"/>
+      <attrKeyMap attr="srcIpAddr" key="source_ip"/>
+      <attrKeyMap attr="resourceName" key="resource_name"/>
+      <attrKeyMap attr="infoURL" key="resource_url"/>
+    </collectAndSetAttrByJSON>
+
+    <when test="exist _userJson">
+      <setEventAttribute attr="_userJson">replaceStrInStr($_userJson, "\\\"", "\"")</setEventAttribute>
+      <collectAndSetAttrByJSON src="$_userJson">
+        <attrKeyMap attr="user" key="name"/>
+        <attrKeyMap attr="userId" key="id"/>
+        <attrKeyMap attr="domain" key="domain.name"/>
+      </collectAndSetAttrByJSON>
+    </when>
+
+    <choose>
+      <when test="not_exist _severity"/>
+      <when test="$_severity = 'normal'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_severity = 'warning'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_severity = 'incident'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+    </choose>
+
+    <setEventAttribute attr="eventType">G42_Generic_Event</setEventAttribute>
+    <when test="exist eventAction">
+      <setEventAttribute attr="eventType">combineMsgId("G42_", $serviceType, "_", $eventAction)</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>

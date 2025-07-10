@@ -1,0 +1,55 @@
+<eventParser name="JuniperDDoSParser">
+  <deviceType>
+    <Vendor>Juniper</Vendor>
+    <Model>DDoS Secure</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patDefendStr"><![CDATA[Defended|Defending]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>Juniper:]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<134>Juniper: Start: 1.1.1.1 : TUR: Worst Offender: (Valid IP) : Defending 1.1.1.2]]></testEvent>
+    <testEvent><![CDATA[<134>Juniper: End : 1.1.1.1 : IND: Worst Offender: Last Defended 1.1.1.2: TCP Attack - Port Scan (Peak 55/s, Occurred 554)]]></testEvent>
+    <testEvent><![CDATA[<134>Juniper: End : 1.1.1.1 : MYS: Worst Offender: Last Defended 1.1.1.2: TCP Attack - Port Scan (Peak 19/s, Occurred 136)]]></testEvent>
+    <testEvent><![CDATA[<134>Juniper: End : 1.1.1.1 : IRL: IP Address Temp Black-Listed (Valid IP) Exceeds SYN + RST + F2D Count (Peak 114/s, Dropped 83.5K pkts)]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>Juniper:\s+(?:Start|End)\s*:\s+<srcIpAddr:gPatIpAddr>\s+:<:gPatStrEndColon>:<_eventTypeMsg:gPatStrEndColon>:<_msg:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>Juniper:\s+(?:Start|End)\s*:\s+<srcIpAddr:gPatIpAddr>\s+:<:gPatStrEndColon>:<_eventTypeMsg:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <choose>
+      <when test="$_eventTypeMsg = 'Worst Offender'">
+        <setEventAttribute attr="eventType">Juniper-DDoS-Secure-WorstOffender</setEventAttribute>
+      </when>
+      <when test="matches($_eventTypeMsg, '\bBlack-Listed\b')">
+        <setEventAttribute attr="eventType">Juniper-DDoS-Secure-Blacklisted</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _msg">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_msg">
+            <regex><![CDATA[<:patDefendStr>\s+<destIpAddr:gPatIpAddr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+  </parsingInstructions>
+</eventParser>

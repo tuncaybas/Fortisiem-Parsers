@@ -1,0 +1,69 @@
+<eventParser name="HitachiVSPParser">
+  <deviceType>
+    <Vendor>Hitachi</Vendor>
+    <Model>Virtual Storage Platform</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <!-- Reference: https://knowledge.hitachivantara.com/Documents/Storage/VSP_5000_Series/90-01-xx/System_Configuration/20_Logging  -->
+
+  <testEvents>
+    <testEvent><![CDATA[<142>Mar  5 16:53:45 10.92.26.47 GUM local1[3780]: <142> Mar  5 16:53:37 GUM Storage: CELFSS,1.1,16,,2021-03-05T16:53:37.0+08:00,Storage,GUM,Authentication,Success,uid=maintenance,HM800:430333,,G200BK,,,,from=AMI001F672F4FB0,,,,8,BasicLog,,,Out-of-band,,[User Auth],Login,,Normal end,Seq.=0000000008]]></testEvent>
+    <testEvent><![CDATA[<142>Mar  4 17:16:39 10.92.26.47 GUM local1[3780]: <142> Mar  4 17:16:38 GUM Storage: CELFSS,1.1,20,,2021-03-04T17:16:38.3+08:00,Storage,GUM,Maintenance,Success,uid=maintenance,HM800:430333,,G200BK,,,,from=10.92.208.93,,,,,DetailLog,,,+Syslog Transfer Protocol=UDP/RFC3164,{Syslog Server,Server Enable,Type,Name,Port Number,Client Certificate File Name,Root Certificate File Name,Location Identification Name,Retry,Retry Interval}=[{Primary,Enable,IPv4,10.92.11.20,514,-,-,G200BK,-,-},{Secondary,Disable,-,-,-,-,-,G200BK,-,-}],Detail=Enable]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>\s+<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatStr>\s+<:gPatWord>: CELFSS,]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[(?:<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<hostIpAddr:gPatIpAddr>\s+<:gPatStr>\s+<:gPatWord>\[\d+\]:\s+)?<:gPatSyslogPRI>\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<serverName:gPatStr>\s+<programName:gPatWord>:\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">Hitachi-VPS-Generic</setEventAttribute>
+
+    <when test="exist _body">
+      <collectAndSetAttrByPos sep="," src="$_body">
+        <attrPosMap attr="oid" pos="0"/>
+        <attrPosMap attr="version" pos="1"/>
+        <attrPosMap attr="msgId" pos="2"/>
+        <attrPosMap attr="action" pos="7"/>
+        <attrPosMap attr="actionResult" pos="8"/>
+        <attrPosMap attr="_uid" pos="9"/>
+        <attrPosMap attr="hwObject" pos="10"/>
+        <attrPosMap attr="_src" pos="16"/>
+        <attrPosMap attr="operationId" pos="20"/>
+        <attrPosMap attr="logLevel" pos="21"/>
+        <attrPosMap attr="msg" pos="24"/>
+      </collectAndSetAttrByPos>
+      <when test="exist _uid">
+        <collectAndSetAttrByKeyValuePair sep="=" src="$_uid">
+          <attrKeyMap attr="user" key="uid="/>
+        </collectAndSetAttrByKeyValuePair>
+      </when>
+      <when test="exist _src">
+        <collectAndSetAttrByKeyValuePair sep="=" src="$_src">
+          <attrKeyMap attr="srcName" key="from="/>
+        </collectAndSetAttrByKeyValuePair>
+      </when>
+      <choose>
+        <when test="not_exist logLevel"/>
+        <when test="$logLevel = 'BasicLog'">
+          <collectAndSetAttrByPos sep="BasicLog," src="$_body">
+            <attrPosMap attr="msg" pos="2"/>
+          </collectAndSetAttrByPos>
+        </when>
+        <when test="$logLevel = 'DetailLog'">
+          <collectAndSetAttrByPos sep="DetailLog," src="$_body">
+            <attrPosMap attr="msg" pos="2"/>
+          </collectAndSetAttrByPos>
+        </when>
+      </choose>
+      <when test="exist action">
+        <setEventAttribute attr="eventType">combineMsgId("Hitachi-VPS-",$action)</setEventAttribute>
+        <when test="exist actionResult">
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$actionResult)</setEventAttribute>
+        </when>
+      </when>
+    </when>
+  </parsingInstructions>
+</eventParser>

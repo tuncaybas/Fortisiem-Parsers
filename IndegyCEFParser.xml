@@ -1,0 +1,124 @@
+<eventParser name="IndegyCEFParser">
+  <deviceType>
+    <Vendor>Indegy</Vendor>
+    <Model>Indegy Security Platform</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<12>Nov 17 09:04:06 10.100.20.40 CEF:0|Indegy|Indegy Security Platform|3.0.33|109|Unauthorized Conversation|7|dvchost=indegy rt=Nov 17 2019 09:04:06 duser=AS_01,Comm. Adapter #2 suser=Eng. Station #9 proto=UDP externalId=125 dst=10.100.102.150 src=10.100.20.34 dpt=47808 cs6Label=policy_name cs6=Use of Unauthorized Protocols in Siemens Controllers cat=NetworkEvents]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\bCEF:\d+\|Indegy\|Indegy Security Platform\|]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>\s+CEF:<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </case>
+      <default>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[CEF\s*:<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </default>
+    </switch>
+
+    <setEventAttribute attr="eventType">Indegy-Generic</setEventAttribute>
+
+    <when test="matches($_body, '\\\|')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "\|", "::TEMP::")</setEventAttribute>
+    </when>
+    <setEventAttribute attr="_body">replaceStrInStr($_body, "|", "::SEP::")</setEventAttribute>
+    <when test="matches($_body, '::TEMP::')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "::TEMP::", "|")</setEventAttribute>
+    </when>
+
+    <collectAndSetAttrByPos sep="::SEP::" src="$_body">
+      <attrPosMap attr="version" pos="1"/>
+      <attrPosMap attr="_devVendor" pos="2"/>
+      <attrPosMap attr="_devProduct" pos="3"/>
+      <attrPosMap attr="appVersion" pos="4"/>
+      <attrPosMap attr="_sigId" pos="5"/>
+      <attrPosMap attr="_eventType" pos="6"/>
+      <attrPosMap attr="_severity" pos="7"/>
+      <attrPosMap attr="_extension" pos="8"/>
+    </collectAndSetAttrByPos>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_extension">
+      <attrKeyMap attr="categoryType" key="cat"/>
+      <attrKeyMap attr="modifiedItem" key="cs1"/>
+      <attrKeyMap attr="_cs5" key="cs5"/>
+      <attrKeyMap attr="_cs5Label" key="cs5Label"/>
+      <attrKeyMap attr="_cs6" key="cs6"/>
+      <attrKeyMap attr="_cs6Label" key="cs6Label"/>
+      <attrKeyMap attr="_destMACAddr" key="dmac"/>
+      <attrKeyMap attr="destIpPort" key="dpt"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="targetUser" key="duser"/>
+      <attrKeyMap attr="reptDevName" key="dvchost"/>
+      <attrKeyMap attr="repoName" key="externalId"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="_outcome" key="outcome"/>
+      <attrKeyMap attr="_proto" key="proto"/>
+      <attrKeyMap attr="_rt" key="rt"/>
+      <attrKeyMap attr="_srcMACAddr" key="smac"/>
+      <attrKeyMap attr="srcIpPort" key="spt"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="srcUser" key="suser"/>
+    </collectFieldsByKeyValuePair>
+
+    <setEventAttribute attr="_eventType">replaceStringByRegex($_eventType, "[ :]+", "-")</setEventAttribute>
+    <setEventAttribute attr="eventType">combineMsgId("Indegy-", $_eventType)</setEventAttribute>
+
+    <when test="exist _outcome">
+      <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $_outcome)</setEventAttribute>
+    </when>
+
+    <when test="exist _rt">
+      <collectFieldsByRegex src="$_rt">
+        <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+
+    <when test="exist _srcMACAddr">
+      <setEventAttribute attr="srcMACAddr">normalizeMAC($_srcMACAddr)</setEventAttribute>
+    </when>
+
+    <when test="exist _destMACAddr">
+      <setEventAttribute attr="destMACAddr">normalizeMAC($_destMACAddr)</setEventAttribute>
+    </when>
+
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist _cs5Label"/>
+      <when test="not_exist _cs5"/>
+      <when test="$_cs5Label = 'ports'">
+        <setEventAttribute attr="portList">$_cs5</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs6Label"/>
+      <when test="not_exist _cs6"/>
+      <when test="$_cs6Label = 'policy_name'">
+        <setEventAttribute attr="policyName">$_cs6</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="$_severity = '0'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventSeverity">$_severity</setEventAttribute>
+      </otherwise>
+    </choose>
+  </parsingInstructions>
+</eventParser>

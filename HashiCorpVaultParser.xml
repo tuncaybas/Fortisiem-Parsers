@@ -1,0 +1,84 @@
+<eventParser name="HashiCorpVaultParser">
+  <deviceType>
+    <Vendor>HashiCorp</Vendor>
+    <Model>Vault</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<38>Jul 24 22:45:27 Lab-03 vault-va[4058044]: {"time":"2023-07-25T05:45:27.179439486Z","type":"request","auth":{"token_type":"default"},"request":{"id":"11111111-1111-1111-1111-111111111111","operation":"read","mount_type":"system","namespace":{"id":"test"},"path":"my/file/path","remote_address":"192.168.1.25","remote_port":29500},"error":"permission denied"}]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>\s*<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+vault-va\[<:gPatStr>\]:\s+]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>\s*<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<reptDevName:gPatHostName>\s+vault-va\[<procId:gPatStr>\]:\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <collectAndSetAttrByJSON src="$_body">
+      <!-- auth -->
+      <attrKeyMap attr="accessKeyId" key="auth.accessor"/>
+      <attrKeyMap attr="token" key="auth.client_token"/>
+      <attrKeyMap attr="objName" key="auth.display_name"/>
+      <attrKeyMap attr="objId" key="auth.entity_id"/>
+      <attrKeyMap attr="permissionRoleName" key="auth.metadata.role_name"/>
+      <attrKeyMap attr="action" key="auth.policy_results.allowed"/>
+      <attrKeyMap attr="policyDetails" key="auth.policy_results.granting_policies"/>
+      <attrKeyMap attr="policyName" key="auth.policy_results.granting_policies.name"/>
+      <attrKeyMap attr="serverNamespace" key="auth.policy_results.granting_policies.namespace_id"/>
+      <attrKeyMap attr="policyIdentityType" key="auth.policy_results.granting_policies.type"/>
+      <attrKeyMap attr="_createTime" key="auth.token_issue_time"/>
+      <attrKeyMap attr="policyIdentity" key="auth.policies"/>
+      <attrKeyMap attr="servicePolicy" key="auth.token_policies"/>
+      <attrKeyMap attr="cacheTTL" key="auth.token_ttl"/>
+      <attrKeyMap attr="tokenIssuerType" key="auth.token_type"/>
+      <!-- request -->
+      <attrKeyMap attr="queryId" key="request.id"/>
+      <attrKeyMap attr="namespace" key="request.namespace.id"/>
+      <attrKeyMap attr="clientAppId" key="request.client_id"/>
+      <attrKeyMap attr="token" key="request.client_token"/>
+      <attrKeyMap attr="clientAppId" key="request.data.format"/>
+      <attrKeyMap attr="errorString" key="response.data.error"/>
+      <attrKeyMap attr="opName" key="request.operation"/>
+      <attrKeyMap attr="objectPath" key="request.path"/>
+      <attrKeyMap attr="srcIpAddr" key="request.remote_address"/>
+      <attrKeyMap attr="srcIpPort" key="request.remote_port"/>
+      <!-- response -->
+      <attrKeyMap attr="httpContentType" key="response.data.http_content_type"/>
+      <attrKeyMap attr="responseBody" key="response.data.raw_body"/>
+      <attrKeyMap attr="httpStatusCode" key="response.data.http_status_code"/>
+      <attrKeyMap attr="clientAppId" key="request.client_id"/>
+      <attrKeyMap attr="errReason" key="error"/>
+      <attrKeyMap attr="type" key="type"/>
+    </collectAndSetAttrByJSON>
+
+    <setEventAttribute attr="eventType">HashiCorp-Vault-Generic</setEventAttribute>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+
+    <!-- 2023-06-12T13:16:13-07:00 -->
+    <when test="exist _createTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_createTime">
+            <regex><![CDATA[<_cYear:gPatYear>-<_cMonth:gPatMonNum>-<_cDay:gPatYear>T<_cTime:gPatTime><_cTz:gPatTimeZone>]]></regex>
+            <setEventAttribute attr="createTime">toDateTime($_cMonth, $_cDay, $_cYear, $_cTime, $_cTz)</setEventAttribute>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <choose>
+      <when test="not_exist type"/>
+      <when test="$type = 'request'">
+        <setEventAttribute attr="eventType">HashiCorp-Vault-Request</setEventAttribute>
+      </when>
+      <when test="$type = 'response'">
+        <setEventAttribute attr="eventType">HashiCorp-Vault-Response</setEventAttribute>
+      </when>
+    </choose>
+
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,135 @@
+<eventParser name="InfoBloxAppParser">
+  <deviceType>
+    <Vendor>InfoBlox</Vendor>
+    <Model>NiOS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+  <patternDefinitions>
+    <pattern name="patGenericMod"><![CDATA[ApplicationSpawner|scriptxmld|netauto_discovery|netauto_core]]></pattern>
+    <pattern name="patStrRightParen"><![CDATA[[^\)]*]]></pattern>
+    <pattern name="patStrRightSingleQuotes"><![CDATA[[^']*]]></pattern>
+  </patternDefinitions>
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatIpAddr>\s+<:patGenericMod>(?:\[\d+\])?:\s]]></eventFormatRecognizer>
+  <testEvents>
+    <testEvent><![CDATA[<13>Apr 28 14:16:40 10.210.252.42 ApplicationSpawner: /tools/skipjack/app/rails[28654]: Stopping dataEngine...]]></testEvent>
+    <testEvent><![CDATA[<181>Apr 28 14:11:25 10.210.252.42 scriptxmld[32766]: status: [4895] msgs processed since: 2016-02-16 19:46:04]]></testEvent>
+    <testEvent><![CDATA[<13>Apr 28 14:21:53 10.210.252.42 netauto_core[15189]: netautoctl: Attempting to terminate 'check-and-restart-discovery', pid 15208]]></testEvent>
+    <testEvent><![CDATA[<13>Apr 28 14:22:07 10.210.252.42 netauto_core[15422]: netautoctl: Discovery Engine started correctly]]></testEvent>
+    <testEvent><![CDATA[<13>Apr 28 14:24:08 10.210.252.42 netauto_core[17373]: netautoctl: Discovery Engine is not running correctly, attempting to start]]></testEvent>
+    <testEvent><![CDATA[<13>Apr 28 14:18:57 10.210.252.42 netauto_core[12010]: netautoctl: Activity 'check-and-restart-discovery': locked out, 'check-and-restart-core' in progress]]></testEvent>
+    <testEvent><![CDATA[<13>Apr 28 14:08:30 10.210.252.42 netauto_core[1422]: consolidate.pl: Routing Summary: Processed        31 records in      0.6 seconds (    53.45/s) ]]></testEvent>
+    <testEvent><![CDATA[<13>Apr 28 14:08:58 10.210.252.42 netauto_discovery[1838]: discoveryEngine.pl: Devices: 967 Added: 0 Updated: 0 Deleted: 0]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<reptDevIpAddr:gPatIpAddr>\s+<_mod:patGenericMod>(?:\[\d+\])?:\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+    <setEventAttribute attr="_deviceType">InfoBlox-NiOS</setEventAttribute>
+    <setEventAttribute attr="_type">Generic</setEventAttribute>
+    <setEventAttribute attr="eventType">combineMsgId($_deviceType,"-",$_mod,"-",$_type)</setEventAttribute>
+    <choose>
+      <when test="$_mod = 'ApplicationSpawner'">
+        <collectFieldsByRegex src="$_body">
+          <!--<13>Apr 28 14:16:40 10.210.252.42 ApplicationSpawner: /tools/skipjack/app/rails[28654]: Stopping dataEngine...-->
+          <regex><![CDATA[^<:gPatStrEndColon>:\s+Stopping\s]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="_type">Stop</setEventAttribute>
+      </when>
+      <when test="$_mod = 'scriptxmld'">
+        <collectFieldsByRegex src="$_body">
+          <!--<181>Apr 28 14:11:25 10.210.252.42 scriptxmld[32766]: status: [4895] msgs processed since: 2016-02-16 19:46:04-->
+          <regex><![CDATA[^<:gPatStrEndColon>:\s+\[\d+\]\s+msgs\s+processed\s+since:\s+<_year2:gPatYear>-<_mon2:gPatMonNum>-<_day2:gPatDay>\s+<_time2:gPatTime>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="startTime">toDateTime($_mon2, $_day2, $_year2, $_time2)</setEventAttribute>
+        <setEventAttribute attr="_type">Successful-Start</setEventAttribute>
+      </when>
+      <when test="$_mod = 'netauto_core'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <!--<13>Apr 28 14:21:53 10.210.252.42 netauto_core[15189]: netautoctl: Attempting to terminate 'check-and-restart-discovery', pid 15208-->
+              <regex><![CDATA[^<:gPatStrEndColon>:\s+Attempting\s+to\s+terminate\s+'<threadName:patStrRightSingleQuotes>',\s+pid\s+<threadId:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="_type">Try-End</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <!--<13>Apr 28 14:22:07 10.210.252.42 netauto_core[15422]: netautoctl: Discovery Engine started correctly-->
+              <regex><![CDATA[^<:gPatStrEndColon>:\s+.*\s+started\s+correctly]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="_type">Successful-Start</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <!--<13>Apr 28 14:24:08 10.210.252.42 netauto_core[17373]: netautoctl: Discovery Engine is not running correctly, attempting to start-->
+              <regex><![CDATA[^<:gPatStrEndColon>:\s+.*\s+is\s+not\s+running\s+correctly,\s+attempting\s+to\s+start]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="_type">Failed</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <!--<13>Apr 28 14:18:57 10.210.252.42 netauto_core[12010]: netautoctl: Activity 'check-and-restart-discovery': locked out, 'check-and-restart-core' in progress-->
+              <regex><![CDATA[^<:gPatStrEndColon>:\s+Activity\s+'<:patStrRightSingleQuotes>':\s+locked\s+out,\s+'<:patStrRightSingleQuotes>'\s+in\s+progress]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="_type">Switch-Successful</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <!--<13>Apr 28 14:08:30 10.210.252.42 netauto_core[1422]: consolidate.pl: Routing Summary: Processed        31 records in      0.6 seconds (    53.45/s) -->
+              <regex><![CDATA[^<:gPatStrEndColon>:\s+<_patStr:gPatStr>\s+Summary:\s+Processed\s+\d+\s+records\s+in\s+[\d.]+\s+seconds\s+\(\s+[\d.]+/s\)]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="_type">combineMsgId("Successful-",$_patStr,"-Summary")</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="_type">Generic</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+      <when test="$_mod = 'netauto_discovery'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <!--<13>Apr 28 14:08:58 10.210.252.42 netauto_discovery[1838]: discoveryEngine.pl: Devices: 967 Added: 0 Updated: 0 Deleted: 0-->
+              <regex><![CDATA[^<:gPatStrEndColon>:\s+Devices:\s+\d+\s+Added:\s+\d+\s+Updated:\s+\d+\s+Deleted:\s+\d+]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="_type">Successful</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <!--<13>Apr 28 14:56:06 10.210.252.42 netauto_discovery[17395]: PathCollector.pl: Skipping path collection for CIDR 10.6.84.96/27 due to blackout period in effect.-->
+              <regex><![CDATA[^<:gPatStrEndColon>:\s+Skipping\s+path\s+collection\s+for\s+CIDR\s+<destIpAddr:gPatIpAddr>/\d+\s+due\s+to\s+blackout\s+period\s+in\s+effect]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="_type">Skipping-Path</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <!--<13>Apr 28 14:11:33 10.210.252.42 netauto_discovery[4558]: dataProc.pl: 04558 (manager ) Started - Process Size: 65824-->
+              <regex><![CDATA[^<:gPatStrEndColon>:\s+\d+\s+\(<targetUser:patStrRightParen>\)\s+Started\s+-\s+Process\s+Size:\s+\d+]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="_type">Successful-Started</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <!--<13>Apr 28 14:11:57 10.210.252.42 netauto_discovery[4615]: dataProc.pl: 04615 (worker01) Device(898335346568137728): Skipping Normal Worker due to blackout period in effect. (1461889800)-->
+              <regex><![CDATA[^<:gPatStrEndColon>:\s+\d+\s+\(<targetUser:patStrRightParen>\)\s+Device\(<:patStrRightParen>\):\s+Skipping\s+Normal\s+Worker\s+]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="_type">Skipping-Worker</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <!--<13>Apr 28 14:12:23 10.210.252.42 netauto_discovery[4728]: dataProc.pl: 04728 (worker10.0) 10.6.16.10/VlanObject-2868782145931852800: Skipping async collector for device 2868782145931852800 due to blackout period in effect. (1461889800)-->
+              <regex><![CDATA[^<:gPatStrEndColon>:\s+\d+\s+\(<targetUser:patStrRightParen>\)\s+<:gPatIpAddr>/<:gPatStrEndColon>:\s+Skipping\s+async\s+collector\s+for\s+device]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="_type">Skipping-async</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="_type">Generic</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+    </choose>
+    <setEventAttribute attr="eventType">combineMsgId($_deviceType,"-",$_mod,"-",$_type)</setEventAttribute>
+  </parsingInstructions>
+</eventParser>

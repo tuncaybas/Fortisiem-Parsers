@@ -1,0 +1,86 @@
+<eventParser name="GoogleAppsAdminParser">
+  <deviceType>
+    <Vendor>Google</Vendor>
+    <Model>Google Apps</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[[Google_Apps_DOMAIN_SETTINGS]:[eventSeverity]=PHL_INFO,[actor.callerType]=USER,[actor.profileId]=117858279951236905887,[id.applicationName]=admin,[kind]=admin#reports#activity,[ipAddress]=1.1.1.1,[event.name]=AUTHORIZE_API_CLIENT_ACCESS,[id.time]=2016-08-05T09:39:35.754Z,[id.customerId]=C01lzy8ye,[id.uniqueQualifier]=-4646109273668679000,[event.type]=DOMAIN_SETTINGS,[actor.email]=api1@example.net,[etag]="K7weO5KXLrPU3p64O3h2OrP24p0/fvu47GM2VmvY0bIeOS3Qy9aGgZE",[event.parameters.DOMAIN_NAME]=example.org]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\[Google_Apps_]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\[<eventType:gPatWord>\]:<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="extEventRecvProto">GOOGLE_APPS_ADMIN_SDK</setEventAttribute>
+    <collectFieldsByKeyValuePair sep=",[" kvsep="]=" src="$_body">
+      <attrKeyMap attr="activityType" key="kind"/>
+      <attrKeyMap attr="_time" key="id.time"/>
+      <attrKeyMap attr="appCategory" key="id.applicationName"/>
+      <attrKeyMap attr="uuid" key="id.uniqueQualifier"/>
+      <attrKeyMap attr="caller" key="actor.callerType"/>
+      <attrKeyMap attr="user" key="actor.email"/>
+      <attrKeyMap attr="user" key="event.parameters.USER_EMAIL"/>
+      <attrKeyMap attr="domain" key="ownerDomain"/>
+      <attrKeyMap attr="srcIpAddr" key="ipAddress"/>
+      <attrKeyMap attr="actionName" key="event.name"/>
+      <attrKeyMap attr="appName" key="event.parameters.APPLICATION_NAME"/>
+      <attrKeyMap attr="settingsName" key="event.parameters.SETTING_NAME"/>
+      <attrKeyMap attr="newSettingsValue" key="event.parameters.NEW_VALUE"/>
+      <attrKeyMap attr="oldSettingsValue" key="event.parameters.OLD_VALUE"/>
+      <attrKeyMap attr="clientName" key="event.parameters.API_CLIENT_NAME"/>
+      <attrKeyMap attr="privName" key="event.parameters.PRIVILEGE_NAME"/>
+      <attrKeyMap attr="role" key="event.parameters.ROLE_NAME"/>
+      <attrKeyMap attr="userGrp" key="event.parameters.GROUP_EMAIL"/>
+      <attrKeyMap attr="targetDomain" key="event.parameters.DOMAIN_NAME"/>
+      <attrKeyMap attr="_authScope" key="event.parameters.API_SCOPES"/>
+      <attrKeyMap attr="targetUser" key="event.parameters.USER_EMAIL"/>
+      <attrKeyMap attr="orgUnit" key="event.parameters.ORG_UNIT_NAME"/>
+      <attrKeyMap attr="loginType" key="event.parameters.login_type"/>
+      <attrKeyMap attr="_isSuspicious" key="event.parameters.is_suspicious"/>
+      <attrKeyMap attr="_failureType" key="event.parameters.login_failure_type"/>
+      <attrKeyMap attr="appName" key="event.parameters.app_name"/>
+      <attrKeyMap attr="clientAppId" key="event.parameters.client_id"/>
+      <attrKeyMap attr="_authScope" key="event.parameters.scope"/>
+      <attrKeyMap attr="fileName" key="event.parameters.doc_title"/>
+      <attrKeyMap attr="fileType" key="event.parameters.doc_type"/>
+      <attrKeyMap attr="fileOwner" key="event.parameters.owner"/>
+      <attrKeyMap attr="targetUser" key="event.parameters.event_guest"/>
+      <attrKeyMap attr="userGrp" key="event.parameters.group_email"/>
+      <attrKeyMap attr="phCustId" key="phCustId"/>
+      <attrKeyMap attr="reptDevName" key="reptDevName"/>
+      <attrKeyMap attr="reptDevIpAddr" key="reptDevIpAddr"/>
+      <attrKeyMap attr="userId" key="actor.profileId"/>
+      <attrKeyMap attr="memberID" key="event.parameters.member_id"/>
+      <attrKeyMap attr="type" key="event.parameters.member_type"/>
+      <attrKeyMap attr="groupID" key="event.parameters.group_id"/>
+      <attrKeyMap attr="role" key="event.parameters.member_role"/>
+      <attrKeyMap attr="tenantId" key="id.customerId"/>
+      <attrKeyMap attr="tagName" key="etag"/>
+      <attrKeyMap attr="clientAppId" key="event.parameters.client_id"/>
+      <attrKeyMap attr="httpMethod" key="event.parameters.method_name"/>
+      <attrKeyMap attr="appName" key="event.parameters.app_name"/>
+      <attrKeyMap attr="uriStem" key="event.parameters.api_name"/>
+      <attrKeyMap attr="srcType" key="event.parameters.client_type"/>
+      <attrKeyMap attr="bucketName" key="event.parameters.product_bucket"/>
+      <attrKeyMap attr="newSettingsValue" key="event.parameters.visibility"/>
+      <attrKeyMap attr="newObjValue" key="event.parameters.new_value"/>
+      <attrKeyMap attr="fileType" key="event.parameters.doc_type"/>
+      <attrKeyMap attr="changeSet" key="event.parameters.visibility_change"/>
+      <attrKeyMap attr="fileId" key="event.parameters.doc_id"/>
+      <attrKeyMap attr="fileName" key="event.parameters.doc_title"/>
+      <attrKeyMap attr="oldObjValue" key="event.parameters.old_value"/>
+      <attrKeyMap attr="fileOwner" key="event.parameters.owner"/>
+      <attrKeyMap attr="oldSettingsValue" key="event.parameters.old_visibility"/>
+      <attrKeyMap attr="srcAppVersion" key="event.parameters.originating_app_id"/>
+    </collectFieldsByKeyValuePair>
+
+    <collectFieldsByRegex src="$_time">
+      <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d{3}<_tz:gPatTimeZone>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+  </parsingInstructions>
+</eventParser>

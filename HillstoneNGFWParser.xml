@@ -1,0 +1,329 @@
+<eventParser name="HillstoneNGFWParser">
+  <deviceType>
+    <Vendor>Hillstone</Vendor>
+    <Model>NG Firewall</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<190>Jul 11 15:16:59 1122334455667788(root) 43214321 HillstoneNetworks#Traffic@FLOW: SESSION: 11.11.11.2:63075(ethernet0/1)->192.168.10.10:443(ethernet0/2), APP/Protocol HTTPS/TCP, vr trust-vr, policy 1, user -@-, host -, mac 0000.0000.0000, send packets 6, send bytes 976, receive packets 5, receive bytes 556, zone from dmz to untrust, start time 2023-06-29 15:16:45, close time 2023-06-29 15:16:49, session end, TCP FIN]]></testEvent>
+    <testEvent><![CDATA[<190>Jul 12 14:44:31 2233445566778899(root) 4321abcd HillstoneNetworks#Event@AAA: receive authentication request from LOGIN module for administrator hillstone.]]></testEvent>
+    <testEvent><![CDATA[<188>Jul 12 14:44:31 9922883377446655(root) 41120011 HillstoneNetworks#Event@MGMT: Admin user "hillstone" logged out through https, and the IP is 12.12.12.3]]></testEvent>
+    <testEvent><![CDATA[<190>Aug  1 12:39:10 9988776655443322(root) 4987aabb HillstoneNetworks#Threat@IPS: CRITICAL! From 13.13.13.4(UNKNOWN:-@-):51761(ethernet0/1) to 192.168.2.2(UNKNOWN:-@-):80(ethernet0/2), threat name: Cross-site Scripting Detected, threat type: Attack, threat subtype: Vulnerability Exploit Attack, App/Protocol: HTTP, action: reset, defender: IPS, signature ID: 334841, profile: new_ips, threat severity: High, policy type: FW, policy id: 1, packet id: 288231613102293006, url=http://192.168.2.2/%test%3ETest%3C/test%3E]]></testEvent>
+    <testEvent><![CDATA[<186>Jul 13 12:50:18 1122334455667788(root) 4000aaaa HillstoneNetworks#Event@SECURITY: The user "hillstone" modified the policy (id 1), the "url" has been modified: ""->"no-url:0]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>?<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatStr>\s+<:gPatStr>\s+HillstoneNetworks]]></eventFormatRecognizer>
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_pri:gPatSyslogPRI>?<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatStr>\s+<:gPatStr>\s+HillstoneNetworks#<type:gPatStr>@<subtype:gPatStr>:\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventType">Hillstone-FW-Generic</setEventAttribute>
+
+    <when test="exist type">
+      <setEventAttribute attr="eventType">combineMsgId("Hillstone-",$type,"-",$subtype)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist subtype"/>
+      <when test="$subtype = 'FLOW'">
+        <switch>
+          <case>
+            <!--<190>Jul 11 15:16:59 1122334455667788(root) 43214321 HillstoneNetworks#Traffic@FLOW: SESSION: 11.11.11.2:63075(ethernet0/1)->192.168.10.10:443(ethernet0/2), APP/Protocol HTTPS/TCP, vr trust-vr, policy 1, user -@-, host -, mac 0000.0000.0000, send packets 6, send bytes 976, receive packets 5, receive bytes 556, zone from dmz to untrust, start time 2023-06-29 15:16:45, close time 2023-06-29 15:16:49, session end, TCP FIN-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<categoryType:gPatStr>:\s+<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatIpPort>\(<srcIntfName:gPatStr>\)-\><destIpAddr:gPatIpAddr>:<destIpPort:gPatIpPort>\(<destIntfName:gPatStr>\),\s+APP\/Protocol\s+<appTransportProto:gPatStr>,\s+vr\s+<vdom:gPatStr>,\s+policy\s+<ipPolicyId:gPatInt>,\s+user\s+<_user:gPatStr>@<_domain:gPatStr>,\s+host\s+<hostName:gPatStr>,\s+mac\s+<_srcMACAddr:gPatStr>,\s+send\s+packets\s+<sentPkts:gPatInt>,\s+send\s+bytes\s+<sentBytes:gPatInt>,\s+receive\s+packets\s+<recvPkts:gPatInt>,\s+receive\s+bytes\s+<recvBytes:gPatInt>,\s+zone\s+from\s+<srcFwZone:gPatStr>\s+to\s+<destFwZone:gPatStr>,\s+start\s+time\s+<:gPatStr>\s+<:gPatStr>,\s+close\s+time\s+<:gPatStr>\s+<:gPatStr>,\s+session\s+<status:gPatStr>,\s+<:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<categoryType:gPatStr>:\s+<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatIpPort>\(<srcIntfName:gPatStr>\)-\><destIpAddr:gPatIpAddr>:<destIpPort:gPatIpPort>\(<destIntfName:gPatStr>\),\s+Protocol\s+<appTransportProto:gPatStr>,\s+vr\s+<vdom:gPatStr>,\s+policy\s+<ipPolicyId:gPatInt>,\s+user\s+<_user:gPatStr>@<_domain:gPatStr>,\s+host\s+<_hostName:gPatStr>,\s+mac\s+<_srcMACAddr:gPatStr>,\s+zone\s+from\s+<srcFwZone:gPatStr>\s+to\s+<destFwZone:gPatStr>,\s+session\s+<status:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <!--<190>Jul 11 15:16:59 2508241205018745(root) 4608362f HillstoneNetworks#Traffic@FLOW: NAT: in-if ethernet0/1, out-if ethernet0/2, src-zone dmz, dst-zone untrust, 20.20.20.5:61438->1.1.1.1:53(UDP), snat to 192.168.82.225:1048, vr trust-vr, user -@UNKNOWN, host -, rule 1, user-mac 0000.0000.0000-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<categoryType:gPatStr>:\s+in-if\s+<srcIntfName:gPatStr>,\s+out-if\s+<destIntfName:gPatStr>,\s+src-zone\s+<srcFwZone:gPatStr>,\s+dst-zone\s+<destFwZone:gPatStr>,\s+<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatIpPort>-\><destIpAddr:gPatIpAddr>:<destIpPort:gPatIpPort>\(<_proto:gPatStr>\),\s+snat\s+to\s+<preNATDestIpAddr:gPatIpAddr>:<preNATDestIpPort:gPatIpPort>,\s+vr\s+<vdom:gPatStr>,\s+user\s+<_user:gPatStr>@<_domain:gPatStr>,\s+host\s+<_hostName:gPatStr>,\s+rule\s+<ruleId:gPatInt>,\s+user-mac\s+<_srcMACAddr:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <!--<190>Aug  1 10:25:48 2508241205018745(root) 46409427 HillstoneNetworks#Threat@FLOW: From 20.20.20.22(UNKNOWN:-@-):445(ethernet0/1) to 192.168.82.223(UNKNOWN:-@-):1075(ethernet0/2), threat name: GENERIC.HS, threat type: Malware, threat subtype: Riskware, App/Protocol: SMB, action: reset, defender: AV, URL 192.168.82.223, profile: NEW_AV, threat severity: Low, policy type: FW, policy id: 5, md5:-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[From\s+<srcIpAddr:gPatIpAddr>\(<:gPatStr>:<:gPatStr>\):<srcIpPort:gPatIpPort>\(<srcIntfName:gPatStr>\)\s+to\s+<destIpAddr:gPatIpAddr>\(<:gPatStr>:<:gPatStr>\):<destIpPort:gPatIpPort>\(<destIntfName:gPatStr>\),\s+threat\s+name:\s+<attackName:gPatStrComma>,\s+threat\s+type:\s+<attackType:gPatStrComma>,\s+threat\s+subtype:\s+<threatCategory:gPatStrComma>,\s+App\/Protocol:\s+<appTransportProto:gPatStr>,\s+action:\s+<fwAction:gPatStr>,\s+defender:\s+<module:gPatStr>,\s+URL\s+<infoURL:gPatStr>,\s+profile:\s+<profileName:gPatStr>,\s+threat\s+severity:\s+<_severity:gPatStr>,\s+policy\s+type:\s+<policyIdentity:gPatStr>,\s+policy\s+id:\s+<ipsPolicyId:gPatStr>,\s+md5:\s+<hashMD5:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-","Generic")</setEventAttribute>
+        </switch>
+        <when test="exist categoryType">
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$categoryType)</setEventAttribute>
+        </when>
+        <when test="exist threatCategory">
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$threatCategory)</setEventAttribute>
+        </when>
+        <when test="exist status">
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-","$status")</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$subtype = 'AAA'">
+        <switch>
+          <case>
+            <!--<190>Jul 12 14:44:31 2508241205018745(root) 47040611 HillstoneNetworks#Event@AAA: receive authentication request from LOGIN module for administrator hillstone.-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[receive\s+authentication\s+<action:gPatWord>\s+from\s+<module:gPatStr>\s+module\s+for\s+administrator\s+<_user:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <!--
+        <190>Jul 12 14:44:31 2508241205018745(root) 47040612 HillstoneNetworks#Event@AAA: authentication response to LOGIN module for administrator hillstone, and answer is success.
+        <190>Jul 13 12:50:30 2508241205018745(root) 47040613 HillstoneNetworks#Event@AAA: authentication response to LOGIN module for administrator h3c-admin, and answer is failed, account not found.-->
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[authentication\s+<action:gPatWord>\s+to\s+<module:gPatStr>\s+module\s+for\s+<:gPatStr>\s+<_user:gPatStr>,<msg:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-","Generic")</setEventAttribute>
+        </switch>
+        <choose>
+          <when test="not_exist action"/>
+          <when test="$action = 'request'">
+            <setEventAttribute attr="eventType">combineMsgId("Hillstone-",$subtype,"-","Auth-Request")</setEventAttribute>
+          </when>
+          <when test="$action = 'response'">
+            <setEventAttribute attr="eventType">combineMsgId("Hillstone-",$subtype,"-","Auth-Response")</setEventAttribute>
+          </when>
+        </choose>
+        <when test="matches($_body, 'success')">
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-","Success")</setEventAttribute>
+        </when>
+        <when test="matches($_body, 'failed')">
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-","Failure")</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$subtype = 'MGMT'">
+        <switch>
+          <case>
+            <!--<188>Jul 12 14:44:31 2508241205018745(root) 421c0403 HillstoneNetworks#Event@MGMT: Admin user "hillstone" logged out through https, and the IP is 20.20.20.5-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Admin\s+user\s+\"<_user:gPatStr>\"\s+logged\s+out\s+through\s+<authenMethod:gPatStr>,\s+and\s+the\s+IP\s+is\s+<srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType,"-","User-logout")</setEventAttribute>
+          </case>
+          <case>
+            <!--<188>Jul 12 14:44:31 2508241205018745(root) 421c041b HillstoneNetworks#Event@MGMT: Admin user "hillstone" logined through https, from 20.20.20.5:63565 to 20.20.20.10:443(TCP)-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Admin\s+user\s+\"<_user:gPatStr>\"\s+logined\s+through\s+<authenMethod:gPatStr>,\s+from\s+<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatIpPort>\s+to\s+<destIpAddr:gPatIpAddr>:<destIpPort:gPatIpPort>\(<_proto:gPatStr>\)]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType,"-","User-login")</setEventAttribute>
+          </case>
+          <!--<188>Jul 13 12:50:30 2508241205018745(root) 421c041c HillstoneNetworks#Event@MGMT: Admin user "h3c-admin" attempted to login through SSH failed, from 192.168.21.200:55990 to 192.168.82.225:22(TCP)-->
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Admin\s+user\s+\"<_user:gPatStr>\"\s+attempted\s+to\s+login\s+through\s+<authenMethod:gPatStr>\s+<action:gPatStr>,\s+from\s+<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatIpPort>\s+to\s+<destIpAddr:gPatIpAddr>:<destIpPort:gPatIpPort>\(<_proto:gPatStr>\)]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType,"-","User-login")</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Admin\s+user\s+\"<_user:gPatStr>\"\s+logined\s+through\s+<authenMethod:gPatStr>,\s+and\s+the\s+IP\s+is\s+<srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType,"-","User-login")</setEventAttribute>
+          </case>
+          <default/>
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-","Generic")</setEventAttribute>
+        </switch>
+        <when test="exist action">
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$action)</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$subtype = 'SECURITY'">
+        <switch>
+          <case>
+            <!--<186>Jul 13 12:50:18 2508241205018745(root) 44040204 HillstoneNetworks#Event@SECURITY: The user "hillstone" modified the policy (id 1), the "url" has been modified: ""->"no-url:0-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[The\s+user\s+\"<_user:gPatStr>\"\s+<msg:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[<action:gPatWord>\s+the\s+policy\s+\(id\s+<policyId:gPatInt>\),\s+the\s+\"<modifiedItem:gPatStr>\"\s+<:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-","Generic")</setEventAttribute>
+        </switch>
+        <choose>
+          <when test="exist policyId">
+            <when test="$action = 'modified'">
+              <setEventAttribute attr="eventType">combineMsgId($eventType,"-","policy-modified")</setEventAttribute>
+            </when>
+          </when>
+        </choose>
+      </when>
+
+      <when test="$subtype = 'IPS'">
+        <switch>
+          <case>
+            <!--<190>Aug  1 12:39:10 2508241205018745(root) 4810920b HillstoneNetworks#Threat@IPS: CRITICAL! From 20.20.20.22(UNKNOWN:-@-):51761(ethernet0/1) to 192.168.82.80(UNKNOWN:-@-):80(ethernet0/2), threat name: Cross-site Scripting Detected, threat type: Attack, threat subtype: Vulnerability Exploit Attack, App/Protocol: HTTP, action: reset, defender: IPS, signature ID: 334841, profile: new_ips, threat severity: High, policy type: FW, policy id: 1, packet id: 288231613102293006, url=http://192.168.82.80/%3Cscript%3ETest%3C/script%3E-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<threatLevel:gPatStr>\s+From\s+<srcIpAddr:gPatIpAddr>\(<:gPatStr>:<:gPatStr>\):<srcIpPort:gPatIpPort>\(<srcIntfName:gPatStr>\)\s+to\s+<destIpAddr:gPatIpAddr>\(<:gPatStr>:<:gPatStr>\):<destIpPort:gPatIpPort>\(<destIntfName:gPatStr>\),\s+threat\s+name:\s+<attackName:gPatStrComma>,\s+threat\s+type:\s+<attackType:gPatStr>,\s+threat\s+subtype:\s+<threatCategory:gPatStrComma>,\s+App\/Protocol:\s+<appTransportProto:gPatStr>,\s+action:\s+<fwAction:gPatStr>,\s+defender:\s+<module:gPatStr>,\s+signature\s+ID:\s+<ipsSignatureId:gPatStr>,\s+profile:\s+<profileName:gPatStr>,\s+threat\s+severity:\s+<_severity:gPatStr>,\s+policy\s+type:\s+<policyIdentity:gPatStr>,\s+policy\s+id:\s+<ipsPolicyId:gPatStr>,\s+packet\s+id:\s+<sessionId:gPatStr>,\s+url=<infoURL:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-","Generic")</setEventAttribute>
+        </switch>
+        <when test="exist threatCategory">
+          <setEventAttribute attr="threatCategory">replaceStringByRegex($threatCategory, " ", "-")</setEventAttribute>
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$threatCategory)</setEventAttribute>
+        </when>
+        <when test="exist threatLevel">
+          <setEventAttribute attr="threatLevel">replaceStringByRegex($threatLevel, "!", "")</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$subtype = 'NET'">
+        <switch>
+          <case>
+            <!--<189>Jul 12 14:43:49 2508241205018745(root) 43240501 HillstoneNetworks#Event@NET: ARP entry is created, 20.20.20.5, e86a.64fe.1e51, trust-vr-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<msg:gPatMesgBody>,\s+<srcIpAddr:gPatIpAddr>,\s+<srcMACAddr:gPatStr>,\s+<vdom:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\"<_user:gPatStr>\"@<authenMethod:gPatStr>,<msg:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-","Generic")</setEventAttribute>
+        </switch>
+        <choose>
+          <when test="matches($msg, 'ARP entry is created')">
+            <setEventAttribute attr="eventType">combineMsgId($eventType,"-","ARP-entry-created")</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <when test="$subtype = 'VPN'">
+        <switch>
+          <case>
+            <!--<190>Jul 31 16:17:37 2508241205018745(root) 45080605 HillstoneNetworks#Event@VPN: responded new phase 2 negotiation: 192.168.82.225:500-192.168.82.80:500-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[responded\s+new\s+phase\s+(?:1|2)\s+negotiation:\s+<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatIpPort>-<destIpAddr:gPatIpAddr>:<destIpPort:gPatIpPort>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType,"-","negotiation")</setEventAttribute>
+          </case>
+          <case>
+            <!--
+        <188>Jul 31 16:17:37 2508241205018745(root) 45080434 HillstoneNetworks#Event@VPN: IPSec tunnel:To_401E connected-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[IPSec\s+tunnel:<vpnTunnelName:gPatStr>\s+<tunnelStatus:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$tunnelStatus)</setEventAttribute>
+          </case>
+          <case>
+            <!--<190>Jul 31 16:17:25 2508241205018745(root) 45080645 HillstoneNetworks#Event@VPN: Tunnel To_401E's IPSec SA 1 teardown at time 2023-07-31 16:17:25, because configuration changed-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Tunnel\s+<vpnTunnelName:gPatStr>\'s\s+IPSec\s+SA\s+(?:1|2)\s+<reason:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+
+          </case>
+          <case>
+            <!--<190>Jul 31 16:17:37 2508241205018745(root) 4508063a HillstoneNetworks#Event@VPN: *****Phase 2 ISAKMP SA has established 192.168.82.225:500-192.168.82.80:500, ISAKMP SA index=1 *****-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[.*Phase\s+(?:1|2)\s+ISAKMP\s+SA\s+has\s+established\s+<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatIpPort>-<destIpAddr:gPatIpAddr>:<destIpPort:gPatIpPort>,\s+ISAKMP\s+SA\s+index=(?:1|2)]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType,"-","ISAKMP-established")</setEventAttribute>
+          </case>
+          <case>
+            <!--<190>Jul 31 16:17:36 2508241205018745(root) 45080602 HillstoneNetworks#Event@VPN: *****ISAKMP SA established, 192.168.82.225:500-192.168.82.80:500 cookies:da4f830b147c5648:daa63677a4b4651d*****-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[.*ISAKMP\s+SA\s+established, <srcIpAddr:gPatIpAddr>:<srcIpPort:gPatIpPort>-<destIpAddr:gPatIpAddr>:<destIpPort:gPatIpPort> cookies:<cookie:gPatStr>\*\*\*\*\*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType,"-","ISAKMP-established")</setEventAttribute>
+          </case>
+          <case>
+            <!--<190>Jul 31 15:50:37 2508241205018745(root) 45140631 HillstoneNetworks#Event@VPN: User "steveyam" IP "172.25.11.107" on SCVPN "SSLVPN" logs out(client), online time "00h00m22s", allocated IP "30.30.30.45", SPI "0fbb137d"-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[User\s+\"<_user:gPatStr>\"\s+IP\s+"<srcIpAddr:gPatIpAddr>"\s+on\s+SCVPN\s+\"<vpnConnType:gPatStr>\"\s+logs\s+out\(client\),\s+online\s+time\s+\"<:gPatStr>\",\s+allocated\s+IP\s+\"<clientIpAddr:gPatIpAddr>\",\s+SPI\s+\"<securityId:gPatStr>\"]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$vpnConnType,"-","User-logout")</setEventAttribute>
+          </case>
+          <case>
+            <!--<190>Jul 31 15:50:15 2508241205018745(root) 45140638 HillstoneNetworks#Event@VPN: User "steveyam" on SCVPN "SSLVPN" logs on from device type "LENOVO" hostid "44176f1ad5463c47e02ee1e0d6bf6c8d" OS "Windows 10 Home - 22621.ni_release.220506-1250" MAC "38:00:25:56:05:9F" IP "172.25.11.107"(client, version "5.0.1"), allocated IP "30.30.30.45", SPI "0fbb137d"-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[User\s+\"<_user:gPatStr>\"\s+on\s+SCVPN\s+\"<vpnConnType:gPatStr>\"\s+logs\s+on from device type \"<deviceType:gPatStr>\" hostid \"<hostId:gPatStr>\" OS \"<osVersion:gPatMesgBodyMin>\" MAC \"<srcMACAddr:gPatStr>\" IP \"<srcIpAddr:gPatIpAddr>\"\(<:gPatMesgBodyMin>, allocated IP \"<clientIpAddr:gPatIpAddr>\", SPI \"<securityId:gPatStr>\"]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$vpnConnType,"-","User-logon")</setEventAttribute>
+          </case>
+          <default/>
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-","Generic")</setEventAttribute>
+        </switch>
+        <when test="exist reason">
+          <when test="matches($reason, 'configuration changed')">
+            <setEventAttribute attr="eventType">combineMsgId($eventType,"-","config-change")</setEventAttribute>
+          </when>
+        </when>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _severity"/>
+      <when test="$_severity = 'High'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_severity = 'Medium'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_severity = 'Low'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _user"/>
+      <when test="$_user =  '-'"/>
+      <otherwise>
+        <setEventAttribute attr="user">$_user</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <choose>
+      <when test="not_exist _domain"/>
+      <when test="$_domain = '-'"/>
+      <otherwise>
+        <setEventAttribute attr="domain">$_domain</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <choose>
+      <when test="not_exist _hostName"/>
+      <when test="$_hostName = '-'"/>
+      <otherwise>
+        <setEventAttribute attr="hostName">$_hostName</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <choose>
+      <when test="not_exist _srcMACAddr"/>
+      <when test="$_srcMACAddr = '0000.0000.0000'"/>
+      <otherwise>
+        <setEventAttribute attr="srcMACAddr">$_srcMACAddr</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist fwAction">
+      <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$fwAction)</setEventAttribute>
+    </when>
+    <when test="exist srcMACAddr">
+      <setEventAttribute attr="srcMACAddr">normalizeMAC($srcMACAddr)</setEventAttribute>
+    </when>
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+    <when test="exist user">
+      <setEventAttribute attr="user">trimAttribute($user, ".")</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>

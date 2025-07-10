@@ -1,0 +1,1302 @@
+<eventParser name="IronportMailParser">
+
+  <deviceType>
+    <Vendor>Cisco</Vendor>
+    <Model>IronPort AsyncOS Mail</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <!-- Many variations in casing - ensure matches are case insensitive e.g. IronPort vs ironport vs Ironport -->
+    <pattern name="patIronportMailMod"><![CDATA[[Ii]ron[Pp]ort-(?:Mail|Mail-AntiSpam|Mail-AntiVirus|Mail-MailLog)|antispam|antivirus|antivirus_log1|mail_log1|smtp_logs]]></pattern>
+    <pattern name="patStrGT"><![CDATA[[^ >]*]]></pattern>
+    <pattern name="patStrBackslash"><![CDATA[[^ \\]*]]></pattern>
+    <pattern name="patLogLevel"><![CDATA[Critical|Debug|Info|Trace|Warning]]></pattern>
+    <pattern name="patExceptComma"><![CDATA[[^,]+]]></pattern>
+    <pattern name="patExceptDelim"><![CDATA[[^'"]+]]></pattern>
+    <pattern name="patExceptOperator"><![CDATA[[^\<\>]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+(?:<:gPatYear>\s+)?(?:<:gPatHostName>:?\s+)?(?:<:patIronportMailMod>:\s+)?<:patLogLevel>:\s]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[Sep 24 11:39:49 2.2.2.2 IronPort-Mail: Info: New SMTP ICID 346818 interface External (1.1.1.1) address 2.2.2.2 reverse dns host unknown verified no]]></testEvent>
+    <testEvent><![CDATA[Sep 24 11:39:49 2.2.2.2 IronPort-Mail: Info: MID 1347075 ICID 346817 RID 3 To: <joeUser@abc.com>]]></testEvent>
+    <testEvent><![CDATA[Sep 24 11:39:49 2.2.2.2 IronPort-Mail: Info: MID 1347076 ICID 346818 From: <joeUser@abc.com>]]></testEvent>
+    <testEvent><![CDATA[Sep 24 11:39:49 2.2.2.2 IronPort-Mail: Info: MID 1347076 Subject '=?iso-8859?Q?bingo?=']]></testEvent>
+    <testEvent><![CDATA[Sep 24 11:39:49 2.2.2.2 IronPort-Mail: Info: MID 1347076 ready 27567 bytes from <joeUser@abc.com>]]></testEvent>
+    <testEvent><![CDATA[Sep 24 11:39:49 2.2.2.2 IronPort-Mail: Info: Internal SMTP system successfully sent a message to joeUser@abc.com with subject 'Critical <System> foo.com: Log Error: Subscription IronPort-Mail: Network error while send..'.]]></testEvent>
+    <testEvent><![CDATA[Sep 24 11:39:49 2.2.2.2 IronPort-Mail: Info: A System/Critical alert was sent to joeUser@abc.com with subject "foo".]]></testEvent>
+    <testEvent><![CDATA[Tue Sep 24 11:39:49 2012 IronPort-Mail: Info: MID 200257071 ICID 282204970 RID 0 To: <user@abc.com>]]></testEvent>
+    <testEvent><![CDATA[<182>Feb 20 15:29:13 examplecom_TextMailLogs_207: Info: ICID 18277721 ACCEPT SG UNKNOWNLIST match sbrs[-1.0:10.0] SBRS 3.5 country United States]]></testEvent>
+    <testEvent><![CDATA[<134>Feb 13 14:01:51 lab01.test-01.us.example.com Ironport-Mail: Info: New SMTP DCID 4205552 interface 192.168.1.25 address 1.1.1.1 port 25]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <setEventAttribute attr="eventType">Cisco-IronPort-Mail-Generic</setEventAttribute>
+
+    <switch>
+      <case>
+        <!-- <20>Feb 15 15:31:08 192.168.1.1 IronPort-Mail: Warning: System limit reached: connection limit for IP 1.1.1.1 on listener Entrada/saida ICID 1574275: max: 3 -->
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>?<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>\s+|<reptDevName:gPatHostName>\s+)<_mod:patIronportMailMod>:\s+<_severity:patLogLevel>:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <20>Feb 15 15:31:08 IronPort-Mail: Error: System limit reached: connection limit for IP 1.1.1.1 on listener Entrada/saida ICID 1574275: max: 3 -->
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>?<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_mod:patIronportMailMod>:\s+<_severity:gPatWord>:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatStr>\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>\s+IronPort-Mail:\s+<_severity:gPatWord>:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+
+      <case>
+        <!--
+          <22>Jan 25 13:59:12 mail-srv1 mail_log1: Info: Delivery start DCID 34119101 MID 56039783 to RID [0]
+        -->
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>?<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_hostName:gPatStr>\s+<_mod:patIronportMailMod>:\s+<_severity:gPatWord>:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <182>Feb 20 15:29:13 Warpcom_TextMailLogs_207: Info: ICID 18277721 ACCEPT SG UNKNOWNLIST match sbrs[-1.0:10.0] SBRS 3.5 country United States -->
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_hostName:gPatHostName>:?\s+<_severity:patLogLevel>:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </case>
+    </switch>
+    <!-- Info -> 1 Warning -> 5, Error -> 7 Alert -> 9 Critical -> 10 -->
+    <when test="exist _severity">
+      <choose>
+        <when test="$_severity = 'Info'">
+          <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        </when>
+        <when test="$_severity = 'Warning'">
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </when>
+        <when test="$_severity = 'Error'">
+          <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        </when>
+        <when test="$_severity = 'Alert'">
+          <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        </when>
+        <when test="$_severity = 'Critical'">
+          <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <switch>
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Start MID <ironportMailMID:gPatInt> ICID <ironportMailICID:gPatInt>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-Start</setEventAttribute>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[New SMTP ICID <ironportMailICID:gPatInt> interface <:gPatStr> \(<:gPatIpAddr>\) address <hostIpAddr:gPatIpAddr> reverse dns host <hostName:gPatStr> verified <_action:gPatWord>]]></regex>
+        </collectAndSetAttrByRegex>
+        <choose>
+          <when test="$_action = 'yes'">
+            <setEventAttribute attr="eventType">Cisco-IronPort-Mail-DNSVerify-Success</setEventAttribute>
+            <setEventAttribute attr="eventAction">0</setEventAttribute>
+          </when>
+          <when test="$_action = 'no'">
+            <setEventAttribute attr="eventType">Cisco-IronPort-Mail-DNSVerify-Failed</setEventAttribute>
+            <setEventAttribute attr="eventAction">1</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">Cisco-IronPort-Mail-DNSVerify</setEventAttribute>
+          </otherwise>
+        </choose>
+      </case>
+
+      <case>
+        <!--<22>Feb 15 16:01:09 IronPort-Mail: Info: ICID 1574449 Address: <alert@example.com> sender rejected, envelope sender domain does not exist-->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[ICID <ironportMailICID:gPatInt> Address: \<<senderMailAddr:gPatStr>\> sender rejected]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-Sender-Rejected</setEventAttribute>
+      </case>
+
+      <case>
+        <!--<22>Feb 15 16:00:06 IronPort-Mail: Info: MID 1750712 ICID 1574439 To: <user@example.com> Rejected by LDAPACCEPT-->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[MID <ironportMailMID:gPatInt> ICID <ironportMailICID:gPatInt> To: \<<receiverMailAddr:gPatStr>\> Rejected by]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-Receiver-Rejected</setEventAttribute>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[New SMTP DCID <ironportMailDCID:gPatInt> interface <:gPatIpAddr> address <hostIpAddr:gPatIpAddr> port <ipPort:gPatInt>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-NewSMTP</setEventAttribute>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[MID <ironportMailMID:gPatInt> ICID <ironportMailICID:gPatInt> RID <:gPatInt> To: \<<receiverMailAddr:gPatStr>\>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-To</setEventAttribute>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[MID <ironportMailMID:gPatInt> ICID <ironportMailICID:gPatInt> From: \<<senderMailAddr:gPatStr>\>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-From</setEventAttribute>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[MID <ironportMailMID:gPatInt> Message-ID .*\<<smtpMsgId:gPatStr>\>.*]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SmtpMsgId</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <38>Sep 30 16:09:53 IronPort-Mail: Info: MID 21000000 Subject "IT Asset Management" -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[MID <ironportMailMID:gPatInt> Subject ['"]<mailSubject:patExceptDelim>['"]]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-Subject</setEventAttribute>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-From">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="senderMailAddr">$AnotherEvent.senderMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-To">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="receiverMailAddr">$AnotherEvent.receiverMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[MID <ironportMailMID:gPatInt> ready <sentBytes64:gPatInt> bytes from \<<senderMailAddr:gPatStr>\>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-Bytes</setEventAttribute>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-From">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="senderMailAddr">$AnotherEvent.senderMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-To">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="receiverMailAddr">$AnotherEvent.receiverMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+      </case>
+
+      <case>
+        <!-- Sender Domain Reputation -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[^MID <ironportMailMID:gPatInt> SDR:\s+<msg:gPatMesgBody>\s*$]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SDR-Generic</setEventAttribute>
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$msg">
+              <regex><![CDATA[Domains for which SDR is requested: reverse DNS host: <_rdnsHost:patExceptComma>, helo: <mailDomain:patExceptComma>, env-from: <_envFromDomain:patExceptComma>, header-from: <_hdrFromDomain:patExceptComma>, reply-to: <_replyToDomain:patExceptComma>]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SDR-Domains-Requested</setEventAttribute>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$msg">
+              <regex><![CDATA[Consolidated Sender Threat Level: <threatLevel:patExceptComma>, Threat Category: <threatCategory:patExceptComma>, <details:gPatMesgBody>]]></regex>
+            </collectAndSetAttrByRegex>
+            <when test="exist threatLevel">
+              <setEventAttribute attr="eventType">combineMsgId("Cisco-IronPort-Mail-SDR-Reputation-",$threatLevel)</setEventAttribute>
+            </when>
+            <!-- split up the details section identifying domain -->
+            <switch>
+              <case>
+                <!-- Suspected Domain(s) : owner@xxx.com, owner=xxx.com@xxx.com. Youngest Domain Age: unknown for domain: owner@xxx.com -->
+                <collectAndSetAttrByRegex src="$details">
+                  <regex><![CDATA[.*for domain:\s+<mailDomain:gPatStr>\??]]></regex>
+                </collectAndSetAttrByRegex>
+              </case>
+              <default/>
+            </switch>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$msg">
+              <regex><![CDATA[Tracker Header : <trackStatements:gPatStr>]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SDR-Tracker-Hdr</setEventAttribute>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$msg">
+              <regex><![CDATA[Message was not scanned for Sender Domain Reputation\. Reason: <reason:gPatMesgBody>\.?\s*$]]></regex>
+            </collectAndSetAttrByRegex>
+            <choose>
+              <when test="$reason = 'Authentication failure'">
+                <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SDR-Scan-Auth-Failure</setEventAttribute>
+              </when>
+              <otherwise>
+                <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SDR-Scan-Failure</setEventAttribute>
+              </otherwise>
+            </choose>
+          </case>
+          <default/>
+        </switch>
+
+      </case>
+
+      <case>
+        <!-- Sender Policy Framework -->
+        <!-- <22>Feb 15 15:57:26 IronPort-Mail: Info: MID 1750702 SPF: mailfrom identity user@example.com None -->
+        <!-- <22>Feb 15 16:00:31 IronPort-Mail: Info: MID 1750713 SPF: mailfrom identity user@example.com Pass (v=spf1) -->
+        <!-- <22>Feb 15 15:57:29 IronPort-Mail: Info: MID 1750703 SPF: mailfrom identity user@example.com SoftFail (v=spf1) -->
+        <!-- <22>Feb 15 16:29:23 IronPort-Mail: Info: MID 1750789 SPF: mailfrom identity user@example.com Fail (v=spf1) -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[^MID <ironportMailMID:gPatInt> SPF:\s+<msg:gPatMesgBody>\s*$]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SPF-Generic</setEventAttribute>
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$msg">
+              <regex><![CDATA[^<identityType:gPatStr> identity <senderMailAddr:gPatStr>\s+<action:gPatStr>(?:\s+\(v=<appVersionStatus:gPatWord>\))?]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="_identityTypeStr">$identityType</setEventAttribute>
+            <choose>
+              <when test="$identityType = 'helo'">
+                <setEventAttribute attr="_identityTypeStr">Helo</setEventAttribute>
+              </when>
+              <when test="$identityType = 'pra'">
+                <setEventAttribute attr="_identityTypeStr">PRA</setEventAttribute>
+              </when>
+              <when test="$identityType = 'mailfrom'">
+                <setEventAttribute attr="_identityTypeStr">Mailfrom</setEventAttribute>
+              </when>
+              <otherwise/>
+            </choose>
+            <setEventAttribute attr="eventType">combineMsgId("Cisco-IronPort-Mail-SPF-",$_identityTypeStr,"-",$action)</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </case>
+
+      <case>
+        <!-- <22>Feb 15 15:57:29 IronPort-Mail: Info: MID 1750703 matched all recipients for per-recipient policy mmoraes_personal_incoming_policy in the inbound table	-->
+        <!-- <22>Feb 15 16:11:46 IronPort-Mail: Info: MID 1750751 matched all recipients for per-recipient policy mmoraes_personal_incoming_policy in the inbound table -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[MID <ironportMailMID:gPatInt> matched all recipients for per-recipient policy <:gPatStr> in the <:gPatStr> table]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-PolicyMatch</setEventAttribute>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-From">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="senderMailAddr">$AnotherEvent.senderMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-To">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="receiverMailAddr">$AnotherEvent.receiverMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Subject">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="mailSubject">$AnotherEvent.mailSubject</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Bytes">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="sentBytes64">$AnotherEvent.sentBytes64</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[MID <ironportMailMID:gPatInt> interim verdict using engine: CASEspam negative]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-Interim-SpamNegative</setEventAttribute>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-From">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="senderMailAddr">$AnotherEvent.senderMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-To">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="receiverMailAddr">$AnotherEvent.receiverMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Subject">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="mailSubject">$AnotherEvent.mailSubject</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[MID <ironportMailMID:gPatInt> using engine: CASE spam negative]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-Final-SpamNegative</setEventAttribute>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-From">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="senderMailAddr">$AnotherEvent.senderMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-To">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="receiverMailAddr">$AnotherEvent.receiverMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Subject">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="mailSubject">$AnotherEvent.mailSubject</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[MID <ironportMailMID:gPatInt> attachment (?:"|')<fileName:gPatStr>(?:"|')]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-Attachment</setEventAttribute>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-From">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="senderMailAddr">$AnotherEvent.senderMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-To">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="receiverMailAddr">$AnotherEvent.receiverMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Subject">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="mailSubject">$AnotherEvent.mailSubject</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[MID <ironportMailMID:gPatInt> queued for delivery]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-DeliveryQueued</setEventAttribute>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-From">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="senderMailAddr">$AnotherEvent.senderMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-To">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="receiverMailAddr">$AnotherEvent.receiverMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Subject">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="mailSubject">$AnotherEvent.mailSubject</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[EUQ: Tagging MID <ironportMailMID:gPatInt> for quarantine]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-QuarantineTag</setEventAttribute>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-From">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="senderMailAddr">$AnotherEvent.senderMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-To">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="receiverMailAddr">$AnotherEvent.receiverMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Subject">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="mailSubject">$AnotherEvent.mailSubject</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Bytes">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="sentBytes64">$AnotherEvent.sentBytes64</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[MID <ironportMailMID:gPatInt> antivirus negative]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-AVNegative</setEventAttribute>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-From">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="senderMailAddr">$AnotherEvent.senderMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-To">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="receiverMailAddr">$AnotherEvent.receiverMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Subject">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="mailSubject">$AnotherEvent.mailSubject</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Bytes">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="sentBytes64">$AnotherEvent.sentBytes64</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[MID <ironportMailMID:gPatInt> antivirus positive (?:"|')<virusName:gPatStr>(?:"|')]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-AVPositive</setEventAttribute>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-From">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="senderMailAddr">$AnotherEvent.senderMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-To">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="receiverMailAddr">$AnotherEvent.receiverMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Subject">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="mailSubject">$AnotherEvent.mailSubject</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Bytes">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="sentBytes64">$AnotherEvent.sentBytes64</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+      </case>
+
+      <case>
+        <!--<22>Feb 15 15:58:34 IronPort-Mail: Info: Message aborted MID 1750705 Receiving aborted by sender-->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^Message aborted MID <ironportMailMID:gPatInt> <reason:gPatMesgBody>\s*$]]></regex>
+        </collectFieldsByRegex>
+
+        <choose>
+          <when test="not_exist reason">
+            <setEventAttribute attr="eventType">Cisco-IronPort-Mail-Aborted</setEventAttribute>
+          </when>
+          <when test="$reason = 'Receiving aborted by sender'">
+            <setEventAttribute attr="eventType">Cisco-IronPort-Mail-Sender-Aborted</setEventAttribute>
+          </when>
+          <when test="$reason = 'Dropped by antivirus'">
+            <setEventAttribute attr="eventType">Cisco-IronPort-Mail-AVPositive-Dropped</setEventAttribute>
+          </when>
+          <when test="matches($reason, '^Dropped by.*$')">
+            <switch>
+              <case>
+                <!-- Dropped by content filter 'my_dns_filter' in the inbound table -->
+                <collectAndSetAttrByRegex src="$reason">
+                  <regex><![CDATA[Dropped by.*filter ['"]<fileName:gPatStr>['"]]]></regex>
+                </collectAndSetAttrByRegex>
+                <setEventAttribute attr="eventType">Cisco-IronPort-Mail-FilterDrop</setEventAttribute>
+              </case>
+              <default>
+                <setEventAttribute attr="eventType">Cisco-IronPort-Mail-Drop</setEventAttribute>
+              </default>
+            </switch>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">Cisco-IronPort-Mail-Aborted</setEventAttribute>
+          </otherwise>
+        </choose>
+
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-From">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="senderMailAddr">$AnotherEvent.senderMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-To">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="receiverMailAddr">$AnotherEvent.receiverMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Subject">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="mailSubject">$AnotherEvent.mailSubject</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Bytes">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="sentBytes64">$AnotherEvent.sentBytes64</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[RPC Delivery start RCID <:gPatInt> MID <ironportMailMID:gPatInt> to local IronPort Spam Quarantine]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SpamQuarantine-Start</setEventAttribute>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-From">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="senderMailAddr">$AnotherEvent.senderMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-To">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="receiverMailAddr">$AnotherEvent.receiverMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Subject">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="mailSubject">$AnotherEvent.mailSubject</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Bytes">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="sentBytes64">$AnotherEvent.sentBytes64</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+      </case>
+
+      <case>
+        <!-- <22>Feb 15 15:59:39 IronPort-Mail: Info: Delivery start DCID 426117 MID 1750710 to RID [0] -->
+        <!-- <22>Feb 15 15:58:42 IronPort-Mail: Info: Delivery start DCID 426116 MID 1750707 to RID [0, 1] -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Delivery start DCID <ironportMailDCID:gPatInt> MID <ironportMailMID:gPatInt> to RID \[<:gPatStrRightSB>\]]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-DeliveryStarted</setEventAttribute>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-From">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="senderMailAddr">$AnotherEvent.senderMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-To">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="receiverMailAddr">$AnotherEvent.receiverMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Subject">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="mailSubject">$AnotherEvent.mailSubject</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Bytes">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="sentBytes64">$AnotherEvent.sentBytes64</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[EUQ: Quarantined MID <ironportMailMID:gPatInt>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SpamQuarantine-Complete</setEventAttribute>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-From">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="senderMailAddr">$AnotherEvent.senderMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-To">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="receiverMailAddr">$AnotherEvent.receiverMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Subject">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="mailSubject">$AnotherEvent.mailSubject</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Bytes">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="sentBytes64">$AnotherEvent.sentBytes64</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Delayed: DCID <ironportMailDCID:gPatInt> MID <ironportMailMID:gPatInt> to RID <:gPatInt> - <:gPatStr> - Unknown address error \('<smtpFailCode:gPatInt>', <:gPatMesgBody>\).*]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SoftBounce</setEventAttribute>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-From">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="senderMailAddr">$AnotherEvent.senderMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-To">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="receiverMailAddr">$AnotherEvent.receiverMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Bounced: DCID <ironportMailDCID:gPatInt> MID <ironportMailMID:gPatInt> to RID <:gPatInt> - <:gPatStr> - Unknown address error \('<smtpFailCode:gPatInt>', \['\<<receiverMailAddr:gPatStr>\><:gPatMesgBody>'\]\)]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-HardBounce</setEventAttribute>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-From">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="senderMailAddr">$AnotherEvent.senderMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-To">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="receiverMailAddr">$AnotherEvent.receiverMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Message <ironportMailMID:gPatInt> to RID \[<:gPatMesgBody>\] pending till <:gPatStr> <pendingStartTime:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-DeliveryPending</setEventAttribute>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-From">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="senderMailAddr">$AnotherEvent.senderMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-To">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="receiverMailAddr">$AnotherEvent.receiverMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+      </case>
+
+      <case>
+        <!--<22>Feb 15 15:58:34 IronPort-Mail: Info: Message finished MID 1750705 aborted-->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Message finished MID <ironportMailMID:gPatInt> aborted]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-DeliveryAborted</setEventAttribute>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-From">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="senderMailAddr">$AnotherEvent.senderMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-To">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="receiverMailAddr">$AnotherEvent.receiverMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Subject">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="mailSubject">$AnotherEvent.mailSubject</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Bytes">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="sentBytes64">$AnotherEvent.sentBytes64</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Message finished MID <ironportMailMID:gPatInt> done]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-DeliveryComplete</setEventAttribute>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-From">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="senderMailAddr">$AnotherEvent.senderMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-To">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="receiverMailAddr">$AnotherEvent.receiverMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Subject">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="mailSubject">$AnotherEvent.mailSubject</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Bytes">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="sentBytes64">$AnotherEvent.sentBytes64</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+      </case>
+
+      <case>
+        <!-- Message done DCID 3715235 MID 4903684 to RID [0] [('from', 'Example User <euser@example.us>'), ('to', 'Test User <test@fortinet.com>')] -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Message done DCID <ironportMailDCID:gPatInt> MID <ironportMailMID:gPatInt> to RID \[<:gPatInt>\](?:\s+\[\('from',\s+'<_senderStr:gPatStrSQ>'\),\s+\('to',\s+'<_receiverStr:gPatStrSQ>'\)\])?]]></regex>
+        </collectAndSetAttrByRegex>
+        <when test="exist _senderStr">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_senderStr">
+                <regex><![CDATA[^<srcUser:patExceptOperator>\<<senderMailAddr:patExceptOperator>\>]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="srcUser">trimAttribute($srcUser, "\s")</setEventAttribute>
+            </case>
+            <default/>
+          </switch>
+        </when>
+        <when test="exist _receiverStr">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_receiverStr">
+                <regex><![CDATA[^<destUser:patExceptOperator>\<<receiverMailAddr:patExceptOperator>\>]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="destUser">trimAttribute($destUser, "\s")</setEventAttribute>
+            </case>
+            <default/>
+          </switch>
+        </when>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-DeliveryComplete</setEventAttribute>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-From">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="senderMailAddr">$AnotherEvent.senderMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-To">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="receiverMailAddr">$AnotherEvent.receiverMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Subject">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="mailSubject">$AnotherEvent.mailSubject</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-Bytes">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="sentBytes64">$AnotherEvent.sentBytes64</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+      </case>
+
+      <case>
+        <!-- NOTE: Close event does not imply success, just connection close, Message xx done implies completion prior to close -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[ICID <ironportMailICID:gPatInt> close]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-Close</setEventAttribute>
+        <!-- Enrich the closure event with Host Access Table (HAT) Delayed rejection log messages if enabled on Cisco ESA -->
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-HAT-DELAY-REJECT-MailFrom">
+          <when test="$ironportMailICID = $AnotherEvent.ironportMailICID">
+            <setEventAttribute attr="senderMailAddr">$AnotherEvent.senderMailAddr</setEventAttribute>
+            <setEventAttribute attr="srcIpAddr">$AnotherEvent.srcIpAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-HAT-DELAY-REJECT-MailTo">
+          <when test="$ironportMailICID = $AnotherEvent.ironportMailICID">
+            <setEventAttribute attr="receiverMailAddr">$AnotherEvent.receiverMailAddr</setEventAttribute>
+            <setEventAttribute attr="destIpAddr">$AnotherEvent.destIpAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-SenderGroupMatch">
+          <when test="$ironportMailICID = $AnotherEvent.ironportMailICID">
+            <setEventAttribute attr="groupName">$AnotherEvent.groupName</setEventAttribute>
+            <setEventAttribute attr="action">$AnotherEvent.action</setEventAttribute>
+            <setEventAttribute attr="policyDetails">$AnotherEvent.policyDetails</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[DCID <ironportMailDCID:gPatInt> close]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-Close</setEventAttribute>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Internal SMTP system successfully sent a message to <receiverMailAddr:gPatStr> with subject <mailSubject:gPatMesgBody>\.]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-MessageSent</setEventAttribute>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[A System/Critical alert was sent to <receiverMailAddr:gPatStr> with subject <mailSubject:gPatMesgBody>\.]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-AlertSent</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <20>Feb 15 15:31:08 IronPort-Mail: Error: System limit reached: connection limit for IP 1.1.1.1 on listener Entrada/saida ICID 1574275: max: 3 -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[System limit reached: connection limit for IP <srcIpAddr:gPatIpAddr> on listener Entrada/saida ICID <ironportMailICID:gPatInt>: max: 3]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-ConnLimitReached</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <20>Feb 15 15:48:08 192.168.1.1 IronPort-Mail: Warning: Received an invalid DNS Response: '' to IP 1.1.1.1 looking up foo.com -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[^Received an invalid DNS Response: <:gPatMesgBodyMin> to IP <destIpAddr:gPatIpAddr> looking up <destName:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-InvalidDNS</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <22>Feb 15 15:57:57 IronPort-Mail: Info: SLBL: Database watcher updated from snapshot 20130215T175757-slbl.db. -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[^SLBL: Database watcher updated from snapshot]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-DBWatcher-Updated</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <22>Feb 15 16:01:09 IronPort-Mail: Info: ICID 1574451 Receiving Failed: Connection limit exceeded -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[ICID <ironportMailICID:gPatInt> Receiving Failed: Connection limit exceeded]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-ConnLimitReached</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <22>Feb 15 15:58:36 IronPort-Mail: Info: DCID 426114 STARTTLS command not supported -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[DCID <ironportMailDCID:gPatInt> <:gPatStr> command not supported]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-Command-Unsupported</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <22>Feb 15 16:21:31 IronPort-Mail: Info: Connection Error: DCID: 426180 domain: example.com IP: 1.1.1.1 port: 25 details: [Errno 61] Connection refused interface: 1.1.1.2 reason: network error -->
+        <!-- <22>Feb 15 15:30:27 IronPort-Mail: Info: Connection Error: DCID: 426025 domain: example.com IP: 10.21.40.15 port: 25 details: [Errno 65] No route to host interface: 1.1.1.1 reason: network error -->
+        <!-- <22>Feb 15 15:57:29 IronPort-Mail: Info: Connection Error: DCID: 426107 domain: example.com IP: 1.1.1.1 port: 25 details: timeout interface: 1.1.1.2 reason: connection timed out -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Connection Error: DCID: <ironportMailDCID:gPatInt> domain: <domain:gPatStr> IP: <:gPatIpAddr> port: <destIpPort:gPatIpPort> details: <:gPatMesgBody> interface: <destIpAddr:gPatIpAddr> reason:]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-NoRoute</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <22>Oct 17 18:07:31 IronPort-Mail: Info: ICID 175169666 ACCEPT SG UNKNOWNLIST match sbrs[-1.0:10.0] SBRS 4.8 -->
+        <!-- <22>Feb 15 16:02:33 IronPort-Mail: Info: ICID 1574462 ACCEPT SG SUSPECTLIST match sbrs[none] SBRS rfc1918 -->
+        <!-- <22>Feb 15 16:01:09 IronPort-Mail: Info: ICID 1574450 ACCEPT SG SEMI_SUSPECT_LIST match sbrs[1.0:3.0] SBRS 2.9 -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[ICID <ironportMailICID:gPatInt> ACCEPT SG <:gPatStr> match sbrs\[<:gPatStrRightSB>\] SBRS <sbrsScore:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-Accept</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <22>Oct 18 17:47:49 IronPort-Mail: Info: ICID 175199551 REJECT SG BLACKLIST match sbrs[-10.0:-3.0] SBRS -8.2 -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[ICID <ironportMailICID:gPatInt> REJECT SG <:gPatStr> match sbrs\[<:gPatStrRightSB>\] SBRS <sbrsScore:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-Reject</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <22>Oct 17 18:07:32 IronPort-Mail: Info: ICID 175169666 TLS success protocol TLSv1 cipher RC4-SHA -->
+        <!-- <22>Feb 15 16:00:00 IronPort-Mail: Info: DCID 426119 TLS success protocol TLSv1 cipher AES128-SHA -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[(?:ICID <ironportMailICID:gPatInt>|DCID <ironportMailDCID:gPatInt>) TLS success protocol]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-TLS-Success</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <22>Feb 15 15:57:07 IronPort-Mail: Info: MID 1750701 RID [0, 1, 2, 3] Response 'OK: <6f7e963800101e20@im-vv-sg-022>' -->
+        <!-- <22>Feb 15 15:58:43 IronPort-Mail: Info: MID 1750707 RID [0, 1] Response 'OK: <6f7a283f00104bc1@im-vv-sg-021>' -->
+        <!-- <22>Feb 15 16:00:01 IronPort-Mail: Info: MID 1750439 RID [0, 1] Response '2.6.0 <user@example.com> [InternalId=503410] Queued mail for delivery'-->
+        <!-- <22>Feb 15 16:05:53 IronPort-Mail: Info: MID 1750729 RID [0, 1] Response '2.6.0 <FB342B268E268C4185859204B70807A5A3491B@USDC1SRP00202.prosegur.local> [InternalId=503452] Queued mail for delivery' -->
+        <!-- <22>Feb 15 16:09:53 IronPort-Mail: Info: MID 1750743 RID [2] Response 'Thanks'	-->
+        <!-- <22>Feb 15 16:10:29 IronPort-Mail: Info: MID 1750744 RID [0, 1] Response '2.0.0 Ok: queued as 0153B6A62B6'		-->
+        <!-- <22>Feb 15 16:23:20 IronPort-Mail: Info: MID 1750774 RID [2] Response 'OK id=1U6PwB-0003dM-5N'	-->
+        <!-- <22>Feb 15 16:26:29 IronPort-Mail: Info: MID 1750787 RID [0, 1] Response 'ok:  Message 7308511 accepted'		-->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[MID <ironportMailMID:gPatInt> RID \[<:gPatStrRightSB>\] Response]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-Response</setEventAttribute>
+        <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-To">
+          <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+            <setEventAttribute attr="receiverMailAddr">$AnotherEvent.receiverMailAddr</setEventAttribute>
+          </when>
+        </collectAndSetAttrFromAnotherEvent>
+      </case>
+
+      <case>
+        <!-- <22>Feb 15 15:57:26 IronPort-Mail: Info: MID 1750702 using engine: SPF Verdict Cache using cached verdict -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[MID <ironportMailMID:gPatInt> using engine: SPF Verdict Cache using cached verdict]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SPF-Verdict</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <22>Feb 15 15:57:26 IronPort-Mail: Info: SPF Verdict Cache cache status: hits = 393752, misses = 286301, expires = 187316, adds = 283462, seconds saved = 193363.79, total seconds = 331785.82 -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[SPF Verdict Cache cache status:]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SPF-Status</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <22>Oct 18 17:35:45 IronPort-Mail: Info: ISQ: Tagging MID 19597403 for quarantine -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[ISQ: Tagging MID <ironportMailMID:gPatInt> for quarantine]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-QuarantineTag</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <22>Oct 18 17:35:45 IronPort-Mail: Info: MID 19597403 interim verdict using engine: CASE spam positive -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[MID <ironportMailMID:gPatInt> interim verdict using engine: CASE spam positive]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SpamPositive</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- <22>Oct 17 18:07:31 IronPort-Mail: Info: New SMTP ICID 175169666 interface Data 1 (10.0.3.41) address 1.1.1.1 reverse dns host foo.com verified yes -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[New SMTP ICID <ironportMailICID:gPatInt> interface Data <:gPatInt> \(<:gPatIpAddr>\) address <hostIpAddr:gPatIpAddr> reverse dns host <hostName:gPatStr> verified yes]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-DNSVerify-Success</setEventAttribute>
+      </case>
+
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[ICID <ironportMailICID:gPatInt> lost]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-Lost</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- https://www.cisco.com/c/en/us/support/docs/security/email-security-appliance/117960-qa-esa-00.html -->
+        <!-- ICID 23697297 Delayed HAT REJECT continuing session for recipient logging (192.168.1.25) -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[ICID <ironportMailICID:gPatInt> Delayed HAT REJECT continuing session for recipient logging \(<srcIpAddr:gPatIpAddr>\)]]></regex>
+        </collectAndSetAttrByRegex>
+        <!-- Indicates that Host Access Table (HAT) Delayed Rejection logging is enabled which provides more details in subsequent logs -->
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-HAT-DELAY-REJECT-CONTINUE-LOGGING</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- HAT From logging -->
+        <!-- ICID 4160 Delayed HAT REJECT Message from: user1@example.com (y.y.y.y) -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[ICID <ironportMailICID:gPatInt> Delayed HAT REJECT Message from: \<?<senderMailAddr:gPatStr>\>?(?: \(<srcIpAddr:gPatIpAddr>\))?]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-HAT-DELAY-REJECT-MailFrom</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- HAT Recipient logging -->
+        <!-- ICID 4160 Delayed HAT REJECT Message recipient: <xyz@example.org> (y.y.y.y) -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[ICID <ironportMailICID:gPatInt> Delayed HAT REJECT Message recipient: \<?<receiverMailAddr:gPatStr>\>?(?: \(<srcIpAddr:gPatIpAddr>\))?]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-HAT-DELAY-REJECT-MailTo</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- Sender Groups logging -->
+        <!-- ICID 23152896 RELAY SG RELAYLIST match 10.1.0.0/16 SBRS rfc1918 country not applicable -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[ICID <ironportMailICID:gPatInt> <action:gPatWord> SG <groupName:gPatWord> <policyDetails:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SenderGroupMatch</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- MID 4912626 Outbreak Filters: verdict negative -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[MID <ironportMailMID:gPatInt> Outbreak Filters: verdict <status:gPatWord>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-OutbreakFilterVerdict</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- MID 4912625 using engine: GRAYMAIL positive -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[MID <ironportMailMID:gPatInt> using engine: <scanEngine:gPatStr> <status:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">combineMsgId("Cisco-IronPort-Mail-", $scanEngine)</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- MID 4912625 AMP file reputation verdict : SKIPPED (no attachment in message) -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[MID <ironportMailMID:gPatInt> AMP file reputation verdict\s*: <status:gPatStr>(?:\s<details:gPatMesgBody>)?]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Cisco-IronPort-Mail-AMP-File-Verdict</setEventAttribute>
+      </case>
+
+      <default>
+      </default>
+    </switch>
+
+    <when test="exist _mod">
+      <choose>
+        <when test="$_mod = 'smtp_logs'">
+          <switch>
+            <case>
+              <!-- <22>Oct 17 18:07:31 smtp_logs: Info: ICID 175169666 << EHLO foo.com -->
+              <collectAndSetAttrByRegex src="$_body">
+                <regex><![CDATA[ICID <ironportMailICID:gPatInt> \<\< EHLO <mailGatewayName:gPatStr>]]></regex>
+              </collectAndSetAttrByRegex>
+              <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SMTP-EHLO</setEventAttribute>
+            </case>
+
+            <case>
+              <!-- <22>Oct 17 18:07:32 smtp_logs: Info: ICID 175169666 << MAIL FROM:<user@gmail.com> -->
+              <collectAndSetAttrByRegex src="$_body">
+                <regex><![CDATA[ICID <ironportMailICID:gPatInt> \<\< MAIL FROM:\<<senderMailAddr:patStrGT>\>]]></regex>
+              </collectAndSetAttrByRegex>
+              <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SMTP-FROM</setEventAttribute>
+            </case>
+
+            <case>
+              <!-- <22>Oct 17 18:07:32 smtp_logs: Info: ICID 175169666 << RCPT TO:<user@example.com> -->
+              <collectAndSetAttrByRegex src="$_body">
+                <regex><![CDATA[ICID <ironportMailICID:gPatInt> \<\< RCPT TO:\<<receiverMailAddr:patStrGT>\>]]></regex>
+              </collectAndSetAttrByRegex>
+              <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SMTP-RCPT</setEventAttribute>
+            </case>
+
+            <case>
+              <!-- <22>Oct 17 18:07:32 smtp_logs: Info: ICID 175169666 << QUIT -->
+              <collectAndSetAttrByRegex src="$_body">
+                <regex><![CDATA[ICID <ironportMailICID:gPatInt> \<\< QUIT]]></regex>
+              </collectAndSetAttrByRegex>
+              <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SMTP-QUIT</setEventAttribute>
+            </case>
+
+            <case>
+              <!-- <22>Oct 17 18:07:31 smtp_logs: Info: ICID 175169666 << STARTTLS -->
+              <collectAndSetAttrByRegex src="$_body">
+                <regex><![CDATA[ICID <ironportMailICID:gPatInt> \<\< STARTTLS]]></regex>
+              </collectAndSetAttrByRegex>
+              <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SMTP-STARTTLS</setEventAttribute>
+            </case>
+
+            <case>
+              <!-- <22>Oct 17 18:07:31 smtp_logs: Info: ICID 175169666 >> 220 Go ahead with TLS -->
+              <collectAndSetAttrByRegex src="$_body">
+                <regex><![CDATA[ICID <ironportMailICID:gPatInt> \>\> <smtpFailCode:gPatInt> Go ahead with TLS]]></regex>
+              </collectAndSetAttrByRegex>
+              <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SMTP-TLS</setEventAttribute>
+            </case>
+
+            <case>
+              <!-- <22>Oct 17 18:07:31 smtp_logs: Info: ICID 175169666 >> 220 spam.example.com ESMTP -->
+              <collectAndSetAttrByRegex src="$_body">
+                <regex><![CDATA[ICID <ironportMailICID:gPatInt> \>\> <smtpFailCode:gPatInt> <domain:gPatStr> ESMTP]]></regex>
+              </collectAndSetAttrByRegex>
+              <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SMTP-TLS</setEventAttribute>
+            </case>
+
+            <case>
+              <!-- <22>Oct 17 18:07:32 smtp_logs: Info: ICID 175169666 >> 250 sender <user@gmail.com> ok -->
+              <collectAndSetAttrByRegex src="$_body">
+                <regex><![CDATA[ICID <ironportMailICID:gPatInt> \>\> <smtpFailCode:gPatInt> sender \<<senderMailAddr:patStrGT>\> ok]]></regex>
+              </collectAndSetAttrByRegex>
+              <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SMTP-CLOSE</setEventAttribute>
+            </case>
+
+            <case>
+              <!-- <22>Oct 17 18:07:32 smtp_logs: Info: ICID 175169666 >> spam.example.com\r\n250-8BITMIME\r\n250 SIZE 14680064 -->
+              <collectAndSetAttrByRegex src="$_body">
+                <regex><![CDATA[ICID <ironportMailICID:gPatInt> \>\> <smtpFailCode:gPatInt>-<domain:patStrBackslash><:gPatStr> SIZE <size:gPatInt>]]></regex>
+              </collectAndSetAttrByRegex>
+              <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SMTP-OK</setEventAttribute>
+            </case>
+
+            <case>
+              <!-- <22>Oct 17 18:07:31 smtp_logs: Info: ICID 175169666 >> spam.example.com\r\n250-8BITMIME\r\n250-SIZE 14680064\r\n250 STARTTLS -->
+              <collectAndSetAttrByRegex src="$_body">
+                <regex><![CDATA[ICID <ironportMailICID:gPatInt> \>\> <smtpFailCode:gPatInt>-<domain:patStrBackslash><:gPatStr>-SIZE <size:gPatInt><:gPatStr> STARTTLS]]></regex>
+              </collectAndSetAttrByRegex>
+              <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SMTP-OK-STARTTLS</setEventAttribute>
+            </case>
+
+            <case>
+              <!-- <22>Oct 17 18:07:32 smtp_logs: Info: ICID 175169666 >> 550 #5.1.0 Address rejected. -->
+              <collectAndSetAttrByRegex src="$_body">
+                <regex><![CDATA[ICID <ironportMailICID:gPatInt> \>\> <smtpFailCode:gPatInt>\s+<:gPatStr>\s+Address rejected\.]]></regex>
+              </collectAndSetAttrByRegex>
+              <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SMTP-Mailbox-Unavail</setEventAttribute>
+            </case>
+
+            <case>
+              <!-- <22>Oct 18 17:47:49 smtp_logs: Info: ICID 175199551 >> spam.example.com\r\n554 Your access to this mail system has been rejected due to the sending MTA's poor reputation. If you believe that this failure is in error, please  contact the intended recipient via alternate means. -->
+              <collectAndSetAttrByRegex src="$_body">
+                <regex><![CDATA[ICID <ironportMailICID:gPatInt> \>\> <smtpFailCode:gPatInt>-<:gPatStr> Your access to this mail system has been rejected due to the sending MTA's poor reputation\.]]></regex>
+              </collectAndSetAttrByRegex>
+              <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SMTP-SendFailure</setEventAttribute>
+            </case>
+
+            <case>
+              <!-- <22>Oct 17 18:07:32 smtp_logs: Info: ICID 175169666 >> 221 example.com -->
+              <collectAndSetAttrByRegex src="$_body">
+                <regex><![CDATA[ICID <ironportMailICID:gPatInt> \>\> <smtpFailCode:gPatInt> <domain:gPatStr>]]></regex>
+              </collectAndSetAttrByRegex>
+              <setEventAttribute attr="eventType">Cisco-IronPort-Mail-SMTP-Reject</setEventAttribute>
+            </case>
+
+            <case>
+              <!-- <22>Oct 17 18:07:31 smtp_logs: Info: ICID 175169666 address 1.1.1.1 dns host foo.com sbrs 4.8 -->
+              <collectAndSetAttrByRegex src="$_body">
+                <regex><![CDATA[ICID <ironportMailICID:gPatInt> address <hostIpAddr:gPatIpAddr> dns host <hostName:gPatStr> sbrs <sbrsScore:gPatStr>]]></regex>
+              </collectAndSetAttrByRegex>
+              <setEventAttribute attr="eventType">Cisco-IronPort-Mail-DNSVerify-Success</setEventAttribute>
+            </case>
+
+            <default/>
+          </switch>
+        </when>
+
+        <when test="$_mod IN 'antivirus, antivirus_log1'">
+          <switch>
+            <case>
+              <!-- <38>Oct 18 17:35:45 antivirus: Info: sophos antivirus - MID 19597403 - Result 'CLEAN' () -->
+              <collectAndSetAttrByRegex src="$_body">
+                <regex><![CDATA[sophos antivirus - MID <ironportMailMID:gPatInt> - Result ]]></regex>
+              </collectAndSetAttrByRegex>
+              <setEventAttribute attr="eventType">Cisco-IronPort-Mail-AVNegative</setEventAttribute>
+            </case>
+            <default/>
+          </switch>
+        </when>
+      </choose>
+    </when>
+
+    <when test="not_exist ironportMailMID">
+      <switch>
+        <case>
+          <collectAndSetAttrByRegex src="$_body">
+            <regex><![CDATA[MID <ironportMailMID:gPatInt> ]]></regex>
+          </collectAndSetAttrByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist mailDomain">
+      <switch>
+        <case>
+          <collectAndSetAttrByRegex src="$mailDomain">
+            <regex><![CDATA[mailto:<:gPatStr>@<mailDomain:gPatStr>\??]]></regex>
+          </collectAndSetAttrByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="$eventType IN 'Cisco-IronPort-Mail-DeliveryComplete,Cisco-IronPort-Mail-Aborted,Cisco-IronPort-Mail-AVPositive-Dropped,Cisco-IronPort-Mail-FilterDrop,Cisco-IronPort-Mail-Drop,Cisco-IronPort-Mail-HardBounce,Cisco-IronPort-Mail-SoftBounce,Cisco-IronPort-Mail-SpamQuarantine-Complete'">
+      <!-- SDR Attempt to see if a prior reputation event had the same message ID and set it. -->
+      <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-SDR-Reputation-Unknown">
+        <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+          <setEventAttribute attr="mailDomain">$AnotherEvent.mailDomain</setEventAttribute>
+          <setEventAttribute attr="threatLevel">$AnotherEvent.threatLevel</setEventAttribute>
+          <setEventAttribute attr="threatCategory">$AnotherEvent.threatCategory</setEventAttribute>
+        </when>
+      </collectAndSetAttrFromAnotherEvent>
+
+      <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-SDR-Reputation-Neutral">
+        <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+          <setEventAttribute attr="mailDomain">$AnotherEvent.mailDomain</setEventAttribute>
+          <setEventAttribute attr="threatLevel">$AnotherEvent.threatLevel</setEventAttribute>
+          <setEventAttribute attr="threatCategory">$AnotherEvent.threatCategory</setEventAttribute>
+        </when>
+      </collectAndSetAttrFromAnotherEvent>
+
+      <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-SDR-Reputation-Good">
+        <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+          <setEventAttribute attr="mailDomain">$AnotherEvent.mailDomain</setEventAttribute>
+          <setEventAttribute attr="threatLevel">$AnotherEvent.threatLevel</setEventAttribute>
+          <setEventAttribute attr="threatCategory">$AnotherEvent.threatCategory</setEventAttribute>
+        </when>
+      </collectAndSetAttrFromAnotherEvent>
+
+      <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-SDR-Reputation-Awful">
+        <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+          <setEventAttribute attr="mailDomain">$AnotherEvent.mailDomain</setEventAttribute>
+          <setEventAttribute attr="threatLevel">$AnotherEvent.threatLevel</setEventAttribute>
+          <setEventAttribute attr="threatCategory">$AnotherEvent.threatCategory</setEventAttribute>
+        </when>
+      </collectAndSetAttrFromAnotherEvent>
+
+      <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-SDR-Reputation-Poor">
+        <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+          <setEventAttribute attr="mailDomain">$AnotherEvent.mailDomain</setEventAttribute>
+          <setEventAttribute attr="threatLevel">$AnotherEvent.threatLevel</setEventAttribute>
+          <setEventAttribute attr="threatCategory">$AnotherEvent.threatCategory</setEventAttribute>
+        </when>
+      </collectAndSetAttrFromAnotherEvent>
+
+      <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-SDR-Reputation-Tainted">
+        <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+          <setEventAttribute attr="mailDomain">$AnotherEvent.mailDomain</setEventAttribute>
+          <setEventAttribute attr="threatLevel">$AnotherEvent.threatLevel</setEventAttribute>
+          <setEventAttribute attr="threatCategory">$AnotherEvent.threatCategory</setEventAttribute>
+        </when>
+      </collectAndSetAttrFromAnotherEvent>
+
+      <collectAndSetAttrFromAnotherEvent AnotherEventType="Cisco-IronPort-Mail-SDR-Reputation-Weak">
+        <when test="$ironportMailMID = $AnotherEvent.ironportMailMID">
+          <setEventAttribute attr="mailDomain">$AnotherEvent.mailDomain</setEventAttribute>
+          <setEventAttribute attr="threatLevel">$AnotherEvent.threatLevel</setEventAttribute>
+          <setEventAttribute attr="threatCategory">$AnotherEvent.threatCategory</setEventAttribute>
+        </when>
+      </collectAndSetAttrFromAnotherEvent>
+    </when>
+
+    <!-- extract source and dest domains -->
+    <when test="exist senderMailAddr">
+      <switch>
+        <case>
+          <collectAndSetAttrByRegex src="$senderMailAddr">
+            <regex><![CDATA[^.*@<srcDomain:gPatStr>$]]></regex>
+          </collectAndSetAttrByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist receiverMailAddr">
+      <switch>
+        <case>
+          <collectAndSetAttrByRegex src="$receiverMailAddr">
+            <regex><![CDATA[^.*@<destDomain:gPatStr>$]]></regex>
+          </collectAndSetAttrByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <!-- strip trailing ? from mailDomain -->
+    <when test="exist mailDomain">
+      <switch>
+        <case>
+          <collectAndSetAttrByRegex src="$mailDomain">
+            <regex><![CDATA[^<mailDomain:gPatStr>\??$]]></regex>
+          </collectAndSetAttrByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+  </parsingInstructions>
+
+</eventParser>

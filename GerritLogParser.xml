@@ -1,0 +1,380 @@
+<eventParser name="GerritLogParser">
+  <deviceType>
+    <Vendor>Gerrit</Vendor>
+    <Model>Code Review</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<190>May  8 14:03:49 dops-gerrit-17 gerrit-sshd [2019-05-08 14:03:49,894 -0700] a94a7cab boweiliu a/1000341 LOGOUT]]></testEvent>
+    <testEvent><![CDATA[<187>May  8 00:33:50 dops-gerrit-17 gerrit-error [2019-05-08 16:31:05,165] [sshd-SshServer[3fb42ec7]-nio2-thread-6] DEBUG org.apache.sshd.server.session.ServerUserAuthService : process(ServerSessionImpl[null@/10.0.0.1:65106]) Received SSH_MSG_USERAUTH_REQUEST user=btang, service=ssh-connection, method=none]]></testEvent>
+    <testEvent><![CDATA[<190>May 9 14:24:33 dops-gerrit-17 gerrit-https 127.0.0.1:443 172.24.204.131 - - [09/May/2019:14:24:33 -0700] "GET /a/FortiPortal/info/refs?service=git-upload-pack HTTP/1.1" 401 378 "-" "git/2.16.2.windows.1"]]></testEvent>
+    <testEvent><![CDATA[<190>May 12 23:51:02 dops-gerrit-17 gerrit-https 127.0.0.1:443 10.32.58.97 (-) unknown - [12/May/2019:23:51:02 -0700] "GET /changes/44127/detail?O=50004 HTTP/1.1" 304 307 "https://dops-gerrit.fortinet-us.com/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36 Edge/17.17134"]]></testEvent>
+    <testEvent><![CDATA[<190>May 13 00:07:08 dops-gerrit-17 gerrit-https 127.0.0.1:443 10.32.32.138 (-) unknown - [13/May/2019:00:07:08 -0700] "-" 408 156 "-" "-"]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patDot"><![CDATA[[^\.]*]]></pattern>
+    <pattern name="patDiagonal"><![CDATA[[^/]*]]></pattern>
+    <pattern name="patStrLeftSB"><![CDATA[[^\[]*]]></pattern>
+    <pattern name="patStrRightParen"><![CDATA[[^\)]*]]></pattern>
+    <pattern name="patStrLeftBraces"><![CDATA[[^\{]*]]></pattern>
+    <pattern name="patStrRightBraces"><![CDATA[[^\}]*]]></pattern>
+    <pattern name="patStatus"><![CDATA[FAILURE|SUCCESS]]></pattern>
+    <pattern name="patType"><![CDATA[DEBUG|INFO|WARN|ERROR]]></pattern>
+    <pattern name="patDoubleQuot"><![CDATA[[^"]*]]></pattern>
+    <pattern name="patQuot"><![CDATA[[^']*]]></pattern>
+    <pattern name="patStrRightParen"><![CDATA[[^\)]*]]></pattern>
+    <pattern name="patWord"><![CDATA[[\w-]+]]></pattern>
+    <pattern name="patGitLabMod"><![CDATA[gerrit-sshd|gerrit-error|gerrit-https]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+<:patGitLabMod>\s]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+<fileName:patGitLabMod>(?:\s*\[<_year:gPatYear>-<_mon1:gPatMonNum>-<_day1:gPatDay>\s+<_time1:gPatTime>,\d+(?:\s+<_zone:gPatTimeZone>)?\])?\s+<_body:gPatMesgBodyMin>\s*$]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">Gerrit-Generic</setEventAttribute>
+    <setEventAttribute attr="infoURL">$_body</setEventAttribute>
+
+    <choose>
+      <when test="exist _zone">
+        <setEventAttribute attr="deviceTime">toDateTime($_mon1, $_day1, $_year, $_time1, $_zone)</setEventAttribute>
+      </when>
+      <when test="exist _year">
+        <setEventAttribute attr="deviceTime">toDateTime($_mon1, $_day1, $_year, $_time1)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </otherwise>
+    </choose>
+    <choose>
+      <when test="not_exist _body"/>
+      <when test="$fileName = 'gerrit-https'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<:gPatIpAddr>:<:gPatInt>\s+<srcIpAddr:gPatIpAddr>(?:\s+\S+)*\s+\[<_day1:gPatDay>/<_mon1:gPatMon>/<_year:gPatYear>:<_time1:gPatTime>\s+<_zone:gPatTimeZone>\]\s+"(?:<httpMethod:gPatStr>\s+<httpEndUri:gPatStr>\s+HTTP/<httpVersion:patDoubleQuot>|<:patDoubleQuot>)?"\s+<httpStatusCode:gPatInt>\s+<totBytes:gPatInt>\s+"<infoURL:patDoubleQuot>"\s+"<httpServerAgent:patDoubleQuot>"]]></regex>
+            </collectFieldsByRegex>
+
+            <switch>
+              <case>
+                <collectFieldsByRegex src="$httpEndUri">
+                  <regex><![CDATA[(?:/a/)?<repoName:patDiagonal>/.*\?service=<_action:gPatStr>]]></regex>
+                </collectFieldsByRegex>
+              </case>
+              <default/>
+            </switch>
+            <setEventAttribute attr="eventType">Gerrit-Https-Request</setEventAttribute>
+            <choose>
+              <when test="not_exist _action"/>
+              <when test="$_action = 'git-upload-pack'">
+                <setEventAttribute attr="eventType">Gerrit-Clone</setEventAttribute>
+              </when>
+              <when test="$_action = 'git-receive-pack'">
+                <setEventAttribute attr="eventType">Gerrit-Push</setEventAttribute>
+              </when>
+              <otherwise/>
+            </choose>
+            <setEventAttribute attr="deviceTime">toDateTime($_mon1, $_day1, $_year, $_time1, $_zone)</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$fileName = 'gerrit-sshd'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\S+\s+<srcUser:gPatStr>\s+a/\d+\s+LOGIN\s+FROM\s+<srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Gerrit-SSH-Login</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">. 
+              <regex><![CDATA[\S+\s+<srcUser:gPatStr>\s+a/\d+\s+LOGOUT]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Gerrit-SSH-Logout</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\S+\s+<srcUser:gPatStr>\s+a/\d+\s+git-receive-pack\./<repoName:gPatStr>\s+\d+ms\s+\d+ms\s+<_status:gPatStr>(?:\s+<appName:patDiagonal>/<appVersion:gPatStr>)?]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Gerrit-Push</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\S+\s+<srcUser:gPatStr>\s+a/\d+\s+git-upload-pack\./<repoName:gPatStr>\s+\d+ms\s+\d+ms\s+<_status:gPatStr>(?:\s+<appName:patDiagonal>/<appVersion:gPatStr>)?]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Gerrit-Pull</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\S+\s+<srcUser:gPatStr>\s+a/\d+\s+gerrit\.<_action:patWord>(?:\.<paraName:gPatStr>)?(?:\s+\d+ms\d+\d+ms\s+<_status:gPatStr>)?]]></regex>
+            </collectFieldsByRegex>
+            <switch>
+              <case>
+                <collectFieldsByRegex src="$paraName">
+                  <regex><![CDATA[-m\.<msg:patDot>]]></regex>
+                </collectFieldsByRegex>
+              </case>
+              <case>
+                <collectFieldsByRegex src="$paraName">
+                  <regex><![CDATA[--message\.<msg:patDot>]]></regex>
+                </collectFieldsByRegex>
+              </case>
+              <default/>
+            </switch>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-", $_action)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\S+\s+<srcUser:gPatStr>\s+a/\d+\s+scp\.<paraName:gPatStr>\s+\d+ms\s+\d+ms\s+<_status:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Gerrit-Scp</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<infoURL:gPatStrEndColon>:\s*<_s:patStatus>\.--verified\.<:patDot>\.--code-review\.\d+(?:\.--tag\.<tagName:gPatStr>)?\s+\d+ms\s+\d+ms\s+<_status:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-Verified-", $_s)</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">Gerrit-SSH-Generic</setEventAttribute>
+          </default>
+        </switch>
+        <choose>
+          <when test="not_exist _status"/>
+          <when test="$_status = '0'">
+            <setEventAttribute attr="status">Successful</setEventAttribute>
+          </when>
+          <when test="$_status = 'killed'">
+            <setEventAttribute attr="status">Stop</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="status">Failed</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+      <when test="$fileName = 'gerrit-error'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^\s*\S+\s+\(<srcUser:patStrRightParen>\)\]\s*<_type:patType>\s+<module:gPatStrEndColon>:\s*<funName:patStrLeftSB>(?:\[<:gPatStrRightSB>\])?\(<paraName:patStrRightParen>[\)]+<details:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-", $funName, "-", $_type)</setEventAttribute>
+            <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "\s+", "-")</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^\s*\S+\s+\(<srcUser:patStrRightParen>\)\]\s*<_type:patType>\s+<module:gPatStrEndColon>:\s*Writing\s+<sessionOutboundCount:gPatInt>\s+bytes]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-Session-Output-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Caused by:\s*<errorString:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Gerrit-Error-Caused</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[HTTP-<httpStatusCode:gPatInt>\]\s*INFO\s+<module:gPatStrEndColon>:\s*'<srcUser:patQuot>'\s*failed to sign in:\s*<errorString:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Gerrit-Sign-In-Failed</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[HTTP-<httpStatusCode:gPatInt>\]\s+WARN\s+<module:gPatStrEndColon>:\s*Authentication failed for <srcUser:gPatStrEndColon>:\s*<errorString:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Gerrit-Authentication-Failed</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[HTTP-<httpStatusCode:gPatInt>(?:\s*-\s*<uriStem:gPatStrRightSB>)?\]\s+<_type:patType>\s+<module:gPatStrEndColon>:\s*RESPONSE\s+<infoURL:gPatStr>\s+<httpStatusCode:gPatInt>\s+]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-HTTP-Response-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[HTTP-<httpStatusCode:gPatInt>(?:\s*-\s*<uriStem:gPatStrRightSB>)?\]\s+<_type:patType>\s+<module:gPatStrEndColon>:\s*REQUEST\s+<httpMethod:gPatStr>\s+<infoURL:gPatStr>\s+on\s+<funName:patStrLeftBraces>\{<paraName:patStrRightBraces>\}]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-HTTP-Request-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[HTTP-<httpStatusCode:gPatInt>(?:\s*-\s*<uriStem:gPatStrRightSB>)?\]\s+<_type:patType>\s+<module:gPatStrEndColon>:\s*<oldValue:gPatWord>\s*--\>\s*<newValue:gPatStr>(?:\s+<funName:patStrLeftSB>\[<paraName:gPatMesgBody>\])?]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-HTTP-Request-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[HTTP-<httpStatusCode:gPatInt>(?:\s*-\s*<uriStem:gPatStrRightSB>)?\]\s+<_type:patType>\s+<module:gPatStrEndColon>:\s*<actionName:gPatMesgBody>\s+<funName:patStrLeftBraces>\{<paraName:gPatMesgBody>\}]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-HTTP-Request-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[HTTP-<httpStatusCode:gPatInt>(?:\s*-\s*<uriStem:gPatStrRightSB>)?\]\s+<_type:patType>\s+<module:gPatStrEndColon>:\s*<actionName:gPatMesgBody>\s+<funName:patStrLeftSB>\[<paraName:gPatMesgBody>\]]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-HTTP-Request-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[HTTP-<httpStatusCode:gPatInt>(?:\s*-\s*<uriStem:gPatStrRightSB>)?\]\s+<_type:patType>\s+<module:gPatStrEndColon>:\s*<funName:patStrLeftSB>\[<paraName:gPatMesgBody>\]\s*<details:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-HTTP-Request-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[HTTP-<httpStatusCode:gPatInt>(?:\s*-\s*<uriStem:gPatStrRightSB>)?\]\s+<_type:patType>\s+<module:gPatStrEndColon>:\s*<funName:patStrLeftBraces>\{<paraName:gPatStr>\}\s*<details:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-HTTP-Request-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[HTTP-<httpStatusCode:gPatInt>(?:\s*-\s*<uriStem:gPatStrRightSB>)?\]\s+<_type:patType>\s+<module:gPatStrEndColon>:\s*<details:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-HTTP-Request-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[HTTP-<httpStatusCode:gPatInt>-selector-<procName:gPatStrRightSB>\]\s+<_type:patType>\s+<module:gPatStrEndColon>:\s*<details:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-HTTP-Selector-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[HookQueue-\d+\]\s+<_type:patType>\s+<module:gPatStrEndColon>:\s*<details:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-HookQueue-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[PluginScanner\]\s+<_type:patType>\s+<module:gPatStrEndColon>:\s*File\s+<fileName:gPatStr>\s+handled by\s+<appName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-PluginScanner-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[PluginScanner\]\s+<_type:patType>\s+<module:gPatStrEndColon>:\s*<details:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-PluginScanner-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[ReceiveCommits-\d+\]\s+<_type:patType>\s+<module:gPatStrEndColon>:\s*<details:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-ReceiveCommits-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[SSH gerrit review --code-review \S+ -m <msg:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Gerrit-Code-Review</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[SSH gerrit <_action:gPatStrLeftParen>\(<srcUser:patStrRightParen>\)\]\s+<_type:patType>\s+<module:gPatStrEndColon>:(?:\s*<funName:gPatStrLeftParen>\(<paraName:gPatMesgBody>\))?<details:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-",$_action,"-", $_type)</setEventAttribute>
+            <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "\s+$", "")</setEventAttribute>
+            <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "\s+", "-")</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[SSH\s+git-receive-pack\s+'<repoName:patQuot>'\s+\(<srcUser:patStrRightParen>\)\]\s*<_type:patType>\s+<module:gPatStrEndColon>:(?:\s*<funName:gPatStrLeftParen>\(<paraName:gPatMesgBody>\))?<details:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-Push-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[SSH\s+git-upload-pack\s+'<repoName:patQuot>'\s+\(<srcUser:patStrRightParen>\)\]\s*<_type:patType>\s+<module:gPatStrEndColon>:(?:\s*<funName:gPatStrLeftParen>\(<paraName:gPatMesgBody>\))?<details:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-Pull-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[Scheduler-\d+\]\s*<_type:patType>\s+<module:gPatStrEndColon>:\s*<actionName:gPatMesgBody>\s<funName:patStrLeftBraces>\{<paraName:gPatStr>\}]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-Scheduler-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[Scheduler-\d+\]\s*<_type:patType>\s+<module:gPatStrEndColon>:\s*<funName:patStrLeftBraces>\{<paraName:gPatStr>\}\s*<details:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-Scheduler-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[SendEmail-\d+\]\s*<_type:patType>\s+velocity\s*:\s*<errorString:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-SendEmail-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[ShutdownCallback\]\s*<_type:patType>\s+<module:gPatStrEndColon>:(?:\s*<funName:gPatStrLeftParen>\(<paraName:gPatMesgBody>\))?\s*<details:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-ShutdownCallback-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[WorkQueue-\d+\]\s*<_type:patType>\s+<module:gPatStrEndColon>:\s*<details:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-WorkQueue-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[main\]\s*<_type:patType>\s+<module:gPatStrEndColon>:\s*<details:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-Main-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[plugin-manager-preloader\]\s*<_type:patType>\s+<module:gPatStrEndColon>:\s*<details:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-Plugin-Manager-Preloader-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[sshd-SshServer.*\]\s*<_type:patType>\s+<module:gPatStrEndColon>:\s*<funName:gPatStrLeftParen>\(<paraName:gPatMesgBody>\)(?:\s*\[.*\])?\s*<details:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-SshServer-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[sshd-SshServer.*\]\s*<_type:patType>\s+<module:gPatStrEndColon>:\s*<details:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Gerrit-SshServer-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[<procName:gPatStrRightSB>\]\s*<_type:patType>\s+<module:gPatStrEndColon>:\s*<details:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Gerrit-Error-Generic</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<module:gPatStrEndColon>:\s*<funName:gPatStrLeftParen>\(<paraName:gPatMesgBody>\)\s*<details:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Gerrit-Error-Generic</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^at\s+\s*<funName:gPatStrLeftParen>\(<paraName:gPatMesgBody>\)]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Gerrit-Error-Generic</setEventAttribute>
+          </case>
+          <default>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<details:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Gerrit-Error-Generic</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>
+

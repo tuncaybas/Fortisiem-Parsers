@@ -1,0 +1,825 @@
+<eventParser name="GitLabLogParser">
+  <deviceType>
+    <Vendor>GitLab</Vendor>
+    <Model>GitLab</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<13>Jan  5 01:23:45 host-git application.log: Failed Login: username=domain1\user1 ip=172.30.1.1]]></testEvent>
+    <testEvent><![CDATA[gitlabhost-123 gitlab-workhorse: {"content_type":"application/x-git-upload-pack-advertisement","correlation_id":"010203040506070809ABCDEFG","duration_ms":106,"host":"host-git.test.com","level":"info","method":"GET","msg":"access","proto":"HTTP/1.1","referrer":"","remote_addr":"127.0.0.1:0","remote_ip":"127.0.0.1","route":"^/.+\\.git/info/refs\\z","status":200,"system":"http","time":"2023-07-15T17:29:23-07:00","ttfb_ms":105,"uri":"/TEST/test-win-agent.git/info/refs?service=git-upload-pack","user_agent":"Jgit/3.7.0.201502260915-r","written_bytes":3647}]]></testEvent>
+    <testEvent><![CDATA[<13>Feb 21 13:07:48 gitlab-test.example.com GitLab_Application: {"severity":"INFO","time":"2024-02-21T21:07:48.922Z","correlation_id":"01HQ6QXZPDZARVY2F2TJCHNJC1","meta.caller_id":"PipelineProcessWorker","meta.remote_ip":"192.168.1.2","meta.feature_category":"continuous_integration","meta.root_namespace":"devops","meta.client_id":"client/1122","meta.root_caller_id":"POST /api/:version/jobs/request","message":"Enqueuing hooks for Pipeline 772217: running","class":"Ci::Pipeline","pipeline_id":772217,"project_id":2642,"pipeline_status":"running"}
+]]></testEvent>
+  </testEvents>
+
+  <!-- These logs are collected via Rsyslog, follow ESCG guide to ensure rsyslog input file Tag matches expected format e.g. Tag="GitLab_Application:" for the /var/log/gitlab/gitlab-rails/application_json.log -->
+  <patternDefinitions>
+    <pattern name="patDoubleQuot"><![CDATA[[^"]*]]></pattern>
+    <pattern name="PatStrRightParen"><![CDATA[[^\)]*]]></pattern>
+    <pattern name="patGitLabMod"><![CDATA[api_json\.log|application\.log|gitaly|production\.log|production_json\.log|prometheus|redis|remote-syslog|sidekiq|sidekiq_exporter\.log|unicorn_stderr\.log|unicorn_stdout\.log|gitaly|[Gg]it[Ll]ab[-_]\w+(?:\.log)?|integrations_json\.log|kubernetes\.log|git_json\.log|audit_json\.log|graphql_json\.log|repocheck\.log|importer\.log|auth\.log|migrations\.log|web_exporter\.log|database_load_balancing\.log|sidekiq\.log]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[((?:<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>|<:gPatYear>-<:gPatMonNum>-<:gPatDay>_<:gPatTime>\.\d+)\s+)?<:gPatHostName>\s+<:patGitLabMod>:\s]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[(?:<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>|<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>_<_time:gPatTime>\.\d+)?\s*(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+<fileName:patGitLabMod>:\s*<_body:gPatMesgBodyMin>\s*$]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+    <setEventAttribute attr="eventType">GitLab-Generic</setEventAttribute>
+
+    <choose>
+      <when test="not_exist _mon"/>
+      <when test="not_exist _day"/>
+      <when test="not_exist _time"/>
+      <when test="exist _year">
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <choose>
+      <when test="not_exist _body"/>
+      <when test="$fileName IN 'sidekiq, sidekiq.log'">
+        <setEventAttribute attr="eventType">GitLab-Sidekiq-Generic</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[TID-\S+ <procName:gPatStr> JID-\S+ INFO: start]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Sidekiq-Process-Start</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[TID-\S+ <procName:gPatStr> JID-\S+ INFO: done: <_sec:gPatStr> sec]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="durationMSec">scale($_sec, 1000)</setEventAttribute>
+            <setEventAttribute attr="eventType">GitLab-Sidekiq-Process-done</setEventAttribute>
+          </case>
+          <case>
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="_severity" key="severity"/>
+              <attrKeyMap attr="jobName" key="class"/>
+              <attrKeyMap attr="msg" key="message"/>
+              <attrKeyMap attr="status" key="job_status"/>
+              <attrKeyMap attr="_sec" key="duration"/>
+              <attrKeyMap attr="jobId" key="pid"/>
+            </collectAndSetAttrByJSON>
+            <setEventAttribute attr="durationMSec">scale($_sec, 1000)</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId("GitLab-Sidekiq-Job-", $status)</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$fileName = 'remote-syslog'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Watching <fileName:gPatStr> with <procName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Watching-File</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$fileName = 'redis'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[DB saved on disk]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Redis-DB-Saved</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RDB: \d+ MB of memory used by copy-on-write]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Redis-Memory-Used</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\d+ changes in \d+ seconds. Saving...]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Redis-Changes-Saved</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Background saving started by pid <procId:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Redis-Background-Saving-started</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Background saving terminated with success]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Redis-Background-Terminated-OK</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$fileName IN 'gitaly, prometheus'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <!-- If match any char {"key": ... } then assume body is json -->
+              <regex><![CDATA[^\s*\{\s*".*":.*\}\s*$]]></regex>
+            </collectFieldsByRegex>
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="correlationId" key="correlation_id"/>
+              <attrKeyMap attr="action" key="&quot;grpc.method&quot;"/>
+              <attrKeyMap attr="clientName" key="&quot;grpc.meta.client_name&quot;"/>
+              <attrKeyMap attr="filePath" key="&quot;grpc.request.glProjectPath&quot;"/>
+              <attrKeyMap attr="projectName" key="&quot;grpc.request.glRepository&quot;"/>
+              <attrKeyMap attr="logLevel" key="level"/>
+              <attrKeyMap attr="msg" key="msg"/>
+              <attrKeyMap attr="srcIpAddr" key="remote_ip"/>
+              <attrKeyMap attr="type" key="system"/>
+              <attrKeyMap attr="_timestr" key="time"/>
+              <attrKeyMap attr="userId" key="user_id"/>
+              <attrKeyMap attr="user" key="username"/>
+            </collectAndSetAttrByJSON>
+
+            <when test="exist type">
+              <setEventAttribute attr="eventType">combineMsgId($fileName,"-",$type)</setEventAttribute>
+            </when>
+            <when test="exist clientName">
+              <choose>
+                <when test="matches($clientName, 'git-receive-pack')">
+                  <setEventAttribute attr="eventType">Gitlab-push</setEventAttribute>
+                </when>
+                <when test="matches($clientName, 'git-upload-pack')">
+                  <setEventAttribute attr="eventType">Gitlab-clone</setEventAttribute>
+                </when>
+              </choose>
+            </when>
+          </case>
+          <default>
+            <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+              <attrKeyMap attr="logLevel" key="level"/>
+              <attrKeyMap attr="msg" key="msg"/>
+              <attrKeyMap attr="status" key="grpc.code"/>
+              <attrKeyMap attr="appVersion" key="grpc.meta.auth_version"/>
+              <attrKeyMap attr="appName" key="grpc.meta.client_name"/>
+              <attrKeyMap attr="funName" key="grpc.method"/>
+              <attrKeyMap attr="repoName" key="grpc.request.glRepository"/>
+              <attrKeyMap attr="repoURL" key="grpc.request.repoPath"/>
+              <attrKeyMap attr="serviceName" key="grpc.service"/>
+              <attrKeyMap attr="durationMSec" key="grpc.time_ms"/>
+              <attrKeyMap attr="supervisorName" key="supervisor.name"/>
+              <attrKeyMap attr="caller" key="caller"/>
+              <attrKeyMap attr="componentName" key="component"/>
+              <attrKeyMap attr="alertName" key="alert"/>
+              <attrKeyMap attr="errorString" key="err"/>
+            </collectFieldsByKeyValuePair>
+
+            <setEventAttribute attr="_msg">$msg</setEventAttribute>
+            <when test="matches($msg, '[^=]+=.*|[^:]+:')">
+              <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$msg">
+                <attrKeyMap attr="status" key="grpc.code"/>
+                <attrKeyMap attr="appVersion" key="grpc.meta.auth_version"/>
+                <attrKeyMap attr="appName" key="grpc.meta.client_name"/>
+                <attrKeyMap attr="funName" key="grpc.method"/>
+                <attrKeyMap attr="repoName" key="grpc.request.glRepository"/>
+                <attrKeyMap attr="repoURL" key="grpc.request.repoPath"/>
+                <attrKeyMap attr="serviceName" key="grpc.service"/>
+                <attrKeyMap attr="durationMSec" key="grpc.time_ms"/>
+                <attrKeyMap attr="supervisorName" key="supervisor.name"/>
+              </collectFieldsByKeyValuePair>
+              <setEventAttribute attr="msg">""</setEventAttribute>
+              <setEventAttribute attr="_msg">combineMsgId($fileName,"-Generic")</setEventAttribute>
+            </when>
+            <setEventAttribute attr="_msg">replaceStringByRegex($_msg, "\s+$", "")</setEventAttribute>
+            <setEventAttribute attr="_msg">replaceStringByRegex($_msg, "\s+", "-")</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId("GitLab-",$_msg)</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+      <when test="$fileName = 'sidekiq_exporter.log'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr>\s+\S+\s+\S+\s*\[<:gPatStrRightSB>\]\s+"<httpMethod:gPatStr>\s+<uriStem:gPatStr> HTTP/<httpVersion:patDoubleQuot>"\s+<httpStatusCode:gPatInt>\s+<:gPatInt>\s+"<httpReferrer:patDoubleQuot>"\s+"<httpUserAgent:patDoubleQuot>"]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Sidekiq-Exporte-Request</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$fileName = 'unicorn_stderr.log'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[.,\s*\[<:gPatStrRightSB>\]\s+<_status:gPatStr>\s*--\s*:\s*<msg:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="_fileName">replaceStringByRegex($fileName, ".log", "")</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId("GitLab-",$_fileName,"-", $_status)</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">GitLab-unicorn_stderr-Request</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+      <when test="$fileName = 'unicorn_stdout.log'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[.,\s*\[<:gPatStrRightSB>\]\s+<_status:gPatStr>\s*--\s*(?:\S+)?:\s*\S+\s+Authentication failure!\s+<msg:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Authentication-Failure</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[.,\s*\[<:gPatStrRightSB>\]\s+<_status:gPatStr>\s*--\s*(?:\S+)?:\s*\S+\s+Callback phase initiated]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Callback-Phase-Initiated</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[.,\s*\[<:gPatStrRightSB>\]\s+<_status:gPatStr>\s*--\s*(?:\S+)?:\s*<msg:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="_fileName">replaceStringByRegex($fileName, ".log", "")</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId("GitLab-",$_fileName,"-", $_status)</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[Invalid credentials for <user:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$fileName = 'application.log'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^(?:\s*\S+ \d{2},\s*\d{4}\s+\d{2}:\d{2}:)?\s*<_eventType:gPatStrEndColon>:\s+<_body:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+              <attrKeyMap attr="user" key="username"/>
+              <attrKeyMap attr="srcIpAddr" key="ip"/>
+              <attrKeyMap attr="_admin" key="admin"/>
+            </collectFieldsByKeyValuePair>
+
+            <choose>
+              <when test="$_eventType = 'User Logout'">
+                <setEventAttribute attr="eventType">GitLab-User-Logout</setEventAttribute>
+              </when>
+              <when test="$_eventType = 'Successful Login'">
+                <setEventAttribute attr="eventType">GitLab-Nonadmin-Login-Success</setEventAttribute>
+                <when test="exist _admin">
+                  <when test="$_admin = 'true'">
+                    <setEventAttribute attr="eventType">GitLab-Admin-Login-Success</setEventAttribute>
+                  </when>
+                </when>
+              </when>
+              <when test="$_eventType = 'Failed Login'">
+                <setEventAttribute attr="eventType">GitLab-Login-Failure</setEventAttribute>
+              </when>
+              <otherwise>
+                <setEventAttribute attr="_eventType">replaceStringByRegex($_eventType, "\s+", "-")</setEventAttribute>
+                <setEventAttribute attr="eventType">combineMsgId("GitLab-", $_eventType)</setEventAttribute>
+              </otherwise>
+            </choose>
+
+            <when test="exist user">
+              <switch>
+                <case>
+                  <collectFieldsByRegex src="$user">
+                    <regex><![CDATA[<domain:gPatStr>[\\]<user:gPatStr>]]></regex>
+                  </collectFieldsByRegex>
+                </case>
+                <default/>
+              </switch>
+            </when>
+          </case>
+
+
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^User "<user:gPatStr>" \([^)]*\) was <_action:gPatWord>]]></regex>
+            </collectFieldsByRegex>
+            <choose>
+              <when test="$_action = 'created'">
+                <setEventAttribute attr="eventType">GitLab-User-created</setEventAttribute>
+              </when>
+              <when test="$_action = 'removed'">
+                <setEventAttribute attr="eventType">GitLab-User-removed</setEventAttribute>
+              </when>
+            </choose>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^<user:gPatStr>\s+created a new project "<projectName:gPatMesgBodyMin>"]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Project-created</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^Attempting to destroy "?<projectName:gPatMesgBodyMin>"?\s+\(\d+\)]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Project-destroyed</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Project "?<projectName:gPatMesgBodyMin>"? was removed]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Project-destroyed</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^Repository\s+"<repoName:gPatMesgBodyMin>"\s+moved to\s+"<newRepoName:gPatMesgBodyMin>"\s+for project\s+"<projectName:gPatMesgBodyMin>"]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Repository-renamed</setEventAttribute>
+          </case>
+
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$fileName = 'api_json.log'">
+        <setEventAttribute attr="eventType">GitLab-API-Request</setEventAttribute>
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="_serverIpAddr" key="host"/>
+          <attrKeyMap attr="srcIpAddr" key="ip"/>
+          <attrKeyMap attr="httpMethod" key="method"/>
+          <attrKeyMap attr="repoURL" key="project"/>
+          <attrKeyMap attr="_proto" key="protocol"/>
+          <attrKeyMap attr="user" key="username"/>
+          <attrKeyMap attr="userId" key="user_id"/>
+          <attrKeyMap attr="httpStatusCode" key="status"/>
+          <attrKeyMap attr="infoURL" key="target_url"/>
+          <attrKeyMap attr="httpUserAgent" key="ua"/>
+          <attrKeyMap attr="accessKeyId" key="params.key_id"/>
+          <attrKeyMap attr="actionName" key="params.action"/>
+          <attrKeyMap attr="_proto" key="params.protocol"/>
+          <attrKeyMap attr="projectName" key="params.project"/>
+          <attrKeyMap attr="_env" key="params.env"/>
+          <attrKeyMap attr="infoURL" key="path"/>
+          <attrKeyMap attr="actionName" key="params.find(key='action', value)"/>
+          <attrKeyMap attr="accessKeyId" key="params.find(key='key_id', value)"/>
+          <attrKeyMap attr="srcIpAddr" key="params.find(key='check_ip', value)"/>
+          <attrKeyMap attr="repoURL" key="params.find(key='project', value)"/>
+          <attrKeyMap attr="_proto" key="params.find(key='protocol', value)"/>
+          <attrKeyMap attr="destIpAddrList" key="remote_ip"/>
+          <attrKeyMap attr="destIpAddr" key="remote_ip"/>
+        </collectAndSetAttrByJSON>
+        <when test="exist _proto">
+          <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+        </when>
+        <when test="exist _serverIpAddr">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_body">
+                <regex><![CDATA[<serverIpAddr:gPatIpAddr>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default>
+              <setEventAttribute attr="serverName">$_serverIpAddr</setEventAttribute>
+            </default>
+          </switch>
+        </when>
+
+        <when test="not_exist user">
+          <when test="exist accessKeyId">
+            <collectFieldsByCsvFile file="/opt/phoenix/config/xml/gitlab-users-map.csv" key="$accessKeyId" reloadInterval="3600">
+              <attrKeyMap attr="user" column="2"/>
+              <attrKeyMap attr="userId" column="3"/>
+            </collectFieldsByCsvFile>
+          </when>
+        </when>
+
+        <choose>
+          <when test="not_exist actionName"/>
+          <when test="$actionName = 'git-upload-pack'">
+            <setEventAttribute attr="eventType">GitLab-Clone</setEventAttribute>
+          </when>
+          <when test="not_exist _env"/>
+          <when test="$actionName = 'git-receive-pack'">
+            <when test="$_env = '{}'">
+              <setEventAttribute attr="eventType">GitLab-Push</setEventAttribute>
+            </when>
+          </when>
+        </choose>
+      </when>
+      <when test="$fileName = 'production_json.log'">
+        <setEventAttribute attr="eventType">GitLab-Production-Request</setEventAttribute>
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="httpMethod" key="method"/>
+          <attrKeyMap attr="fileType" key="format"/>
+          <attrKeyMap attr="actionName" key="action"/>
+          <attrKeyMap attr="httpStatusCode" key="status"/>
+          <attrKeyMap attr="_durationMSec" key="duration"/>
+          <attrKeyMap attr="srcIpAddr" key="remote_ip"/>
+          <attrKeyMap attr="httpStatusCode" key="user_id"/>
+          <attrKeyMap attr="infoURL" key="target_url"/>
+          <attrKeyMap attr="infoURL" key="path"/>
+          <attrKeyMap attr="httpUserAgent" key="ua"/>
+          <attrKeyMap attr="user" key="username"/>
+          <attrKeyMap attr="_params" key="params"/>
+          <attrKeyMap attr="projectName" key="&quot;meta.project&quot;"/>
+        </collectAndSetAttrByJSON>
+
+        <when test="exist _durationMSec">
+          <setEventAttribute attr="durationMSec">scale($_durationMSec, 1000)</setEventAttribute>
+        </when>
+
+        <when test="exist _params">
+          <collectAndSetAttrByJsonArray src="$_params" sep="/">
+            <attrKeyMap attr="projectId" key="entries.find(key='project_id',  value)"/>
+            <attrKeyMap attr="projectName" key="entries.find(key='project',  value)"/>
+            <attrKeyMap attr="srcIpAddr" key="entries.find(key='check_ip',  value)"/>
+          </collectAndSetAttrByJsonArray>
+        </when>
+      </when>
+      <when test="$fileName IN 'gitlab-monitor, gitlab-workhorse, gitlab_access.log'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <!-- If match any char {"key": ... } then assume body is json -->
+              <regex><![CDATA[^\s*{\s*".*":.*}\s*$]]></regex>
+            </collectFieldsByRegex>
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="httpContentType" key="content_type"/>
+              <attrKeyMap attr="correlationId" key="correlation_id"/>
+              <attrKeyMap attr="durationMSec" key="duration_ms"/>
+              <attrKeyMap attr="destName" key="host"/>
+              <attrKeyMap attr="logLevel" key="level"/>
+              <attrKeyMap attr="httpMethod" key="method"/>
+              <attrKeyMap attr="msg" key="msg"/>
+              <attrKeyMap attr="httpVersion" key="proto"/>
+              <attrKeyMap attr="httpReferrer" key="referrer"/>
+              <!-- 127.0.0.1:0 -->
+              <attrKeyMap attr="_remote" key="remote_addr"/>
+              <attrKeyMap attr="srcIpAddr" key="remote_ip"/>
+              <attrKeyMap attr="_route" key="route"/>
+              <attrKeyMap attr="httpStatusCode" key="status"/>
+              <attrKeyMap attr="_timestr" key="time"/>
+              <attrKeyMap attr="uriStem" key="uri"/>
+              <attrKeyMap attr="projectName" key="uri"/>
+              <attrKeyMap attr="httpUserAgent" key="user_agent"/>
+              <attrKeyMap attr="recvBytes64" key="written_bytes"/>
+            </collectAndSetAttrByJSON>
+
+            <when test="exist uriStem">
+              <choose>
+                <when test="matches($uriStem, 'git-receive-pack')">
+                  <setEventAttribute attr="eventType">Gitlab-push</setEventAttribute>
+                </when>
+                <when test="matches($uriStem, 'git-upload-pack')">
+                  <setEventAttribute attr="eventType">Gitlab-clone</setEventAttribute>
+                </when>
+              </choose>
+            </when>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA["<httpMethod:gPatWord>\s+<uriStem:gPatStr>\s+HTTP/<httpVersion:patDoubleQuot>"\s+<httpStatusCode:gPatInt>\s+<:gPatInt>(?:\s+"<httpReferrer:patDoubleQuot>"\s+"<httpUserAgent:patDoubleQuot>")?]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="_fileName">replaceStringByRegex($fileName, ".log", "")</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId("GitLab-", $_fileName, "-Request")</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^\s*-\s*-\>\s*/<_type:gPatStr>$]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($fileName, "-", $_type)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+              <attrKeyMap attr="logLevel" key="level"/>
+              <attrKeyMap attr="msg" key="msg"/>
+              <attrKeyMap attr="uriStem" key="uri"/>
+              <attrKeyMap attr="httpMethod" key="method"/>
+              <attrKeyMap attr="errorString" key="error"/>
+              <attrKeyMap attr="encoding" key="encoding"/>
+            </collectFieldsByKeyValuePair>
+            <setEventAttribute attr="_msg">replaceStringByRegex($msg, "\s+$", "")</setEventAttribute>
+            <setEventAttribute attr="_msg">replaceStringByRegex($_msg, "\s+", "-")</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId("GitLab-", $_msg)</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$fileName = 'gitlab-shell.log'">
+        <setEventAttribute attr="eventType">GitLab-Shell-Generic</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[INFO\s*--\s*:\s*Adding project\s+<projectName:gPatStr>\s+at\s+<filePath:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Shell-Adding-Project</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[INFO\s*--\s*:\s*Moving existing hooks directory and symlinking global hooks directory for\s+<filePath:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Shell-Moving-Existing-Hooks-Directory</setEventAttribute>
+          </case>
+          <default>
+            <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+              <attrKeyMap attr="command" key="command"/>
+              <attrKeyMap attr="httpMethod" key="method"/>
+              <attrKeyMap attr="msg" key="msg"/>
+              <attrKeyMap attr="infoURL" key="url"/>
+              <attrKeyMap attr="procId" key="pid"/>
+              <attrKeyMap attr="user" key="user"/>
+            </collectFieldsByKeyValuePair>
+          </default>
+        </switch>
+        <when test="exist command">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$command">
+                <regex><![CDATA[[^\{]+\{<_jsonstr:gPatMesgBody>\}]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="_jsonstr">replaceStringByRegex($_jsonstr, "\\\"", "\"")</setEventAttribute>
+              <setEventAttribute attr="_jsonstr">combineMsgId("{", $_jsonstr, "}")</setEventAttribute>
+              <collectAndSetAttrByJSON src="$_jsonstr">
+                <attrKeyMap attr="spoolName" key="repository.storage_name"/>
+                <attrKeyMap attr="repoURL" key="repository.relative_path"/>
+                <attrKeyMap attr="repoName" key="repository.gl_repository"/>
+                <attrKeyMap attr="dirName" key="repository.git_object_directory"/>
+                <attrKeyMap attr="repoName" key="gl_repository"/>
+                <attrKeyMap attr="user" key="gl_username"/>
+                <attrKeyMap attr="appTransportProto" key="git_protocol"/>
+                <attrKeyMap attr="configValue" key="git_config_options"/>
+              </collectAndSetAttrByJSON>
+            </case>
+            <default/>
+          </switch>
+        </when>
+        <when test="exist msg">
+          <setEventAttribute attr="_eventType">replaceStringByRegex($msg, "\s+", "-")</setEventAttribute>
+          <setEventAttribute attr="eventType">combineMsgId("GitLab-", $_eventType)</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$fileName = 'production.log'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[ActiveJob\]\s+Enqueued\s+<_action:gPatStr>\s+\(Job ID:<jobId:PatStrRightParen>\) to \S+ with arguments:<swParam:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="_action">replaceStringByRegex($_action, "::", "-")</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId("GitLab-", $_action)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[ActiveJob\]\s+\[<_action:gPatStrRightSB>\]\s+\[<jobId:gPatStrRightSB>\](?:\s*Performing \S+ from \S+ with arguments:<swParam:gPatStr>)?]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="_action">replaceStringByRegex($_action, "::", "-")</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId("GitLab-", $_action)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[ActiveJob\]\s+\[<_action:gPatStrRightSB>\]\s+\[<jobId:gPatStrRightSB>\](?:\s*Performing \S+ from \S+ in [0-9.]+ms)?]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="_action">replaceStringByRegex($_action, "::", "-")</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId("GitLab-", $_action)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Completed <httpStatusCode:gPatInt> <_statue:gPatMesgBody> in \d+ms \(.*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="_statue">replaceStringByRegex($_statue, "\s+$", "")</setEventAttribute>
+            <setEventAttribute attr="_statue">replaceStringByRegex($_statue, "\s+", "-")</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId("GitLab-Completed-", $_statue)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Filter chain halted as :.*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Filter-Chain-Halted</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Filter chain halted as :.*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Filter-Chain-Halted</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[(?:Git|Post) merge finished on JID.*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Merge-Finished</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[(?:Git|Post) merge started on JID.*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Merge-started</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Merge process finished on JID.*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Merge-Process-Finished</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Processing by <procName:gPatStr> as (?:HTML|JSON|\*/\*)]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Production-Log-Processing</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Read fragment .*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Read-Fragment</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Write fragment .*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Write-Fragment</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Redirected to <infoURL:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Redirected</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Scheduling removal of <targetType:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Scheduling-Removed</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Sent file <filePath:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Sent-File</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Sent mail to <receiverMailAddr:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Sent-Mail</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Started <httpMethod:gPatStr> "<infoURL:patDoubleQuot>" for <srcIpAddr:gPatIpAddr> at .*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Started-Request</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Cleaning stuck builds]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Cleaning-Stuck-Builds</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Cleaning stuck builds]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Cleaning-Stuck-Builds</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Updating statistics for project <projectName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Updating-Statistics</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Parameters: \{"utf8"=>"<:patDoubleQuot>", "authenticity_token"=>"\[<:gPatStrRightSB>\]", "username"=>"<user:patDoubleQuot>", "password"=>"\[<:gPatStrRightSB>\]"}]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitLab-Web-Login</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^\s*Parameters:\s*\{<_subBody:gPatMesgBody>\}]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="_subBody">replaceStringByRegex($_subBody, "=&gt;", "=")</setEventAttribute>
+            <setEventAttribute attr="_subBody">replaceStringByRegex($_subBody, "\"", "")</setEventAttribute>
+            <collectFieldsByKeyValuePair sep=", " kvsep="=" src="$_subBody">
+              <attrKeyMap attr="projectName" key="project_id"/>
+              <attrKeyMap attr="fileId" key="file_identifier"/>
+              <attrKeyMap attr="filePath" key="new_path"/>
+              <attrKeyMap attr="user" key="id"/>
+              <attrKeyMap attr="targetType" key="target_type"/>
+              <attrKeyMap attr="targetName" key="target_id"/>
+              <attrKeyMap attr="_limit" key="limit"/>
+              <attrKeyMap attr="module" key="model"/>
+              <attrKeyMap attr="_mount" key="mounted_as"/>
+              <attrKeyMap attr="totalPages" key="page"/>
+              <attrKeyMap attr="serviceName" key="service"/>
+              <attrKeyMap attr="msg" key="commit_message"/>
+              <attrKeyMap attr="details" key="text"/>
+              <attrKeyMap attr="details" key="note"/>
+              <attrKeyMap attr="description" key="description"/>
+              <attrKeyMap attr="projectName" key="source_project_id"/>
+              <attrKeyMap attr="branchName" key="source_branch"/>
+            </collectFieldsByKeyValuePair>
+            <setEventAttribute attr="eventType">GitLab-Parameters-Info</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$fileName IN 'kubernetes.log, git_json.log, audit_json.log, integrations_json.log'">
+        <setEventAttribute attr="eventType">combineMsgId("GitLab-", $fileName, "-Request")</setEventAttribute>
+        <setEventAttribute attr="eventType">replaceStringByRegex($eventType, ".log", "")</setEventAttribute>
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="serverName" key="service_class"/>
+          <attrKeyMap attr="_severity" key="severity"/>
+          <attrKeyMap attr="repoURL" key="project_path"/>
+          <attrKeyMap attr="infoURL" key="client_url"/>
+          <attrKeyMap attr="msg" key="message"/>
+          <attrKeyMap attr="serverName" key="service"/>
+          <attrKeyMap attr="errorNo" key="error_code"/>
+          <attrKeyMap attr="errorString" key="exception"/>
+          <attrKeyMap attr="projectId" key="project_ids[0]"/>
+          <attrKeyMap attr="user" key="author_name"/>
+          <attrKeyMap attr="projectName" key="from"/>
+          <attrKeyMap attr="targetName" key="to"/>
+          <attrKeyMap attr="targetType" key="target_type"/>
+          <attrKeyMap attr="type" key="entity_type"/>
+          <attrKeyMap attr="projectId" key="entity_id"/>
+        </collectAndSetAttrByJSON>
+      </when>
+      <when test="$fileName = 'GitLab_Application'">
+        <case>
+          <!-- Rsyslog has input file with Tag="GitLab_Application:" for gitlab application logs -->
+          <!-- <13>Feb 21 13:07:48 gitlab-test.example.com GitLab_Application: {"severity":"INFO","time":"2024-02-21T21:07:48.922Z","correlation_id":"01HQ6QXZPDZARVY2F2TJCHNJC1","meta.caller_id":"PipelineProcessWorker","meta.remote_ip":"192.168.1.2","meta.feature_category":"continuous_integration","meta.root_namespace":"devops","meta.client_id":"client/1122","meta.root_caller_id":"POST /api/:version/jobs/request","message":"Enqueuing hooks for Pipeline 772217: running","class":"Ci::Pipeline","pipeline_id":772217,"project_id":2642,"pipeline_status":"running"} -->
+          <collectAndSetAttrByJSON src="$_body">
+            <attrKeyMap attr="_severity" key="severity"/>
+            <attrKeyMap attr="correlationId" key="correlation_id"/>
+            <attrKeyMap attr="caller" key="&quot;meta.caller_id&quot;"/>
+            <attrKeyMap attr="namespace" key="&quot;meta.root_namespace&quot;"/>
+            <attrKeyMap attr="user" key="&quot;meta.user&quot;"/>
+            <attrKeyMap attr="userId" key="&quot;meta.user_id&quot;"/>
+            <attrKeyMap attr="projectName" key="&quot;meta.project&quot;"/>
+            <attrKeyMap attr="clientName" key="&quot;meta.client_id&quot;"/>
+            <!-- Example root caller id POST /api/:version/jobs/request -->
+            <attrKeyMap attr="_rootCaller" key="&quot;meta.root_caller_id&quot;"/>
+            <attrKeyMap attr="msg" key="message"/>
+            <attrKeyMap attr="pipelineId" key="pipeline_id"/>
+            <attrKeyMap attr="projectId" key="project_id"/>
+            <attrKeyMap attr="jobClass" key="class"/>
+            <attrKeyMap attr="srcIpAddr" key="&quot;meta.remote_ip&quot;"/>
+            <attrKeyMap attr="feature" key="&quot;meta.feature_category&quot;"/>
+            <attrKeyMap attr="status" key="pipeline_status"/>
+          </collectAndSetAttrByJSON>
+
+          <setEventAttribute attr="eventType">GitLab_Application_Generic</setEventAttribute>
+
+          <when test="exist _rootCaller">
+            <switch>
+              <case>
+                <collectFieldsByRegex src="$_rootCaller">
+                  <regex><![CDATA[^<httpMethod:gPatWord>\s+<uriStem:gPatMesgBody>$]]></regex>
+                </collectFieldsByRegex>
+              </case>
+              <default/>
+            </switch>
+          </when>
+
+        </case>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _severity"/>
+      <when test="$_severity = 'ERROR'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_severity = 'NOTICE'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist _timestr">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_timestr">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>(?:\.\d+)?<_tz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

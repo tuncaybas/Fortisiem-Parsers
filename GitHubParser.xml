@@ -1,0 +1,657 @@
+<eventParser name="GitHubParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+  <appType>
+    <Vendor>GitHub.com</Vendor>
+    <Model>GitHub</Model>
+    <Version>ANY</Version>
+    <Name>GitHub Webserver</Name>
+  </appType>
+  <!-- pattern definitions -->
+  <!--  sshd su sudo kernel dhclient systemd is same as UnixParser-->
+  <patternDefinitions>
+    <pattern name="patGithubMod" list="begin"><![CDATA[babeld|codeload|enterprise_manage_access|enterprise_manage_unicorn|]]></pattern>
+    <pattern name="patGithubMod" list="continue"><![CDATA[github_access|github_audit|github_auth|github_gitauth|]]></pattern>
+    <pattern name="patGithubMod" list="end"><![CDATA[github_production|github_resque|github_unicorn|gitmon]]></pattern>
+    <pattern name="patGithubMod1" list="begin"><![CDATA[dbus|ghe-es-upgrade|ghe-systemd-wrapper|haproxy|rrdcached|]]></pattern>
+    <pattern name="patGithubMod1" list="end"><![CDATA[samplicator|systemd-logind|systemd-timedated|systemd-udevd]]></pattern>
+    <pattern name="patUnderline"><![CDATA[[^_]+]]></pattern>
+    <pattern name="patRightBracket"><![CDATA[[^)]*]]></pattern>
+    <pattern name="patSigQuote"><![CDATA[[^']*]]></pattern>
+    <pattern name="patHttpAction"><![CDATA[GET|POST]]></pattern>
+    <pattern name="patAction"><![CDATA[Starting|Stopping|Started|Stopped|Removed]]></pattern>
+    <pattern name="patDoubleRightQuote"><![CDATA[[^"]*]]></pattern>
+    <pattern name="patHashSymbol"><![CDATA[[^#]*]]></pattern>
+    <pattern name="patDot"><![CDATA[[^.]*]]></pattern>
+    <pattern name="patRightBraces"><![CDATA[[^}]*]]></pattern>
+    <pattern name="patOblique"><![CDATA[[^/]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\[GITHUB_AUDIT_LOG\] = |<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+\S+\s+(?:<:patGithubMod>(?:\[<:gPatYear>-<:gPatMonNum>-<:gPatDay>T<:gPatStrRightSB>\])?|<:patGithubMod1>\[\d+\]):\s*]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<14>Nov 24 02:56:33 10-1-1-1 github_resque[2016-11-24T02]: 56:33.273312 # 25173]  INFO Resqued::Worker -- Forked worker 26356]]></testEvent>
+    <testEvent><![CDATA[Oct 26 01:42:08 github-ent github_audit: {:created_at=>1351215728326, :actor_ip=>"10.0.0.51", :data=>{}, :user=>"some-user", :repo=>"some-user/some-repository", :actor=>"some-user", :actor_id=>2, :user_id=>2, :action=>"repo.create", :repo_id=>1, :from=>"repositories#create"}]]></testEvent>
+    <testEvent><![CDATA[Oct 26 02:19:31 github-ent github_audit: {"pid":22860, "ppid":22859, "program":"receive-pack", "git_dir":"/data/repositories/some-user/some-repository.git", "hostname":"github-ent", "pusher":"some-user", "real_ip":"10.0.0.51", "user_agent":"git/1.7.10.4", "repo_id":1, "repo_name":"some-user/some-repository", "transaction_id":"b031b7dc7043c87323a75f7a92092ef1456e5fbaef995c68", "frontend_ppid":1, "repo_public":true, "user_name":"some-user", "user_login":"some-user", "frontend_pid":18238, "frontend":"github-ent", "user_email":"some-user@example.com", "user_id":2, "pgroup":"github-ent_22860", "status":"post_receive_hook", "features":" report-status side-band-64k", "received_objects":3, "receive_pack_size":243, "non_fast_forward":false, "current_ref":"refs/heads/master" }]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[\[GITHUB_AUDIT_LOG\] = <_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="_mode">GITHUB_AUDIT_LOG</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[\[GITHUB_AUDIT_LOG\] = <_body:gPatMesgBody>|<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<reptDevName:gPatStr>\s+(?:<_mode:patGithubMod>(?:\[<:gPatYear>-<:gPatMonNum>-<:gPatDay>T<:gPatStrRightSB>\])?|<_mode:patGithubMod1>\[\d+\]):\s*<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </case>
+    </switch>
+    <setEventAttribute attr="eventType">GitHub-Generic</setEventAttribute>
+    <choose>
+      <!--
+    <11>Nov 11 11:11:11 11-11-111-11 dbus[111]: [system] Activating via systemd: service name='org.freedesktop.timedate1' unit='dbus-org.freedesktop.timedate1.service'
+    <11>Nov 11 11:11:11 11-11-111-11 dbus[111]: [system] Successfully activated service 'org.freedesktop.timedate1'
+    -->
+
+      <when test="$_mode = 'dbus'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^\[system\]\s*Activating\s+via\s+systemd:\s*service\s+name='<serverName:patSigQuote>'\s+unit='<componentName:patSigQuote>']]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Activating-Via-systemd</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^\[system\]\s*Successfully\s+activated\s+service\s+'<serverName:patSigQuote>']]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Activated-Service-Successfully</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_mode IN 'babeld, codeload'">
+        <!--
+       <11>Nov 11 11:11:11 11-11-111-11 babeld: Nov 11 11:11:11 1111 pid=11111 tid=11111 version=ef111f1 log_level=INFO msg="expired pk cache" duration_ms=1.11 entries_total=1 entries_freed=1 hits_ok=1 hits_unknown=1 expired_via_get=1
+       <14>Nov 24 03:04:29 54-81-144-94 babeld: Nov 24 03:04:28 2016 pid=24880 tid=28110 version=ef862f8 proto=ssh banner='SSH-2.0-OpenSSH_5.3' kex='diffie-hellman-group14-sha1' cipher='aes128-ctr' hmac='hmac-sha1' ip=211.144.207.10 srcp=33800 dstp=22 log_level=ERROR msg="failed to verify pubkey: exited with error: Socket error: disconnected" auth_tries=0 probe_ok=0 probe_fail=0 srq_ok=1 srq_bad=0 hin=1213 hout=1333 sin=1264 sout=1365 siocin=-1 siocout=-1 fds=12 fde=-1
+     -->
+        <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+          <attrKeyMap attr="version" key="version"/>
+          <attrKeyMap attr="_eventSeverity" key="log_level"/>
+          <attrKeyMap attr="msg" key="msg"/>
+          <attrKeyMap attr="durationMSec" key="duration_ms"/>
+          <attrKeyMap attr="_ipProto" key="proto"/>
+          <attrKeyMap attr="appName" key="banner"/>
+          <attrKeyMap attr="srcIpAddr" key="ip"/>
+          <attrKeyMap attr="srcIpPort" key="srcp"/>
+          <attrKeyMap attr="destIpPort" key="dstp"/>
+          <attrKeyMap attr="user" key="user"/>
+          <attrKeyMap attr="command" key="cmd"/>
+          <attrKeyMap attr="repoName" key="repo"/>
+        </collectFieldsByKeyValuePair>
+        <when test="exist _eventSeverity">
+          <choose>
+            <when test="$_eventSeverity = 'INFO'">
+              <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+            </when>
+            <when test="$_eventSeverity = 'ERROR'">
+              <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+            </when>
+          </choose>
+        </when>
+        <when test="exist msg">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$msg">
+                <regex><![CDATA[^expired\s+<memName:gPatMesgBodyMin>\s+cache]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="eventType">GitHub-Cache-Expired</setEventAttribute>
+            </case>
+            <case>
+              <collectFieldsByRegex src="$msg">
+                <regex><![CDATA[^stats\s+generation\s+inc\s+\(\d+\.\d+\s+ms\)\s+free:]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="eventType">GitHub-Generation-Inc-Free-Statistic</setEventAttribute>
+            </case>
+            <case>
+              <collectFieldsByRegex src="$msg">
+                <regex><![CDATA[^http\s+op\s+done]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="eventType">GitHub-Http-Op-Done</setEventAttribute>
+            </case>
+            <case>
+              <collectFieldsByRegex src="$msg">
+                <regex><![CDATA[^parse_url\s+failed]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="eventType">GitHub-Parse-Url-Failed</setEventAttribute>
+            </case>
+            <case>
+              <collectFieldsByRegex src="$msg">
+                <regex><![CDATA[^failed\s+to\s+verify\s+pubkey:\s+exited\s+with\s+error:\s*<errorString:gPatMesgBody>]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="eventType">GitHub-Verify-Pubkey-Failed</setEventAttribute>
+            </case>
+            <case>
+              <collectFieldsByRegex src="$msg">
+                <regex><![CDATA[^pubkey\s+probe\s+failed\s+\(\d+\),]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="eventType">GitHub-Pubkey-Probe-Failed</setEventAttribute>
+            </case>
+            <case>
+              <collectFieldsByRegex src="$msg">
+                <regex><![CDATA[^repo\s+auth\s+check\s+failed:\s+<details:gPatMesgBody>]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="eventType">GitHub-Repo-Auth-Check-Failed</setEventAttribute>
+            </case>
+            <case>
+              <collectFieldsByRegex src="$msg">
+                <regex><![CDATA[^rejecting\s+shell\s+request]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="eventType">GitHub-Rejecting-Shell-Request</setEventAttribute>
+            </case>
+            <case>
+              <collectFieldsByRegex src="$msg">
+                <regex><![CDATA[^op done]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="eventType">GitHub-Op-Done</setEventAttribute>
+            </case>
+            <default/>
+          </switch>
+        </when>
+        <!-- <when test ="exist actionName">
+          <setEventAttribute attr="eventType">combineMsgId("GitHub-",$actionName)</setEventAttribute>
+          <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "[\._]", "-")</setEventAttribute>
+        </when>-->
+      </when>
+      <when test="$_mode = 'haproxy'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^<srcIpAddr:gPatIpAddr>:<devPort:gPatIpPort>\s*\[<_day1:gPatDay>/<_mon1:gPatMon>/<_year1:gPatYear>:<_time1:gPatTime>\.\d+\]\s*<_proto:patUnderline>_protocol<_body1:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon1, $_day1, $_year1, $_time1)</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body1">
+              <regex><![CDATA["<httpMethod:patHttpAction>\s+<filePath:gPatStr>\s+HTTP/<httpVersion:patDoubleRightQuote>"]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("GitHub-Haproxy-",$httpMethod)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body1">
+              <regex><![CDATA["\s*\<BADREQ\>"]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Haproxy-Bad-Requset</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body1">
+              <regex><![CDATA[:\s*Connection\s+closed\s+during\s+SSL\s+handshake]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Haproxy-Connection-closed</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body1">
+              <regex><![CDATA[:\s*SSL\s+handshake\s+failure]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Haproxy-SSL-Handshake-Failure</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body1">
+              <regex><![CDATA[:\s*Stopped\s+a\s+<:gPatStr>\s+heartbeat\s+attack]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Haproxy-Stopped-Heartbeat-Attack</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body1">
+              <regex><![CDATA[:\s*Timeout\s+during\s+SSL\s+handshake]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Haproxy-SSL-Handshake-Timeout</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="eventType">GitHub-Haproxy-Generic</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+      <!--
+      <11>Nov 11 11:11:11 11-11-111-11 ghe-es-upgrade[11111]: Creating audit log template audit_log_template.
+      <11>Nov 11 11:11:11 11-11-111-11 ghe-es-upgrade[11111]: Deleting audit log template audit_log_template.
+      <11>Nov 11 11:11:11 11-11-111-11 ghe-es-upgrade[11111]: ** Execute environment
+      <11>Nov 11 11:11:11 11-11-111-11 ghe-es-upgrade[11111]: ** Execute es:upgrade
+      <11>Nov 11 11:11:11 11-11-111-11 ghe-es-upgrade[11111]: ** Invoke environment (first_time)
+      <11>Nov 11 11:11:11 11-11-111-11 ghe-es-upgrade[11111]: ** Invoke es:upgrade (first_time)
+      <11>Nov 11 11:11:11 11-11-111-11 ghe-es-upgrade[11111]: Primary index is "blog-1".
+      -->
+      <when test="$_mode = 'ghe-es-upgrade'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^<_action:gPatStr> audit log template audit_log_template]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("GitHub-ghe-es-upgrade-", $_action, "-Audit-Log")</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^\*\*\s*<_action:gPatStr>\s+environment]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("GitHub-ghe-es-upgrade-", $_action, "-Environment")</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^\*\*\s*<_action:gPatStr>\s+es:upgrade]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("GitHub-ghe-es-upgrade-", $_action, "-Upgrade")</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^Primary\s+index\s+is\s+"<osObjName:patDoubleRightQuote>"\.]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Primary-Index</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <!--
+      <14>Nov 24 04:07:30 54-81-144-94 enterprise_manage_access: - - [24/Nov/2016:04:07:29 +0000] "GET / HTTP/1.0" 302 44 "-" "-" "-" 0.001 0.001 .
+      <11>Nov 11 11:11:11 11-11-111-11 github_access: - - [11/Nov/1111:11:11:11 +1111] "GET /admin/audit-log HTTP/1.1" 111 11111 "https://11.11.111.11/admin/settings" "Mozilla/1.1 (Windows NT 1.1; WOW11) AppleWebKit/111.11 (KHTML, like Gecko) Chrome/11.1.1111.111 Safari/111.11" "111.111.111.11" 1.111 1.111 .
+      <11>Nov 11 11:11:11 11-11-111-11 enterprise_manage_access: - - [11/Nov/1111:11:11:11 +1111] "POST /setup/upload/unlock HTTP/1.1" 111 1 "https://11.11.111.11:1111/setup/unlock?redirect_to=/start" "Mozilla/1.1 (Windows NT 1.1; WOW11) AppleWebKit/111.11 (KHTML, like Gecko) Chrome/11.1.1111.111 Safari/111.11" "111.111.111.11" 1.111 1.111 .
+      -->
+      <when test="$_mode IN 'enterprise_manage_access, github_access'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^-+\s+-\s+\[<_day1:gPatDay>/<_mon1:gPatMon>/<_year1:gPatYear>:<_time1:gPatTime>\s+[+-]\d+\]\s+"<httpMethod:patHttpAction>\s+<dirName:gPatStr>\s+HTTP/<httpVersion:patDoubleRightQuote>"\s+\d+\s+\d+\s+"<infoURL:patDoubleRightQuote>"\s+"<httpUserAgent:patDoubleRightQuote>"\s+"<srcIpAddr:patDoubleRightQuote>"\s+]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon1, $_day1, $_year1, $_time1)</setEventAttribute>
+        <setEventAttribute attr="eventType">combineMsgId("GitHub-Http-",$httpMethod)</setEventAttribute>
+      </when>
+      <when test="$_mode = 'enterprise_manage_unicorn'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^\[<_year1:gPatYear>-<_mon1:gPatMonNum>-<_day1:gPatDay>T<_time1:gPatTime>\.\d+\s+#\d+\]\s+<_body1:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon1, $_day1, $_year1, $_time1)</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body1">
+              <regex><![CDATA[^ERROR\s*--\s*:\s+<errorString:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Enterprise-Manage-Unicorn-Error</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body1">
+              <regex><![CDATA[^INFO\s*--\s*:\s+<destIpAddr:gPatIpAddr>(?:,\s+\S+)?\s*-\s*-\s*\[<:gPatStrRightSB>\]\s*"<httpMethod:patHttpAction>\s+<dirName:gPatStr>\s+HTTP/<httpVersion:patDoubleRightQuote>"]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("GitHub-Enterprise-Manage-Unicorn-Http-",$httpMethod)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body1">
+              <regex><![CDATA[^INFO -- : Authentication Failure from <srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Enterprise-Manage-Unicorn-Authentication-Failure</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_mode IN 'github_resque, github_unicorn'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[INFO Resqued::Worker -- Forked worker\s+\d+]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Forked-Worker</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[:\s*<:gPatStr>\s+after_fork=<status:gPatStr>\s+worker=\d+]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-After-Fork</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[:\s*worker=\d+\s+after_fork=<status:gPatStr>(?:\s+duration=<:gPatStr>)?]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-After-Fork</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[:\s*<:gPatStr> before_fork=<status:gPatStr> worker=\d+]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Before-Fork</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[:\s*<:gPatStr> build_app=<status:gPatStr>\s+]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Build-App</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[:\s*master\s+complete]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Master-complete</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[:\s*master\s+process\s+ready]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Master-Ready</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[:\s*worker=\d+\s+ready]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Worker-Ready</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[:\s+reaped\s+#\<Process::Status:\s+pid\s+<procId:gPatInt>\s+exit\s+\d+\>\s+worker=\d+t?]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Process-Exit</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+              <attrKeyMap attr="msg" key="log_message"/>
+              <attrKeyMap attr="funName" key="method"/>
+              <attrKeyMap attr="status" key="key"/>
+              <attrKeyMap attr="status" key="status"/>
+              <attrKeyMap attr="user" key="user"/>
+              <attrKeyMap attr="repoName" key="repo"/>
+              <attrKeyMap attr="controllerName" key="controller"/>
+              <attrKeyMap attr="actionName" key="action"/>
+              <attrKeyMap attr="dbObjName" key="dbconn"/>
+              <attrKeyMap attr="webAppState" key="stateless"/>
+              <attrKeyMap attr="destIpAddr" key="remote_address"/>
+              <attrKeyMap attr="httpMethod" key="request_method"/>
+              <attrKeyMap attr="srcName" key="request_host"/>
+              <attrKeyMap attr="filePath" key="path_info"/>
+              <attrKeyMap attr="httpContentLen64" key="content_length"/>
+              <attrKeyMap attr="httpContentType" key="content_type"/>
+              <attrKeyMap attr="httpUserAgent" key="user_agent"/>
+              <attrKeyMap attr="httpAcceptLang" key="language"/>
+              <attrKeyMap attr="infoURL" key="url"/>
+              <attrKeyMap attr="webCategory" key="request_category"/>
+            </collectFieldsByKeyValuePair>
+            <when test="exist funName">
+              <setEventAttribute attr="eventType">combineMsgId("GitHub-",$funName)</setEventAttribute>
+            </when>
+            <when test="exist controllerName">
+              <setEventAttribute attr="eventType">combineMsgId("GitHub-",$controllerName, "-Info")</setEventAttribute>
+            </when>
+            <when test="exist msg">
+              <switch>
+                <case>
+                  <collectFieldsByRegex src="$_body">
+                    <regex><![CDATA[Finding pages sites with fewer than \d+ replicas]]></regex>
+                  </collectFieldsByRegex>
+                  <setEventAttribute attr="eventType">GitHub-Finding-Pages-Sites</setEventAttribute>
+                </case>
+                <case>
+                  <collectFieldsByRegex src="$_body">
+                    <regex><![CDATA[Found \d+ sites needing replica repair]]></regex>
+                  </collectFieldsByRegex>
+                  <setEventAttribute attr="eventType">GitHub-Needing-Replica-Sites-Found</setEventAttribute>
+                </case>
+              </switch>
+            </when>
+          </case>
+        </switch>
+      </when>
+      <when test="$_mode IN 'ghe-systemd-wrapper, github_auth, github_gitauth'">
+        <collectAndSetAttrByKeyValuePair src="$_body" sep=" ">
+          <attrKeyMap attr="httpMethod" key="method="/>
+          <attrKeyMap attr="actionName" key="action="/>
+          <attrKeyMap attr="filePath" key="path="/>
+          <attrKeyMap attr="repoName" key="member="/>
+          <attrKeyMap attr="repoName" key="repo="/>
+          <attrKeyMap attr="status" key="status="/>
+          <attrKeyMap attr="status" key="at="/>
+          <attrKeyMap attr="user" key="login="/>
+          <attrKeyMap attr="hostName" key="hostname="/>
+          <attrKeyMap attr="appTransportProto" key="proto="/>
+          <attrKeyMap attr="msg" key="message="/>
+          <attrKeyMap attr="infoURL" key="uri="/>
+          <attrKeyMap attr="srcIpAddr" key="remote_addr="/>
+        </collectAndSetAttrByKeyValuePair>
+        <setEventAttribute attr="eventType">combineMsgId("GitHub-",$_mode)</setEventAttribute>
+        <when test="exist actionName">
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-", $actionName)</setEventAttribute>
+        </when>
+        <when test="exist status">
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$status)</setEventAttribute>
+        </when>
+        <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "[\._]", "-")</setEventAttribute>
+      </when>
+      <when test="$_mode IN 'github_audit,GITHUB_AUDIT_LOG'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^\s*\{<_body1:gPatMesgBody>\}]]></regex>
+        </collectFieldsByRegex>
+        <choose>
+          <when test="matches($_body1, '^\s*:.*')">
+            <collectFieldsByKeyValuePair sep=", :" kvsep="=&gt;" src="$_body1">
+              <attrKeyMap attr="srcIpAddr" key="actor_ip"/>
+              <attrKeyMap attr="user" key="user"/>
+              <attrKeyMap attr="repoName" key="repo"/>
+              <attrKeyMap attr="user" key="actor"/>
+              <attrKeyMap attr="userId" key="actor_id"/>
+              <attrKeyMap attr="actionName" key="action"/>
+              <attrKeyMap attr="activityType" key="from"/>
+              <attrKeyMap attr="actionName" key="program"/>
+              <attrKeyMap attr="filePath" key="git_dir"/>
+              <attrKeyMap attr="hostName" key="hostname"/>
+              <attrKeyMap attr="srcIpAddr" key="real_ip"/>
+              <attrKeyMap attr="userFullName" key="user_name"/>
+              <attrKeyMap attr="user" key="user_login"/>
+              <attrKeyMap attr="userId" key="user_id"/>
+              <attrKeyMap attr="groupName" key="pgroup"/>
+              <attrKeyMap attr="status" key="status"/>
+              <attrKeyMap attr="feature" key="features"/>
+              <attrKeyMap attr="recvPkts64" key="receive_pack_size"/>
+              <attrKeyMap attr="emailId" key="user_email"/>
+              <attrKeyMap attr="httpUserAgent" key="user_agent"/>
+              <attrKeyMap attr="repoName" key="repo_name"/>
+              <attrKeyMap attr="httpMethod" key="method"/>
+              <attrKeyMap attr="infoURL" key="url"/>
+            </collectFieldsByKeyValuePair>
+          </when>
+          <otherwise>
+            <collectAndSetAttrByJSON src="$_body">
+              <attrKeyMap attr="extEventRecvProto" key="extEventRecvProto"/>
+              <attrKeyMap attr="phCustId" key="phCustId"/>
+              <attrKeyMap attr="reptDevIpAddr" key="reptDevIpAddr"/>
+              <attrKeyMap attr="reptDevName" key="reptDevName"/>
+              <attrKeyMap attr="_createdTime" key="created_at"/>
+              <attrKeyMap attr="reptGeoOrg" key="org"/>
+              <attrKeyMap attr="srcIpAddr" key="actor_ip"/>
+              <attrKeyMap attr="user" key="user"/>
+              <attrKeyMap attr="repoName" key="repo"/>
+              <attrKeyMap attr="user" key="actor"/>
+              <attrKeyMap attr="userId" key="actor_id"/>
+              <attrKeyMap attr="actionName" key="action"/>
+              <attrKeyMap attr="activityType" key="from"/>
+              <attrKeyMap attr="actionName" key="program"/>
+              <attrKeyMap attr="filePath" key="git_dir"/>
+              <attrKeyMap attr="hostName" key="hostname"/>
+              <attrKeyMap attr="srcIpAddr" key="real_ip"/>
+              <attrKeyMap attr="userFullName" key="user_name"/>
+              <attrKeyMap attr="user" key="user_login"/>
+              <attrKeyMap attr="userId" key="user_id"/>
+              <attrKeyMap attr="groupName" key="pgroup"/>
+              <attrKeyMap attr="status" key="status"/>
+              <attrKeyMap attr="feature" key="features"/>
+              <attrKeyMap attr="recvPkts64" key="receive_pack_size"/>
+              <attrKeyMap attr="emailId" key="user_email"/>
+              <attrKeyMap attr="httpUserAgent" key="user_agent"/>
+              <attrKeyMap attr="repoName" key="repo_name"/>
+              <attrKeyMap attr="httpMethod" key="method"/>
+              <attrKeyMap attr="httpMethod" key="data.method"/>
+              <attrKeyMap attr="infoURL" key="url"/>
+              <attrKeyMap attr="infoURL" key="data.url"/>
+            </collectAndSetAttrByJSON>
+          </otherwise>
+        </choose>
+        <when test="exist _createdTime">
+          <setEventAttribute attr="deviceTime">divide($_createdTime, 1000)</setEventAttribute>
+        </when>
+        <when test="exist actionName">
+          <setEventAttribute attr="eventType">combineMsgId("GitHub-",$actionName)</setEventAttribute>
+          <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "[\._]", "-")</setEventAttribute>
+        </when>
+      </when>
+      <!--
+      <11>Nov 11 11:11:11 11-11-111-11 github_production: 11:11:11 +1111 [metrics resque.queued]: {:queue=>"audit_logs", :class=>"github-jobs-post_delayed_audit"} 111.11111111111111ms
+      <11>Nov 11 11:11:11 11-11-111-11 github_production: 111 Accepted in 11.1ms (ActiveRecord: 1.1ms)
+      <11>Nov 11 11:11:11 11-11-111-11 github_production: 111 Found in 111.1ms (ActiveRecord: 11.1ms)
+      <11>Nov 11 11:11:11 11-11-111-11 github_production: 111 OK in 1111.1ms (Views: 1.1ms | ActiveRecord: 1.1ms)
+      <11>Nov 11 11:11:11 11-11-111-11 github_production: 111 OK in 11.1ms (ActiveRecord: 11.1ms)
+      <11>Nov 11 11:11:11 11-11-111-11 github_production: audit_log/_action.html.erb (1.1ms)
+     <11>Nov 11 11:11:11 11-11-111-11 github_production: by EditRepositoriesController#keys as HTML
+      -->
+      <when test="$_mode = 'github_production'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[metrics\s+<funName:gPatStrRightSB>\]:\s*\{:queue=>"<jobName:patDoubleRightQuote>",\s*:class=>"<_action:patDoubleRightQuote>"}]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("GitHub-",$_action)</setEventAttribute>
+            <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "[\._]", "-")</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^\d+\s+<status:gPatStr>\s+in\s+\d+\.?\d*ms\s*\(<_action:gPatStrEndColon>:<:patRightBracket>\)]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("GitHub-",$_action,"-", $status)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^<logText:gPatStr>\s+(within\s+<:gPatStr>\s+)?\(\d+\.\d+ms\)]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Production-Log</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^by\s+<funName:patHashSymbol>#<paraName:gPatStr>\s+as\s+<fileType:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Production-Function-Called</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^category:\s+<webCategory:gPatStr>\s+<dirName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Production-Category-Info</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^chain\s+halted\s+as\s*:\s*<errReason:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Production-Chain-Halted</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^fragment\s+<fileName:gPatStr>\s+\d+.\d+ms]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Production-View-Fragment</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^<_action:gPatStr>\s+"<targetName:patDoubleRightQuote>"\s+for\s+(?:<srcIpAddr:gPatIpAddr>\s+)?at\s+]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("GitHub-Production-", $_action)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^scope\s*:<:patDot>\.\s*Overwriting\s+existing\s+method\s+<funName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Production-Overwriting-Method</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^to\s+https://<destIpAddr:patOblique>/]]></regex>
+            </collectFieldsByRegex>
+
+            <setEventAttribute attr="eventType">GitHub-Production-Jump-To-Targetpage</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^mail\s+to\s+]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Production-Send-Mail</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^\{"<_body1:gPatMesgBody>"\}]]></regex>
+            </collectFieldsByRegex>
+            <collectFieldsByKeyValuePair sep="', '" kvsep="'=&gt;'" src="$_body1">
+              <attrKeyMap attr="targetName" key="id"/>
+              <attrKeyMap attr="user" key="user"/>
+              <attrKeyMap attr="userId" key="user_id"/>
+              <attrKeyMap attr="repoName" key="repository"/>
+              <attrKeyMap attr="repoName" key="repository_id"/>
+            </collectFieldsByKeyValuePair>
+            <setEventAttribute attr="eventType">GitHub-Production-Operated-Info</setEventAttribute>
+          </case>
+        </switch>
+      </when>
+      <when test="$_mode = 'gitmon'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[Opening\s+new\s+database\s+for\s+for\s+writing:\s+<dbObjName:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">GitHub-Opening-New-DB</setEventAttribute>
+      </when>
+      <!--
+      <11>Nov 11 11:11:11 11-11-111-11 rrdcached[111]: flushing old values
+      <11>Nov 11 11:11:11 11-11-111-11 samplicator[11111]: samplicator disabled. Enable it adding ENABLED=yes to /etc/default/samplicator
+      -->
+      <when test="$_mode IN 'rrdcached, samplicator, systemd-logind, systemd-timedated, systemd-udevd'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^flushing\s+old\s+values]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("GitHub-",$_mode,"-Flushing-Values")</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^samplicator disabled. Enable it adding ENABLED=<status:gPatStr>\s+to\s+<targetName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Enable-Samplicator</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^<_action:gPatStr>\s+session\s+\d+]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("GitHub-",$_action, "-session")</setEventAttribute>
+          </case>
+          <!--
+          <11>Nov 11 11:11:11 11-11-111-11 systemd-logind[111]: New session 111 of user admin.
+          <11>Nov 11 11:11:11 11-11-111-11 systemd-timedated[11111]: /etc/localtime should be a symbolic link to a time zone data file in /usr/share/zoneinfo/.
+          <11>Nov 11 11:11:11 11-11-111-11 systemd-udevd[11111]: error opening ATTR{/sys/devices/vbd-111/block/xvda/xvda1/queue/scheduler} for writing: No such file or directory
+          -->
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^New session \d+ of user admin.]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-New-Session-Created</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^/etc/localtime should be a symbolic link to a time zone data file in <filePath:gPatStr>\.]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Time-Zone-Data-File</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^error\s+opening\s+ATTR{<:patRightBraces>}\s+for\s+writing:\s+<errorString:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">GitHub-Writing-Attribute-Failed</setEventAttribute>
+          </case>
+        </switch>
+      </when>
+    </choose>
+    <setEventAttribute attr="eventType">replaceStrInStr($eventType, "GitHub-github", "GitHub")</setEventAttribute>
+    <when test="exist infoURL">
+      <setEventAttribute attr="destName">extractHostFromURL($infoURL)</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>

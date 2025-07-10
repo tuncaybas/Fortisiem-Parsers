@@ -1,0 +1,57 @@
+<eventParser name="IBMTownsendParser">
+  <deviceType>
+    <Vendor>IBM</Vendor>
+    <Model>OS400</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="pat4Digits"><![CDATA[\d{4}]]></pattern>
+    <pattern name="pat2Digits"><![CDATA[\d{2}]]></pattern>
+    <pattern name="patNoPipe"><![CDATA[[^|]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[^\s*<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+CEF:\d+\|PATownsend\|IBM-\w+\|\d]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[Nov 3 17:07:28 FOO CEF:0|PATownsend|IBM-QAUDJRN|1.28|1056|SV-System value changed|10|msg=SV-System value changed act=D-Adjust UTC actual_type=SV-D system_value=ADJUTC new_value=2751703461974520 old_value=2751703461991213 jrn_seq=158268434 timestamp=20151103170728328000 dproc=QTOTNTP suser=QNTP job_number=758502 eff_user=QNTP]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[^\s*<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatHostName>\s+CEF:(?:[^|]*\|){5}<_et:gPatWord>\-<_msg:patNoPipe>\|<_severity:gPatInt>\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventType">combineMsgId("OS400-",$_et)</setEventAttribute>
+    <setEventAttribute attr="msg">combineMsgId($_et,"-",$_msg)</setEventAttribute>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="user" key="suser"/>
+      <attrKeyMap attr="targetUser" key="eff_user"/>
+      <attrKeyMap attr="_eventTime" key="timestamp"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="osObjType" key="object_type"/>
+      <attrKeyMap attr="osObjName" key="old_object"/>
+      <attrKeyMap attr="osObjName" key="object"/>
+      <attrKeyMap attr="targetOsObjName" key="new_object"/>
+      <attrKeyMap attr="jobId" key="job_number"/>
+      <attrKeyMap attr="osObjName" key="object_name"/>
+      <attrKeyMap attr="osObjectLibrary" key="object_library"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist _eventTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_eventTime">
+            <regex><![CDATA[^<_year:pat4Digits><_mon:pat2Digits><_day:pat2Digits><_hour:pat2Digits><_min:pat2Digits><_sec:pat2Digits>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="_time">combineMsgId($_hour, ":", $_min, ":", $_sec)</setEventAttribute>
+          <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+  </parsingInstructions>
+</eventParser>

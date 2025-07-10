@@ -1,0 +1,292 @@
+<eventParser name="GoogleGCPParser">
+  <deviceType>
+    <Vendor>Google</Vendor>
+    <Model>Google Cloud Platform</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[1 10.10.10.46 google.com GCP_AUDIT_LOG {"insertId":"5k3fzzd4qtw","logName":"projects/fortisiem-integration-314917/logs/cloudaudit.googleapis.com%2Fdata_access","protoPayload":{"@type":"type.googleapis.com/google.cloud.audit.AuditLog","authenticationInfo":{"principalEmail":"user@example.com"},"authorizationInfo":[{"granted":true,"permission":"resourcemanager.projects.get","resource":"projects/fortisiem-integration-314917","resourceAttributes":{}}],"methodName":"GetResourceBillingInfo","request":{"@type":"type.googleapis.com/google.internal.cloudbilling.billingaccount.v1.GetResourceBillingInfoRequest","billingInfoOptions":{},"resourceName":"projects/fortisiem-integration-314917"},"requestMetadata":{"callerIp":"10.10.10.45","destinationAttributes":{},"requestAttributes":{}},"resourceName":"projects/fortisiem-integration-314917","serviceName":"cloudbilling.googleapis.com","status":{}},"receiveTimestamp":"2021-07-29T01:55:31.993042341Z","resource":{"labels":{"project_id":"fortisiem-integration-314917"},"type":"project"},"severity":"INFO","timestamp":"2021-07-29T01:55:31.201402Z"}]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patExceptSlash"><![CDATA[[^/]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatInt>\s+<:gPatStr>\s+<:gPatStr>\s+GCP_AUDIT_LOG\s+]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<phCustId:gPatInt>\s+<reptDevIpAddr:gPatStr>\s+<reptDevName:gPatStr>\s+GCP_AUDIT_LOG\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+
+    <collectAndSetAttrByJSON src="$_body">
+      <attrKeyMap attr="_eventTime" key="timestamp"/>
+      <attrKeyMap attr="infoURL" key="log_name"/>
+      <attrKeyMap attr="_severity" key="severity"/>
+      <attrKeyMap attr="_trace" key="trace"/>
+      <attrKeyMap attr="_spanId" key="span_id"/>
+      <attrKeyMap attr="_traceSampled" key="trace_sampled"/>
+      <attrKeyMap attr="resourceType" key="resource.type"/>
+      <attrKeyMap attr="vmId" key="resource.labels.instance_id"/>
+      <attrKeyMap attr="resourceZone" key="resource.labels.zone"/>
+      <attrKeyMap attr="resourceZone" key="jsonPayload.instance.zone"/>
+      <attrKeyMap attr="resourceZone" key="resource.labels.location"/>
+      <attrKeyMap attr="projectId" key="resource.labels.project_id"/>
+      <attrKeyMap attr="topicName" key="resource.labels.topic_id"/>
+      <attrKeyMap attr="_lab" key="labels"/>
+      <attrKeyMap attr="_httpReq" key="http_request"/>
+      <attrKeyMap attr="fileName" key="source_location.file"/>
+      <attrKeyMap attr="funName" key="source_location.function"/>
+      <attrKeyMap attr="lineNumber" key="source_location.line"/>
+      <attrKeyMap attr="srcName" key="operation.producer"/>
+      <attrKeyMap attr="msg" key="textPayload"/>
+      <attrKeyMap attr="type" key="protoPayload.@type"/>
+      <attrKeyMap attr="msg" key="protoPayload.message"/>
+      <attrKeyMap attr="_startupEvent" key="protoPayload.startupEvent"/>
+      <attrKeyMap attr="_shutdownEvent" key="protoPayload.shutdownEvent"/>
+      <attrKeyMap attr="errorNoInt" key="protoPayload.status.code"/>
+      <attrKeyMap attr="errReason" key="protoPayload.status.message"/>
+      <attrKeyMap attr="details" key="protoPayload.status.details"/>
+      <attrKeyMap attr="emailId" key="protoPayload.authenticationInfo.principalEmail"/>
+      <attrKeyMap attr="serviceName" key="protoPayload.serviceName"/>
+      <attrKeyMap attr="actionName" key="protoPayload.methodName"/>
+      <attrKeyMap attr="resourceName" key="protoPayload.resourceName"/>
+      <attrKeyMap attr="srcIpAddr" key="protoPayload.requestMetadata.callerIp"/>
+      <attrKeyMap attr="httpUserAgent" key="protoPayload.requestMetadata.callerSuppliedUserAgent"/>
+      <attrKeyMap attr="resourceName" key="protoPayload.authorizationInfo[0].resource"/>
+      <attrKeyMap attr="personalPermissions" key="protoPayload.authorizationInfo[0].permission"/>
+      <attrKeyMap attr="_resourceType" key="protoPayload.authorizationInfo[0].resourceAttributes.type"/>
+      <attrKeyMap attr="projectId" key="protoPayload.request.projectId"/>
+      <attrKeyMap attr="parentObjTitle" key="protoPayload.request.project.parent.id"/>
+      <attrKeyMap attr="parentObjType" key="protoPayload.request.project.parent.type"/>
+      <attrKeyMap attr="projectName" key="protoPayload.request.project.name"/>
+      <attrKeyMap attr="user" key="protoPayload.request.account_id"/>
+      <attrKeyMap attr="topicName" key="protoPayload.request.topic"/>
+      <attrKeyMap attr="emailId" key="protoPayload.response.email"/>
+      <attrKeyMap attr="requestType" key="protoPayload.request.@type"/>
+      <!-- json object of policy bindings, includes entire policy not just changes -->
+      <attrKeyMap attr="_bindings" key="request.bindings"/>
+      <attrKeyMap attr="_logName" key="logName"/>
+      <attrKeyMap attr="_serviceDataType" key="protoPayload.serviceData.@type"/>
+      <attrKeyMap attr="action" key="protoPayload.serviceData.policyDelta.bindingDeltas[0].action"/>
+      <attrKeyMap attr="targetUser" key="protoPayload.serviceData.policyDelta.bindingDeltas[0].member"/>
+      <attrKeyMap attr="role" key="protoPayload.serviceData.policyDelta.bindingDeltas[0].role"/>
+      <attrKeyMap attr="role" key="protoPayload.request.role.title"/>
+      <attrKeyMap attr="accountId" key="protoPayload.resource.labels.organization_id"/>
+      <!-- vpc -->
+      <attrKeyMap attr="destIpAddr" key="jsonPayload.connection.dest_ip"/>
+      <attrKeyMap attr="destIpPort" key="jsonPayload.connection.dest_port"/>
+      <attrKeyMap attr="ipProto" key="jsonPayload.connection.protocol"/>
+      <attrKeyMap attr="srcIpAddr" key="jsonPayload.connection.src_ip"/>
+      <attrKeyMap attr="srcIpPort" key="jsonPayload.connection.src_port"/>
+      <attrKeyMap attr="projectId" key="jsonPayload.instance.project_id"/>
+      <attrKeyMap attr="domain" key="jsonPayload.instance.region"/>
+      <attrKeyMap attr="vmName" key="jsonPayload.instance.vm_name"/>
+      <attrKeyMap attr="projectId" key="jsonPayload.dest_instance.project_id"/>
+      <attrKeyMap attr="destDomain" key="jsonPayload.dest_instance.region"/>
+      <attrKeyMap attr="destVmName" key="jsonPayload.dest_instance.vm_name"/>
+      <attrKeyMap attr="projectId" key="jsonPayload.vpc.project_id"/>
+      <attrKeyMap attr="vpcName" key="jsonPayload.vpc.vpc_name"/>
+      <attrKeyMap attr="projectId" key="jsonPayload.dest_vpc.project_id"/>
+      <attrKeyMap attr="vpcName" key="jsonPayload.dest_vpc.vpc_name"/>
+      <attrKeyMap attr="_endTime" key="jsonPayload.end_time"/>
+      <attrKeyMap attr="sentPkts" key="jsonPayload.packets_sent"/>
+      <attrKeyMap attr="_startTime" key="jsonPayload.start_time"/>
+      <attrKeyMap attr="msg" key="jsonPayload.message"/>
+      <attrKeyMap attr="_vmName" key="protoPayload.resourceName"/>
+      <attrKeyMap attr="tagName" key="protoPayload.request.tags"/>
+      <attrKeyMap attr="tagName" key="protoPayload.request.tags.tags"/>
+      <attrKeyMap attr="tagName" key="protoPayload.request.targetTags"/>
+      <attrKeyMap attr="subnetName" key="protoPayload.request.network"/>
+      <attrKeyMap attr="subnetName" key="jsonPayload.vpc.subnetwork_name"/>
+      <attrKeyMap attr="tagName" key="jsonPayload.rule_details.target_tag"/>
+      <attrKeyMap attr="_machineType" key="protoPayload.request.machineType"/>
+      <attrKeyMap attr="_ruleName" key="jsonPayload.rule_details.reference"/>
+      <!-- DNS -->
+      <attrKeyMap attr="_ipProto" key="jsonPayload.protocol"/>
+      <attrKeyMap attr="dnsQueryName" key="jsonPayload.queryName"/>
+      <attrKeyMap attr="dnsQueryType" key="jsonPayload.queryType"/>
+      <attrKeyMap attr="queryData" key="jsonPayload.rdata"/>
+      <attrKeyMap attr="httpStatusCode" key="jsonPayload.responseCode"/>
+      <attrKeyMap attr="srcIpAddr" key="jsonPayload.sourceIP"/>
+      <attrKeyMap attr="srcNetwork" key="jsonPayload.sourceNetwork"/>
+      <attrKeyMap attr="vmId" key="jsonPayload.vmInstanceIdString"/>
+      <attrKeyMap attr="vmName" key="jsonPayload.vmInstanceName"/>
+      <attrKeyMap attr="projectId" key="jsonPayload.vmProjectId"/>
+      <attrKeyMap attr="srcTimeZone" key="jsonPayload.vmZoneName"/>
+      <!-- IPSEC -->
+      <attrKeyMap attr="vpnTunnelName" key="labels.tunnel_id"/>
+      <!-- Firewall Rule Traffic Log -->
+      <attrKeyMap attr="action" key="jsonPayload.disposition"/>
+      <attrKeyMap attr="direction" key="jsonPayload.rule_details.direction"/>
+      <attrKeyMap attr="direction" key="protoPayload.request.direction"/>
+      <!-- GCP Insight Generic -->
+      <attrKeyMap attr="activityType" key="labels.activity_type_name"/>
+      <!-- Networking General -->
+      <attrKeyMap attr="operationId" key="operation.id"/>
+      <attrKeyMap attr="reservedAddressId" key="resource.labels.reserved_address_id"/>
+      <attrKeyMap attr="bucketName" key="resource.labels.bucket_name"/>
+      <attrKeyMap attr="subnetName" key="resource.labels.subnetwork_name"/>
+      <attrKeyMap attr="subnetId" key="resource.labels.subnetwork_id"/>
+      <attrKeyMap attr="routerId" key="resource.labels.router_id"/>
+      <attrKeyMap attr="targetResourceId" key="protoPayload.response.targetId"/>
+      <attrKeyMap attr="region" key="protoPayload.response.region"/>
+      <attrKeyMap attr="addressType" key="protoPayload.request.addressType"/>
+      <attrKeyMap attr="resourceZone" key="jsonPayload.instance.zone"/>
+    </collectAndSetAttrByJSON>
+
+    <when test="exist _ipProto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_ipProto)</setEventAttribute>
+    </when>
+
+    <when test="exist _eventTime">
+      <collectFieldsByRegex src="$_eventTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>[ T]<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <when test="exist _endTime">
+      <collectFieldsByRegex src="$_endTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>[ T]<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="endTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <when test="exist _startTime">
+      <collectFieldsByRegex src="$_startTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>[ T]<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="startTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <when test="exist _machineType">
+      <collectFieldsByRegex src="$_machineType">
+        <regex><![CDATA[<instanceType:patExceptSlash>$]]></regex>
+      </collectFieldsByRegex>
+    </when>
+    <when test="exist tagName">
+      <setEventAttribute attr="tagName">replaceStringByRegex($tagName, "[\[\]\{\} \"\t\n]", "")</setEventAttribute>
+    </when>
+    <when test="exist _ruleName">
+      <collectFieldsByRegex src="$_ruleName">
+        <regex><![CDATA[.*firewall:<ruleName:gPatStr>]]></regex>
+      </collectFieldsByRegex>
+    </when>
+
+    <when test="exist _resourceType">
+      <collectFieldsByRegex src="$_resourceType">
+        <regex><![CDATA[<resourceType:patExceptSlash>$]]></regex>
+      </collectFieldsByRegex>
+    </when>
+
+    <when test="exist _vmName">
+      <when test="$resourceType = 'compute.instances'">
+        <collectFieldsByRegex src="$_vmName">
+          <regex><![CDATA[<vmName:patExceptSlash>$]]></regex>
+        </collectFieldsByRegex>
+      </when>
+    </when>
+
+    <setEventAttribute attr="eventType">GCP_Audit_Generic</setEventAttribute>
+    <when test="exist _logName">
+      <!-- figure out log type, appended to string in format activity,data_access,policy, or system -->
+      <collectFieldsByRegex src="$_logName">
+        <!-- sample organizations/11111115/logs/cloudaudit.googleapis.com%2Factivity -->
+        <regex><![CDATA[\%2F<_logName:gPatStr>$]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="eventType">combineMsgId("GCP_Audit_", $_logName)</setEventAttribute>
+    </when>
+
+    <when test="exist actionName">
+      <collectFieldsByRegex src="$actionName">
+        <regex><![CDATA[(?:^.*[Vv]\d+[^.]*\.|^.*beta\.)?<_actionName:gPatMesgBody>$]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="_actionName">replaceStringByRegex($_actionName, "^beta\.", "")</setEventAttribute>
+      <setEventAttribute attr="_actionName">replaceStringByRegex($_actionName, "\.", "_")</setEventAttribute>
+      <setEventAttribute attr="eventType">combineMsgId($eventType,"_", $_actionName)</setEventAttribute>
+    </when>
+
+    <when test="exist action">
+      <setEventAttribute attr="eventType">combineMsgId($eventType,"_", $action)</setEventAttribute>
+    </when>
+
+    <when test="exist targetUser">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$targetUser">
+            <regex><![CDATA[^<targetUserType:gPatStr>:<targetUser:gPatStr>$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist dnsQueryName">
+      <switch>
+        <!-- trim root dns designator from end of string if existing e.g. login.windows.net.  -->
+        <case>
+          <collectFieldsByRegex src="$dnsQueryName">
+            <regex><![CDATA[^<dnsQueryName:gPatStr>\.$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <choose>
+      <when test="not_exist _severity"/>
+      <when test="$_severity = 'ERROR'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_severity = 'NOTICE'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_severity IN 'INFO,DEBUG'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist errorNoInt"/>
+      <when test="$errorNoInt = '0'">
+        <!-- Success -->
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "_Success")</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "_Failure")</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <!-- Event Type Specific Parsing -->
+    <choose>
+      <when test="$eventType IN 'GCP_Audit_activity_CreateRole,GCP_Audit_activity_UpdateRole,GCP_Audit_activity_DeleteRole'">
+        <collectAndSetAttrByJSON src="$_body">
+          <!-- Each event create,update,delete has actual role name in different field -->
+          <attrKeyMap attr="role" key="protoPayload.resource.response.title"/>
+          <attrKeyMap attr="role" key="protoPayload.response.title"/>
+        </collectAndSetAttrByJSON>
+      </when>
+      <when test="$eventType IN 'GCP_Audit_activity_CreateServiceAccount,GCP_Audit_activity_DisableServiceAccount,GCP_Audit_activity_DeleteServiceAccount'">
+        <collectAndSetAttrByJSON src="$_body">
+          <!-- Update appropriate user who made change vs target service account -->
+          <attrKeyMap attr="emailId" key="protoPayload.authenticationInfo.principalEmail"/>
+          <attrKeyMap attr="targetUser" key="resource.labels.email_id"/>
+        </collectAndSetAttrByJSON>
+      </when>
+      <when test="$eventType IN 'GCP_Audit_activity_CreateServiceAccountKey,GCP_Audit_activity_DeleteServiceAccountKey'">
+        <collectAndSetAttrByJSON src="$_body">
+          <!-- target service account needs to be marked targetUser -->
+          <attrKeyMap attr="targetUser" key="resource.labels.email_id"/>
+        </collectAndSetAttrByJSON>
+      </when>
+      <otherwise/>
+    </choose>
+  </parsingInstructions>
+</eventParser>

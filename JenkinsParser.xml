@@ -1,0 +1,146 @@
+<eventParser name="JenkinsParser">
+  <deviceType>
+    <Vendor>Jenkins</Vendor>
+    <Model>Automation</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<15>Mar 04 20:43:30 jenkins-lab-1 jenkins: Mar 04, 2022 12:43:30 PM hudson.tasks.LogRotator shouldKeepRun FINER: Backup/backup-old #145 is not to be removed or purged of artifacts because it’s the last successful build]]></testEvent>
+    <testEvent><![CDATA[<14>Mar 11 09:41:15 jenkins-slave-47 jenkins: /job/testReindexing/job/SnapshotRestore/64/rebuild/configSubmit by labuser from 10.1.1.25]]></testEvent>
+  </testEvents>
+
+  <!-- pattern definitions -->
+  <patternDefinitions>
+    <pattern name="patExceptPipe"><![CDATA[[^\|]+]]></pattern>
+    <pattern name="patExceptBracket"><![CDATA[[^\[\]]+]]></pattern>
+    <pattern name="patExceptComma"><![CDATA[[^,]+]]></pattern>
+  </patternDefinitions>
+  <!-- Jenkins default syslog format very generic so must include full log header -->
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+jenkins:\s+]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+jenkins:\s+<_mon:gPatMon>\s+<_day:gPatDay>,\s+<_year:gPatYear>\s+<_time:gPatTime>\s+<:gPatWord>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="_body">replaceStrInStr($_body, "»", "")</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<module:gPatStr>\s+<opName:gPatStr>\s+<msg:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Jenkins-", $module, "-", $opName)</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+jenkins:\s+<opName:gPatStr>\s+<msg:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId("Jenkins-", $opName)</setEventAttribute>
+      </case>
+      <default/>
+    </switch>
+
+    <!-- Set event type -->
+    <choose>
+      <when test="exist module">
+        <choose>
+          <when test="not_exist opName">
+            <setEventAttribute attr="eventType">combineMsgId("Jenkins-", $module)</setEventAttribute>
+          </when>
+          <when test="exist opName">
+            <setEventAttribute attr="eventType">combineMsgId("Jenkins-", $module, "-", $opName)</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+      <when test="exist opName">
+        <setEventAttribute attr="eventType">combineMsgId("Jenkins-", $opName)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">Jenkins-Generic</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <!-- Strip chars from event type -->
+    <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "([\.\/\(\)\$]|--)+", "-")</setEventAttribute>
+    <setEventAttribute attr="eventType">trimAttribute($eventType, "-")</setEventAttribute>
+
+
+    <!-- If year or time present, assume the rest of values exist as well -->
+    <choose>
+      <when test="not_exist _time"/>
+      <when test="exist _year">
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <!-- specific event type handling -->
+    <choose>
+      <when test="$eventType = 'Jenkins-jenkins-security-SecurityListener-fireLoggedIn'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[FINE: logged in: <user:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Jenkins-Login-Success</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$eventType = 'Jenkins-jenkins-security-SecurityListener-fireAuthenticated2'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[FINE: authenticated: <user:gPatStr>\s+\[<groupName:patExceptBracket>\]]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Jenkins-Authentication-Success</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <!-- Job logs operations contain user variables for job type -->
+      <when test="matches($eventType, '^Jenkins-job-.*configSubmit')">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[by <user:gPatStr> from <srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Jenkins-job-config-submit</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+    </choose>
+
+    <!-- Last effort to parse user and/or source -->
+    <choose>
+      <when test="exist msg">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[by <user:gPatStr> from <srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Jenkins-job-config-submit</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[Started by user <user:patExceptComma>,]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Jenkins-job-config-submit</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+    </choose>
+
+  </parsingInstructions>
+</eventParser>

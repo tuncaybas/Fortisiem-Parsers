@@ -1,0 +1,106 @@
+<eventParser name="HXParser">
+  <deviceType>
+    <Vendor>FireEye</Vendor>
+    <Model>HX</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[\[\d+\]:\s+CEF:\d+\|(?:mandiant\|mso|fireeye\|hx)\|]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<15>Mar 17 20:25:35 mso2 app-proc[7396]: CEF:0|mandiant|mso|1.4.0|Mandiant Acquisition Completed|Mandiant Acquisition Completed|0|rt=Mar 17 2014 20:25:35 UTC dvchost=test.local categoryDeviceGroup=/IDS/Application/Service categoryDeviceType=Forensic Investigation categoryObject=/Host cs1Label=Host Agent Cert Hash cs1=lZISR2eGsXdczNFg56DmwM dst=192.168.55.130 dmac=00-0c-29-eb-9b-20 dhost=WIN-7U91HMRJNNI dntdom=WORKGROUP cd1Label=Agent Last Audit cd1=Mar 17 2014 20:24:58 UTC cs2Label=Mandiant Agent Version cs2=10.6.14 cs5Label=Target GMT Offset cs5=PT0H cs6Label=Target OS cs6=Windows 7 Home Premium 7600  externalId=17 cs3Label=Script Name cs3=Timestamped Triage cd2Label=Triage Request Timestamp cd2=Mar 17 2014 20:00:05 UTC devAction=Acquisition Status msg=Host WIN-7U91HMRJNNI acquisition completed categoryOutcome=/Success categorySignificance=/Informational categoryBehavior=/Access/Start in=10102327 request=https://test.local:3000/triages/17/content categoryTupleDescription=A Host Acquisition was successfully completed]]></testEvent>
+    <testEvent><![CDATA[<149>Sep  5 16:00:58 RTL-HO-APTSRV cef[15085]: CEF:0|fireeye|hx|3.5.1|FireEye Acquisition Queued|FireEye Acquisition Queued|0|rt=Sep 05 2017 12:00:58 UTC dvchost=RTL-HO-APTSRV categoryDeviceGroup=/IDS/Application/Service categoryDeviceType=Forensic Investigation categoryObject=/Host cs1Label=Host Agent Cert Hash cs1=JxVc1nigRchdDa5uZfWTWn dst=10.252.16.123 dmac=00-00-00-00-00-00 dhost=GSEB-DT-IT03 dntdom=RTL_HO deviceCustomDate1Label=Agent Last Audit deviceCustomDate1=Sep 05 2017 12:00:45 UTC cs2Label=FireEye Agent Version cs2=24.9.0 cs5Label=Target GMT Offset cs5=+PT4H cs6Label=Target OS cs6=Windows 7 Professional 7601 Service Pack 1 externalId=267 cs3Label=Script Name cs3=Timestamped Triage deviceCustomDate2Label=Triage Request Timestamp deviceCustomDate2=Sep 05 2017 12:00:14 UTC suser=automatic categoryOutcome=/Success categorySignificance=/Informational categoryBehavior=/Create act=Acquisition Create msg=Host GSEB-DT-IT03 Timestamped Triage queued by automatic categoryTupleDescription=A Host Acquisition was successfully queued.]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatStr>\s+\S+\[\d+\]:\s+CEF:<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <collectAndSetAttrByPos sep="|" src="$_body">
+      <attrPosMap attr="_name" pos="6"/>
+      <attrPosMap attr="eventSeverity" pos="7"/>
+      <attrPosMap attr="_extension" pos="8"/>
+    </collectAndSetAttrByPos>
+
+    <setEventAttribute attr="eventType">FireEye-HX_Generic</setEventAttribute>
+    <when test="$eventSeverity = '0'">
+      <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+    </when>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_name">
+          <regex><![CDATA[^(?:Mandiant|FireEye)\s+<_name:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+    <setEventAttribute attr="_hxeventname">replaceStringByRegex($_name, "\s+", "_")</setEventAttribute>
+
+    <setEventAttribute attr="eventType">combineMsgId("FireEye-HX_", $_hxeventname)</setEventAttribute>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_extension">
+      <attrKeyMap attr="reptDevName" key="dvchost"/>
+      <attrKeyMap attr="hostIpAddr" key="dst"/>
+      <attrKeyMap attr="hostName" key="dhost"/>
+      <attrKeyMap attr="hxAgentCertHash" key="cs1"/>
+      <attrKeyMap attr="hxAgentVersion" key="cs2"/>
+      <attrKeyMap attr="hostMACAddr" key="dmac"/>
+      <attrKeyMap attr="domain" key="dntdom"/>
+      <attrKeyMap attr="hxDirectURL" key="request"/>
+      <attrKeyMap attr="_type" key="cs3"/>
+      <attrKeyMap attr="filePath" key="filePath"/>
+      <attrKeyMap attr="fileName" key="fname"/>
+      <attrKeyMap attr="_cd1" key="cd1"/>
+      <attrKeyMap attr="_cd2" key="cd2"/>
+      <attrKeyMap attr="_cd3" key="cd3"/>
+      <attrKeyMap attr="osType" key="cs6"/>
+      <attrKeyMap attr="msg" key="msg"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist _cd1">
+      <collectFieldsByRegex src="$_cd1">
+        <regex><![CDATA[^<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>\s+<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="hxAgentLastAudit">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="exist _cd3">
+        <collectFieldsByRegex src="$_cd3">
+          <regex><![CDATA[^<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>\s+<_tz:gPatTimeZone>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+      </when>
+      <when test="exist _cd2">
+        <collectFieldsByRegex src="$_cd2">
+          <regex><![CDATA[^<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>\s+<_tz:gPatTimeZone>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="matches($_name, '^Containment\s')">
+        <when test="exist _type">
+          <when test="$_type = 'uncontain'">
+            <setEventAttribute attr="eventType">replaceStrInStr($eventType, "Containment", "UnContainment")</setEventAttribute>
+          </when>
+        </when>
+      </when>
+
+      <when test="matches($_name, '^Acquisition\s')">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[ cs3=<hxAcqType:gPatMesgBodyMin>\s+<:gPatWord>=]]></regex>
+        </collectFieldsByRegex>
+      </when>
+
+      <when test="matches($_name, '^IOC\s')">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[ cs4=<iocName:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

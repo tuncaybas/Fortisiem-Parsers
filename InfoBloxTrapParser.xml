@@ -1,0 +1,289 @@
+<eventParser name="InfoBloxTrapParser">
+  <deviceType>
+    <Vendor>InfoBlox</Vendor>
+    <Model>NiOS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+  <eventFormatRecognizer><![CDATA[SNMPv2-SMI::enterprises.7779]]></eventFormatRecognizer>
+  <testEvents>
+    <testEvent><![CDATA[2012-01-13 11:13:53 0.0.0.0(via UDP: [192.168.20.245]:161) TRAP2, SNMP v2c, community public	. Cold Start Trap (0) Uptime: 0:00:00.00	DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (5862025) 16:17:00.25	SNMPv2-MIB::snmpTrapOID.0 = OID: SNMPv2-SMI::enterprises.7779.3.1.1.1.1.1.0	SNMPv2-SMI::enterprises.7779.3.1.1.1.2.1 = STRING: ""0""	SNMPv2-SMI::enterprises.7779.3.1.1.1.2.2 = INTEGER: 2	SNMPv2-SMI::enterprises.7779.3.1.1.1.2.3 = STRING: ""0""	SNMPv2-SMI::enterprises.7779.3.1.1.1.2.4 = INTEGER: 2	SNMPv2-SMI::enterprises.7779.3.1.1.1.2.11 = STRING: ""0""]]></testEvent>
+    <testEvent><![CDATA[2012-01-13 11:14:49 0.0.0.0(via UDP: [192.168.20.245]:161) TRAP2, SNMP v2c, community public	. Cold Start Trap (0) Uptime: 0:00:00.00	DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (5867625) 16:17:56.25	SNMPv2-MIB::snmpTrapOID.0 = OID: SNMPv2-SMI::enterprises.7779.3.1.1.1.1.1.0	SNMPv2-SMI::enterprises.7779.3.1.1.1.2.1 = STRING: ""0""	SNMPv2-SMI::enterprises.7779.3.1.1.1.2.2 = INTEGER: 2	SNMPv2-SMI::enterprises.7779.3.1.1.1.2.3 = STRING: ""0""	SNMPv2-SMI::enterprises.7779.3.1.1.1.2.4 = INTEGER: 2	SNMPv2-SMI::enterprises.7779.3.1.1.1.2.11 = STRING: ""0""]]></testEvent>
+    <testEvent><![CDATA[2012-01-13 11:15:26 0.0.0.0(via UDP: [192.168.20.245]:161) TRAP2, SNMP v2c, community public	. Cold Start Trap (0) Uptime: 0:00:00.00	DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (5871325) 16:18:33.25	SNMPv2-MIB::snmpTrapOID.0 = OID: SNMPv2-SMI::enterprises.7779.3.1.1.1.1.1.0	SNMPv2-SMI::enterprises.7779.3.1.1.1.2.1 = STRING: ""0""	SNMPv2-SMI::enterprises.7779.3.1.1.1.2.2 = INTEGER: 2	SNMPv2-SMI::enterprises.7779.3.1.1.1.2.3 = STRING: ""0""	SNMPv2-SMI::enterprises.7779.3.1.1.1.2.4 = INTEGER: 2	SNMPv2-SMI::enterprises.7779.3.1.1.1.2.11 = STRING: ""0""]]></testEvent>
+    <testEvent><![CDATA[2012-01-13 11:16:34 0.0.0.0(via UDP: [192.168.20.245]:161) TRAP2, SNMP v2c, community public	. Cold Start Trap (0) Uptime: 0:00:00.00	DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (5878125) 16:19:41.25	SNMPv2-MIB::snmpTrapOID.0 = OID: SNMPv2-SMI::enterprises.7779.3.1.1.1.1.1.0	SNMPv2-SMI::enterprises.7779.3.1.1.1.2.1 = STRING: ""0""	SNMPv2-SMI::enterprises.7779.3.1.1.1.2.2 = INTEGER: 2	SNMPv2-SMI::enterprises.7779.3.1.1.1.2.3 = STRING: ""0""	SNMPv2-SMI::enterprises.7779.3.1.1.1.2.4 = INTEGER: 2	SNMPv2-SMI::enterprises.7779.3.1.1.1.2.11 = STRING: ""0""]]></testEvent>
+    <testEvent><![CDATA[2012-01-13 11:13:53 0.0.0.0TRAP2, SNMP v2c, community public	. Cold Start Trap (0) Uptime: 0:00:00.00	DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (5862025) 16:17:00.25	SNMPv2-MIB::snmpTrapOID.0 = OID: SNMPv2-SMI::enterprises.7779.3.1.1.1.1.1.0	SNMPv2-SMI::enterprises.7779.3.1.1.1.2.1 = STRING: ""0""	SNMPv2-SMI::enterprises.7779.3.1.1.1.2.2 = INTEGER: 2	SNMPv2-SMI::enterprises.7779.3.1.1.1.2.3 = STRING: ""0""	SNMPv2-SMI::enterprises.7779.3.1.1.1.2.4 = INTEGER: 2	SNMPv2-SMI::enterprises.7779.3.1.1.1.2.11 = STRING: ""0""]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patStrRightParenthesis"><![CDATA[[^\)]*]]></pattern>
+    <pattern name="patStrColon"><![CDATA[[^:]*]]></pattern>
+    <pattern name="patStrQuote"><![CDATA[[^"]*]]></pattern>
+  </patternDefinitions>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatIpAddr>\(via <_reptIp:patStrRightParenthesis>\)<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+<hostName:gPatStr> <:gPatStr> \(via <_reptIp:patStrRightParenthesis>\)<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+<_reptIp:gPatIpAddr><_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+<hostName:gPatStr> <:gPatStr> <_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">Snmp Trap</setEventAttribute>
+
+    <when test="exist _reptIp">
+      <when test="matches($_reptIp, '^\w+:')">
+        <collectFieldsByRegex src="$_reptIp">
+          <regex><![CDATA[<:patStrColon>:\s+\[<_reptIp:gPatIpAddr>\]<:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </when>
+      <when test="$_reptIp != '127.0.0.1'">
+        <when test="$_reptIp != '0.0.0.0'">
+          <setEventAttribute attr="reptDevIpAddr">$_reptIp</setEventAttribute>
+        </when>
+      </when>
+    </when>
+
+    <collectAndSetAttrByKeyValuePair sep="\t\\| SNMP" src="$_body">
+      <attrKeyMap attr="_id" key="SNMPv2-MIB::snmpTrapOID.0 = OID: "/>
+      <attrKeyMap attr="_hostName" key="SNMPv2-SMI::enterprises.7779.3.1.1.1.2.1"/>
+      <attrKeyMap attr="_ibTrapSeverity" key="SNMPv2-SMI::enterprises.7779.3.1.1.1.2.2 = INTEGER: "/>
+      <attrKeyMap attr="_osObjectName" key="SNMPv2-SMI::enterprises.7779.3.1.1.1.2.3"/>
+      <attrKeyMap attr="_msg" key="SNMPv2-SMI::enterprises.7779.3.1.1.1.2.11"/>
+      <attrKeyMap attr="_ibSubsystemName" key="SNMPv2-SMI::enterprises.7779.3.1.1.1.2.5"/>
+      <attrKeyMap attr="_ibProbableCause" key="SNMPv2-SMI::enterprises.7779.3.1.1.1.2.4 = INTEGER: "/>
+      <attrKeyMap attr="_ibCurrentState" key="SNMPv2-SMI::enterprises.7779.3.1.1.1.2.10"/>
+      <attrKeyMap attr="_ibThresholdHigh" key="SNMPv2-SMI::enterprises.7779.3.1.1.1.2.7"/>
+      <attrKeyMap attr="_ibThresholdLow" key="SNMPv2-SMI::enterprises.7779.3.1.1.1.2.8"/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <choose>
+      <when test="$_ibTrapSeverity = '5'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+      <when test="$_ibTrapSeverity = '4'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$_ibTrapSeverity = '3'">
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+      <when test="$_ibTrapSeverity = '2'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.7779.3.1.1.1.1.1.0'">
+        <when test="$_ibProbableCause = '0'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-Generic</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '1'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-Generic</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '2'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibPrimaryDiskFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '3'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibFanFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '4'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibPowerSupplyFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '5'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibDBFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '6'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibApacheSoftwareFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '7'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibSerialConsoleFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '11'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibControldSoftwareFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '12'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibUpgradeFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '13'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibSNMPDFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '15'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibSSHDSoftwareFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '16'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibNTPDSoftwareFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '17'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibClusterdSoftwarFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '18'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibLCDSoftwareFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '19'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibDHCPdSoftwareFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '20'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibNamedSoftwareFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '21'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibAuthServerGroupDown</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '22'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibAuthServerGroupUp</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '24'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibNTLMSoftwareFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '25'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibNetBIOSDaemonFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '26'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibWindowBindDaemonFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '27'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibTFTPDSoftwareFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '29'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibBackupSoftwareFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '30'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibBackupDatabaseSoftwareFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '31'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibBackupModuleSoftwareFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '32'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibBackupSizeSoftwareFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '33'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibBackupLockSoftwareFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '34'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibHTTPFileDistSoftwareFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '35'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibOSPFSoftwareFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '36'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibAuthDHCPNamedSoftwareFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '37'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibFan1Failure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '38'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibFan2Failure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '39'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibFan3Failure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '40'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibFan1OK</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '41'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibFan2OK</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '42'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibFan3OK</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '44'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibFTPDSoftwareFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '46'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibPowerSupplyOK</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '47'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibWebUISoftwareFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '49'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibADAgentSyncFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '53'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibADAgentSyncFailure</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '3001'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibRAIDIsOptimal</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '3002'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibRAIDIsDegraded</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '3003'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibRAIDIsRebuilding</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '3004'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibRAIDStatusUnknown</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '3005'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibRAIDBatteryIsOK</setEventAttribute>
+        </when>
+        <when test="$_ibProbableCause = '3006'">
+          <setEventAttribute attr="eventType">InfoBlox-NiOS-ibRAIDBatteryFailed</setEventAttribute>
+        </when>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.7779.3.1.1.1.1.5.0'">
+        <setEventAttribute attr="eventType">InfoBlox-NiOS-ibProcStartStopTrap</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.7779.3.1.1.1.1.2.0'">
+        <setEventAttribute attr="eventType">InfoBlox-NiOS-ibProcessingFailureTrap</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.7779.3.1.1.1.1.4.0'">
+        <setEventAttribute attr="eventType">InfoBlox-NiOS-ibStateChangeEvent</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.7779.3.1.1.1.1.3.0'">
+        <setEventAttribute attr="eventType">InfoBlox-NiOS-ibThresholdCrossingEvent</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _hostName">
+      <collectFieldsByRegex src="$_hostName">
+        <regex><![CDATA[\s*=\s+STRING:\s+"*<hostName:patStrQuote>"*<:gPatMesgBody>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="hostName">$hostName</setEventAttribute>
+    </when>
+
+    <when test="exist _osObjectName">
+      <collectFieldsByRegex src="$_osObjectName">
+        <regex><![CDATA[\s*=\s+STRING:\s+"*<_osObjectName:patStrQuote>"*<:gPatMesgBody>]]></regex>
+      </collectFieldsByRegex>
+    </when>
+    <when test="exist _msg">
+      <collectFieldsByRegex src="$_msg">
+        <regex><![CDATA[\s*=\s+STRING:\s+"*<msg:patStrQuote>"*<:gPatMesgBody>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="msg">$msg</setEventAttribute>
+    </when>
+    <when test="exist _ibSubsystemName">
+      <collectFieldsByRegex src="$_ibSubsystemName">
+        <regex><![CDATA[\s*=\s+STRING:\s+"*<ibSubsystemName:patStrQuote>"*<:gPatMesgBody>]]></regex>
+      </collectFieldsByRegex>
+    </when>
+    <when test="exist _ibCurrentState">
+      <collectFieldsByRegex src="$_ibCurrentState">
+        <regex><![CDATA[\s*=\s+STRING:\s+"*<ibCurrentState:patStrQuote>"*<:gPatMesgBody>]]></regex>
+      </collectFieldsByRegex>
+    </when>
+    <when test="exist _ibThresholdHigh">
+      <collectFieldsByRegex src="$_ibThresholdHigh">
+        <regex><![CDATA[\s*=\s+STRING:\s+"*<ibThresholdHigh:patStrQuote>"*<:gPatMesgBody>]]></regex>
+      </collectFieldsByRegex>
+    </when>
+    <when test="exist _ibThresholdLow">
+      <collectFieldsByRegex src="$_ibThresholdLow">
+        <regex><![CDATA[\s*=\s+STRING:\s+"*<ibThresholdLow:patStrQuote>"*<:gPatMesgBody>]]></regex>
+      </collectFieldsByRegex>
+    </when>
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,142 @@
+<eventParser name="IBMDirectorParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+  <appType>
+    <Vendor>IBM</Vendor>
+    <Model>Systems Director</Model>
+    <Version>ANY</Version>
+    <Name>IBM Systems Director Server</Name>
+  </appType>
+  <eventFormatRecognizer><![CDATA[SNMPv2-SMI::enterprises\.2\.6\.159]]></eventFormatRecognizer>
+  <testEvents>
+    <testEvent><![CDATA[2011-12-27 22:18:18 0.0.0.0(via UDP: [172.16.10.18]:38263) TRAP2, SNMP v2c, community public	. Cold Start Trap (0) Uptime: 0:00:00.00	DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (15518925) 1 day, 19:06:29.25	SNMPv2-MIB::snmpTrapOID.0 = OID: SNMPv2-SMI::enterprises.2.6.159.201.1.3.1	SNMPv2-SMI::enterprises.2.6.159.202.1 = STRING: ""Director.Test.Action""	SNMPv2-SMI::enterprises.2.6.159.202.2 = STRING: ""Informational""	SNMPv2-SMI::enterprises.2.6.159.202.4 = STRING: ""AIX6.1p5""	SNMPv2-SMI::enterprises.2.6.159.202.5 = STRING: ""An internally generated event for the purpose of testing the 'sendSNMPTrapV2c.192 - 12/27/11 11:58 PM' action configuration.""	SNMPv2-SMI::enterprises.2.6.159.202.6 = STRING: ""Alert""	SNMPv2-MIB::snmpTrapEnterprise.0 = OID: SNMPv2-SMI::enterprises.2.6.159.201.1.3.1]]></testEvent>
+    <testEvent><![CDATA[2011-12-28 00:06:52 0.0.0.0(via UDP: [172.16.10.18]:38285) TRAP2, SNMP v2c, community public	. Cold Start Trap (0) Uptime: 0:00:00.00	DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (16170255) 1 day, 20:55:02.55	SNMPv2-MIB::snmpTrapOID.0 = OID: SNMPv2-SMI::enterprises.2.6.159.201.2	SNMPv2-SMI::enterprises.2.6.159.202.1 = STRING: ""Director.Director Agent.MONMEM.Used.High Error""	SNMPv2-SMI::enterprises.2.6.159.202.2 = STRING: ""Critical""	SNMPv2-SMI::enterprises.2.6.159.202.3 = STRING: ""AIX6.1p5""	SNMPv2-SMI::enterprises.2.6.159.202.4 = STRING: ""AIX6.1p5""	SNMPv2-SMI::enterprises.2.6.159.202.5 = Hex-STRING: 4D 6F 6E 69 74 6F 72 20 27 E7 BB 84 20 E6 89 80 E6 9C 89 E6 93 8D E4 BD 9C E7 B3 BB E7 BB 9F 20 E7 9A 84 20 E5 86 85 E5 AD 98 E4 BD BF E7 94 A8 E6 83 85 E5 86 B5 20 E7 9A 84 E7 BB 84 E9 98 88 E5 80 BC 27 20 48 69 67 68 20 45 72 72 6F 72 3A 20 27 55 73 65 64 20 28 4D 42 79 74 65 73 29 27 20 68 61 73 20 62 65 65 6E 20 61 62 6F 76 65 20 6F 72 20 65 71 75 61 6C 20 74 6F 20 32 20 66 6F 72 20 30 3A 30 35 3A 30 35 2E 20 56 61 6C 75 65 20 72 65 70 6F 72 74 65 64 20 69 73 20 33 36 34 36 2E 	SNMPv2-SMI::enterprises.2.6.159.202.6 = STRING: ""Alert""]]></testEvent>
+    <testEvent><![CDATA[2011-12-28 00:06:53 0.0.0.0(via UDP: [172.16.10.18]:38290) TRAP2, SNMP v2c, community public	. Cold Start Trap (0) Uptime: 0:00:00.00	DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (16170259) 1 day, 20:55:02.59	SNMPv2-MIB::snmpTrapOID.0 = OID: SNMPv2-SMI::enterprises.2.6.159.201.2	SNMPv2-SMI::enterprises.2.6.159.202.1 = STRING: ""Director.Director Agent.MONDASD./.diskPercentUsed.High Error""	SNMPv2-SMI::enterprises.2.6.159.202.2 = STRING: ""Critical""	SNMPv2-SMI::enterprises.2.6.159.202.3 = STRING: ""AIX6.1p5""	SNMPv2-SMI::enterprises.2.6.159.202.4 = STRING: ""AIX6.1p5""	SNMPv2-SMI::enterprises.2.6.159.202.5 = Hex-STRING: 4D 6F 6E 69 74 6F 72 20 27 E7 BB 84 20 E6 89 80 E6 9C 89 E6 93 8D E4 BD 9C E7 B3 BB E7 BB 9F 20 E7 9A 84 20 E5 B7 B2 E7 94 A8 E7 A3 81 E7 9B 98 E7 A9 BA E9 97 B4 E7 99 BE E5 88 86 E6 AF 94 20 E7 9A 84 E7 BB 84 E9 98 88 E5 80 BC 27 20 48 69 67 68 20 45 72 72 6F 72 3A 20 27 50 65 72 63 65 6E 74 61 67 65 20 53 70 61 63 65 20 55 73 65 64 27 20 68 61 73 20 62 65 65 6E 20 61 62 6F 76 65 20 6F 72 20 65 71 75 61 6C 20 74 6F 20 35 30 20 66 6F 72 20 30 3A 30 35 3A 30 34 2E 20 56 61 6C 75 65 20 72 65 70 6F 72 74 65 64 20 69 73 20 37 34 2E 39 2E 	SNMPv2-SMI::enterprises.2.6.159.202.6 = STRING: ""Alert""]]></testEvent>
+    <testEvent><![CDATA[2011-12-28 00:23:51 0.0.0.0(via UDP: [172.16.10.18]:38296) TRAP2, SNMP v2c, community public	. Cold Start Trap (0) Uptime: 0:00:00.00	DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (16272252) 1 day, 21:12:02.52	SNMPv2-MIB::snmpTrapOID.0 = OID: SNMPv2-SMI::enterprises.2.6.159.201.1.2.2.1	SNMPv2-SMI::enterprises.2.6.159.202.1 = STRING: ""Director.Director Agent.MONCPU.2872344980.Low Error""	SNMPv2-SMI::enterprises.2.6.159.202.2 = STRING: ""Critical""	SNMPv2-SMI::enterprises.2.6.159.202.3 = STRING: ""AIX6.1p5""	SNMPv2-SMI::enterprises.2.6.159.202.4 = STRING: ""AIX6.1p5""	SNMPv2-SMI::enterprises.2.6.159.202.5 = Hex-STRING: 4D 6F 6E 69 74 6F 72 20 27 E7 BB 84 20 E6 89 80 E6 9C 89 E6 93 8D E4 BD 9C E7 B3 BB E7 BB 9F 20 E7 9A 84 20 43 50 55 20 25 20 E4 BD BF E7 94 A8 E7 8E 87 20 E7 9A 84 E7 BB 84 E9 98 88 E5 80 BC 27 20 4C 6F 77 20 45 72 72 6F 72 20 27 43 50 55 20 55 74 69 6C 69 7A 61 74 69 6F 6E 27 20 68 61 73 20 62 65 65 6E 20 62 65 6C 6F 77 20 6F 72 20 65 71 75 61 6C 20 74 6F 20 35 20 66 6F 72 20 30 3A 30 35 3A 33 30 2E 20 56 61 6C 75 65 20 72 65 70 6F 72 74 65 64 20 69 73 20 32 2E 30 36 	SNMPv2-SMI::enterprises.2.6.159.202.6 = STRING: ""Alert""]]></testEvent>
+    <testEvent><![CDATA[2011-12-30 11:30:46 0.0.0.0(via UDP: [172.16.10.18]:38628) TRAP2, SNMP v2c,community public    . Cold Start Trap (0) Uptime: 0:00:00.00       DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (4003193) 11:07:11.93 SNMPv2-MIB::snmpTrapOID.0 = OID: SNMPv2-SMI::enterprises.2.6.159.201.1.3.1     SNMPv2-SMI::enterprises.2.6.159.202.1 = STRING: "Director.Test.Action" SNMPv2-SMI::enterprises.2.6.159.202.2 = STRING: "Informational"SNMPv2-SMI::enterprises.2.6.159.202.4 = STRING: "AIX6.1p5"     SNMPv2-SMI::enterprises.2.6.159.202.5 = STRING: "An internally generated eventfor the purpose of testing the 'sendSNMPTrapV2c.22.192 - 12/30/11 1:12 PM'action configuration."        SNMPv2-SMI::enterprises.2.6.159.202.6 = STRING:"Alert" SNMPv2-MIB::snmpTrapEnterprise.0 = OID:SNMPv2-SMI::enterprises.2.6.159.201.1.3.1]]></testEvent>
+    <testEvent><![CDATA[2011-12-28 16:06:42 0.0.0.0(via UDP: [172.16.10.18]:38281) TRAP2, SNMP v2c,community public . Cold Start Trap (0) Uptime: 0:00:00.00DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (16170255) 1 day, 20:55:02.55SNMPv2-MIB::snmpTrapOID.0 = OID: SNMPv2-SMI::enterprises.2.6.159.201.2SNMPv2-SMI::enterprises.2.6.159.202.1 = STRING: "Director.DirectorAgent.MONMEM.Used.High Error" SNMPv2-SMI::enterprises.2.6.159.202.2 = STRING:"Critical" SNMPv2-SMI::enterprises.2.6.159.202.3 = STRING: "AIX6.1p5"SNMPv2-SMI::enterprises.2.6.159.202.4 = STRING: "AIX6.1p5"SNMPv2-SMI::enterprises.2.6.159.202.5 = Hex-STRING: 4D 6F 6E 69 74 6F 72 20 27E7 BB 84 20 E6 89 80 E6 9C 89 E6 93 8D E4 BD 9C E7 B3 BB E7 BB 9F 20 E7 9A 8420 E5 86 85 E5 AD 98 E4 BD BF E7 94 A8 E6 83 85 E5 86 B5 20 E7 9A 84 E7 BB 84E9 98 88 E5 80 BC 27 20 48 69 67 68 20 45 72 72 6F 72 3A 20 27 55 73 65 64 2028 4D 42 79 74 65 73 29 27 20 68 61 73 20 62 65 65 6E 20 61 62 6F 76 65 20 6F72 20 65 71 75 61 6C 20 74 6F 20 32 20 66 6F 72 20 30 3A 30 35 3A 30 35 2E 2056 61 6C 75 65 20 72 65 70 6F 72 74 65 64 20 69 73 20 33 36 34 36 2E SNMPv2-SMI::enterprises.2.6.159.202.6 = STRING: "Alert"SNMPv2-SMI::enterprises.2.6.159.201.1.2.8.4 = Hex-STRING: E7 BB 84 20 E6 89 80E6 9C 89 E6 93 8D E4 BD 9C E7 B3 BB E7 BB 9F 20 E7 9A 84 20 E5 86 85 E5 AD 98E4 BD BF E7 94 A8 E6 83 85 E5 86 B5 20 E7 9A 84 E7 BB 84 E9 98 88 E5 80 BC SNMPv2-SMI::enterprises.2.6.159.201.1.2.8.3 = STRING: "Used (MBytes)"SNMPv2-SMI::enterprises.2.6.159.201.1.2.8.5 = STRING: "2.0"SNMPv2-SMI::enterprises.2.6.159.201.1.2.8.2 = STRING: "305"SNMPv2-SMI::enterprises.2.6.159.201.1.2.8.1 = STRING: "3646.0"SNMPv2-SMI::enterprises.2.6.159.9696.9.3 = STRING: "Threshold ID: 5,  CTAD: WedDec 28 01:42:24 CST 2011,  Version: 1" SNMPv2-MIB::snmpTrapEnterprise.0 = OID:SNMPv2-SMI::enterprises.2.6.159.201.2]]></testEvent>
+    <testEvent><![CDATA[2011-12-27 22:18:18 0.0.0.0TRAP2, SNMP v2c, community public	. Cold Start Trap (0) Uptime: 0:00:00.00	DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (15518925) 1 day, 19:06:29.25	SNMPv2-MIB::snmpTrapOID.0 = OID: SNMPv2-SMI::enterprises.2.6.159.201.1.3.1	SNMPv2-SMI::enterprises.2.6.159.202.1 = STRING: ""Director.Test.Action""	SNMPv2-SMI::enterprises.2.6.159.202.2 = STRING: ""Informational""	SNMPv2-SMI::enterprises.2.6.159.202.4 = STRING: ""AIX6.1p5""	SNMPv2-SMI::enterprises.2.6.159.202.5 = STRING: ""An internally generated event for the purpose of testing the 'sendSNMPTrapV2c.192 - 12/27/11 11:58 PM' action configuration.""	SNMPv2-SMI::enterprises.2.6.159.202.6 = STRING: ""Alert""	SNMPv2-MIB::snmpTrapEnterprise.0 = OID: SNMPv2-SMI::enterprises.2.6.159.201.1.3.1]]></testEvent>
+  </testEvents>
+  <!-- pattern definitions -->
+  <patternDefinitions>
+    <pattern name="patStrRightParenthesis"><![CDATA[[^\)]*]]></pattern>
+    <pattern name="patStrColon"><![CDATA[[^:]*]]></pattern>
+    <pattern name="patStrQuote"><![CDATA[[^"]*]]></pattern>
+  </patternDefinitions>
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatIpAddr>\(via <_reptIp:patStrRightParenthesis>\)<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+<hostName:gPatStr> <:gPatStr> \(via <_reptIp:patStrRightParenthesis>\)<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+<_reptIp:gPatIpAddr><_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+<hostName:gPatStr> <:gPatStr>\s*<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventType">combineMsgId("IBM-Director-", "Generic")</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">Snmp Trap</setEventAttribute>
+
+    <!-- parse reporting ip -->
+    <when test="exist _reptIp">
+      <when test="matches($_reptIp, '^\w+:')">
+        <collectFieldsByRegex src="$_reptIp">
+          <regex><![CDATA[<:patStrColon>:\s+\[<_reptIp:gPatIpAddr>\]<:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </when>
+
+      <when test="$_reptIp != '127.0.0.1'">
+        <when test="$_reptIp != '0.0.0.0'">
+          <setEventAttribute attr="reptDevIpAddr">$_reptIp</setEventAttribute>
+        </when>
+      </when>
+    </when>
+
+    <choose>
+      <when test="matches($_body,'SNMPv2-SMI::enterprises.2.6.159.202')">
+        <collectAndSetAttrByKeyValuePair sep="SNMPv2-SMI::enterprises.2.6.159.202" src="$_body">
+          <attrKeyMap attr="_trapType" key="SNMPv2-SMI::enterprises.2.6.159.202.1"/>
+          <attrKeyMap attr="_trapSeverity" key="SNMPv2-SMI::enterprises.2.6.159.202.2"/>
+          <attrKeyMap attr="_trapSenderName" key="SNMPv2-SMI::enterprises.2.6.159.202.3"/>
+          <attrKeyMap attr="_trapManagedObjectname" key="SNMPv2-SMI::enterprises.2.6.159.202.4"/>
+          <attrKeyMap attr="_trapText" key="SNMPv2-SMI::enterprises.2.6.159.202.5"/>
+          <attrKeyMap attr="_trapCategory" key="SNMPv2-SMI::enterprises.2.6.159.202.6"/>
+        </collectAndSetAttrByKeyValuePair>
+        <when test="exist _trapType">
+          <collectFieldsByRegex src="$_trapType">
+            <regex><![CDATA[\s*=\s*STRING:\s*"*<_eventType:patStrQuote>"*<:gPatMesgBody>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventDesc">$_eventType</setEventAttribute>
+          <when test="matches($_eventType, 'Director\.Director\s*Agent')">
+            <setEventAttribute attr="eventType">combineMsgId("IBM-Director-", "Alert")</setEventAttribute>
+          </when>
+        </when>
+        <when test="exist _trapSeverity">
+          <collectFieldsByRegex src="$_trapSeverity">
+            <regex><![CDATA[\s*=\s*STRING:\s*"+<_severity:patStrQuote>"*<:gPatMesgBody>]]></regex>
+          </collectFieldsByRegex>
+          <choose>
+            <when test="matches($_severity,'Critical')">
+              <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+            </when>
+            <when test="matches($_severity,'Fatal')">
+              <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+            </when>
+            <when test="matches($_severity,'Informational')">
+              <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+            </when>
+            <when test="matches($_severity,'Minor')">
+              <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+            </when>
+            <when test="matches($_severity,'Warning')">
+              <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+            </when>
+            <when test="matches($_severity,'Unknown')">
+              <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+            </when>
+          </choose>
+        </when>
+        <when test="exist _trapSenderName">
+          <collectFieldsByRegex src="$_trapSenderName">
+            <regex><![CDATA[\s*=\s*STRING:\s*"+<reptDevName:patStrQuote>"*<:gPatMesgBody>]]></regex>
+          </collectFieldsByRegex>
+        </when>
+        <when test="exist _trapManagedObjectname">
+          <collectFieldsByRegex src="$_trapManagedObjectname">
+            <regex><![CDATA[\s*=\s*STRING:\s*"+<_senderName:patStrQuote>"*<:gPatMesgBody>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="destName">$_senderName</setEventAttribute>
+          <setEventAttribute attr="hostName">$_senderName</setEventAttribute>
+        </when>
+        <when test="exist _trapText">
+          <when test="matches($_trapText,'= STRING')">
+            <collectFieldsByRegex src="$_trapText">
+              <regex><![CDATA[\s*=\s*STRING:\s*"+<msg:patStrQuote>"*<:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_trapText,'= Hex-STRING')">
+            <collectFieldsByRegex src="$_trapText">
+              <regex><![CDATA[\s*=\s*Hex-STRING:\s*<msg:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+          </when>
+        </when>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

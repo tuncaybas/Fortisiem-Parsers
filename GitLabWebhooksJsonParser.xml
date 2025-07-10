@@ -1,0 +1,146 @@
+<eventParser name="GitLabWebhooksJsonParser">
+
+  <deviceType>
+    <Vendor>GitLab</Vendor>
+    <Model>GitLab</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[\[PH_DEV_MON_CUSTOM_JSON]\:\[reptVendor\]=GitLab,\[reptModel\]=GitLab,]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[[PH_DEV_MON_CUSTOM_JSON]:[reptVendor]=GitLab,[reptModel]=GitLab,[reptDevName]=Gitlab.com,[reptDevIpAddr]=127.0.0.1,[json]={"object_kind":"push","event_name":"push","before":"f6b6bc1d9fb2bb191c61e934031f10931e198088","after":"f6b6bc1d9fb2bb191c61e934031f10931e198088","ref":"refs/heads/main","ref_protected":true,"checkout_sha":"f6b6bc1d9fb2bb191c61e934031f10931e198088","message":null,"user_id":20685255,"user_name":"user1","user_username":"user1","user_email":null,"user_avatar":"https://secure.gravatar.com/avatar/b28999676eb9a776197e27504358c0bfce1d1ebf9771c550bd51a2fde1702833?s=80&d=identicon","project_id":56310484,"project":{"id":56310484,"name":"testProject2","description":null,"web_url":"https://gitlab.com/testgroup432113/testproject2","avatar_url":null,"git_ssh_url":"git@gitlab.com:testgroup432113/testproject2.git","git_http_url":"https://gitlab.com/testgroup432113/testproject2.git","namespace":"testGroup","visibility_level":20,"path_with_namespace":"testgroup432113/testproject2","default_branch":"main","ci_config_path":"","homepage":"https://gitlab.com/testgroup432113/testproject2","url":"git@gitlab.com:testgroup432113/testproject2.git","ssh_url":"git@gitlab.com:testgroup432113/testproject2.git","http_url":"https://gitlab.com/testgroup432113/testproject2.git"},"commits":[{"id":"f6b6bc1d9fb2bb191c61e934031f10931e198088","message":"Initial commit","title":"Initial commit","timestamp":"2024-03-28T22:44:51+00:00","url":"https://gitlab.com/testgroup432113/testproject2/-/commit/f6b6bc1d9fb2bb191c61e934031f10931e198088","author":{"name":"user1","email":"user1@abc.com"},"added":["README.md"],"modified":[],"removed":[]}],"total_commits_count":1,"push_options":{},"repository":{"name":"testProject2","url":"git@gitlab.com:testgroup432113/testproject2.git","description":null,"homepage":"https://gitlab.com/testgroup432113/testproject2","git_http_url":"https://gitlab.com/testgroup432113/testproject2.git","git_ssh_url":"git@gitlab.com:testgroup432113/testproject2.git","visibility_level":20}}]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\[PH_DEV_MON_CUSTOM_JSON\]:<_customBody:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="extEventRecvProto">WEBHOOK</setEventAttribute>
+    <setEventAttribute attr="eventType">GitLab-Generic</setEventAttribute>
+    <collectFieldsByKeyValuePair kvsep="]=" sep=",[" src="$_customBody">
+      <attrKeyMap attr="reptDevName" key="reptDevName"/>
+      <attrKeyMap attr="reptDevIpAddr" key="reptDevIpAddr"/>
+      <attrKeyMap attr="_keyword" key="keyword"/>
+      <attrKeyMap attr="_json" key="json"/>
+    </collectFieldsByKeyValuePair>
+    <when test="exist _json">
+      <collectAndSetAttrByJSON src="$_json">
+        <attrKeyMap attr="_objectKind" key="object_kind"/>
+        <attrKeyMap attr="targetType" key="event_type"/>
+        <attrKeyMap attr="actionName" key="event_name"/>
+
+        <attrKeyMap attr="_action" key="object_attributes.action"/>
+        <attrKeyMap attr="_noteableType" key="object_attributes.noteable_type"/>
+
+        <attrKeyMap attr="subjectContainsWords" key="object_attributes.title"/>
+        <attrKeyMap attr="_deviceTime" key="object_attributes.updated_at"/>
+        <attrKeyMap attr="details" key="object_attributes.description"/>
+        <attrKeyMap attr="details" key="object_attributes.note"/>
+        <attrKeyMap attr="details" key="object_attributes.message"/>
+
+        <attrKeyMap attr="status" key="object_attributes.state"/>
+        <attrKeyMap attr="resourceName" key="object_attributes.source.name"/>
+        <attrKeyMap attr="srcNamespace" key="object_attributes.source.namespace"/>
+        <attrKeyMap attr="targetName" key="object_attributes.target.name"/>
+        <attrKeyMap attr="destNamespace" key="object_attributes.target.namespace"/>
+
+        <attrKeyMap attr="opName" key="object_attributes.name"/>
+        <attrKeyMap attr="lineContent" key="object_attributes.content"/>
+
+        <attrKeyMap attr="userId" key="user.id"/>
+        <attrKeyMap attr="user" key="user.name"/>
+        <attrKeyMap attr="emailId" key="user.email"/>
+        <attrKeyMap attr="emailId" key="user_email"/>
+        <attrKeyMap attr="msg" key="message"/>
+        <attrKeyMap attr="projectId" key="project.id"/>
+        <attrKeyMap attr="projectName" key="project.name"/>
+        <attrKeyMap attr="description" key="project.description"/>
+        <attrKeyMap attr="infoURL" key="project.web_url"/>
+        <attrKeyMap attr="namespace" key="project.namespace"/>
+        <attrKeyMap attr="branchName" key="project.default_branch"/>
+        <attrKeyMap attr="repoName" key="repository.name"/>
+        <attrKeyMap attr="repoURL" key="repository.url"/>
+        <attrKeyMap attr="comment" key="commit.message"/>
+        <attrKeyMap attr="uuid" key="commit.id"/>
+        <attrKeyMap attr="_deviceTime" key="commit.timestamp"/>
+        <attrKeyMap attr="user" key="commit.author.name"/>
+        <attrKeyMap attr="emailId" key="commit.author.email"/>
+        <attrKeyMap attr="user" key="commit.author_name"/>
+        <attrKeyMap attr="emailId" key="commit.author_email"/>
+        <attrKeyMap attr="comment" key="commits[0].title"/>
+        <attrKeyMap attr="uuid" key="commits[0].id"/>
+        <attrKeyMap attr="_deviceTime" key="commits[0].timestamp"/>
+        <attrKeyMap attr="addedItem" key="commits[0].added"/>
+        <attrKeyMap attr="modifiedItem" key="commits[0].modified"/>
+        <attrKeyMap attr="deletedItem" key="commits[0].removed"/>
+        <attrKeyMap attr="User" key="commits[0].author.name"/>
+        <attrKeyMap attr="emailId" key="commits[0].author.email"/>
+        <attrKeyMap attr="branchName" key="merge_request.target_branch"/>
+        <attrKeyMap attr="title" key="merge_request.title"/>
+        <attrKeyMap attr="status" key="merge_request.state"/>
+        <attrKeyMap attr="description" key="merge_request.description"/>
+        <attrKeyMap attr="resourceName" key="merge_request.source.name"/>
+        <attrKeyMap attr="srcNamespace" key="merge_request.source.namespace"/>
+        <attrKeyMap attr="targetName" key="merge_request.target.name"/>
+        <attrKeyMap attr="destNamespace" key="merge_request.target.namespace"/>
+        <attrKeyMap attr="title" key="snippet.title"/>
+        <attrKeyMap attr="lineContent" key="snippet.content"/>
+        <attrKeyMap attr="fileName" key="snippet.file_name"/>
+        <attrKeyMap attr="type" key="snippet.type"/>
+        <attrKeyMap attr="status" key="build_status"/>
+        <attrKeyMap attr="_deviceTime" key="build_created_at"/>
+        <attrKeyMap attr="projectName" key="project_name"/>
+        <attrKeyMap attr="projectId" key="project_id"/>
+        <attrKeyMap attr="status" key="status"/>
+        <attrKeyMap attr="_deviceTime" key="status_changed_at"/>
+        <attrKeyMap attr="_deviceTime" key="updated_at"/>
+        <attrKeyMap attr="_deviceTime" key="released_at"/>
+        <attrKeyMap attr="groupName" key="group_name"/>
+        <attrKeyMap attr="user" key="user_name"/>
+        <attrKeyMap attr="emailId" key="user_email"/>
+        <attrKeyMap attr="userId" key="user_id"/>
+        <attrKeyMap attr="parentObjTitle" key="parent_name"/>
+        <attrKeyMap attr="objectPath" key="full_path"/>
+        <attrKeyMap attr="osObjName" key="name"/>
+        <attrKeyMap attr="tagName" key="tag"/>
+        <attrKeyMap attr="issueBody" key="issue.title"/>
+        <attrKeyMap attr="_deviceTime" key="issue.updated_at"/>
+      </collectAndSetAttrByJSON>
+    </when>
+
+    <!-- actionName > _objectKind > targetType -->
+    <setEventAttribute attr="eventType">GitLab</setEventAttribute>
+    <choose>
+      <when test="exist actionName">
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $actionName)</setEventAttribute>
+      </when>
+      <when test="exist _objectKind">
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $_objectKind)</setEventAttribute>
+      </when>
+      <when test="exist targetType">
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $targetType)</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="exist _noteableType">
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $_noteableType)</setEventAttribute>
+      </when>
+      <when test="exist _action">
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $_action)</setEventAttribute>
+      </when>
+    </choose>
+    <when test="exist _deviceTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_deviceTime">
+            <!--"2018-11-01T22:26:59.883Z"-->
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\s*(?:\.\d+)?<_tz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+  </parsingInstructions>
+</eventParser>

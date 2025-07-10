@@ -1,0 +1,185 @@
+<eventParser name="IronportWebParser">
+
+  <deviceType>
+    <Vendor>Cisco</Vendor>
+    <Model>IronPort AsyncOS Web</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patStrEndSlashOrColon"><![CDATA[[^/:]+]]></pattern>
+    <pattern name="patStrEndSlash"><![CDATA[[^/]+]]></pattern>
+    <pattern name="patWebApp"><![CDATA[https?|tunnel]]></pattern>
+    <pattern name="patWebPort"><![CDATA[:\d+]]></pattern>
+    <pattern name="patDoubleQuot"><![CDATA[[^"]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[IronPort-Web:\s+Info:\s]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<134>Oct 09 09:19:25 IronPort-Web: Info: 1349795965.314 92 2.2.2.2 TCP_CLIENT_REFRESH_MISS/200 70798 GET http://abc.com/server/scanengineupdate/x86/Kaspersky/Package/1210090007/bases/base1b1d.kdc.cab - DIRECT/abc.com application/octet-stream ALLOW_CUSTOMCAT_11-UnAuthenticated_Applications-AFCU_No_Auth-NONE-NONE-NONE-DefaultGroup <C_Whit,6.9,-,""-"",-,-,-,-,""-"",-,-,-,""-"",-,-,""-"",""-"",-,-,IW_swup,-,""-"",""-"",""Unknown"",""Unknown"",""-"",""-"",6156.35,0,-,""-"",""-""> - ""09/Oct/2012:09:19:25 -0600"" 71052 ""V3S;{11111111-1111-1111-1111-111111111111};""]]></testEvent>
+    <testEvent><![CDATA[<38>Jan 22 13:40:06 IronPort-Web: Info: 1421952006.580 0 1.2.3.4 TCP_DENIED/403 0 GET http://a.com/files/1.pdf "DOT\a@B" NONE/- - CMF:4 DCF:0 ERR:10 BLOCK_CUSTOMCAT_11-DefaultGroup-DefaultGroup-NONE-NONE-NONE-NONE <C_Bloc,-,-,"-",-,-,-,-,"-",-,-,-,"-",-,-,"-","-",-,-,-,-,"-","-","-","-","-","-",0.00,0,-,"-","-"> - "22/Jan/2015:13:40:06 -0500" 155 "Mazilla/4.0"]]></testEvent>
+    <testEvent><![CDATA[<38>Feb 19 15:49:50 IronPort-Web: Info: 1424378990.155 141 10.16.105.99 TCP_DENIED_SSL/200 0 TCP_CONNECT 1.2.3.4:443 - DIRECT/1.2.3.4 - DECRYPT_ADMIN_2-NONE-DefaultGroup-NONE-NONE-NONE-DefaultGroup <IW_gov,6.5,1,"-",-,-,-,-,"-",-,-,-,"-",-,-,"-","-",-,-,IW_gov,-,"-","-","Unknown","Unknown","-","-",0.00,0,-,"-","-"> - "19/Feb/2015:15:49:50 -0500" 0 - x-webcat-code-full "Government and Law"]]></testEvent>
+    <testEvent><![CDATA[<14>Apr 17 13:06:48 IronPort-Web: Info: 1429290408.427 260 10.1.0.1 TCP_MISS/200 1975 GET http://a.com/j.ad? - DIRECT/a.com application/x-javascript DEFAULT_CASE_11-DefaultGroup-DefaultGroup-DefaultGroup-NONE-NONE-DefaultGroup <IW_adv,0.7,1,"-",-,-,-,1,"-",-,-,-,"-",1,-,"-","-",-,-,IW_adv,-,"-","-","Unknown","Unknown","-","-",60.77,0,-,"-","-"> - "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.118 Safari/537.36" 1.2.3.4 "http://e.com/2015/" "17/Apr/2015:13:06:48 -0400"]]></testEvent>
+    <testEvent><![CDATA[<14>Apr 17 13:06:48 IronPort-Web: Info: 1429290408.645 109 10.1.0.1 TCP_MISS/200 573 GET http://s.com/b/]]></testEvent>
+    <testEvent><![CDATA[<14>Apr 17 13:06:48 host1 IronPort-Web: Info: 1429290408.645 109 10.1.0.1 TCP_MISS/200 573 GET http://s.com/b/]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">Cisco-IronPort-Web-Generic</setEventAttribute>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>\s+)?IronPort-Web:\s+Info:\s+<:gPatStr>\s+<:gPatInt>\s+<srcIpAddr:gPatIpAddr>\s+<httpProxyAction:gPatStr>/<httpStatusCode:gPatInt>\s+<:gPatInt>\s+<httpMethod:gPatStr>\s+<infoURL:gPatStr>\s*<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<_user:gPatStr>\s+<:gPatStr>/<_destName:gPatStr>\s+<_httpContentType:gPatStr>(?:\s+\w+:\d+)*\s+<webCategory:gPatStr>\s+\<[^\>]*\>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+
+        <when test="$_user != '-'">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_user">
+                <regex><![CDATA["<domain:gPatStr>[\\]<user:gPatStr>"]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <case>
+              <collectFieldsByRegex src="$_user">
+                <regex><![CDATA[<domain:gPatStr>[\\]<user:gPatStr>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+        </when>
+
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^<:gPatStr>\s+"*<_day:gPatDay>/<_mon:gPatMon>/<_year:gPatYear>:<_time:gPatTime>\s+[+-]<:gPatInt>"*\s+<recvBytes64:gPatInt>\s+"*<_httpUserAgent:gPatMesgBody>"*]]></regex>
+            </collectFieldsByRegex>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^<:gPatStr>\s+"*<_httpUserAgent:patDoubleQuot>"*\s+<destIpAddr:gPatIpAddr>\s+"*<:patDoubleQuot>"*\s+"*<_day:gPatDay>/<_mon:gPatMon>/<_year:gPatYear>:<_time:gPatTime>\s+[+-]<:gPatInt>"*(?:\s+<sentBytes64:gPatInt>\s+<recvBytes64:gPatInt>)?]]></regex>
+            </collectFieldsByRegex>
+          </case>
+        </switch>
+
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+
+        <when test="exist _httpContentType">
+          <when test="$_httpContentType != '-'">
+            <setEventAttribute attr="httpContentType">$_httpContentType</setEventAttribute>
+          </when>
+        </when>
+
+        <when test="exist _httpUserAgent">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_httpUserAgent">
+                <regex><![CDATA[<_httpUserAgent:gPatMesgBody>\s+x-webcat-code-full\s+"<webCategory:gPatMesgBody>"]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+
+          <when test="$_httpUserAgent != '-'">
+            <setEventAttribute attr="httpUserAgent">$_httpUserAgent</setEventAttribute>
+          </when>
+        </when>
+      </case>
+
+      <default>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </default>
+    </switch>
+
+    <choose>
+      <when test="$httpStatusCode = '0'">
+        <choose>
+          <when test="$httpProxyAction IN 'DENIED,TCP_DENIED,UDP_DENIED,FAILED'">
+            <setEventAttribute attr="eventType">Cisco-IronPort-Web-Request-Denied</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">Cisco-IronPort-Web-Request-Success</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+
+      <otherwise>
+        <when test="matches($httpStatusCode, '^2')">
+          <setEventAttribute attr="eventType">Cisco-IronPort-Web-Request-Success</setEventAttribute>
+          <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        </when>
+
+        <when test="matches($httpStatusCode, '^3')">
+          <setEventAttribute attr="eventType">Cisco-IronPort-Web-Request-Redirect</setEventAttribute>
+          <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        </when>
+
+        <when test="matches($httpStatusCode, '^4')">
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+
+          <choose>
+            <when test="$httpStatusCode = '401'">
+              <setEventAttribute attr="eventType">Cisco-IronPort-Web-Client-Access-Denied</setEventAttribute>
+            </when>
+
+            <when test="$httpStatusCode = '403'">
+              <setEventAttribute attr="eventType">Cisco-IronPort-Web-Forbidden-Access-Denied</setEventAttribute>
+            </when>
+
+            <when test="$httpStatusCode = '400'">
+              <setEventAttribute attr="eventType">Cisco-IronPort-Web-Bad-Request</setEventAttribute>
+            </when>
+
+            <when test="$httpStatusCode = '411'">
+              <setEventAttribute attr="eventType">Cisco-IronPort-Web-Length-Reqd-Access-Denied</setEventAttribute>
+            </when>
+
+            <otherwise>
+              <setEventAttribute attr="eventType">Cisco-IronPort-Web-Client-Error</setEventAttribute>
+              <setEventAttribute attr="eventAction">1</setEventAttribute>
+            </otherwise>
+          </choose>
+        </when>
+
+        <when test="matches($httpStatusCode, '^5')">
+          <setEventAttribute attr="eventType">Cisco-IronPort-Web-Server-Error</setEventAttribute>
+          <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+          <setEventAttribute attr="eventAction">1</setEventAttribute>
+        </when>
+      </otherwise>
+    </choose>
+
+    <switch>
+      <case>
+        <collectAndSetAttrByRegex src="$infoURL">
+          <regex><![CDATA[^<destIpAddr:gPatIpAddr>:<destIpPort:gPatInt>$]]></regex>
+        </collectAndSetAttrByRegex>
+      </case>
+      <default>
+        <setEventAttribute attr="_destName">extractHostFromURL($infoURL)</setEventAttribute>
+      </default>
+    </switch>
+
+    <when test="exist _destName">
+      <!-- http://proxy/B0000D0000N0001F0000S0002R0004/http://graph.example.com/ -->
+      <when test="matches($_destName, 'proxy')">
+        <collectAndSetAttrByRegex src="$infoURL">
+          <regex><![CDATA[<:patWebApp>://<:patStrEndSlash>/<:patStrEndSlash>/<:patWebApp>://<_destName:patStrEndSlashOrColon><:patWebPort>?/]]></regex>
+        </collectAndSetAttrByRegex>
+      </when>
+
+      <when test="$_destName != '-'">
+        <setEventAttribute attr="destName">replaceStringByRegex($_destName, "^www\.", "")</setEventAttribute>
+      </when>
+    </when>
+  </parsingInstructions>
+
+</eventParser>

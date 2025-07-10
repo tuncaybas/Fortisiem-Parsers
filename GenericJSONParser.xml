@@ -1,0 +1,30 @@
+<eventParser name="GenericJSONParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patFsmAttr"><![CDATA[deviceTime|eventSeverity|eventType|phCustId|phRecvTime|relayDevIpAddr|reptDevIpAddr]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[^\s*\{.*"<:patFsmAttr>":.*\}]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[{"phRecvTime":"1706551610","comment":"test"}]]></testEvent>
+  </testEvents>
+  <parsingInstructions>
+    <!--Parse internal attributes-->
+    <collectAndSetAttrByJsonSymbol src="$_rawmsg">
+      <excludeAttr>rawEventMsg</excludeAttr>
+    </collectAndSetAttrByJsonSymbol>
+    <!--
+    Parse user-defined attributes
+    <collectAndSetAttrByJSON src="$_rawmsg">
+      <attrKeyMap attr="intfName" key="intfName_1"/>
+      <attrKeyMap attr="msg" key="msg_1"/>
+    </collectAndSetAttrByJSON>
+    -->
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,104 @@
+<eventParser name="IBMDB2DiagParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>IBM</Vendor>
+    <Model>DB2</Model>
+    <Version>ANY</Version>
+    <Name>IBM DB2 Server</Name>
+  </appType>
+
+  <eventFormatRecognizer><![CDATA[DB2Diag]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<13>Jul 19 14:18:58 WIN-6IDDILU233L DB2Diag	0	2013-07-16-18.56.19.695000-420 E10443388F387      LEVEL: Error (OS)	PID     : 2512                 TID  : 2720        PROC : db2fmp64.exe	INSTANCE: DB2                  NODE : 000	EDUID   : 2720	FUNCTION: DB2 UDB, oper system services, sqloSSemOpen, probe:2	MESSAGE : ZRC=0x83000002=-2097151998	CALLED  : OS, -, OpenEvent	OSERR   : 2 "The system cannot find the file specified."\n]]></testEvent>
+    <testEvent><![CDATA[<13>Jul 19 14:16:17 WIN-6IDDILU233L DB2Diag	0	2013-07-16-18.56.24.177000-420 I10445044F479      LEVEL: Warning	PID     : 1568                 TID  : 3016        PROC : db2syscs.exe	INSTANCE: DB2                  NODE : 000         DB   : SAMPLE	APPHDL  : 0-3273               APPID: *LOCAL.DB2.130717015717	AUTHID  : DB2ADMIN	EDUID   : 3016                 EDUNAME: db2agent (SAMPLE) 0	FUNCTION: DB2 UDB, database utilities, sqluvtld_route_in, probe:839	DATA #1 : <preformatted>	Starting LOAD operation (S) (1) (I).\n]]></testEvent>
+    <testEvent><![CDATA[<13>Jul 19 14:34:30 WIN-6IDDILU233L DB2Diag	0	2013-07-16-18.56.26.319000-420 I10445525F503      LEVEL: Warning	PID     : 1568                 TID  : 1980        PROC : db2syscs.exe	INSTANCE: DB2                  NODE : 000         DB   : SAMPLE	APPHDL  : 0-3273               APPID: *LOCAL.DB2.130717015717	AUTHID  : DB2ADMIN	EDUID   : 1980                 EDUNAME: db2lrid 0	FUNCTION: DB2 UDB, database utilities, DIAG_NOTE, probe:0	DATA #1 : String, 78 bytes	LOADID: 3016.2013-07-16-18.56.24.177001.0 (2;19)	Load CPU parallelism is: 3, 0\n]]></testEvent>
+    <testEvent><![CDATA[<13>Jul 19 14:36:40 WIN-6IDDILU233L DB2Diag	0	2013-07-16-18.56.46.325000-420 I10452861F538      LEVEL: Warning	PID     : 1568                 TID  : 1508        PROC : db2syscs.exe	INSTANCE: DB2                  NODE : 000         DB   : SAMPLE	APPHDL  : 0-3273               APPID: *LOCAL.DB2.130717015717	AUTHID  : DB2ADMIN	EDUID   : 1508                 EDUNAME: db2lrid 0	FUNCTION: DB2 UDB, database utilities, sqlulPrintPhaseMsg, probe:314	DATA #1 : String, 103 bytes	LOADID: 3016.2013-07-16-18.56.43.918013.0 (2;22) 	Completed LOAD phase at 07/16/2013 18:56:46.217606.\n]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <!--comment>parsing message head<comment-->
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><:gPatMon>\s*<:gPatDay>\s*<:gPatTime>\s*<:gPatStr>\s*DB2Diag\s*\d+\s*<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>-<_hour:gPatInt>\.<_min:gPatInt>\.<_sec:gPatInt>\.<:gPatInt>-<_timeZone:gPatInt>\s*<:gPatStr>\s*<_msgBody:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <!--comment>parsing eventSeverity, processId, threadId, processName, instanceName, partitionName, dbName<comment-->
+    <collectFieldsByRegex src="$_msgBody">
+      <regex><![CDATA[(?:LEVEL:\s*<_eventSeverity:gPatWord>\s*(?:\(\S+\s*)?)?(?:PID\s*:\s*<procId:gPatWord>\s*)?(?:TID\s*:\s*<threadId:gPatWord>\s*)?(?:PROC\s*:\s*<procName:gPatStr>\s*)?(?:INSTANCE\s*:\s*<instanceName:gPatWord>\s*)?(?:NODE\s*:\s*<dbPartition:gPatWord>\s*)?(?:DB\s*:\s*<dbName:gPatStr>\s*)?<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="_time">combineMsgId($_hour, ":", $_min, ":", $_sec)</setEventAttribute>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventType">DB2-Diag-Generic</setEventAttribute>
+
+    <choose>
+      <when test="$_eventSeverity = 'Event'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_eventSeverity = 'Info'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_eventSeverity = 'Warning'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_eventSeverity = 'Error'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_eventSeverity = 'Severe'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+    </choose>
+
+    <!--comment>this part is not parsed, keep them here for future use<comment-->
+    <!--collectFieldsByRegex src="$_body">
+            <regex><![CDATA[(?:APPHDL\s*:\s*<:gPatNoneSpace>\s*)?(?:APPID\s*:\s*<:gPatNoneSpace>\s*)?(?:AUTHID\s*:\s*<:gPatNoneSpace>\s*)?(?:EDUID\s*:\s*<:gPatNoneSpace>\s*)?<_more:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex-->
+    <!--collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[<:gPatMesgBodyMin>EDUNAME\s*:\s*<_eduname:gPatMesgBodyMin>(?:[A-Z]+\s*:|[A-Z]+ #\d+\s*:|$)]]></regex>
+        </collectAndSetAttrByRegex-->
+
+    <!--comment>Parsing rest part<comment-->
+    <switch>
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[FUNCTION\s*:\s*<componentName:gPatMesgBodyMin>(?:[A-Z]+\s*:|[A-Z]+ #\d+\s*:|$)]]></regex>
+        </collectAndSetAttrByRegex>
+      </case>
+      <default/>
+    </switch>
+
+    <switch>
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[MESSAGE\s*:\s*<msg:gPatMesgBodyMin>(?:[A-Z]+\s*:|[A-Z]+ #\d+\s*:|$)]]></regex>
+        </collectAndSetAttrByRegex>
+      </case>
+      <default/>
+    </switch>
+
+    <switch>
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[CALLED\s*:\s*<funName:gPatMesgBodyMin>(?:[A-Z]+\s*:|[A-Z]+ #\d+\s*:|$)]]></regex>
+        </collectAndSetAttrByRegex>
+      </case>
+      <default/>
+    </switch>
+
+    <switch>
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[OSERR\s*:\s*<errorString:gPatMesgBodyMin>(?:[A-Z]+\s*:|[A-Z]+ #\d+\s*:|$)]]></regex>
+        </collectAndSetAttrByRegex>
+      </case>
+      <default/>
+    </switch>
+  </parsingInstructions>
+
+</eventParser>

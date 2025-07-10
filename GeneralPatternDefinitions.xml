@@ -1,0 +1,43 @@
+<!-- general pattern definitions -->
+<generalPatternDefinitions>
+
+  <!-- event log patterns -->
+  <pattern name="gPatSyslogPRI"><![CDATA[<\d+>]]></pattern>
+  <pattern name="gPatMesgBody"><![CDATA[.*]]></pattern>
+  <pattern name="gPatMesgBodyMin"><![CDATA[.*?]]></pattern>
+  <pattern name="gPatSyslogNGHeader"><![CDATA[\w{3}\s+\d{1,2}\s\d{1,2}:\d{1,2}:\d{1,2}\s\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}]]></pattern>
+
+
+  <!-- time patters -->
+  <pattern name="gPatMon"><![CDATA[Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{1,2}]]></pattern>
+  <pattern name="gPatMonNum"><![CDATA[\d{1,2}]]></pattern>
+  <pattern name="gPatDay"><![CDATA[\d{1,2}]]></pattern>
+  <pattern name="gPatTime"><![CDATA[\d{1,2}:\d{1,2}:\d{1,2}]]></pattern>
+  <pattern name="gPatYear"><![CDATA[\d{2,4}]]></pattern>
+  <pattern name="gPatMSec"><![CDATA[\d{1,3}]]></pattern>
+  <pattern name="gPatTimeMSec"><![CDATA[\d{1,2}:\d{1,2}:\d{1,2}\.\d{1,3}]]></pattern>
+  <pattern name="gPatTimeZone"><![CDATA[Z|UTC|GMT|[+-]\d{1,2}:?\d{2}]]></pattern>
+  <pattern name="gPatWeekday"><![CDATA[Mon|Tue|Wed|Thu|Fri|Sat|Sun]]></pattern>
+
+  <pattern name="gPatIpV4Dot"><![CDATA[\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}]]></pattern>
+  <pattern name="gPatIpAddr"><![CDATA[[0-9A-Fa-f]{0,4}(?::[0-9A-Fa-f]{0,4}){1,5}:(?:\d{1,3}(?:\.\d{1,3}){3}|[0-9A-Fa-f]{0,4}(?::[0-9A-Fa-f]{0,4})?)|\d{1,3}(?:\.\d{1,3}){3}]]></pattern>
+  <pattern name="gPatIpPort"><![CDATA[\d{1,5}]]></pattern>
+  <pattern name="gPatProto"><![CDATA[ftp|icmp|tcp|udp|http|ip|smb|smtp|snmp|others|FTP|ICMP|UDP|TCP|HTTP|IP|SMB|SMTP|SNMP|OTHERS]]></pattern>
+
+  <!-- fqdn -->
+  <pattern name="gPatFqdn"><![CDATA[[\w.-]+]]></pattern>
+
+  <!-- type patterns -->
+  <pattern name="gPatWord"><![CDATA[\w+]]></pattern>
+  <pattern name="gPatStr"><![CDATA[[^\s]*]]></pattern>
+  <pattern name="gPatHostName"><![CDATA[[\w.-]+]]></pattern>
+  <pattern name="gPatStrComma"><![CDATA[[^,]*]]></pattern>
+  <pattern name="gPatStrLeftParen"><![CDATA[[^\(]*]]></pattern>
+  <pattern name="gPatStrRightSB"><![CDATA[[^\]]*]]></pattern>
+  <pattern name="gPatInt"><![CDATA[\d+]]></pattern>
+  <pattern name="gPatSpace"><![CDATA[\s+]]></pattern>
+  <pattern name="gPatStrEndColon"><![CDATA[[^:]*]]></pattern>
+  <pattern name="gPatStrSQ"><![CDATA[[^']*]]></pattern>
+  <pattern name="gPatStrDQ"><![CDATA[[^"]*]]></pattern>
+  <pattern name="gPatSentence"><![CDATA[\w[\s+\w]*]]></pattern>
+</generalPatternDefinitions>

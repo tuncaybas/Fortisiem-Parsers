@@ -1,0 +1,94 @@
+<eventParser name="IBMDB2AuditParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>IBM</Vendor>
+    <Model>DB2</Model>
+    <Version>ANY</Version>
+    <Name>IBM DB2 Server</Name>
+  </appType>
+
+  <patternDefinitions>
+    <pattern name="patStrEndWithRightSquareBracket"><![CDATA[[^\]]*]]></pattern>
+    <pattern name="patStrEndBrack"><![CDATA[[^\]+]]></pattern>
+  </patternDefinitions>
+  <eventFormatRecognizer><![CDATA[\[IBMDB2_]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<134>May 29 02:16:27 10.1.20.171 java: [IBMDB2_CHECKING_OBJECT]:[eventSeverity]=PHL_INFO, [objName]=SYSSH200, [srcApp]=DB2HMON, [dbName]=SAMPLE, [eventTime]=2013-05-10-08.47.08.802001, [srcName]=WIN-6IDDILU233L, [user]=db2admin,]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<serverName:gPatStr>\s+java:\s+\[<eventType:patStrEndWithRightSquareBracket>\]:<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="extEventRecvProto">JDBC</setEventAttribute>
+    <when test="matches($serverName, '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')">
+      <setEventAttribute attr="reptDevIpAddr">$serverName</setEventAttribute>
+    </when>
+
+    <collectAndSetAttrByKeyValuePair sep="," src="$_body">
+      <attrKeyMap attr="_severity" key="[eventSeverity]="/>
+      <attrKeyMap attr="_eventTime" key="[eventTime]="/>
+      <attrKeyMap attr="_srcName" key="[srcName]="/>
+      <attrKeyMap attr="user" key="[user]="/>
+      <attrKeyMap attr="dbName" key="[dbName]="/>
+      <attrKeyMap attr="dbRetCode" key="[retCode]="/>
+      <attrKeyMap attr="dbObjName" key="[objName]="/>
+      <attrKeyMap attr="srcApp" key="[srcApp]="/>
+      <attrKeyMap attr="categoryType" key="[eventCategory]="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <!-- parse this 2013-05-09-13.24.09.537000 -->
+
+    <choose>
+      <when test="exist _eventTime">
+        <collectFieldsByRegex src="$_eventTime">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>-<_hour:gPatInt>\.<_min:gPatInt>\.<_sec:gPatInt>\.]]></regex>
+        </collectFieldsByRegex>
+
+        <setEventAttribute attr="_time">combineMsgId($_hour, ":", $_min, ":", $_sec)</setEventAttribute>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist _srcName">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_srcName">
+            <regex><![CDATA[^<srcIpAddr:gPatIpAddr>$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="srcName">$_srcName</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+
+    <!-- event severity -->
+    <choose>
+      <when test="$_severity = 'PHL_ALERT'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+      <when test="$_severity = 'PHL_CRITICAL'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$_severity IN 'PHL_ERROR, PHL_WARNING'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_severity = 'PHL_INFO'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+    </choose>
+
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,37 @@
+<eventParser name="HyTrustParser">
+  <deviceType>
+    <Vendor>HyTrust</Vendor>
+    <Model>CloudControl</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<172>Mar 22 03:32:36 htcc136.test.hytrust.com local5: CEF:0|HyTrust|HyTrust CloudControl|5.0.0.50821|ARC0031|TEMPLATE_OPERATION_ERRORED_ERR|6| rt=Mar 22 2017 03:32:36.196 UTC act=HostOperation dst=192.168.213.154 src=192.168.213.10 suser=ARC deviceExternalId=6u1b-esxi2.test.hytrust.com deviceFacility=HostSystem msg=Template operation VHG6.0 esxi-check-patch-version error  on host 6u1b-esxi2.test.hytrust.com (192.168.213.154). privilege={}]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patVbar"><![CDATA[[^|]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\bCEF:\d+\|HyTrust\|HyTrust CloudControl\|\d]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+(?:[^:]+:\s+)?CEF:\d+\|HyTrust\|HyTrust CloudControl\|<:patVbar>\|<:patVbar>\|<_eventType:patVbar>\|<eventSeverity:gPatInt>\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">combineMsgId("HyTrust-", $_eventType)</setEventAttribute>
+
+    <collectAndSetAttrByKeyValuePair sep=" " src="$_body">
+      <attrKeyMap attr="appTransportProto" key="app="/>
+      <attrKeyMap attr="_eventAction" key="batchAuthzStatus="/>
+      <attrKeyMap attr="description" key="description="/>
+      <attrKeyMap attr="destIpAddr" key="dst="/>
+      <attrKeyMap attr="destName" key="dhost="/>
+      <attrKeyMap attr="srcIpAddr" key="src="/>
+      <attrKeyMap attr="srcUser" key="suser="/>
+      <attrKeyMap attr="user" key="suser="/>
+      <attrKeyMap attr="user" key="user="/>
+    </collectAndSetAttrByKeyValuePair>
+  </parsingInstructions>
+</eventParser>

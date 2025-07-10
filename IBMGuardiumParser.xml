@@ -1,0 +1,44 @@
+<eventParser name="IBMGuardiumParser">
+  <deviceType>
+    <Vendor>IBM</Vendor>
+    <Model>Guardium</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<30>Dec 15 11:51:19 guardprd6 guard_sender[32524]: Alert based on rule ID ALERT-AML-Script-Usage|Category: |Classification: |Severity: INFO|Rule #: 27462 [ALERT-AML-Script-Usage]|Request Info: [Session start:2015-12-15 11:50:32]|Server Type: ORACLE|Client IP: 10.4.19.20|ServerIP: 10.4.19.20|Client PORT: 12455|Server Port: 0|Net Protocol: BEQUEATH|DB Protocol: TNS|DB Protocol Version: 3.14|DB User: SYS|Application User Name: :PU=SYS|Source Program: SQLPLUS|Request Type: SQL_LANG|Last Error: |SQL: select 'GuardAppEvent:Start',\n  'GuardAppEventType:"fix_gg_untrans_chars"',\n  'GuardAppEventUserName:"san"',\n  'GuardAppEventStrValue:"dba999999"'\nfrom dual]]></testEvent>
+    <testEvent><![CDATA[<25>Dec 15 16:23:19 guardprd6 guard_sender[32524]: Alert based on rule ID ALERT-Repeat-Failed-Logins|Category: Exception|Classification: Login-Failure|Severity: MED|Rule #: 27461 [ALERT-Repeat-Failed-Logins]|Request Info: [Session start:2015-12-15 16:22:48]|Server Type: ORACLE|Client IP: 10.4.136.45|ServerIP: 10.4.19.20|Client PORT: 36791|Server Port: 51521|Net Protocol: TCP|DB Protocol: TNS|DB Protocol Version: 3.10|DB User: ?|Application User Name: |Source Program: JDBC THIN CLIENT|Request Type: LOGIN_FAILED|Last Error: ORA-12521|SQL:]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[ guard_sender\[\d+\]: ]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">Guardium-Alert</setEventAttribute>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatHostName>\s+guard_sender\[\d+\]:\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <collectAndSetAttrByKeyValuePair sep="|" src="$_body">
+      <attrKeyMap attr="fwRule" key="Alert based on rule ID "/>
+      <attrKeyMap attr="srcIpAddr" key="Client IP: "/>
+      <attrKeyMap attr="dbUser" key="DB User: "/>
+      <attrKeyMap attr="ruleName" key="Rule #: "/>
+      <attrKeyMap attr="destIpPort" key="Server Port: "/>
+      <attrKeyMap attr="destIpAddr" key="ServerIP: "/>
+      <attrKeyMap attr="_level" key="Severity: "/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <choose>
+      <when test="not_exist _level"/>
+
+      <when test="$_level = 'HIGH'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+
+      <when test="$_level = 'MED'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

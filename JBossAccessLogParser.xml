@@ -1,0 +1,102 @@
+<eventParser name="JBossAccessLogParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Redhat</Vendor>
+    <Model>JBOSS App Server</Model>
+    <Version>ANY</Version>
+    <Name>Redhat JBOSS App Server</Name>
+  </appType>
+
+
+  <patternDefinitions>
+    <pattern name="patSnareEpilogType"><![CDATA[JBOSSLog:]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatStr>\s+<:patSnareEpilogType>\s+\[<:gPatDay>/<:gPatMon>/<:gPatYear>:<:gPatTime> <:gPatTimeZone>\]\s+]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<13>Mar 24 14:07:45 panjb7ppb02 JBOSSLog: [24/Mar/2016:14:07:40 +0100] 10.30.202.145 - - GET /main-web/bootstrap/css/ElegantIconsPanel.css HTTP/1.1 304 - https://panjb7ppb02:8443/main-web/timeout.zul "Mozilla/5.0 (Windows NT 6.1 WOW64 rv:47.0) Gecko/20100101 Firefox/47.0"" LIMmQVGSYkh4DBA3QToeP4uR.undefined 0.002"]]></testEvent>
+    <testEvent><![CDATA[<13>Mar 24 14:07:45 panjb7ppb02 JBOSSLog: [24/Mar/2016:14:07:40 +0100] 10.30.202.145 - - GET /main-web/timeout.zul HTTP/1.1 200 1190 https://panjb7ppb02:8443/main-web/timeout.zul "Mozilla/5.0 (Windows NT 6.1 WOW64 rv:47.0) Gecko/20100101 Firefox/47.0"" LIMmQVGSYkh4DBA3QToeP4uR.undefined 0.015"]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <!-- parsing common fields -->
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_devmon:gPatMon>\s+<_devday:gPatDay>\s+<_devtime:gPatTime>\s+<hostName:gPatStr>\s+<:patSnareEpilogType>\s+\[<_day:gPatDay>/<_mon:gPatMon>/<_year:gPatYear>:<_time:gPatTime>\s+<_devTime:gPatTimeZone>\]\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">JBoss-Generic</setEventAttribute>
+    <setEventAttribute attr="deviceTime">toDateTime($_devmon, $_devday, $_devtime)</setEventAttribute>
+    <setEventAttribute attr="_prefix">JBOSS</setEventAttribute>
+    <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<srcIpAddr:gPatIpAddr>\s+-\s+-\s+<httpMethod:gPatStr>\s+<uriStem:gPatStr>\s+<httpVersion:gPatStr>\s+<httpStatusCode:gPatInt>\s+<_bytes:gPatStr>\s+<httpReferrer:gPatStr>\s+"<httpUserAgent:gPatMesgBody>"]]></regex>
+        </collectFieldsByRegex>
+        <choose>
+          <when test="matches($_bytes, '^\d+$')">
+            <setEventAttribute attr="recvBytes64">$_bytes</setEventAttribute>
+          </when>
+        </choose>
+        <choose>
+          <when test="matches($httpStatusCode, '^2')">
+            <setEventAttribute attr="eventType">combineMsgId($_prefix, "-Web-Request-Success")</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+          </when>
+
+          <when test="matches($httpStatusCode, '^3')">
+            <setEventAttribute attr="eventType">combineMsgId($_prefix, "-Web-Request-Redirect")</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+          </when>
+
+
+          <when test="matches($httpStatusCode, '^4')">
+            <choose>
+              <when test="matches($httpStatusCode, '^401')">
+                <setEventAttribute attr="eventType">combineMsgId($_prefix, "-Web-Access-Denied")</setEventAttribute>
+                <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+              </when>
+
+              <when test="matches($httpStatusCode, '^403')">
+                <setEventAttribute attr="eventType">combineMsgId($_prefix, "-Web-Access-Denied")</setEventAttribute>
+                <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+              </when>
+
+              <when test="matches($httpStatusCode, '^400')">
+                <setEventAttribute attr="eventType">combineMsgId($_prefix, "-Web-Bad-Request")</setEventAttribute>
+                <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+              </when>
+
+              <when test="matches($httpStatusCode, '^411')">
+                <setEventAttribute attr="eventType">combineMsgId($_prefix, "-Web-Access-Denied")</setEventAttribute>
+                <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+              </when>
+              <otherwise>
+                <setEventAttribute attr="eventType">combineMsgId($_prefix, "-Web-Client-Error")</setEventAttribute>
+                <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+              </otherwise>
+            </choose>
+          </when>
+
+          <when test="matches($httpStatusCode, '^5')">
+            <setEventAttribute attr="eventType">combineMsgId($_prefix, "-Web-Server-Error")</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+          </when>
+
+          <otherwise>
+            <setEventAttribute attr="eventType">combineMsgId($_prefix, "-Web-Request")</setEventAttribute>
+          </otherwise>
+        </choose>
+      </case>
+      <default/>
+    </switch>
+  </parsingInstructions>
+</eventParser>

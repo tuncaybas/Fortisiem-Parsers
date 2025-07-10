@@ -1,0 +1,66 @@
+<eventParser name="JBossLogParser">
+  <deviceType>
+    <Vendor>Microsoft</Vendor>
+    <Model>Windows</Model>
+    <Version>ANY</Version>
+  </deviceType>
+  <appType>
+    <Vendor>Redhat</Vendor>
+    <Model>JBOSS App Server</Model>
+    <Version>ANY</Version>
+    <Name>Redhat JBOSS App Server</Name>
+  </appType>
+
+  <patternDefinitions>
+    <pattern name="patJBossLogLevel"><![CDATA[ALL|CONFIG|ERROR|FATAL|FINE|FINER|FINEST|INFO|OFF|TRACE|WARN|WARNING|DEBUG]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[(?:<:gPatYear>-<:gPatMonNum>-<:gPatDay>\s+)?<:gPatTime>,<:gPatMSec>\s+<:patJBossLogLevel>\s+\[<:gPatStr>\]\s+]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<45>Sep 21 01:58:03 10.1.2.16 JBossEventLog 0 2015-09-01 00:08:50,156 ERROR [org.apache.coyote.ajp.AjpMessage] (ajp-0.0.0.0-8009-1) Invalid message received with signature 18245]]></testEvent>
+    <testEvent><![CDATA[<45>Sep 21 01:58:49 10.1.2.16 JBossEventLog 0 23:22:06,243 DEBUG [Domain] org.jboss.classloading.spi.dependency.Domain@838722{DefaultDomain} add module VFSClassLoaderPolicyModule bootstrap-classloader:0.0.0]]></testEvent>
+    <testEvent><![CDATA[<45>Sep 21 02:10:52 10.1.2.16 JBossEventLog 0 23:22:06,274 INFO  [CopyMechanism] VFS temp dir: C:\jboss-5.1.0.GA\server\default\tmp]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_devmon:gPatMon>\s+<_devday:gPatDay>\s+<_devtime:gPatTime>\s+<hostName:gPatHostName>\s+JBossEventLog\s+\d+\s+(?:<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+)?<_time:gPatTime>,<:gPatMSec>\s+<_level:patJBossLogLevel>\s+\[(?:.*\.)?<_classname:gPatStr>\]\s+(?:\(<threadName:gPatStr>\)\s+)?<eventDesc:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_devmon, $_devday, $_devtime)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[(?:<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+)?<_time:gPatTime>,<:gPatMSec>\s+<_level:patJBossLogLevel>\s+\[(?:.*\.)?<_classname:gPatStr>\]\s+(?:\(<threadName:gPatStr>\)\s+)?<eventDesc:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+    <setEventAttribute attr="_classname">replaceStringByRegex($_classname, "\[|\]", "")</setEventAttribute>
+    <setEventAttribute attr="eventType">combineMsgId("JBoss-", $_classname, "-", $_level)</setEventAttribute>
+    <when test="exist _year">
+      <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+
+    <!-- event severity -->
+    <choose>
+      <when test="$_level = 'OFF'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+
+      <when test="$_level = 'FATAL'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+
+      <when test="$_level IN 'ERROR, WARN, WARNING'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="$_level IN 'ALL, CONFIG, FINE, FINER, FINEST, INFO, DEBUG, TRACE'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+    </choose>
+
+  </parsingInstructions>
+</eventParser>

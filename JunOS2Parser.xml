@@ -1,0 +1,147 @@
+<eventParser name="JunOS2Parser">
+  <deviceType>
+    <Vendor>Juniper</Vendor>
+    <Model>SRX JunOS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patJunOS2Mod"><![CDATA[RT_FLOW|RT_IDP|cron|eswd|inetd|junos-alg|mgd|sshd|xntpd]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatMon>\s+<:gPatDay>\s+(?:<:gPatTime>|<:gPatTimeMSec>)\s+<:gPatStr>\s+(?:<:gPatStr>:\s+)?kmd\[<:gPatInt>\]: IKE\s+|<:gPatInt>\s+<:gPatYear>-<:gPatMonNum>-<:gPatDay>T<:gPatTimeMSec><:gPatTimeZone>?\s+<:gPatHostName>\s+<:patJunOS2Mod>\s+(?:-|\d+)\s+(?:-|\w+)\s+(?:-\s|\[)]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<27>Nov 18 11:33:09 CL-GW-ISP-01 CL-GW-ISP-01: kmd[57362]: IKE Phase-2 Failure: IKE Phase-2 negotiation retry limit reached [spi=647c4736, src_ip=1.1.1.1, dst_ip=1.1.1.2]]></testEvent>
+    <testEvent><![CDATA[Mar 12 10:12:44.944 1.1.1.1 kmd[68989]: IKE negotiation failed with error: Authentication failed. IKE Version: 1, VPN: LNSVRF01_ASR1K_TX-VPN Gateway: LNSVRF01_ASR1K_TX-GW, Local: 1.1.1.2/500, Remote: 1.1.1.3/500, Local IKE-ID: Not-Available, Remote IKE-ID: Not-Available, VR-ID: 0: Role: Initiator]]></testEvent>
+    <testEvent><![CDATA[<14>1 2014-01-30T06:54:29.966 TMG-FW-CO-SPRINGS RT_FLOW - RT_FLOW_SESSION_CREATE [junos@2636.1.1.1.2.39 source-address=192.168.20.61 source-port=2273 destination-address=192.168.2.101 destination-port=123 service-name=junos-ntp nat-source-address=192.168.20.61 nat-source-port=2273 nat-destination-address=192.168.2.101 nat-destination-port=123 src-nat-rule-name=None dst-nat-rule-name=None protocol-id=17 policy-name=shortel_to_servers-desktops_permit source-zone-name=shoretel destination-zone-name=lan session-id-32=10922 username=N/A roles=N/A packet-incoming-interface=reth0.20 application=UNKNOWN nested-application=UNKNOWN encrypted=UNKNOWN]]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">JUNOS_Generic</setEventAttribute>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatStr>\s+<:gPatStr>: kmd\[<:gPatInt>\]: IKE Phase-<_type:gPatInt>\s+<_result:gPatStr>:\s+[^\[]*\[<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+        <setEventAttribute attr="eventType">combineMsgId("SRX_JunOS_IKE_P", $_type, "_", $_result)</setEventAttribute>
+
+        <collectAndSetAttrByKeyValuePair sep=", " src="$_body">
+          <attrKeyMap attr="srcIpAddr" key="src_ip="/>
+          <attrKeyMap attr="destIpAddr" key="dst_ip="/>
+        </collectAndSetAttrByKeyValuePair>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTimeMSec>\s+<_srcIpAddr:gPatIpAddr>\s+kmd\[<:gPatInt>\]:\sIKE negotiation failed with error:\s+<_result:gPatSentence>.<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+
+        <collectAndSetAttrByKeyValuePair sep=", " kvsep=": " src="$_body">
+          <attrKeyMap attr="localVpnIpAddr" key="Local"/>
+          <attrKeyMap attr="remoteVpnIpAddr" key="Remote"/>
+        </collectAndSetAttrByKeyValuePair>
+
+        <collectFieldsByRegex src="$localVpnIpAddr">
+          <regex><![CDATA[<localVpnIpAddr:gPatIpAddr>]]></regex>
+        </collectFieldsByRegex>
+        <collectFieldsByRegex src="$remoteVpnIpAddr">
+          <regex><![CDATA[<remoteVpnIpAddr:gPatIpAddr>]]></regex>
+        </collectFieldsByRegex>
+
+        <when test="exist _srcIpAddr">
+          <setEventAttribute attr="hostIpAddr">$_srcIpAddr</setEventAttribute>
+        </when>
+
+        <when test="$_result = 'Authentication failed'">
+          <setEventAttribute attr="eventType">SRX_JUNOS_IKE_AUTHENTICATION_FAILED</setEventAttribute>
+        </when>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatInt>\s+<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d{3}<_tz:gPatTimeZone>?\s+<:gPatHostName>\s+<procName:patJunOS2Mod>\s+(?:-|\d+)\s+<_et:gPatStr>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+
+        <choose>
+          <when test="exist _tz">
+            <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+          </otherwise>
+        </choose>
+
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^\[junos@[\d.]+\s+<_body:gPatMesgBody>\](?:\s+<_detail:gPatMesgBody>)?]]></regex>
+            </collectFieldsByRegex>
+
+            <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+              <attrKeyMap attr="_appName" key="application"/>
+              <attrKeyMap attr="recvBytes64" key="bytes-from-client"/>
+              <attrKeyMap attr="sentBytes64" key="bytes-from-server"/>
+              <attrKeyMap attr="command" key="command"/>
+              <attrKeyMap attr="destIpAddr" key="destination-address"/>
+              <attrKeyMap attr="destIpPort" key="destination-port"/>
+              <attrKeyMap attr="destFwZone" key="destination-zone-name"/>
+              <attrKeyMap attr="_durationSec" key="elapsed-time"/>
+              <attrKeyMap attr="errorString" key="error-message"/>
+              <attrKeyMap attr="preNATDestIpAddr" key="nat-destination-address"/>
+              <attrKeyMap attr="preNATDestIpPort" key="nat-destination-port"/>
+              <attrKeyMap attr="postNATSrcIpAddr" key="nat-source-address"/>
+              <attrKeyMap attr="postNATSrcIpPort" key="nat-source-port"/>
+              <attrKeyMap attr="recvPkts64" key="packets-from-client"/>
+              <attrKeyMap attr="sentPkts64" key="packets-from-server"/>
+              <attrKeyMap attr="srcIntfName" key="packets-incoming-interface"/>
+              <attrKeyMap attr="policyName" key="policy-name"/>
+              <attrKeyMap attr="ipProto" key="protocol-id"/>
+              <attrKeyMap attr="errReason" key="reason"/>
+              <attrKeyMap attr="appName" key="service-name"/>
+              <attrKeyMap attr="ipConnId" key="session-id-32"/>
+              <attrKeyMap attr="srcIpAddr" key="source-address"/>
+              <attrKeyMap attr="srcIpPort" key="source-port"/>
+              <attrKeyMap attr="srcFwZone" key="source-zone-name"/>
+              <attrKeyMap attr="user" key="username"/>
+            </collectFieldsByKeyValuePair>
+          </case>
+          <default>
+            <setEventAttribute attr="_detail">$_body</setEventAttribute>
+          </default>
+        </switch>
+
+        <when test="exist _durationSec">
+          <setEventAttribute attr="durationMSec">scale($_durationSec, 1000)</setEventAttribute>
+        </when>
+
+        <when test="exist _appName">
+          <when test="$_appName != 'UNKNOWN'">
+            <setEventAttribute attr="appName">$_appName</setEventAttribute>
+          </when>
+        </when>
+
+        <choose>
+          <when test="$_et != '-'">
+            <setEventAttribute attr="eventType">combineMsgId("JUNOS_", $_et)</setEventAttribute>
+          </when>
+          <when test="$procName = 'sshd'">
+            <choose>
+              <when test="not_exist _detail"/>
+              <when test="matches($_detail, 'Accepted password ')">
+                <setEventAttribute attr="eventType">SRX_JUNOS_SSHD_LOGIN_SUCCESSFUL</setEventAttribute>
+              </when>
+              <when test="matches($_detail, 'Received disconnect ')">
+                <setEventAttribute attr="eventType">SRX_JUNOS_SSHD_LOGOUT_SUCCESSFUL</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+        </choose>
+      </case>
+    </switch>
+  </parsingInstructions>
+</eventParser>

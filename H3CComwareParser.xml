@@ -1,0 +1,1180 @@
+<eventParser name="H3CComwareParser">
+  <deviceType>
+    <Vendor>H3C</Vendor>
+    <Model>Comware</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <!-- pattern definitions -->
+  <patternDefinitions>
+    <pattern name="patH3CModule"><![CDATA[DEVD|DFBR|DIAG|DFWD|SMODE|LIF|L2|DRVL3|L3VPN|VLL|VPLS|MPLS|DRIVER|SYSM]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[%<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>:<:gPatInt>\s+<:gPatYear>\s+<:gPatStr>\s+<:patH3CModule>/<:gPatInt>/<:gPatStrEndColon>:\s*<:gPatMesgBody>]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[%Apr 2 11:38:11:113 2010 H3C DEVD/3/BOARD REBOOT:Chasis 0 slot 2 need be rebooted automatically!]]></testEvent>
+    <testEvent><![CDATA[%May 24 16:05:41:582 2010 H3C DFBR/4/CHKCHIP:FE chip fault is detected in slot 20! Please replace the fabric card in the slot.]]></testEvent>
+    <testEvent><![CDATA[%Sep 22 20:38:32:947 2009 H3C DIAG/4/ERROR:The communication between clk-card and cpu fail!]]></testEvent>
+    <testEvent><![CDATA[%Sep 22 21:21:16:899 2009 H3C SMODE/5/DRV_SMODE:Routee mode has been set. It will take effect after system restart.]]></testEvent>
+    <testEvent><![CDATA[%Sep 22 21:21:16:899 2009 H3C LIF/4/ATM:Atm 2/1/1 reports Loss Of Signal!]]></testEvent>
+    <testEvent><![CDATA[%Sep 22 21:21:16:899 2009 H3C L2/4/FDB: The number of mac address received in VLAN 20 reaches the uplimit.]]></testEvent>
+    <testEvent><![CDATA[%Oct 5 09:53:33:655 2010 H3C DRVL3/0/DRVL3_LOG_EMERG: No enough resource!]]></testEvent>
+    <testEvent><![CDATA[%Oct 5 09:53:33:655 2010 H3C L3VPN/3/ERROR: insufficient system resources!]]></testEvent>
+    <testEvent><![CDATA[%Feb 16 11:30:44:967 2011 H3C DRIVER/0/DRV_CLI_LOG_TOP: -Slot=8;CFM block number error,in Func DRIVER_CLIDebug]]></testEvent>
+    <testEvent><![CDATA[%Feb 16 13:37:20:203 2011 H3C SYSM/5/SYSM_LOG_NOTICE: -Slot=8; CFM block number error,in Func SysmCli_Debug]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <!-- default value -->
+    <setEventAttribute attr="eventType">"H3C-Comware-Generic"</setEventAttribute>
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>:<_priority:gPatInt>\s+<_year:gPatYear>\s+<reptDevName:gPatStr>\s+<_module:patH3CModule>/<_severity:gPatInt>/<_action:gPatStrEndColon>:\s*<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <setEventAttribute attr="_action">replaceStringByRegex($_action, "^\s+", "")</setEventAttribute>
+    <setEventAttribute attr="_action">replaceStringByRegex($_action, "\s", "_")</setEventAttribute>
+    <setEventAttribute attr="eventType">combineMsgId("H3C-Comware-", $_module, "-", $_action)</setEventAttribute>
+    <setEventAttribute attr="hostName">$reptDevName</setEventAttribute>
+    <setEventAttribute attr="totFlows">1</setEventAttribute>
+
+    <!-- parse event type -->
+    <choose>
+      <!--
+		%Apr 2 11:38:11:113 2010 H3C DEVD/3/BOARD REBOOT:Chasis 0 slot 2 need be rebooted automatically!
+	  -->
+      <when test="$eventType = 'H3C-Comware-DEVD-BOARD_REBOOT'">
+        <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[Chasis <_chasisId:gPatInt> slot <_slotId:gPatInt> need be rebooted automatically]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="hwComponentName">combineMsgId("Chasis ", $_chasisId, " Slot ", $_slotId)</setEventAttribute>
+      </when>
+
+      <!--
+		%Sep 22 20:38:32:947 2009 H3C DEVD/4/BRD MISPLUG: The board or subcard in slot 1 is not supported.
+		%Sep 22 20:38:32:947 2009 H3C DEVD/4/BRD MISPLUG: The board type of MR in 1 is different from the Mate MR's, so the MR can't work properly.
+		%Sep 22 20:38:32:947 2009 H3C DEVD/2/BRD TOO HOT: The OEM Flag of Slot 5 is different from the Master MR's, so the card can't work properly.
+	  -->
+      <when test="$eventType = 'H3C-Comware-DEVD-BRD_MISPLUG'">
+        <choose>
+          <when test="matches($_body, 'The board or subcard in slot')">
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[The board or subcard in slot <_slotId:gPatInt> is not supported]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Slot ", $_slotId)</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'The board type of MR in')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DEVD-BRD_MISPLUG_MODEL"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[The board type of MR in <_slotId:gPatInt> is different from the Mate MR]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Slot ", $_slotId)</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'The OEM Flag of Slot')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DEVD-BRD_MISPLUG_OEM"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[The OEM Flag of Slot <_slotId:gPatInt> is different from the Master MR]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Slot ", $_slotId)</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <!--
+		%Sep 22 20:38:32:947 2009 H3C DEVD/2/BRD TOO HOT:Temperature of the board is too high!
+	  -->
+      <when test="$eventType = 'H3C-Comware-DEVD-BRD_TOO_HOT'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <!--
+		%Sep 22 20:38:32:947 2009 H3C DEVD/2/ FAN CHANGE: Chassis 1: Fan communication state changed: Fan 1 changed to fault.
+		%Sep 22 20:38:32:947 2009 H3C DEVD/2/ FAN CHANGE: Chassis 1: Fan communication state changed: Fan 1 recovered.
+	  -->
+      <when test="$eventType = 'H3C-Comware-DEVD-FAN_CHANGE'">
+        <choose>
+          <when test="matches($_body, 'changed to fault')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DEVD-FAN_CHANGE_FAULT"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Chassis <_chasisId:gPatInt>: Fan communication state changed: Fan <_fanId:gPatInt> changed to fault]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Chasis ", $_chasisId, " Fan ", $_fanId)</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'recovered')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DEVD-FAN_CHANGE_CLEAR"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Chassis <_chasisId:gPatInt>: Fan communication state changed: Fan <_fanId:gPatInt> recovered]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Chasis ", $_chasisId, " Fan ", $_fanId)</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <!--
+		%Sep 22 20:38:32:947 2009 H3C DEVD/4/PSU CHANGED: Chassis 1: PSU ID may be changed, please check it!
+	  -->
+      <when test="$eventType = 'H3C-Comware-DEVD-PSU_CHANGED'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[Chassis <_chasisId:gPatInt>: PSU ID may be changed, please check it]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="hwComponentName">combineMsgId("Chasis ", $_chasisId)</setEventAttribute>
+      </when>
+
+      <!--
+		%Sep 22 20:38:32:947 2009 H3C DEVD/2/LACK OF PWR: Not enough power to power on board chassis 1 slot 14
+		%Sep 22 20:38:32:947 2009 H3C DEVD/2/LACK OF PWR: Chassis 0:Not enough power to power on board. System available power is 0w.
+		%Oct 18 11:10:34:123 2010 H3C DEVD/2/LACK OF PWR: Not enough power to power on board chassis 0 slot 4. Board power is 180w, system available power is -20w.
+	  -->
+      <when test="$eventType = 'H3C-Comware-DEVD-LACK_OF_PWR'">
+        <choose>
+          <when test="matches($_body, 'Not enough power to power on board chassis \d+ slot \d+')">
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Not enough power to power on board chassis <_chasisId:gPatInt> slot <_slotId:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Chasis ", $_chasisId, " Slot ", $_slotId)</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Chassis \d+:Not enough power')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DEVD-LACK_OF_PWR_DETAIL1"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Chassis <_chasisId:gPatInt>:Not enough power to power on board]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Chasis ", $_chasisId)</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'slot \d+\. Board power')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DEVD-LACK_OF_PWR_DETAIL2"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Not enough power to power on board chassis <_chasisId:gPatInt> slot <_slotId:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Chasis ", $_chasisId, " Slot ", $_slotId)</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <!--
+		%Sep 22 20:38:32:947 2009 H3C DEVD/2/BRD ON_OFF: User powered on board chassis 1 slot 15
+		%Sep 22 20:38:32:947 2009 H3C DEVD/2/BRD ON_OFF: User powered off board chassis 1 slot 15
+	  -->
+      <when test="$eventType = 'H3C-Comware-DEVD-BRD_ON_OFF'">
+        <choose>
+          <when test="matches($_body, 'powered on')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DEVD-BRD_ON"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[User powered on board chassis <_chasisId:gPatInt> slot <_slotId:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Chasis ", $_chasisId, " Slot ", $_slotId)</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'powered off')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DEVD-BRD_OFF"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[User powered off board chassis <_chasisId:gPatInt> slot <_slotId:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Chasis ", $_chasisId, " Slot ", $_slotId)</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <!--
+		%Sep 22 20:38:32:947 2009 H3C DEVD/2/PMU STATUS: Chassis 1: Both power monitors are in master or slave status: master.
+		%Sep 22 20:38:32:947 2009 H3C DEVD/2/PMU STATUS: Chassis 1: No.2 power monitor unit is removed!
+		%Sep 22 20:38:32:947 2009 H3C DEVD/2/PMU STATUS: Chassis 1: No.2 power monitor unit is inserted!
+		%Sep 22 20:38:32:947 2009 H3C DEVD/2/PMU STATUS: Chassis 1: No.1 power monitor: absent.
+		%Sep 22 20:38:32:947 2009 H3C DEVD/2/PMU STATUS: Chassis 1: The number of redundant PSU changed: sufficient.
+		%Sep 22 20:38:32:947 2009 H3C DEVD/2/PMU STATUS: Chassis 1: The number of redundant PSU changed: insufficient.
+	  -->
+      <when test="$eventType = 'H3C-Comware-DEVD-PMU_STATUS'">
+        <choose>
+          <when test="matches($_body, 'Both power monitors are in master or slave status')">
+            <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Chassis <_chasisId:gPatInt>: Both power monitors are in master or slave status: master]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Chasis ", $_chasisId)</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'power monitor unit is removed')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DEVD-PMU_STATUS_REMOVED"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Chassis <_chasisId:gPatInt>: No.<_numId:gPatInt> power monitor unit is removed]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Chasis ", $_chasisId, " No. ", $_numId)</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'power monitor unit is inserted')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DEVD-PMU_STATUS_INSERTED"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Chassis <_chasisId:gPatInt>: No.<_numId:gPatInt> power monitor unit is inserted!]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Chasis ", $_chasisId, " No. ", $_numId)</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'power monitor: absent')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DEVD-PMU_STATUS_ABNORMAL"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Chassis <_chasisId:gPatInt>: No.<_numId:gPatInt> power monitor: absent]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Chasis ", $_chasisId, " No. ", $_numId)</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'PSU changed: sufficient')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DEVD-PSU_CHANGE_SUFFICIENT"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Chassis <_chasisId:gPatInt>: The number of redundant PSU changed: sufficient]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Chasis ", $_chasisId)</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'PSU changed: insufficient')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DEVD-PSU_CHANGE_INSUFFICIENT"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Chassis <_chasisId:gPatInt>: The number of redundant PSU changed: insufficient]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Chasis ", $_chasisId)</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <!--
+		%Sep 22 20:38:32:947 2009 H3C DEVD/4/PWR CHANGED: Chassis 1: No. 2 power tray: output voltage under lower threshold.
+		%Sep 22 20:38:32:947 2009 H3C DEVD/4/PWR CHANGED: Chassis 1: No. 2 power tray: output voltage above upper threshold.
+		%Sep 22 20:38:32:947 2009 H3C DEVD/4/PWR CHANGED: Chassis 1: No. 2 power tray: get output voltage error.
+		%Sep 22 20:38:32:947 2009 H3C DEVD/4/PWR CHANGED: Chassis 1 PSU 1/1 output rated power is different from others, please check input voltage.
+	  -->
+      <when test="$eventType = 'H3C-Comware-DEVD-PWR_CHANGED'">
+        <choose>
+          <when test="matches($_body, 'power tray: output voltage under lower threshold')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DEVD-PWR_CHANGED_VOLT_LOW"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Chassis <_chasisId:gPatInt>: No. <_numId:gPatInt> power tray: output voltage under lower threshold]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Chasis ", $_chasisId, " Power tray:", $_numId)</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'power tray: output voltage above upper threshold')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DEVD-PWR_CHANGED_VOLT_HIGH"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Chassis <_chasisId:gPatInt>: No. <_numId:gPatInt> power tray: output voltage above upper threshold]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Chasis ", $_chasisId, " Power tray:", $_numId)</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'get output voltage error')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DEVD-PWR_CHANGED_VOLT_FAIL"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Chassis <_chasisId:gPatInt>: No. <_numId:gPatInt> power tray: get output voltage error.]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Chasis ", $_chasisId, " Power tray:", $_numId)</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'output rated power is different from others')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DEVD-PWR_CHANGED_VOLT_MISMATCH"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Chassis <_chasisId:gPatInt> PSU <_strId:gPatStr> output rated power is different from others, please check input voltage]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Chasis ", $_chasisId, " PSU ", $_strId)</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <!--
+		%Sep 22 20:38:32:947 2009 H3C  DEVD/2/REG OUTTIME: Board 5 registration time out.
+	  -->
+      <when test="$eventType = 'H3C-Comware-DEVD-REG_OUTTIME'">
+        <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[Board <_numId:gPatInt> registration time out]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="hwComponentName">combineMsgId("Board ", $_numId)</setEventAttribute>
+      </when>
+
+      <!--
+		%May 24 16:05:41:582 2010 H3C DFBR/4/CHKCHIP:FE chip fault is detected in slot 20! Please replace the fabric card in the slot.
+	  -->
+      <when test="$eventType = 'H3C-Comware-DFBR-CHKCHIP'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[FE chip fault is detected in slot <_slotId:gPatInt>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="hwComponentName">combineMsgId("Slot ", $_slotId)</setEventAttribute>
+      </when>
+
+      <!--
+		%Sep 24 20:48:43:895 2009 H3C DIAG/4/WARN:slot 5 is offline
+	  -->
+      <when test="$eventType = 'H3C-Comware-DIAG-WARN'">
+        <choose>
+          <when test="matches($_body, 'slot \d+ is offline')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DIAG-WARN_CARD"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[slot <_slotId:gPatInt> is offline]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Slot ", $_slotId)</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <!--
+		%Sep 22 20:38:32:947 2009 H3C DIAG/4/ERROR:The communication between clk-card and cpu fail!
+		%Sep 24 20:40:07:720 2009 H3C DIAG/3/ERROR:Slot=5;Forwarding fault: slot 5 to slot 6
+		%Nov 21 16:58:35:491 2008 H3C DIAG/3/ERROR:Hardware error! chassis=1, slot=1, code=45
+		%Nov 21 16:58:35:491 2008 H3C DIAG/3/ERROR:Hardware error! slot=1, code=45
+		%Nov 21 16:58:35:491 2008 H3C DIAG/3/ERROR: linecard startup PRBS test failed, rebooting. It is slot 4 # TODO-RUI: ignore as same with last second one
+		%Nov 21 16:58:35:491 2008 H3C DIAG/3/ERROR: linecard startup PRBS test failed, rebooting. It is between slot 4 and slot 0.
+		%Nov 21 16:58:35:491 2008 H3C DIAG/3/ERROR:PRBS test failed between slot 0 and slot 4.	# TODO-RUI: ignore as same with last one
+		%Nov 21 16:58:35:491 2008 H3C DIAG/3/ERROR:Startup PRBS test failed with slot 0 and slot 4, slot 0 is rebooted
+		%Nov 21 16:58:35:491 2008 H3C DIAG/3/ERROR: Board fault: chassis 1 slot 2,please check it
+		%Nov 21 16:58:35:491 2008 H3C DIAG/3/ERROR: linecard startup PRBS test failed, rebooting. It is slot 01.
+		%Nov 21 16:58:35:491 2008 H3C DIAG/3/ERROR: PRBS test failed between slot 01 and slot 02.
+	  -->
+      <when test="$eventType = 'H3C-Comware-DIAG-ERROR'">
+        <choose>
+          <when test="matches($_body, 'The communication between clk-card and cpu fail')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DIAG-ERROR_CLOCK"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Forwarding fault')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DIAG-ERROR_FWD"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Forwarding fault: slot <_slotId:gPatInt> <_operation:gPatStr> slot <_slot1Id:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Slot ", $_slotId, " ", $_operation, " Slot ", $_slot1Id)</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Hardware error! chassis')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DIAG-ERROR_HW"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Hardware error! chassis=<_chasisId:gPatInt>, slot=<_slotId:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Chasis ", $_chasisId, " Slot ", $_slotId)</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Hardware error! slot=')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DIAG-ERROR_HW"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Hardware error! slot=<_slotId:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Slot ", $_slotId)</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'linecard startup PRBS test failed, rebooting\. It is between slot')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DIAG-ERROR_CPU_SVC_CHANNEL"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[It is between slot <_slotId:gPatInt> <_operation:gPatStr> slot <_slot1Id:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Slot ", $_slotId, " ", $_operation, " Slot ", $_slot1Id)</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Startup PRBS test failed with slot')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DIAG-ERROR_DATA_CHANNEL_REBOOT"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Startup PRBS test failed with slot <_slotId:gPatInt> <_operation:gPatStr> slot <_slot1Id:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Slot ", $_slotId, " ", $_operation, " Slot ", $_slot1Id)</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Board fault')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DIAG-ERROR_BOARD_FAILURE"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Board fault: chassis <_chasisId:gPatInt> slot <_slotId:gPatInt>,please check it]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Chasis ", $_chasisId, " Slot ", $_slotId)</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'linecard startup PRBS test failed, rebooting. It is slot ')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DIAG-ERROR_PRBS_REBOOT"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[linecard startup PRBS test failed, rebooting. It is slot <_slotId:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Slot ", $_slotId)</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'PRBS test failed between slot')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DIAG-ERROR_PRBS"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[PRBS test failed between slot <_slotId:gPatInt> <_operation:gPatStr> slot <_slot1Id:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Slot ", $_slotId, " ", $_operation, " Slot ", $_slot1Id)</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <!--
+		%Aug 25 11:46:15:439 2010 H3C DFWD/5/DRV_XBAR:Chassis 0 slot 2 need be rebooted automatically!
+	  -->
+      <when test="$eventType = 'H3C-Comware-DFWD-DRV_XBAR'">
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[Chassis <_chasisId:gPatInt> slot <_slotId:gPatInt> need be rebooted automatically]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="hwComponentName">combineMsgId("Chasis ", $_chasisId, " Slot ", $_slotId)</setEventAttribute>
+      </when>
+
+      <!--
+		%Sep 22 21:21:16:899 2009 H3C SMODE/5/DRV_SMODE:Routee mode has been set. It will take effect after system restart.
+		%Sep 22 21:21:16:899 2009 H3C SMODE/3/DRV_SMODE:Invalid system working mode
+		%Sep 22 21:21:16:899 2009 H3C SMODE/3/DRV_SMODE:Invalid Ingress pcl type
+		%Sep 22 21:21:16:899 2009 H3C SMODE/3/DRV_SMODE:Invalid Egress pcl type
+		%Sep 22 21:21:16:899 2009 H3C SMODE/3/DRV_SMODE:Invalid Ingress or Egress pcl type
+		%Sep 22 21:21:16:899 2009 H3C SMODE/3/DRV_SMODE:Invalid MPLS pop cfg
+		%Sep 22 21:21:16:899 2009 H3C SMODE/3/DRV_SMODE:MPLS pop cfg change to POP RF.
+		%Sep 22 21:21:16:899 2009 H3C SMODE/3/DRV_SMODE:System working mode change to Standard working mode.
+		%Sep 22 21:21:16:899 2009 H3C SMODE/3/DRV_SMODE: System working mode change to Standard.
+		%Sep 22 21:21:16:899 2009 H3C SMODE/3/DRV_SMODE:Ingress pcl key change to 40B for Ethernet interface cards, 288 for base cards.
+		%Sep 22 21:21:16:899 2009 H3C SMODE/3/DRV_SMODE:Egress pcl key change to 40B for Ethernet interface cards,288 for base cards.
+		%Sep 22 21:21:16:899 2009 H3C SMODE/3/DRV_SMODE: System working mode has to change to Standard for IRF stack enable
+	  -->
+      <when test="$eventType = 'H3C-Comware-SMODE-DRV_SMODE'">
+        <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+        <choose>
+          <when test="matches($_body, 'Routee mode has been set')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SMODE-DRV_SMODE_MODE_SET"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Invalid system working mode')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SMODE-DRV_SMODE_INVALID_MODE"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Invalid Ingress pcl type')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SMODE-DRV_SMODE_INVALID_INPCLCFG"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Invalid Egress pcl type')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SMODE-DRV_SMODE_INVALID_OUTPCLCFG"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Invalid Ingress or Egress pcl type')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SMODE-DRV_SMODE_INVALID_PCLKEY"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Invalid MPLS pop cfg')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SMODE-DRV_SMODE_INVALID_MPLSCFG"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'MPLS pop cfg change to POP RF')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SMODE-DRV_SMODE_MPLS_POP_SET"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'System working mode change to Standard working mode')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SMODE-DRV_SMODE_MODE_DEFAULT"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'System working mode change to Standard')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SMODE-DRV_SMODE_MODE_CHG_WORK"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Ingress pcl key change to ')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SMODE-DRV_SMODE_IN_PCL_CHG"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Egress pcl key change to ')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SMODE-DRV_SMODE_OUT_PCL_CHG"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'System working mode has to change to Standard for IRF stack enable')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SMODE-DRV_SMODE_MODE_CHG"</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <!--
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RESOURCE: GigabitEthernet 3/1/1.1 has no enough resource!
+	  -->
+      <when test="$eventType = 'H3C-Comware-LIF-RESOURCE'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<intfName:gPatMesgBody> has no enough resource]]></regex>
+        </collectFieldsByRegex>
+      </when>
+
+      <!--
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/ATM:Atm 2/1/1 reports Loss Of Signal!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/ATM:Atm 2/1/1 reports Loss Of Frame!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/ATM: Atm 2/1/1 reports Out Of Frame!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/ATM: Atm 2/1/1 reports Line Alarm Indication Signal!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/ATM: Atm 2/1/1 Current Alarm Is:none!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/ATM: Atm 2/1/1 Current Alarm Is:SD!
+	  -->
+      <when test="$eventType = 'H3C-Comware-LIF-ATM'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <choose>
+          <when test="matches($_body, 'Loss Of Signal')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-ATM_LOS"</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<intfName:gPatMesgBody> reports Loss Of Signal]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Loss Of Frame!')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-ATM_LOF"</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<intfName:gPatMesgBody> reports Loss Of Frame]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Out Of Frame')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-ATM_OOF"</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<intfName:gPatMesgBody> reports Out Of Frame]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Line Alarm Indication Signal')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-ATM_LAIS"</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<intfName:gPatMesgBody> reports Line Alarm Indication Signal]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Current Alarm Is:none')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-ATM_ALARM_NONE"</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<intfName:gPatMesgBody> Current Alarm Is:none]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Current Alarm Is:SD')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-ATM_ALARM"</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<intfName:gPatMesgBody> Current Alarm Is:SD]]></regex>
+            </collectFieldsByRegex>
+          </when>
+        </choose>
+      </when>
+
+      <!--
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/POS: Pos 2/1/2 loss of signal recover!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/POS: Pos 2/1/2 loss of frame recover!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/POS: Pos 2/1/2 path alarm indication signal recover!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/POS: Pos 2/1/2 loss of pointer recover!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/POS: Pos 2/1/2 reports line alarm indication signal!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/POS: Pos 2/1/2 reports path alarm indication signal!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/POS: Pos 2/1/2 reports loss of pointer!
+	  -->
+      <when test="$eventType = 'H3C-Comware-LIF-POS'">
+        <choose>
+          <when test="matches($_body, 'loss of signal recover')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-POS_LOS_RECOVER"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<intfName:gPatMesgBody> loss of signal recover]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'loss of frame recover')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-POS_LOF_RECOVER"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<intfName:gPatMesgBody> loss of frame recover]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'path alarm indication signal recover')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-POS_LOC_RECOVER"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<intfName:gPatMesgBody> path alarm indication signal recover]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'loss of pointer recover')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-POS_LOP_RECOVER"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<intfName:gPatMesgBody> loss of pointer recover]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'line alarm indication signal')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-POS_LAIS"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<intfName:gPatMesgBody> reports line alarm indication signal]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'path alarm indication signal')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-POS_PAIS"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<intfName:gPatMesgBody> reports path alarm indication signal]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'loss of pointer')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-POS_LOP"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<intfName:gPatMesgBody> reports loss of pointer]]></regex>
+            </collectFieldsByRegex>
+          </when>
+        </choose>
+      </when>
+
+      <!--
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/CPET: WARNING: Mp-Group (ID:1) replace fail, CI invalid.
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/CPET: Cpos 6/1/1 : Alarm AIS recover! Start Time : 2010-12-01 12: 10: 12: 10! End Time : 2010-12-01 10: 13: 10: 10!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/CPET: Cpos 6/1/1 : Channel 1 Alarm LOF recover! Start Time : 2010-12-01 10: 20: 21: 30! End Time : 2010-12-01 10: 20: 50: 10!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/CPET: Cpos 6/1/1 : Path 1 Alarm LOS recover! Start Time : 2010-12-01 10: 50: 10: 10! End Time : 2010-12-01 10: 51: 00: 11!
+	  -->
+      <when test="$eventType = 'H3C-Comware-LIF-CPET'">
+        <choose>
+          <when test="matches($_body, 'replace fail, CI invalid')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-CPET_CI_INSUFF"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Alarm AIS recover')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-CPET_ALARM"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<intfName:gPatMesgBody>\s+: Alarm AIS recover! Start Time]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Channel 1 Alarm LOF recover')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-CPET_ALARM_RECOVER"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<intfName:gPatMesgBody>\s+: Channel 1 Alarm LOF recover]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Path 1 Alarm LOS recover')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-CPET_ALARM_RECOVER_2"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<intfName:gPatMesgBody>\s+: Path 1 Alarm LOS recover]]></regex>
+            </collectFieldsByRegex>
+          </when>
+        </choose>
+      </when>
+
+      <!--
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPR POS 3/2/2 mate is Down!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 mate is Up!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 LOF alarm is present!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 LOF alarm is over!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 LOS alarm is present!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 LOS alarm is over!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 Line AIS alarm is present!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 Line AIS alarm is over!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 LOP alarm is present!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 LOP alarm is over!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 Line AIS alarm is present!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 Line AIS alarm is over!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 LOP alarm is present!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 LOP alarm is over!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 Path AIS alarm is present!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 Path AIS alarm is over!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 SF alarm is present!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 SF alarm is over!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 SD alarm is present!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 SD alarm is over!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 Mate LOS alarm is present!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 Mate LOS alarm is over!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 Mate LOF alarm is present!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 Mate LOF alarm is over!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 Mate AIS_L alarm is present!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 Mate AIS_L alarm is over!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 Mate LOP_P alarm is present!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 Mate LOP_P alarm is over!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 Mate AIS_P alarm is present!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 Mate AIS_P alarm is over!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 Keepalive alarm is present!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 Keepalive alarm is over!
+		%Sep 22 21:21:16:899 2009 H3C LIF/4/RPR: RPRPOS 3/2/2 Mate B1_BIP_ERR alarm is present!
+	  -->
+      <when test="$eventType = 'H3C-Comware-LIF-RPR'">
+        <choose>
+          <when test="matches($_body, 'mate is Down')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_MATE_DOWN"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR <intfName:gPatMesgBody> mate is Down]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'mate is Up')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_MATE_RECOVER"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> mate is Up]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'RPR[^\s]+ [^\s]+ LOF alarm is present')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_LOF"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> LOF alarm is present]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'RPR[^\s]+ [^\s]+ LOF alarm is over')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_LOF_RECOVER"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> LOF alarm is over]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'RPR[^\s]+ [^\s]+ LOS alarm is present')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_LOS"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> LOS alarm is present]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'RPR[^\s]+ [^\s]+ LOS alarm is over')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_LOS_RECOVER"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> LOS alarm is over]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Line AIS alarm is present')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_LAIS"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> Line AIS alarm is present]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Line AIS alarm is over')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_LAIS_RECOVER"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> Line AIS alarm is over]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'LOP alarm is present')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_LOP"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> LOP alarm is present]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'LOP alarm is over')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_LOP_RECOVER"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> LOP alarm is over]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Path AIS alarm is present')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_PAIS"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> Path AIS alarm is present]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Path AIS alarm is over')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_PAIS_RECOVER"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> Path AIS alarm is over]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'SF alarm is present')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_SF"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> SF alarm is present]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'SF alarm is over')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_SF_RECOVER"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> SF alarm is over]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'SD alarm is present')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_SD"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> SD alarm is present]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'SD alarm is over')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_SD_RECOVER"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> SD alarm is over]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Mate LOS alarm is present')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_LOS_MATE"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> Mate LOS alarm is present]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Mate LOS alarm is over')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_LOS_MATE_RECOVER"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> Mate LOS alarm is over]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Mate LOF alarm is present')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_LOF_MATE"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> Mate LOF alarm is present]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Mate LOF alarm is over')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_LOF_MATE_RECOVER"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> Mate LOF alarm is over]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Mate AIS_L alarm is present')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_LAIS_MATE"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> Mate AIS_L alarm is present]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Mate AIS_L alarm is over')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_LAIS_MATE_RECOVER"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> Mate AIS_L alarm is over]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Mate LOP_P alarm is present')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_LOP_MATE"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> Mate LOP_P alarm is present]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Mate LOP_P alarm is over')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_LOP_MATE_RECOVER"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> Mate LOP_P alarm is over]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Mate AIS_P alarm is present')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_PAIS_MATE"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> Mate AIS_P alarm is present]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Mate AIS_P alarm is over')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_PAIS_MATE_RECOVER"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> Mate AIS_P alarm is over]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Keepalive alarm is present')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_KEEPALIVE"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> Keepalive alarm is present]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Keepalive alarm is over')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_KEEPALIVE_RECOVER"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> Keepalive alarm is over]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Mate B1_BIP_ERR alarm is present')">
+            <setEventAttribute attr="eventType">"H3C-Comware-LIF-RPR_B1_BIP_ERR"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[RPR<intfName:gPatMesgBody> Mate B1_BIP_ERR alarm is present]]></regex>
+            </collectFieldsByRegex>
+          </when>
+        </choose>
+      </when>
+
+      <!--
+		%Sep 22 21:21:16:899 2009 H3C L2/4/FDB: The number of mac address received in VLAN 20 reaches the uplimit.
+		%Sep 22 21:21:16:899 2009 H3C L2/4/FDB: The number of mac address received in interface 12 reaches the uplimit.
+		%Sep 22 21:21:16:899 2009 H3C L2/4/FDB: The Hardware of Slot = 1 Receive Error Source Mac-address, The Error counter = 20
+		%Sep 22 21:21:16:899 2009 H3C L2/4/FDB: The Hardware of Slot = 1 Exit Add Mac-Address Error, the Error code you can look for Memory Address = 0x123456AB
+		%Sep 22 21:21:16:899 2009 H3C L2/4/FDB: The Hardware of Slot = 12 Exit delete Mac-Address Error, the Error code you can look for Memory Address = 0x123456AB
+		%Sep 22 21:21:16:899 2009 H3C L2/4/FDB: Add mac address, PA is not exist, P1 = 12
+	  -->
+      <when test="$eventType = 'H3C-Comware-L2-FDB'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <choose>
+          <when test="matches($_body, 'VLAN \d+ reaches the uplimit')">
+            <setEventAttribute attr="eventType">"H3C-Comware-L2-FDB_VLAN_MAC_HIGH"</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[VLAN <hostVLAN:gPatInt> reaches the uplimit]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'interface \d+ reaches the uplimit')">
+            <setEventAttribute attr="eventType">"H3C-Comware-L2-FDB_INTF_MAC_HIGH"</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[interface <intfName:gPatInt> reaches the uplimit]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Receive Error Source Mac-address')">
+            <setEventAttribute attr="eventType">"H3C-Comware-L2-FDB_SRC_MAC_ERROR"</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[The Hardware of Slot = <_slotId:gPatInt> Receive Error Source Mac-address]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Slot ", $_slotId)</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Exit Add Mac-Address Error')">
+            <setEventAttribute attr="eventType">"H3C-Comware-L2-FDB_MAC_ADD_ERROR"</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[The Hardware of Slot = <_slotId:gPatInt> Exit Add Mac-Address Error]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Slot ", $_slotId)</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Exit delete Mac-Address Error')">
+            <setEventAttribute attr="eventType">"H3C-Comware-L2-FDB_MAC_DEL_ERROR"</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[The Hardware of Slot = <_slotId:gPatInt> Exit delete Mac-Address Error]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Slot ", $_slotId)</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Add mac address, PA is not exist')">
+            <setEventAttribute attr="eventType">"H3C-Comware-L2-FDB_AGGR_GRP_ERROR"</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <!--
+		%Sep 22 21:21:16:899 2009 H3C L2/4/PORT: PORT PHY TYPE CHANGE: Ethernet1 turns into atm, please check the transceiver type
+		%Sep 22 21:21:16:899 2009 H3C L2/4/PORT: PORT PHY TYPE CHANGE: Ethernet1 turns into atm
+	  -->
+      <when test="$eventType = 'H3C-Comware-L2-PORT'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <choose>
+          <when test="matches($_body, 'please check the transceiver type')">
+            <setEventAttribute attr="eventType">"H3C-Comware-L2-PORT_PHY_TYPE_CHANGE_MISMATCH"</setEventAttribute>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<intfName:gPatMesgBody> turns into atm]]></regex>
+            </collectFieldsByRegex>
+          </when>
+          <when test="matches($_body, 'Ethernet1 turns into atm$')">
+            <setEventAttribute attr="eventType">"H3C-Comware-L2-PORT_PHY_TYPE_CHANGE"</setEventAttribute>
+            <setEventAttribute attr="intfName">Ethernet1</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <!--
+		%Sep 22 21:21:16:899 2009 H3C L2/4/VLAN: Insufficient system resources of PCL
+		%Sep 22 21:21:16:899 2009 H3C L2/4/VLAN: Insufficient system resources
+	  -->
+      <when test="$eventType = 'H3C-Comware-L2-VLAN'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <choose>
+          <when test="matches($_body, 'Insufficient system resources of PCL')">
+            <setEventAttribute attr="eventType">"H3C-Comware-L2-VLAN_PCL_RES_INSUFF"</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">"H3C-Comware-L2-VLAN_SYS_RES_INSUFF"</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+
+      <!--
+		%Oct 5 09:53:33:655 2010 H3C DRVL3/0/DRVL3_LOG_EMERG: No enough resource!
+		%Oct 5 09:53:33:655 2010 H3C DRVL3/0/DRVL3_LOG_EMERG: No enough tunnel start resource!
+		%Oct 5 09:53:33:655 2010 H3C DRVL3/0/DRVL3_LOG_EMERG: This mac is occupied by another one.
+		%Oct 5 09:53:33:655 2010 H3C DRVL3/0/DRVL3_LOG_EMERG: Insufficient system resources!
+		%Oct 5 09:53:33:655 2010 H3C DRVL3/0/DRVL3_LOG_EMERG: Can't enable IPv6 VPN because of configuration conflicts
+	  -->
+      <when test="$eventType = 'H3C-Comware-DRVL3-DRVL3_LOG_EMERG'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+        <choose>
+          <when test="matches($_body, 'No enough resource')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DRVL3-DRVL3_LOG_SYS_INSUFF"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'No enough tunnel start resource')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DRVL3-DRVL3_LOG_TUNNEL_INSUFF"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'This mac is occupied by another one')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DRVL3-DRVL3_LOG_DUPL_MAC"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Insufficient system resources')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DRVL3-DRVL3_LOG_MTU_INSUFF"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 't enable IPv6 VPN because of configuration conflicts')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DRVL3-DRVL3_IPV6_VPN_ENABLE_FAIL"</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <!--
+		%Oct 5 09:53:33:655 2010 H3C L3VPN/3/ERROR: insufficient system resources!
+		%Oct 5 09:53:33:655 2010 H3C L3VPN/3/ERROR: invalid parameter in command message!
+		%Oct 5 09:53:33:655 2010 H3C L3VPN/3/ERROR: message is null!
+	  -->
+      <when test="$eventType = 'H3C-Comware-L3VPN-ERROR'">
+        <choose>
+          <when test="matches($_body, 'insufficient system resources')">
+            <setEventAttribute attr="eventType">"H3C-Comware-L3VPN-ERROR_RES_INSUFF"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'invalid parameter in command message')">
+            <setEventAttribute attr="eventType">"H3C-Comware-L3VPN-ERROR_BAD_PARAM"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'message is null')">
+            <setEventAttribute attr="eventType">"H3C-Comware-L3VPN-ERROR_MSG_NULL"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <!--
+		%Oct 5 09:53:33:655 2010 H3C VLL/3/ERROR: insufficient system resources!
+	  -->
+      <when test="$eventType = 'H3C-Comware-VLL-ERROR'">
+        <choose>
+          <when test="matches($_body, 'insufficient system resources')">
+            <setEventAttribute attr="eventType">"H3C-Comware-VLL-ERROR_RES_INSUFF"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <!--
+		%Oct 5 09:53:33:655 2010 H3C VPLS/3/ERROR: insufficient system resources!
+	  -->
+      <when test="$eventType = 'H3C-Comware-VPLS-ERROR'">
+        <choose>
+          <when test="matches($_body, 'insufficient system resources')">
+            <setEventAttribute attr="eventType">"H3C-Comware-VPLS-ERROR_RES_INSUFF"</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <!--
+		%Oct 5 09:53:33:655 2010 H3C MPLS/3/ERROR: EA Board not support vpn!
+		%Oct 5 09:53:33:655 2010 H3C MPLS/3/ERROR: No enough resource!
+	  -->
+      <when test="$eventType = 'H3C-Comware-MPLS-ERROR'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <choose>
+          <when test="matches($_body, 'EA Board not support vpn')">
+            <setEventAttribute attr="eventType">"H3C-Comware-MPLS-ERROR_VPN_UNSUPP"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'No enough resource')">
+            <setEventAttribute attr="eventType">"H3C-Comware-MPLS-ERROR_RES_INSUFF"</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <!--
+		%Feb 16 11:30:44:967 2011 H3C DRIVER/0/DRV_CLI_LOG_TOP: -Slot=8;CFM block number error,in Func DRIVER_CLIDebug
+		%Feb 16 09:30:56:1023 2011 H3C DRIVER/0/DRV_CLI_LOG_TOP: -Slot=8;Operate type is not SET,in Func DRIVER_CLIDebug!
+		%Feb 16 09:30:56:1023 2011 H3C DRIVER/0/DRV_CLI_LOG_TOP: -Slot=8;Operate type is not SET,in Func DRIVER_CLIDebug!
+		%Feb 14 11:03:21:52 2011 H3C DRIVER/0/DRV_CLI_LOG_TOP: -Slot=8; Alloc Memory Error,in Func DRIVER_CLIDebug
+		%Feb 12 10:01:32:756 2011 H3C DRIVER/0/DRV_CLI_LOG_TOP: -Slot=8;Parameter Length error,in Func DRIVER_CLIDebug!
+		%Feb 16 15:07:07:1562 2011 H3C DRIVER/0/DRV_CLI_LOG_TOP: -Slot=8;CFM Parameter error,in Func DRIVER_CLIDebug
+		%Feb 15 16:10:02:236 2011 H3C DRIVER/0/DRV_CLI_LOG_TOP: -Slot=8;Invalid input parameter. p1=0.
+		%Feb 13 08:45:13:367 2011 H3C DRIVER/0/DRV_CLI_LOG_TOP: -Slot=7;Error in Call back,in Func DRIVER_Cmd_CallBack
+	  -->
+      <when test="$eventType = 'H3C-Comware-DRIVER-DRV_CLI_LOG_TOP'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <choose>
+          <when test="matches($_body, 'CFM block number error')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DRIVER-DRV_CLI_LONG_MSG"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Operate type is not SET')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DRIVER-DRV_CLI_TYPE_NOT_SET"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Alloc Memory Error')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DRIVER-DRV_CLI_NO_MEM"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Parameter Length error')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DRIVER-DRV_CLI_BAD_PARAM_LEN"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'CFM Parameter error')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DRIVER-DRV_CLI_BAD_PARAM"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Invalid input parameter')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DRIVER-DRV_CLI_INVALID_PARAM"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Error in Call back')">
+            <setEventAttribute attr="eventType">"H3C-Comware-DRIVER-DRV_CLI_CALLBACK_ERR"</setEventAttribute>
+          </when>
+        </choose>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[-Slot=<_slotId:gPatInt>;]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="hwComponentName">combineMsgId("Slot ", $_slotId)</setEventAttribute>
+      </when>
+
+      <!--
+		%Feb 16 13:37:20:203 2011 H3C SYSM/5/SYSM_LOG_NOTICE: -Slot=8; CFM block number error,in Func SysmCli_Debug
+		%Feb 14 14:32:25:1211 2011 H3C SYSM/5/SYSM_LOG_NOTICE: -Slot=7;Parameter number error,in Func SysmCli_Debug
+		%Feb 14 15:28:28:762 2011 H3C SYSM/5/SYSM_LOG_NOTICE: -Slot=8; Operate type is not SET,in Func SysmCli_Debug!
+		%Feb 13 09:45:26:956 2011 H3C SYSM/5/SYSM_LOG_NOTICE: -Slot=8; Alloc Memory Error,in Func SysmCli_Debug!
+		%Feb 16 11:23:31:56 2011 H3C SYSM/5/SYSM_LOG_NOTICE: -Slot=2; Parameter Length error,in Func SysmCli_Debug!
+		%Feb 15 17:26:43:271 2011 H3C SYSM/5/SYSM_LOG_NOTICE: -Slot=1; CFM Parameter error,in Func SysmCli_Debug
+		%Feb 15 12:47:23:85 2011 H3C SYSM/5/SYSM_LOG_NOTICE: -Slot=2; Parameter error! in func DRV_SYSM_ClearEeprom
+		%Feb 14 10:45:18:188 2011 H3C SYSM/5/SYSM_LOG_NOTICE: -Slot=8; Failed to get board eeprom info! in func DRV_SYSM_ClearEeprom
+		%Feb 16 16:41:02:179 2011 H3C SYSM/5/SYSM_LOG_NOTICE: -Slot=1; Failed to malloc memory! in func DRV_SYSM_ClearEeprom
+		%Feb 16 17:46:03:218 2011 H3C SYSM/5/SYSM_LOG_NOTICE: -Slot=2; Failed to write board eeprom! in func DRV_SYSM_ClearEeprom
+		%Feb 15 10:47:05:652 2011 H3C SYSM/5/SYSM_LOG_NOTICE: -Slot=1; Failed to get cpu card eeprom info! in func DRV_SYSM_ClearEeprom
+		%Feb 16 16:48:06:782 2011 H3C SYSM/5/SYSM_LOG_NOTICE: -Slot=1; Failed to malloc memory! in func DRV_SYSM_ClearEeprom
+		%Feb 14 15:01:56:73 2011 H3C SYSM/5/SYSM_LOG_NOTICE: -Slot=3; Failed to write cpu card eeprom! in func DRV_SYSM_ClearEeprom
+		%Feb 16 13:16:43:856 2011 H3C SYSM/5/SYSM_LOG_NOTICE: -Slot=1; Board is recovered after warm reset.
+		%Feb 16 14:06:38:527 2011 H3C SYSM/5/SYSM_LOG_NOTICE: -Slot=1; Board has experienced a power down event.
+		%Feb 16 11:52:12:621 2011 H3C SYSM/5/SYSM_LOG_NOTICE: -Slot=6; Faild to auto update Slot 2 mbus for 3 times, try command please!
+	  -->
+      <when test="$eventType = 'H3C-Comware-SYSM-SYSM_LOG_NOTICE'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <choose>
+          <when test="matches($_body, 'CFM block number error')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SYSM-SYSM_CFM_LONG_MSG"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Parameter number error')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SYSM-SYSM_LARGE_PARAM"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Operate type is not SET')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SYSM-SYSM_TYPE_NOT_SET"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Alloc Memory Error')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SYSM-SYSM_NO_MEM"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Parameter Length error')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SYSM-SYSM_BAD_PARAM_LEN"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'CFM Parameter error')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SYSM-SYSM_BAD_PARAM"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Parameter error')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SYSM-SYSM_BAD_PARAM2"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Failed to get board eeprom info')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SYSM-SYSM_EPROM_ERR"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Failed to malloc memory')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SYSM-SYSM_NO_MEM2"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Failed to write board eeprom')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SYSM-SYSM_WRITE_EPROM_ERR"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Failed to get cpu card eeprom info')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SYSM-SYSM_GET_EPROM_ERR"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Failed to malloc memory')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SYSM-SYSM_NO_MEM3"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Failed to write cpu card eeprom')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SYSM-SYSM_WRITE_EPROM_ERR2"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Board is recovered after warm reset')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SYSM-SYSM_WARM_RESET"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Board has experienced a power down event')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SYSM-SYSM_POWER_DOWN"</setEventAttribute>
+          </when>
+          <when test="matches($_body, 'Faild to auto update Slot')">
+            <setEventAttribute attr="eventType">"H3C-Comware-SYSM-SYSM_MBUS_AUTO_UPGRADE_FAIL"</setEventAttribute>
+          </when>
+        </choose>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[-Slot=<_slotId:gPatInt>;]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="hwComponentName">combineMsgId("Slot ", $_slotId)</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

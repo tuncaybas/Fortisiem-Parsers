@@ -1,0 +1,312 @@
+<eventParser name="ImpervaParser">
+  <deviceType>
+    <Vendor>Imperva</Vendor>
+    <Model>Securesphere Security Gateway</Model>
+    <Version>ANY</Version>
+  </deviceType>
+  <testEvents>
+    <testEvent><![CDATA[<14>CEF:0|Imperva Inc.|SecureSphere|11.5.0.20_0|Audit|Audit|Informative|dst=10.2.6.194 dpt=3306 duser=wf_settlement src=10.2.6.48 spt=59876 proto=TCP rt=11 April 2016 14:07:09 cat=Audit Default Rule - All cs2Label=ServerGroup cs3=ProcessMakerDBFX cs3Label=ServiceName cs4=Default MySql Application cs4Label=ApplicationName cs5=642697783064 cs5Label=EventId cs6=Query cs6Label=EventType cs7=Default MySql group cs7Label=UserGroup cs8=True cs8Label=UserAuthenticated cs9= cs9Label=ApplicationUser cs10= cs10Label=SourceApplication cs11= cs11Label=OSUser cs12= cs12Label=HostName cs13=wf_settlement cs13Label=Database cs14= cs14Label=Schema cs15=SELECT COUNT(APP_CACHE_VIEW.APP_UID) FROM APP_CACHE_VIEW LEFT JOIN USERS CU ON (APP_CACHE_VIEW.USR_UID=CU.USR_UID) LEFT JOIN USERS PU ON (APP_CACHE_VIEW.PREVIOUS_USR_UID=PU.USR_UID) LEFT JOIN APP_CACHE_VIEW APPCVCR ON (APP_CACHE_VIEW.APP_UID=APPCVCR.APP_UID AND APPCVCR.DEL_LAST_INDEX=1) LEFT JOIN USERS USRCR ON (APPCVCR.USR_UID=USRCR.USR_UID) WHERE APP_CACHE_VIEW.APP_STATUS='TO_DO' AND APP_CACHE_VIEW.USR_UID='2800810224bbdfe1cc8bb02024369548' AND APP_CACHE_VIEW.DEL_FINISH_DATE IS NULL  AND APP_CACHE_VIEW.APP_THREAD_STATUS='OPEN' AND APP_CACHE_VIEW.DEL_THREAD_STATUS='OPEN' cs15Label=RawQuery cs16=select count(app_cache_view.app_uid) from app_cache_view left join users cu on (app_cache_view.usr_uid=cu.usr_uid) left join users pu on (app_cache_view.previous_usr_uid=pu.usr_uid) left join app_cache_view appcvcr on (app_cache_view.app_uid=appcvcr.app_uid and appcvcr.del_last_index=?) left join users usrcr on (appcvcr.usr_uid=usrcr.usr_uid) where app_cache_view.app_status=? and app_cache_view.usr_uid=? and app_cache_view.del_finish_date is ? and app_cache_view.app_thread_status=? and app_cache_view.del_thread_status=? cs16Label=ParsedQuery cs17= cs17Label=BindVariables cs18= cs18Label=SQLError cs19=1 cs19Label=ResponseSize cs20=0 cs20Label=ResponseTime cs21=0 cs21Label=AffectedRows]]></testEvent>
+    <testEvent><![CDATA[<6>CEF:0|Imperva Inc.|SecureSphere|11.5.0|Firewall Policy|Firewall Policy|High|act=None dst=1.1.1.1 dpt=123 duser=n/a src=192.168.92.69  spt=123 proto=UDP rt=Sep 30 2016 11:22:54 cat=Alert cs1=Firewall Policy cs1Label=Policy cs2=PCI-V2 cs2Label=ServerGroup cs3=ServiceName cs3Label=ServiceName cs4=AppName cs4Label=ApplicationName cs5=Distributed Unauthorized Access to Service: port UDP:123 cs5Label=Description]]></testEvent>
+    <testEvent><![CDATA[<6>CEF:0|Imperva Inc.|SecureSphere|11.5.0|SQL Profile Policy|SQL Profile Policy|Informative|act=None dst=192.168.92.62 dpt=50015 duser=n/a src=192.168.92.61 spt=58935 proto=TCP rt=Sep 30 2016 11:22:51 cat=Alert cs1=SQL Profile Policy cs1Label=Policy cs2=PCI-V2  cs2Label=ServerGroup cs3=Mysql-prod cs3Label=ServiceName cs4=Panaero MySql App cs4Label=ApplicationName cs5=Untraceable Database User cs5Label=Description]]></testEvent>
+    <testEvent><![CDATA[<6>CEF:0|Imperva Inc.|SecureSphere|14.3.0|Signature|HTTP Signature Violation|High|act=Block dst=1.1.1.1 dpt=80 duser=n/a src=192.168.1.25 spt=1111 proto=TCP rt=Aug 16 2022 18:18:31 cat=Alert cs1=Recommended Signatures Policy for Web Applications cs1Label=Policy cs2=archive.test cs2Label=ServerGroup cs3=archive cs3Label=ServiceName cs4=Default Web Application cs4Label=ApplicationName cs5=Multiple signatures from 192.168.1.25 cs5Label=Description]]></testEvent>
+  </testEvents>
+  <eventFormatRecognizer><![CDATA[CEF:\d+\|Imperva Inc\.\|SecureSphere\|]]></eventFormatRecognizer>
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>CEF:<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <when test="matches($_body, '\\\|')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "\\\|", "\\::TEMP::")</setEventAttribute>
+    </when>
+    <setEventAttribute attr="_body">replaceStrInStr($_body, "|", "::SEP::")</setEventAttribute>
+    <when test="matches($_body, '::TEMP::')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "::TEMP::", "|")</setEventAttribute>
+    </when>
+    <collectAndSetAttrByPos sep="::SEP::" src="$_body">
+      <attrPosMap attr="_sigId" pos="6"/>
+      <attrPosMap attr="_severity" pos="7"/>
+      <attrPosMap attr="_extension" pos="8"/>
+    </collectAndSetAttrByPos>
+
+    <setEventAttribute attr="eventType">combineMsgId("Imperva-SecureSphere-", $_sigId)</setEventAttribute>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_extension">
+      <attrKeyMap attr="appTransportProto" key="app"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="destName" key="dhost"/>
+      <attrKeyMap attr="destMACAddr" key="dmac"/>
+      <attrKeyMap attr="destDomain" key="dntdom"/>
+      <attrKeyMap attr="destIpPort" key="dpt"/>
+      <attrKeyMap attr="fileName" key="fname"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="srcName" key="shost"/>
+      <attrKeyMap attr="srcMACAddr" key="smac"/>
+      <attrKeyMap attr="srcDomain" key="sntdom"/>
+      <attrKeyMap attr="srcIpPort" key="spt"/>
+      <attrKeyMap attr="startTime" key="start"/>
+      <attrKeyMap attr="_ipProto" key="proto"/>
+      <attrKeyMap attr="fwAction" key="act"/>
+      <attrKeyMap attr="fwRule" key="cat"/>
+      <attrKeyMap attr="_rt" key="rt"/>
+      <attrKeyMap attr="destUser" key="duser"/>
+      <attrKeyMap attr="srcUser" key="suser"/>
+      <!-- Labels -->
+      <attrKeyMap attr="_cs1Label" key="cs1Label"/>
+      <attrKeyMap attr="_cs2Label" key="cs2Label"/>
+      <attrKeyMap attr="_cs3Label" key="cs3Label"/>
+      <attrKeyMap attr="_cs4Label" key="cs4Label"/>
+      <attrKeyMap attr="_cs5Label" key="cs5Label"/>
+      <attrKeyMap attr="_cs6Label" key="cs6Label"/>
+      <attrKeyMap attr="_cs7Label" key="cs7Label"/>
+      <attrKeyMap attr="_cs8Label" key="cs8Label"/>
+      <attrKeyMap attr="_cs9Label" key="cs9Label"/>
+      <attrKeyMap attr="_cs10Label" key="cs10Label"/>
+      <attrKeyMap attr="_cs11Label" key="cs11Label"/>
+      <attrKeyMap attr="_cs12Label" key="cs12Label"/>
+      <attrKeyMap attr="_cs13Label" key="cs13Label"/>
+      <attrKeyMap attr="_cs14Label" key="cs14Label"/>
+      <attrKeyMap attr="_cs15Label" key="cs15Label"/>
+      <attrKeyMap attr="_cs16Label" key="cs16Label"/>
+      <attrKeyMap attr="_cs17Label" key="cs17Label"/>
+      <attrKeyMap attr="_cs18Label" key="cs18Label"/>
+      <attrKeyMap attr="_cs19Label" key="cs19Label"/>
+      <attrKeyMap attr="_cs20Label" key="cs20Label"/>
+      <attrKeyMap attr="_cs21Label" key="cs21Label"/>
+      <!-- values -->
+      <attrKeyMap attr="_cs1" key="cs1"/>
+      <attrKeyMap attr="_cs2" key="cs2"/>
+      <attrKeyMap attr="_cs3" key="cs3"/>
+      <attrKeyMap attr="_cs4" key="cs4"/>
+      <attrKeyMap attr="_cs5" key="cs5"/>
+      <attrKeyMap attr="_cs6" key="cs6"/>
+      <attrKeyMap attr="_cs7" key="cs7"/>
+      <attrKeyMap attr="_cs8" key="cs8"/>
+      <attrKeyMap attr="_cs9" key="cs9"/>
+      <attrKeyMap attr="_cs10" key="cs10"/>
+      <attrKeyMap attr="_cs11" key="cs11"/>
+      <attrKeyMap attr="_cs12" key="cs12"/>
+      <attrKeyMap attr="_cs13" key="cs13"/>
+      <attrKeyMap attr="_cs14" key="cs14"/>
+      <attrKeyMap attr="_cs15" key="cs15"/>
+      <attrKeyMap attr="_cs16" key="cs16"/>
+      <attrKeyMap attr="_cs17" key="cs17"/>
+      <attrKeyMap attr="_cs18" key="cs18"/>
+      <attrKeyMap attr="_cs19" key="cs19"/>
+      <attrKeyMap attr="_cs20" key="cs20"/>
+      <attrKeyMap attr="_cs21" key="cs21"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist _rt">
+      <switch>
+        <case>
+          <!--MMM dd yyyy HH:mm:ss-->
+          <collectFieldsByRegex src="$_rt">
+            <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <case>
+          <!--11 April 2016 14:07:09-->
+          <collectFieldsByRegex src="$_rt">
+            <regex><![CDATA[<_day:gPatDay>\s+<_mon:gPatMon>.*\s+<_year:gPatYear>\s+<_time:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+      <when test="exist _mon">
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </when>
+    </when>
+
+    <!-- Handle CSx values -->
+    <choose>
+      <when test="not_exist _cs1"/>
+      <when test="$_cs1Label = 'Policy'">
+        <setEventAttribute attr="policyName">$_cs1</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _cs2"/>
+      <when test="$_cs2Label = 'ServerGroup'">
+        <setEventAttribute attr="appGroupName">$_cs2</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _cs3"/>
+      <when test="$_cs3Label = 'ServiceName'">
+        <setEventAttribute attr="serviceName">$_cs3</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _cs4"/>
+      <when test="$_cs4Label = 'ApplicationName'">
+        <setEventAttribute attr="appName">$_cs4</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _cs5"/>
+      <when test="$_cs5Label = 'Description'">
+        <setEventAttribute attr="description">$_cs5</setEventAttribute>
+      </when>
+      <when test="$_cs5Label = 'EventId'">
+        <setEventAttribute attr="msgId">$_cs5</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _cs6"/>
+      <when test="$_cs6Label = 'EventType'">
+        <setEventAttribute attr="subtype">$_cs6</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _cs7"/>
+      <when test="$_cs7Label = 'UserGroup'">
+        <setEventAttribute attr="userGrp">$_cs7</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _cs8"/>
+      <when test="$_cs8Label = 'UserAuthenticated'">
+        <setEventAttribute attr="authResult">$_cs8</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _cs9"/>
+      <when test="$_cs9Label = 'ApplicationUser'">
+        <setEventAttribute attr="_appUser">$_cs9</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _cs10"/>
+      <when test="$_cs10Label = 'SourceApplication'">
+        <setEventAttribute attr="srcApp">$_cs10</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _cs11"/>
+      <when test="$_cs11Label = 'OSUser'">
+        <setEventAttribute attr="_osUser">$_cs11</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _cs12"/>
+      <when test="$_cs12Label = 'HostName'">
+        <setEventAttribute attr="hostName">$_cs12</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _cs13"/>
+      <when test="$_cs13Label = 'Database'">
+        <setEventAttribute attr="dbName">$_cs13</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _cs14"/>
+      <when test="$_cs14Label = 'Schema'">
+        <setEventAttribute attr="schemaName">$_cs14</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _cs15"/>
+      <when test="$_cs15Label = 'RawQuery'">
+        <setEventAttribute attr="dbQuery">$_cs15</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _cs16"/>
+      <when test="$_cs16Label = 'ParsedQuery'">
+        <setEventAttribute attr="queryDisplay">$_cs16</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _cs17"/>
+      <when test="$_cs17Label = 'BindVariables'">
+        <setEventAttribute attr="dbObjName">$_cs17</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _cs18"/>
+      <when test="$_cs18Label = 'SQLError'">
+        <setEventAttribute attr="errorString">$_cs18</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _cs19"/>
+      <when test="$_cs19Label = 'ResponseSize'">
+        <setEventAttribute attr="totalResponses">$_cs19</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _cs20"/>
+      <when test="$_cs20Label = 'ResponseTime'">
+        <setEventAttribute attr="dbQueryResponseTimeSec">$_cs20</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _cs21"/>
+      <when test="$_cs21Label = 'AffectedRows'">
+        <setEventAttribute attr="tableRowCount">$_cs21</setEventAttribute>
+      </when>
+    </choose>
+
+    <!-- EventType formation -->
+    <when test="exist subtype">
+      <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $subtype)</setEventAttribute>
+    </when>
+
+    <when test="exist description">
+      <when test="matches($description, 'Unauthorized|Untraceable')">
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-Violated")</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist fwAction">
+      <when test="$fwAction != 'None'">
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $fwAction)</setEventAttribute>
+      </when>
+    </when>
+    <!-- Strip Whitespace from EventType if present -->
+    <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "\s+", "-")</setEventAttribute>
+    <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "[-]+", "-")</setEventAttribute>
+
+    <when test="exist _ipProto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_ipProto)</setEventAttribute>
+    </when>
+
+    <!-- Normalize user field if not set -->
+    <choose>
+      <when test="exist user"/>
+      <when test="exist destUser">
+        <when test="$destUser != 'n/a'">
+          <setEventAttribute attr="user">$destUser</setEventAttribute>
+        </when>
+      </when>
+      <when test="exist srcUser">
+        <when test="$srcUser != 'n/a'">
+          <setEventAttribute attr="user">$srcUser</setEventAttribute>
+        </when>
+      </when>
+      <when test="exist _appUser">
+        <setEventAttribute attr="user">$_appUser</setEventAttribute>
+      </when>
+      <when test="exist _osUser">
+        <setEventAttribute attr="user">$_osUser</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="$_severity IN '0, Low, Informative, 低'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_severity IN 'Medium, 中'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_severity IN 'High, 高'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventSeverity">$_severity</setEventAttribute>
+      </otherwise>
+    </choose>
+
+  </parsingInstructions>
+</eventParser>

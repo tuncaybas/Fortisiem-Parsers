@@ -1,0 +1,302 @@
+<eventParser name="IBMISSProventiaParser">
+
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>IBM</Vendor>
+    <Model>ISS SiteProtector Mgmt Server</Model>
+    <Version>ANY</Version>
+    <Name>IBM ISS SiteProtector Mgmt Server</Name>
+  </appType>
+
+  <attachedDeviceType>
+    <Vendor>IBM</Vendor>
+    <Model>ISS Proventia</Model>
+    <Version>ANY</Version>
+  </attachedDeviceType>
+
+  <eventFormatRecognizer><![CDATA[SNMPv2-SMI::enterprises.2499]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[2013-02-07 16:52:18 100.0.0.218(via UDP: [192.168.64.218]:55545) TRAP, SNMP v2c, community public	SNMPv2-SMI::enterprises.2499 Enterprise Specific Trap (4) Uptime: 0:00:00.15	SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.1 = STRING: "SiteProtector_Central_Response (Response1)"	SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.2 = STRING: "16:52:18 2013-02-07"	SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.3 = STRING: "6"	SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.4 = STRING: "100.0.0.216"	SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.5 = STRING: "100.0.0.218"	SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.6 = ""	SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.7 = ""	SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.8 = STRING: "48879"	SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.9 = STRING: "80"	SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.10 = STRING: "DISPLAY=WithoutRaw:0,BLOCK=Default:0"	SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.11 = STRING: " SensorName: IBM-IPS ObjectName: 80 DestinationAddress: 100.0.0.218 AlertName: HTTP_OracleAdmin_Web_Interface AlertTarget: 100.0.0.218 AlertCount: 1 VulnStatus: Simulated block (blocking not enabled) AlertDateTime: 16:52:17 2013-02-07 ObjectType: Target Port SourceAddress: 100.0.0.216 SensorAddress: 192.168.64.15"]]></testEvent>
+    <testEvent><![CDATA[2013-02-07 16:52:18 100.0.0.218TRAP, SNMP v2c, community public	SNMPv2-SMI::enterprises.2499 Enterprise Specific Trap (4) Uptime: 0:00:00.15	SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.1 = STRING: "SiteProtector_Central_Response (Response1)"	SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.2 = STRING: "16:52:18 2013-02-07"	SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.3 = STRING: "6"	SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.4 = STRING: "100.0.0.216"	SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.5 = STRING: "100.0.0.218"	SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.6 = ""	SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.7 = ""	SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.8 = STRING: "48879"	SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.9 = STRING: "80"	SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.10 = STRING: "DISPLAY=WithoutRaw:0,BLOCK=Default:0"	SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.11 = STRING: " SensorName: IBM-IPS ObjectName: 80 DestinationAddress: 100.0.0.218 AlertName: HTTP_OracleAdmin_Web_Interface AlertTarget: 100.0.0.218 AlertCount: 1 VulnStatus: Simulated block (blocking not enabled) AlertDateTime: 16:52:17 2013-02-07 ObjectType: Target Port SourceAddress: 100.0.0.216 SensorAddress: 192.168.64.15"]]></testEvent>
+    <testEvent><![CDATA[2013-09-16 16:41:23 172.16.146.241(via UDP: [172.23.20.27]:58471) TRAP, SNMP v1, community public SNMPv2-SMI::enterprises.2499 Enterprise Specific Trap (4) Uptime: 0:00:00.00 SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.1 = STRING: SiteProtector_Central_Response (11111111-1111-1111-1111-111111111111) SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.2 = STRING: 16:42:49 2013-09-16 SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.3 = STRING: 1 SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.4 = STRING: 0.0.0.0 SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.5 = STRING: 10.94.0.16 SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.6 = STRING: 3 SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.7 = STRING: 3 SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.8 = SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.9 = SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.10 = SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.11 = STRING: AlertName: ICMP_Unreachable_Storm AlertDateTime: 16:41:46 2013-09-16 SensorIPAddress: 172.16.64.60 SensorName: IPSEC VulnStatus: Detected attack (vuln not scanned recently)]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patStrColon"><![CDATA[[^:]*]]></pattern>
+    <pattern name="patStrRightParenthesis"><![CDATA[[^\)]*]]></pattern>
+    <pattern name="patTimeYearMonDay"><![CDATA[\d{1,2}:\d{1,2}:\d{1,2}\s+\d{2,4}-\d{1,2}-\d{1,2}]]></pattern>
+  </patternDefinitions>
+
+  <parsingInstructions>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatIpAddr>\(via <_relayDevIpAddr:patStrRightParenthesis>\)<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+<hostName:gPatStr> <:gPatStr> \(via <_relayDevIpAddr:patStrRightParenthesis>\)<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+<_relayDevIpAddr:gPatIpAddr><_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+<hostName:gPatStr> <:gPatStr> <_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <setEventAttribute attr="extEventRecvProto">Snmp Trap</setEventAttribute>
+
+    <when test="exist _relayDevIpAddr">
+      <when test="matches($_relayDevIpAddr, '^\w+:')">
+        <collectFieldsByRegex src="$_relayDevIpAddr">
+          <regex><![CDATA[<:patStrColon>:\s+\[<_relayDevIpAddr:gPatIpAddr>\]<:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </when>
+
+      <when test="$_relayDevIpAddr != '127.0.0.1'">
+        <when test="$_relayDevIpAddr != '0.0.0.0'">
+          <setEventAttribute attr="relayDevIpAddr">$_relayDevIpAddr</setEventAttribute>
+        </when>
+      </when>
+    </when>
+
+    <collectAndSetAttrByKeyValuePair sep="\t\\| SNMP" src="$_body">
+
+      <attrKeyMap attr="_id" key="SNMPv2-SMI::enterprises.2499 Enterprise Specific Trap "/>
+      <!-- SiteProtector_Central_Response (Response1)
+      <attrKeyMap attr="_eventEntryName" key="SNMPv2-SMI::enterprises.2499.1.1.1.1.1.1.1.1 = STRING: "/>
+        -->
+      <attrKeyMap attr="_eventEntryTime" key="SNMPv2-SMI::enterprises.2499.1.1.1.1.1.1.1.2 = STRING: "/>
+      <!-- TODO
+      <attrKeyMap attr="_eventEntryAmask" key="SNMPv2-SMI::enterprises.2499.1.1.1.1.1.1.1.3 = INTEGER: "/>
+        -->
+      <attrKeyMap attr="_eventEntryPriority" key="SNMPv2-SMI::enterprises.2499.1.1.1.1.1.1.1.4 = INTEGER: "/>
+      <attrKeyMap attr="_eventEntryProtocol" key="SNMPv2-SMI::enterprises.2499.1.1.1.1.1.1.1.5 = INTEGER: "/>
+      <attrKeyMap attr="_eventEntrySourceIpAddress" key="SNMPv2-SMI::enterprises.2499.1.1.1.1.1.1.1.6 = STRING: "/>
+      <attrKeyMap attr="_eventEntryDestinationIpAddress" key="SNMPv2-SMI::enterprises.2499.1.1.1.1.1.1.1.7 = STRING: "/>
+      <attrKeyMap attr="_eventEntrySourceName" key="SNMPv2-SMI::enterprises.2499.1.1.1.1.1.1.1.8 = STRING: "/>
+      <attrKeyMap attr="_eventEntryDestinationName" key="SNMPv2-SMI::enterprises.2499.1.1.1.1.1.1.1.9 = STRING: "/>
+      <attrKeyMap attr="_eventEntryIcmpType" key="SNMPv2-SMI::enterprises.2499.1.1.1.1.1.1.1.10 = STRING: "/>
+      <attrKeyMap attr="_eventEntryIcmpCode" key="SNMPv2-SMI::enterprises.2499.1.1.1.1.1.1.1.11 = STRING: "/>
+      <attrKeyMap attr="_eventEntrySourcePort" key="SNMPv2-SMI::enterprises.2499.1.1.1.1.1.1.1.12 = INTEGER: "/>
+      <attrKeyMap attr="_eventEntryDestinationPort" key="SNMPv2-SMI::enterprises.2499.1.1.1.1.1.1.1.13 = INTEGER: "/>
+      <attrKeyMap attr="_eventEntrySourcePortName" key="SNMPv2-SMI::enterprises.2499.1.1.1.1.1.1.1.14 = STRING: "/>
+      <attrKeyMap attr="_eventEntryDestinationPortName" key="SNMPv2-SMI::enterprises.2499.1.1.1.1.1.1.1.15 = STRING: "/>
+      <attrKeyMap attr="_eventEntryUserActionList" key="SNMPv2-SMI::enterprises.2499.1.1.1.1.1.1.1.16 = STRING: "/>
+      <!-- SiteProtector_Central_Response (Response1)
+      <attrKeyMap attr="_eventEntryName25" key="SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.1 = STRING: "/>
+        -->
+      <!-- eventEntryTime25 -->
+      <attrKeyMap attr="_eventEntryTime" key="SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.2 = STRING: "/>
+      <!-- eventEntryProtocol25 -->
+      <attrKeyMap attr="_eventEntryProtocol" key="SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.3 = STRING: "/>
+      <!-- eventEntrySourceIpAddress25 -->
+      <attrKeyMap attr="_eventEntrySourceIpAddress" key="SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.4 = STRING: "/>
+      <!-- eventEntryDestinationIpAddress25 -->
+      <attrKeyMap attr="_eventEntryDestinationIpAddress" key="SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.5 = STRING: "/>
+      <!-- eventEntryIcmpType25 -->
+      <attrKeyMap attr="_eventEntryIcmpType" key="SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.6 = STRING: "/>
+      <!-- eventEntryIcmpCode25 -->
+      <attrKeyMap attr="_eventEntryIcmpCode" key="SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.7 = STRING: "/>
+      <!-- eventEntrySourcePort25 -->
+      <attrKeyMap attr="_eventEntrySourcePort" key="SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.8 = STRING: "/>
+      <!-- eventEntryDestinationPort25 -->
+      <attrKeyMap attr="_eventEntryDestinationPort" key="SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.9 = STRING: "/>
+      <attrKeyMap attr="_eventEntryUserActionList25" key="SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.10 = STRING: "/>
+      <attrKeyMap attr="_eventEntryEventSpecificInfo25" key="SNMPv2-SMI::enterprises.2499.1.1.2.1.1.1.1.11 = STRING: "/>
+      <attrKeyMap attr="_logEntryTime" key="SNMPv2-SMI::enterprises.2499.1.4.1.1.1.1 = Timeticks: "/>
+      <attrKeyMap attr="_logEntrySource" key="SNMPv2-SMI::enterprises.2499.1.4.1.1.1.2 = STRING: "/>
+      <attrKeyMap attr="_logEntryCategory" key="SNMPv2-SMI::enterprises.2499.1.4.1.1.1.3 = STRING: "/>
+      <attrKeyMap attr="_logEntryEventId" key="SNMPv2-SMI::enterprises.2499.1.4.1.1.1.4 = INTEGER: "/>
+      <attrKeyMap attr="_logEntryDescription" key="SNMPv2-SMI::enterprises.2499.1.4.1.1.1.5 = STRING: "/>
+      <attrKeyMap attr="_logEntryData" key="SNMPv2-SMI::enterprises.2499.1.4.1.1.1.6 = Hex-STRING: "/>
+
+    </collectAndSetAttrByKeyValuePair>
+
+    <when test="exist _id">
+      <collectFieldsByRegex src="$_id">
+        <regex><![CDATA[\(<_id:gPatInt>\)]]></regex>
+      </collectFieldsByRegex>
+    </when>
+
+    <when test="exist _eventEntryProtocol">
+      <when test="$_eventEntryProtocol != ''">
+        <setEventAttribute attr="ipProto">$_eventEntryProtocol</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _eventEntrySourceIpAddress">
+      <when test="$_eventEntrySourceIpAddress != ''">
+        <setEventAttribute attr="srcIpAddr">$_eventEntrySourceIpAddress</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _eventEntrySourcePort">
+      <when test="$_eventEntrySourcePort != ''">
+        <setEventAttribute attr="srcIpPort">$_eventEntrySourcePort</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _eventEntrySourcePortName">
+      <when test="$_eventEntrySourcePortName != ''">
+        <setEventAttribute attr="srcDevPort">$_eventEntrySourcePortName</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _eventEntryDestinationIpAddress">
+      <when test="$_eventEntryDestinationIpAddress != ''">
+        <setEventAttribute attr="destIpAddr">$_eventEntryDestinationIpAddress</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _eventEntryDestinationPort">
+      <when test="$_eventEntryDestinationPort != ''">
+        <setEventAttribute attr="destIpPort">$_eventEntryDestinationPort</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _eventEntryDestinationPortName">
+      <when test="$_eventEntryDestinationPortName != ''">
+        <setEventAttribute attr="destDevPort">$_eventEntryDestinationPortName</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _eventEntryIcmpType">
+      <when test="$_eventEntryIcmpType != ''">
+        <setEventAttribute attr="icmpType">$_eventEntryIcmpType</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _eventEntryIcmpCode">
+      <when test="$_eventEntryIcmpCode != ''">
+        <setEventAttribute attr="icmpCode">$_eventEntryIcmpCode</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _eventEntryTime">
+      <collectFieldsByRegex src="$_eventEntryTime">
+        <regex><![CDATA[<_time:gPatTime>\s+<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>]]></regex>
+      </collectFieldsByRegex>
+    </when>
+
+    <when test="exist _eventEntryUserActionList25">
+      <collectFieldsByRegex src="$_eventEntryUserActionList25">
+        <regex><![CDATA[<_actionType:gPatStr>=<_actionDetail:gPatStr>]]></regex>
+      </collectFieldsByRegex>
+
+      <when test="exist _actionType">
+        <when test="$_actionType = 'KILL'">
+          <setEventAttribute attr="eventAction">1</setEventAttribute>
+          <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+        </when>
+        <when test="$_actionType = 'FIREWALL'">
+          <setEventAttribute attr="eventAction">0</setEventAttribute>
+          <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+        </when>
+        <otherwise>
+          <!-- test='$_actionType IN "VIEW_SESS,EMAIL,LOG_RAW,DISPLAY,LOG_DB,SNMP_TRAP,USER_SPECIFIED1,USER_SPECIFIED2,USER_SPECIFIED3,USER_SPECIFIED4"'> -->
+          <setEventAttribute attr="eventAction">0</setEventAttribute>
+          <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        </otherwise>
+      </when>
+    </when>
+
+    <when test="exist _id">
+
+      <when test="$_id = '1'">
+        <setEventAttribute attr="eventType">"IBM-ISS-EventInfo"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+        <!-- TODO -->
+      </when>
+
+      <when test="$_id = '2'">
+        <setEventAttribute attr="eventType">"IBM-ISS-LogDataTrap"</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+        <!-- TODO -->
+      </when>
+
+      <when test="$_id IN '3,4,5'">
+
+        <when test="$_id = '3'">
+          <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+        </when>
+        <when test="$_id = '4'">
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </when>
+        <when test="$_id = '5'">
+          <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+        </when>
+
+        <when test="exist _eventEntryEventSpecificInfo25">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_eventEntryEventSpecificInfo25">
+                <regex><![CDATA[SensorName:\s+<_reptDevName:gPatStr>\s+ObjectName:\s+<:gPatInt>\s+DestinationAddress:\s+<:gPatIpAddr>\s+AlertName:\s+<_alertType:gPatStr>\s+AlertTarget:\s+<:gPatIpAddr>\s+AlertCount:\s+<_alertCount:gPatInt>\s+VulnStatus:\s+<_vulnReportStatus:gPatMesgBody>\s+AlertDateTime:\s+<_alertDateTime:patTimeYearMonDay>\s+ObjectType:\s+<:gPatSentence>\s+SourceAddress:\s+<:gPatIpAddr>\s+SensorAddress:\s+<_reptDevIpAddr:gPatIpAddr>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <case>
+              <collectFieldsByRegex src="$_eventEntryEventSpecificInfo25">
+                <regex><![CDATA[AlertName:\s+<_alertType:gPatStr>\s+AlertDateTime:\s+<_alertDateTime:patTimeYearMonDay>\s+SensorIPAddress:\s+<_reptDevIpAddr:gPatIpAddr>\s+SensorName:\s+<_reptDevName:gPatStr>\s+VulnStatus:\s+<_vulnReportStatus:gPatMesgBody>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+          </switch>
+
+          <when test="exist _alertDateTime">
+            <collectFieldsByRegex src="$_alertDateTime">
+              <regex><![CDATA[<_time:gPatTime>\s+<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>]]></regex>
+            </collectFieldsByRegex>
+          </when>
+
+          <when test="exist _alertType">
+            <when test="$_alertType != ''">
+              <setEventAttribute attr="eventType">combineMsgId("IBM-ISS-", $_alertType)</setEventAttribute>
+            </when>
+          </when>
+
+          <when test="exist _alertCount">
+            <when test="$_alertCount != ''">
+              <setEventAttribute attr="count">$_alertCount</setEventAttribute>
+            </when>
+          </when>
+
+          <when test="exist _vulnReportStatus">
+            <when test="$_vulnReportStatus != ''">
+              <setEventAttribute attr="vulnReportStatus">$_vulnReportStatus</setEventAttribute>
+            </when>
+          </when>
+
+        </when>
+      </when>
+    </when>
+
+    <when test="exist _reptDevName">
+      <when test="$_reptDevName != ''">
+        <setEventAttribute attr="reptDevName">$_reptDevName</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _reptDevIpAddr">
+      <when test="$_reptDevIpAddr != ''">
+        <setEventAttribute attr="reptDevIpAddr">$_reptDevIpAddr</setEventAttribute>
+      </when>
+    </when>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+
+  </parsingInstructions>
+
+</eventParser>

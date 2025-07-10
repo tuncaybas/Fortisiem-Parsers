@@ -1,0 +1,317 @@
+<eventParser name="GenericCEFParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[CEF:0|ArcSight|ArcSight|7.6.0.8009.0|agent:050|Connector Raw Event Statistics|Low| eventId=48909 mrt=1503438141120 categorySignificance=/Informational categoryBehavior=/Execute/Response categoryDeviceGroup=/Application catdt=Security Management categoryOutcome=/Success categoryObject=/Host/Application art=1503438141125 cat=/Agent/RawEvent/Statistics deviceSeverity=Warning rt=1503438141120 fileType=Agent cs1=1.0404921700223713 cs2=538.50225950783 cs3=0.85 cs4=130131 cs5=433.77 cs6=3hvQ5CV4BABDK9QtqtzDQCQ\=\= cn1=46510 cn2=24071051 cn3=255 deviceCustomDate1=1503437841120 cs1Label=Event throughput cs2Label=Raw event character throughput cs3Label=Event throughput (SLC) cs4Label=Raw event length (SLC) cs5Label=Raw event character throughput (SLC) cs6Label=Destination ID cn1Label=Total event count cn2Label=Total raw event length cn3Label=Event count (SLC) deviceCustomDate1Label=Last time ahost=1.1.1.1 agt=2.2.2.2 agentZoneURI=/All Zones/ArcSight System/Private Address Space Zones/RFC1918: 1.1.1.1-2.2.2.2 amac=00-0C-29-0D-87-76 av=7.6.0.8009.0 atz=Asia/Taipei at=syslog dvc=1.1.1.1 deviceZoneURI=/All Zones/ArcSight System/Private Address Space Zones/RFC1918: 1.1.1.1-2.2.2.2 dvcmac=00-0C-29-0D-87-76 dtz=Asia/Taipei _cefVer=0.1 aid=3hvQ5CV4BABDK9QtqtzDQCQ\=\=]]></testEvent>
+    <testEvent><![CDATA[CEF:0|Fortinet|Fortigate||00013|traffic: forward|High| eventId=31166 proto=TCP in=7511 out=2287 catdt=Network-based IDS/IPS art=1503420280948 cat=traffic:forward deviceSeverity=elevated act=close rt=1503420201000 deviceDirection=1 src=1.1.1.1 sourceZoneURI=/All Zones/ArcSight System/Private Address Space Zones/RFC1918: 1.1.1.1-2.2.2.2 sourceTranslatedAddress=10.1.1.1 sourceTranslatedZoneURI=/All Zones/ArcSight System/Public Address Space Zones/APNIC/10.0.0.0-10.1.1.1 (APNIC) spt=55563 sourceTranslatedPort=55563 suid=43540 dst=10.3.3.3 destinationZoneURI=/All Zones/ArcSight System/Public Address Space Zones/Xerox Corporation dpt=443 destinationServiceName=HTTPS cs1=11111111-1111-1111-1111-111111111111 cs5=2 cs6=Collaboration cn1=1 cn2=35506869 cn3=13 cs1Label=UUID Of The Firewall Policy cs2Label=Reference cs3Label=VPN cs4Label=Status cs5Label=Policy ID cs6Label=Application Category cn1Label=Number Of Application Control Logs cn2Label=Session ID cn3Label=Packets Received ahost=10.1.1.3 agt=10.1.1.3 agentZoneURI=/All Zones/ArcSight System/Private Address Space Zones/RFC1918: 10.1.1.1-10.2.2.2 amac=00-0C-29-0D-87-76 av=7.6.0.8009.0 atz=Asia/Taipei at=syslog dvchost=FGT60E4Q16000067 dtz=Asia/Taipei deviceExternalId=FGT60E4Q16000067 deviceInboundInterface=internal deviceOutboundInterface=wan1 _cefVer=0.1 ad.dummy=date\=2017-08-23 time\=00:43:21 devname\=FGT60E4Q16000067 devid\=FGT60E4Q16000067 logid\=0000000013 type\=traffic subtype\=forward level\=notice vd\=root srcip\=10.1.1.2 srcport\=55563 srcintf\="internal" dstip\=10.10.3.3 dstport\=443 dstintf\="wan1" poluuid\=11111111-1111-1111-1111-111111111111 sessionid\=35506869 proto\=6 action\=close policyid\=2 policytype\=policy dstcountry\="United States" srccountry\="Reserved" trandisp\=snat transip\=10.10.4.4 transport\=55563 service\="HTTPS" appid\=43540 app\="Skype.Portals" appcat\="Collaboration" apprisk\=elevated applist\="default" appact\=detected duration\=113 sentbyte\=2287 rcvdbyte\=7511 sentpkt\=20 rcvdpkt\=13 utmaction\=allow countapp\=1 ad.app=Skype.Portals ad.srccountry=Reserved ad.app__list=default ad.policytype=policy ad.dstcountry=United States ad.vd=root aid=3hvQ5CV4BABDK9QtqtzDQCQ\=\=]]></testEvent>
+
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patStrEndSep"><![CDATA[[^|]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\s*CEF\s*:\d+\|(?:<:patStrEndSep>\|){6}\s*]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>?\s*<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<:gPatStr>\s+)?CEF\s*:<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </case>
+      <default>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^CEF\s*:<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </default>
+    </switch>
+
+    <setEventAttribute attr="eventType">CEF-Generic</setEventAttribute>
+
+    <when test="matches($_body, '\\\|')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "\|", "::TEMP::")</setEventAttribute>
+    </when>
+    <setEventAttribute attr="_body">replaceStrInStr($_body, "|", "::SEP::")</setEventAttribute>
+    <when test="matches($_body, '::TEMP::')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "::TEMP::", "|")</setEventAttribute>
+    </when>
+
+    <collectAndSetAttrByPos sep="::SEP::" src="$_body">
+      <attrPosMap attr="version" pos="1"/>
+      <attrPosMap attr="_devVendor" pos="2"/>
+      <attrPosMap attr="_devProduct" pos="3"/>
+      <attrPosMap attr="appVersion" pos="4"/>
+      <attrPosMap attr="_sigId" pos="5"/>
+      <attrPosMap attr="categoryType" pos="6"/>
+      <attrPosMap attr="_severity" pos="7"/>
+      <attrPosMap attr="_extension" pos="8"/>
+    </collectAndSetAttrByPos>
+
+    <setEventAttribute attr="reptVendor">$_devVendor</setEventAttribute>
+    <setEventAttribute attr="reptModel">$_devProduct</setEventAttribute>
+    <setEventAttribute attr="_extension">replaceStrInStr($_extension, "\=", "=")</setEventAttribute>
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_extension">
+      <attrKeyMap attr="_eventId" key="eventId"/>
+      <attrKeyMap attr="remedyAction" key="act"/>
+      <attrKeyMap attr="appTransportProto" key="app"/>
+      <attrKeyMap attr="_cs1Label" key="cs1Label"/>
+      <attrKeyMap attr="_cs1" key="cs1"/>
+      <attrKeyMap attr="_cs2Label" key="cs2Label"/>
+      <attrKeyMap attr="_cs2" key="cs2"/>
+      <attrKeyMap attr="_cs3Label" key="cs3Label"/>
+      <attrKeyMap attr="_cs3" key="cs3"/>
+      <attrKeyMap attr="_cs4Label" key="cs4Label"/>
+      <attrKeyMap attr="_cs4" key="cs4"/>
+      <attrKeyMap attr="_cs5Label" key="cs5Label"/>
+      <attrKeyMap attr="_cs5" key="cs5"/>
+      <attrKeyMap attr="_cn1Label" key="cn1Label"/>
+      <attrKeyMap attr="_cn1" key="cn1"/>
+      <attrKeyMap attr="_cn2Label" key="cn2Label"/>
+      <attrKeyMap attr="_cn2" key="cn2"/>
+      <attrKeyMap attr="destDomain" key="destinationDnsDomain"/>
+      <attrKeyMap attr="destServiceName" key="destinationServiceName"/>
+      <attrKeyMap attr="postNATDestIpAddr" key="destinationTranslatedAddress"/>
+      <attrKeyMap attr="postNATDestIpPort" key="destinationTranslatedPort"/>
+      <attrKeyMap attr="direction" key="deviceDirection"/>
+      <attrKeyMap attr="domain" key="deviceDnsDomain"/>
+      <attrKeyMap attr="deviceIdentification" key="deviceExternalId"/>
+      <attrKeyMap attr="srcIntfName" key="deviceInboundInterface"/>
+      <attrKeyMap attr="domain" key="deviceNtDomain"/>
+      <attrKeyMap attr="destIntfName" key="deviceOutboundInterface"/>
+      <attrKeyMap attr="procName" key="deviceProcessName"/>
+      <attrKeyMap attr="postNATHostIpAddr" key="deviceTranslatedAddress"/>
+      <attrKeyMap attr="destName" key="dhost"/>
+      <attrKeyMap attr="destMACAddr" key="dmac"/>
+      <attrKeyMap attr="destDomain" key="dntdom"/>
+      <attrKeyMap attr="targetProcId" key="dpid"/>
+      <attrKeyMap attr="destUserPriv" key="dpriv"/>
+      <attrKeyMap attr="targetProcName" key="dproc"/>
+      <attrKeyMap attr="destIpPort" key="dport"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="destUserId" key="duid"/>
+      <attrKeyMap attr="destUser" key="duser"/>
+      <attrKeyMap attr="_hostIpAddr" key="dvc"/>
+      <attrKeyMap attr="hostName" key="dvchost"/>
+      <attrKeyMap attr="hostMACAddr" key="dvcmac"/>
+      <attrKeyMap attr="procId" key="dvcpid"/>
+      <attrKeyMap attr="_endTime" key="end"/>
+      <attrKeyMap attr="extEventId" key="externalId"/>
+      <attrKeyMap attr="_fileCreateTime" key="fileCreateTime"/>
+      <attrKeyMap attr="hashCode" key="fileHash"/>
+      <attrKeyMap attr="fileId" key="fileId"/>
+      <attrKeyMap attr="fileModificationTime" key="fileModificationTime"/>
+      <attrKeyMap attr="filePath" key="filePath"/>
+      <attrKeyMap attr="fileAccess" key="filePermission"/>
+      <attrKeyMap attr="fileType" key="fileType"/>
+      <attrKeyMap attr="fileName" key="fname"/>
+      <attrKeyMap attr="fileSize" key="fsize"/>
+      <attrKeyMap attr="recvBytes64" key="in"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="sentBytes64" key="out"/>
+      <attrKeyMap attr="_eventAction" key="outcome"/>
+      <attrKeyMap attr="_ipProto" key="proto"/>
+      <attrKeyMap attr="errReason" key="reason"/>
+      <attrKeyMap attr="infoURL" key="requestUrl"/>
+      <attrKeyMap attr="httpUserAgent" key="requestClientApplication"/>
+      <attrKeyMap attr="httpReferrer" key="requestContext"/>
+      <attrKeyMap attr="httpCookie" key="requestCookies"/>
+      <attrKeyMap attr="httpMethod" key="requestMethod"/>
+      <attrKeyMap attr="_rt" key="rt"/>
+      <attrKeyMap attr="srcName" key="shost"/>
+      <attrKeyMap attr="srcMACAddr" key="smac"/>
+      <attrKeyMap attr="srcDomain" key="sntDomain"/>
+      <attrKeyMap attr="srcDomain" key="sourceDnsDomain"/>
+      <attrKeyMap attr="serviceName" key="sourceServiceName"/>
+      <attrKeyMap attr="postNATSrcIpAddr" key="sourceTranslatedAddress"/>
+      <attrKeyMap attr="postNATSrcIpPort" key="sourceTranslatedPort"/>
+      <attrKeyMap attr="procId" key="spid"/>
+      <attrKeyMap attr="srcUserPriv" key="spriv"/>
+      <attrKeyMap attr="procName" key="sproc"/>
+      <attrKeyMap attr="srcIpPort" key="spt"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="_startTime" key="start"/>
+      <attrKeyMap attr="userId" key="suid"/>
+      <attrKeyMap attr="srcUser" key="suser"/>
+      <attrKeyMap attr="devEventTypeGrp" key="cat"/>
+    </collectFieldsByKeyValuePair>
+
+    <choose>
+      <when test="not_exist _cs1Label"/>
+      <when test="not_exist _cs1"/>
+      <when test="$_cs1Label = 'SupervisorHostName'">
+        <setEventAttribute attr="supervisorName">$_cs1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs2Label"/>
+      <when test="not_exist _cs2"/>
+      <when test="$_cs2Label = 'CustomerName'">
+        <setEventAttribute attr="customer">$_cs2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs3Label"/>
+      <when test="not_exist _cs3"/>
+      <when test="$_cs3Label = 'IncidentDetail'">
+        <setEventAttribute attr="incidentDetail">$_cs3</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs4Label"/>
+      <when test="not_exist _cs4"/>
+      <when test="$_cs4Label = 'RuleName'">
+        <setEventAttribute attr="ruleName">$_cs4</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs5Label"/>
+      <when test="not_exist _cs5"/>
+      <when test="$_cs5Label = 'IncidentEventIDList'">
+        <setEventAttribute attr="inIncidentEventIdList">$_cs5</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cn1Label"/>
+      <when test="not_exist _cn1"/>
+      <when test="$_cn1Label = 'CustomerID'">
+        <setEventAttribute attr="phCustId">$_cn1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cn2Label"/>
+      <when test="not_exist _cn2"/>
+      <when test="$_cn2Label = 'IncidentID'">
+        <setEventAttribute attr="incidentId">$_cn2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="exist _eventId">
+        <setEventAttribute attr="eventType">combineMsgId($_devProduct,"-CEF-", $_eventId)</setEventAttribute>
+      </when>
+      <when test="exist remedyAction">
+        <setEventAttribute attr="eventType">combineMsgId($_devProduct, "-CEF-", $categoryType, "-", $remedyAction)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">combineMsgId($_devProduct, "-CEF-", $categoryType)</setEventAttribute>
+
+        <choose>
+          <when test="not_exist _hostIpAddr"/>
+          <when test="matches($categoryType, '^PH_RULE_')">
+            <setEventAttribute attr="incidentRptIp">$_hostIpAddr</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="hostIpAddr">$_hostIpAddr</setEventAttribute>
+          </otherwise>
+        </choose>
+      </otherwise>
+    </choose>
+    <setEventAttribute attr="eventType">replaceStringByRegex($eventType, ":\s+", "-")</setEventAttribute>
+    <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "\s+", "-")</setEventAttribute>
+
+    <!--MMM dd yyyy HH:mm:ss or milliseconds since epoch (Jan 1st 1970).-->
+    <when test="exist _rt">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_rt">
+            <regex><![CDATA[<_mon1:gPatMon>\s+<_day1:gPatDay>\s+<_year1:gPatYear>\s+<_time1:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventTime">toDateTime($_mon1, $_day1, $_year1, $_time1)</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_rt">
+            <regex><![CDATA[^<eventTime:gPatInt>\d{3}$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _endTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_endTime">
+            <regex><![CDATA[<_mon1:gPatMon>\s+<_day1:gPatDay>\s+<_year1:gPatYear>\s+<_time1:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="endTime">toDateTime($_mon1, $_day1, $_year1, $_time1)</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$endTime">
+            <regex><![CDATA[^<endTime:gPatInt>\d{3}$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _startTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_startTime">
+            <regex><![CDATA[<_mon1:gPatMon>\s+<_day1:gPatDay>\s+<_year1:gPatYear>\s+<_time1:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="startTime">toDateTime($_mon1, $_day1, $_year1, $_time1)</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_startTime">
+            <regex><![CDATA[^<startTime:gPatInt>\d{3}$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _fileCreateTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_fileCreateTime">
+            <regex><![CDATA[<_mon1:gPatMon>\s+<_day1:gPatDay>\s+<_year1:gPatYear>\s+<_time1:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="fileCreateTime">toDateTime($_mon1, $_day1, $_year1, $_time1)</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$fileCreateTime">
+            <regex><![CDATA[^<fileCreateTime:gPatInt>\d{3}$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _ipProto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_ipProto)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist _eventAction"/>
+      <when test="$_eventAction = 'success'">
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <choose>
+      <when test="$_severity = '0'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventSeverity">$_severity</setEventAttribute>
+      </otherwise>
+    </choose>
+
+  </parsingInstructions>
+</eventParser>

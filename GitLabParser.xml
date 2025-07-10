@@ -1,0 +1,64 @@
+<eventParser name="GitLabParser">
+
+  <deviceType>
+    <Vendor>GitLab</Vendor>
+    <Model>GitLab</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[\[GITLAB_EVENT_DATA\] = \s*]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[[GITLAB_EVENT_DATA] = {"action_name":"pushed to","author":{"avatar_url":"https://secure.gravatar.com/avatar/62e30f8b2d3cbc60ed22c217c5fa4e57?s=80&d=identicon","id":185,"name":"gitmirror","state":"active","username":"gitmirror","web_url":"https://dgit.xyz.com/gitmirror"},"author_id":185,"author_username":"gitmirror","created_at":"2018-11-01T22:26:59.883Z","project_id":553,"push_data":{"action":"pushed","commit_count":1,"commit_from":"eea723957400d686063bf54eb2470661a28ae427","commit_title":"*Problem Description:schema upgrade","commit_to":"f1d7196b0cb458f6094dfabc983b6366d482faca","ref":"releases/FCS5_2_0","ref_type":"branch"},"serverIp":"1.1.1.11","serverName":"dgit.xyz.com","target_id":null,"target_iid":null,"target_title":null,"target_type":null}]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\[GITLAB_EVENT_DATA\] = <_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">GitLab-Generic</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">GITLAB_API</setEventAttribute>
+    <collectAndSetAttrByJSON src="$_body">
+      <attrKeyMap attr="reptDevIpAddr" key="serverIp"/>
+      <attrKeyMap attr="reptDevName" key="serverName"/>
+      <attrKeyMap attr="phCustId" key="phCustId"/>
+      <attrKeyMap attr="_action" key="action_name"/>
+      <attrKeyMap attr="status" key="author.state"/>
+      <attrKeyMap attr="userId" key="author.id"/>
+      <attrKeyMap attr="userId" key="author_id"/>
+      <attrKeyMap attr="user" key="author.name"/>
+      <attrKeyMap attr="user" key="author_username"/>
+      <attrKeyMap attr="_deviceTime" key="created_at"/>
+      <attrKeyMap attr="opName" key="push_data.action"/>
+      <attrKeyMap attr="comment" key="push_data.commit_title"/>
+      <attrKeyMap attr="targetName" key="push_data.ref"/>
+      <attrKeyMap attr="targetType" key="push_data.ref_type"/>
+      <attrKeyMap attr="targetName" key="target_title"/>
+      <attrKeyMap attr="targetType" key="target_type"/>
+      <attrKeyMap attr="projectName" key="projectName"/>
+    </collectAndSetAttrByJSON>
+
+    <setEventAttribute attr="eventType">GitLab</setEventAttribute>
+    <choose>
+      <when test="not_exist targetType">
+        <setEventAttribute attr="targetType">Project</setEventAttribute>
+      </when>
+      <when test="$targetType = 'null'">
+        <setEventAttribute attr="targetType">Project</setEventAttribute>
+      </when>
+    </choose>
+    <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $targetType)</setEventAttribute>
+    <when test="exist _action">
+      <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $_action)</setEventAttribute>
+      <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "\s+", "-")</setEventAttribute>
+    </when>
+    <when test="exist _deviceTime">
+      <collectFieldsByRegex src="$_deviceTime">
+        <!--"2018-11-01T22:26:59.883Z"-->
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>

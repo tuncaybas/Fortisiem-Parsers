@@ -1,0 +1,167 @@
+<eventParser name="IPswitchWS_FTPParser">
+  <deviceType>
+    <Vendor>IPswitch</Vendor>
+    <Model>WS_FTP</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patIPswitchMod"><![CDATA[channel|FTP|SFTP|SSH]]></pattern>
+    <pattern name="patStrRightAngle"><![CDATA[[^\>]*]]></pattern>
+    <pattern name="patStrLeftAngle"><![CDATA[[^\<]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+<:patIPswitchMod>:\s*]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<13>Jan 25 07:02:40 FTP01 channel: SFTP subsystem started in channel s_Id: 112, c_Id: 256, c_Window: 2147483628, c_MaxPacket: 16384, s_Window: 300000, s_MaxPacket: 30000 <Host=splawn-ftp-fwa, SessionID=43965182, Listener=172.16.1.9:22, Client=10.251.189.75:5491, User=abc.waters>]]></testEvent>
+    <testEvent><![CDATA[<12>Jan 25 07:02:40 FTP01 channel: abc@putty.projects.tartarus.org <Host=splawn-ftp-fwa, SessionID=43965182, Listener=172.16.1.9:22, Client=10.251.189.75:5491, User=abc.waters><Command=subsystem><Filename=Error.FailedChannelRequest>]]></testEvent>
+    <testEvent><![CDATA[<14>Jan 25 07:02:10 FTP01 SFTP: Invalid User <Host=abc-bcd, User=root><Command=NOTIFICATION, Parameters=Administrator login>]]></testEvent>
+    <testEvent><![CDATA[<14>Jan 25 07:39:09 FTP01 SFTP: IP Address was added to the IP Lockout List <Host=, User=10.61.16.129><Command=NOTIFICATION, Parameters=ServerProtectionRule>]]></testEvent>
+    <testEvent><![CDATA[<14>Jan 25 07:02:38 FTP01 SSH: Client closed connection <Host=abc-cds, SessionID=37538035, Listener=172.16.1.9:22, Client=10.251.189.75:5367, User=abc.waters>]]></testEvent>
+    <testEvent><![CDATA[<13>Jan 25 07:02:40 FTP01 SSH: Completed password Authentication. User logged in <Host=abc-cds, SessionID=43965182, Listener=172.16.1.9:22, Client=10.251.189.75:5491, User=abc.waters>]]></testEvent>
+    <testEvent><![CDATA[<13>Jan 25 07:39:03 FTP01 SSH: Connection established <SessionID=44619117, Listener=172.16.1.9:22, Client=10.61.16.129:53218>]]></testEvent>
+    <testEvent><![CDATA[<12>Jan 25 07:39:09 FTP01 SSH: IP Address 10.61.16.129 has been added to the IP Lockout blacklist <SessionID=20327496, Listener=172.16.1.9:22, Client=10.61.16.129:53844>]]></testEvent>
+    <testEvent><![CDATA[<11>Jan 25 07:39:09 FTP01 SSH: No User. Possible reasons: Invalid username, invalid license, error while accessing user database <SessionID=20327496, Listener=172.16.1.9:22, Client=10.61.16.129:53844, User=root>]]></testEvent>
+    <testEvent><![CDATA[<11>Jan 25 07:02:10 FTP01 SSH: OnPacketReceive, Object reference not set to an instance of an object.:    at SSHServerAPI.Transport.Auth.Processor.UserAuthFailed(Boolean bPartialSuccess, Boolean bIsNormalAuth) at SHServerAPI.Transport.Auth.Processor.Process() at SSHServerAPI.Transport.PacketDispatch._AUTHDispatch() at SSHServerAPI.Transport.PacketDispatch.Process(SSH2BufferStream PacketStream, Byte[] PacketMAC, Byte[] ReadMAC) at SSHServerAPI.Transport.Core._ProcessReadPacket(SSH2BufferStream _Packet, Byte[] PacketMAC,  <SessionID=29459056, Listener=10.16.1.9:22, Client=10.3.202.103:21265>]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[^\s*<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<reptDevName:gPatHostName>\s+<module:patIPswitchMod>:\s*<_body:patStrLeftAngle><_body1:gPatMesgBody>$]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">"IPswitch_Generic"</setEventAttribute>
+
+    <choose>
+      <when test="$module = 'channel'">
+        <switch>
+          <case>
+            <!--SFTP subsystem started in channel s_Id: 1, c_Id: 1, c_Window: 1, c_MaxPacket: 1, s_Window: 1, s_MaxPacket: 1 <Host=splawn-ftp-fwa, SessionID=1, Listener=1.1.1.1:1, Client=1.1.1.1:1, User=chris.waters>-->
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[^SFTP\s+subsystem\s+started\s+in\s+channel]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">"IPswitch_Channel_Started"</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$module = 'FTP'">
+        <switch>
+          <case>
+            <!--Connection closed <SessionID=1, Listener=1.1.1.1:1, Client=1.1.1.1:1><Command=start>-->
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[^Connection\s+<_action:gPatStr>]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("IPswitch_FTP_Connection_",$_action)</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$module = 'SFTP'">
+        <switch>
+          <case>
+            <!--
+            Invalid User <Host=splawn-ftp-fwa, User=root><Command=NOTIFICATION, Parameters=Administrator login>
+            IP Address was added to the IP Lockout List <Host=, User=1.1.1.1><Command=NOTIFICATION, Parameters=ServerProtectionRule>
+            -->
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[^Invalid\s+User]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">IPswitch_SFTP_Invalid_User</setEventAttribute>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[^IP\s+Address\s+was\s+added\s+to\s+the\s+IP\s+Lockout\s+List]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">IPswitch_SFTP_IP_Added</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$module = 'SSH'">
+        <!--
+     Client closed connection <Host=splawn-ftp-fwa, SessionID=1, Listener=1.1.1.1:1, Client=1.1.1.1:1, User=chris.waters>
+     Completed password Authentication. User logged in <Host=splawn-ftp-fwa, SessionID=1, Listener=1.1.1.1:1, Client=1.1.1.1:1, User=chris.waters>
+     Connection established <SessionID=1, Listener=1.1.1.1:1, Client=1.1.1.1:1>
+     IP Address 1.1.1.1 has been added to the IP Lockout blacklist <SessionID=1, Listener=1.1.1.1:1, Client=1.1.1.1:1>
+     No User. Possible reasons: Invalid username, invalid license, error while accessing user database <SessionID=1, Listener=1.1.1.1:1, Client=1.1.1.1:1, User=root>
+     OnPacketReceive, Object reference not set to an instance of an object.:    at SSHServerAPI.Transport.Auth.Processor.UserAuthFailed(Boolean bPartialSuccess, Boolean bIsNormalAuth) at SHServerAPI.Transport.Auth.Processor.Process() at SSHServerAPI.Transport.PacketDispatch._AUTHDispatch() at SSHServerAPI.Transport.PacketDispatch.Process(SSH2BufferStream PacketStream, Byte[] PacketMAC, Byte[] ReadMAC) at SSHServerAPI.Transport.Core._ProcessReadPacket(SSH2BufferStream _Packet, Byte[] PacketMAC,  <SessionID=29459056, Listener=172.16.1.9:22, Client=183.3.202.103:21265>
+      -->
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[^Client\s+closed\s+connection]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">IPswitch_SSH_Connection_Closed</setEventAttribute>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[^Completed\s+password\s+Authentication.\s*User\s+logged\s+in]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">IPswitch_SSH_User_logged</setEventAttribute>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[^Connection\s+established]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">IPswitch_SSH_Connection_Established</setEventAttribute>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[^IP\s+Address\s+<destIpAddr:gPatIpAddr>\s+has\s+been\s+added\s+to\s+the\s+IP\s+Lockout\s+blacklist]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">IPswitch_SSH_IP_Added</setEventAttribute>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[^No\s+User.\s*Possible\s+reasons:\s*Invalid\s+username,\s*invalid\s+license,\s*error\s+while\s+accessing\s+user\s+database]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">IPswitch_SSH_No_User</setEventAttribute>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[^OnPacketReceive,\s*Object\s+reference\s+not\s+set\s+to\s+an\s+instance\s+of\s+an\s+object]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">IPswitch_SSH_Reference_Not_Setted</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <otherwise/>
+    </choose>
+    <when test="exist _body1">
+      <collectAndSetAttrByRegex src="$_body1">
+        <regex><![CDATA[\<<_infoStr:patStrRightAngle>\>(?:\<<_commandStr:patStrRightAngle>\>)?]]></regex>
+      </collectAndSetAttrByRegex>
+      <collectFieldsByKeyValuePair sep=", " kvsep="=" src="$_infoStr">
+        <attrKeyMap attr="hostName" key="Host"/>
+        <attrKeyMap attr="sessionId" key="SessionID"/>
+        <attrKeyMap attr="_hostIpAddr" key="Listener"/>
+        <attrKeyMap attr="_srcIpAddr" key="Client"/>
+        <attrKeyMap attr="user" key="User"/>
+      </collectFieldsByKeyValuePair>
+      <when test="exist _hostIpAddr">
+        <collectAndSetAttrByRegex src="$_hostIpAddr">
+          <regex><![CDATA[<hostIpAddr:gPatIpAddr>:<ipPort:gPatInt>]]></regex>
+        </collectAndSetAttrByRegex>
+      </when>
+      <when test="exist _srcIpAddr">
+        <collectAndSetAttrByRegex src="$_srcIpAddr">
+          <regex><![CDATA[<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>]]></regex>
+        </collectAndSetAttrByRegex>
+      </when>
+      <when test="exist _commandStr">
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_commandStr">
+              <regex><![CDATA[Command=<command:gPatStrComma>(?:,\s*Parameters=<paraName:gPatMesgBody>)?]]></regex>
+            </collectAndSetAttrByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+    </when>
+  </parsingInstructions>
+</eventParser>
