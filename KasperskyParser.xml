@@ -1,0 +1,112 @@
+<eventParser name="KasperskyParser">
+  <deviceType>
+    <Vendor>Kaspersky</Vendor>
+    <Model>Security Center</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[CEF:0|KasperskyLab|SecurityCenter|10.4.343|KLSRV_UPD_BASES_UPDATED|Базы обновлены|1|msg=Базы обновлены. Идентификатор обновления (метка времени 2017-12-08T01:25:00) rt=1512696831 dhost=KSC dst=127.0.0.1 cs2=1093 cs2Label=ProductName cs3=1.0.0.0 cs3Label=ProductVersion]]></testEvent>
+    <testEvent><![CDATA[CEF:0|KasperskyLab|SecurityCenter|10.5.1781|GNRL_EV_VIRUS_FOUND|Обнаружен вредоносный объект|4|msg=Результат:     Обнаружено: EICAR-Test-File\r\nПользователь:     JETCSIRT\\superman (Активный пользователь)\r\nОбъект:     C:\\Users\\superman\\Desktop\\test.txt\r\nПричина:     Экспертный анализ\r\nДата выпуска баз:     10/3/2018 10:23:00 PM\r\nХеш:     275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f\r\n rt=1540210325 dhost=DC02 dst=10.10.3.228 cs2=KES cs2Label=ProductName cs3=11.0.0.0 cs3Label=ProductVersion filePath=C:\\Users\\superman\\Desktop\\test.txt cs1=EICAR-Test-File cs1Label=VirusName duser=JETCSIRT\\superman]]></testEvent>
+    <testEvent><![CDATA[CEF:0|KasperskyLab|SecurityCenter|10.5.1781|KLSRV_HOST_OUT_CONTROL|Контроль над устройством потерян.|4|msg=Контроль над устройством "DC01" потерян. rt=1539968032 dhost=KSC01 dst=127.0.0.1 cs2=1093 cs2Label=ProductName cs3=1.0.0.0 cs3Label=ProductVersion]]></testEvent>
+    <testEvent><![CDATA[CEF:0|KasperskyLab|SecurityCenter|10.5.1781|KLSRV_HOST_STATUS_CRITICAL|Статус устройства - "Критический"|4|msg=Статус устройства 'DC02' изменился на 'Критический': Давно не выполнялся поиск вирусов. rt=1540287707 dhost=KSC01 dst=127.0.0.1 cs2=1093 cs2Label=ProductName cs3=1.0.0.0 cs3Label=ProductVersion]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patVbar"><![CDATA[[^|]*]]></pattern>
+    <pattern name="patStrQuote"><![CDATA[[^"^' \\]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\bCEF:\d+\|KasperskyLab\|SecurityCenter\|\d]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[CEF:\d+\|<:patVbar>\|<:patVbar>\|<_ver:patVbar>\|<_et:patVbar>\|<:patVbar>\|<eventSeverity:patVbar>\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">combineMsgId("Kaspersky-", $_et)</setEventAttribute>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="destName" key="dhost"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="deviceTime" key="rt"/>
+      <attrKeyMap attr="user" key="duser"/>
+      <attrKeyMap attr="virusName" key="cs1"/>
+      <attrKeyMap attr="filePath" key="filePath"/>
+      <attrKeyMap attr="task" key="cs5"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist msg">
+      <setEventAttribute attr="_msg">replaceStrInStr($msg, "\r\n", "::SEP::")</setEventAttribute>
+      <collectAndSetAttrByKeyValuePair sep="::SEP::" src="$_msg">
+        <attrKeyMap attr="virusName" key="Обнаружено: "/>
+        <attrKeyMap attr="user" key="Пользователь: "/>
+        <attrKeyMap attr="virdbVer" key="Дата выпуска баз: "/>
+        <attrKeyMap attr="hashSHA256" key="Хеш: "/>
+        <attrKeyMap attr="errReason" key="Причина: "/>
+        <attrKeyMap attr="fwAction" key="Результат: "/>
+      </collectAndSetAttrByKeyValuePair>
+
+      <when test="not_exist user">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_msg">
+              <regex><![CDATA[ "<domain:patStrQuote>[\\]{1,2}<user:patStrQuote>"]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_msg">
+            <regex><![CDATA[(?:устройством|устройства) (?:\'|\")<hostName:patStrQuote>(?:\'|\")]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_msg">
+            <regex><![CDATA[адреса "<hostName:patStrQuote>"]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_msg">
+            <regex><![CDATA[программа "<swProcName:gPatMesgBodyMin>"]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist user">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$user">
+            <regex><![CDATA[<domain:patStrQuote>[\\]{1,2}<user:patStrQuote>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <choose>
+      <!-- 7 is for init, deinit, general errors -->
+      <when test="not_exist eventSeverity">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$eventSeverity = '1'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$eventSeverity = '2'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$eventSeverity = '3'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$eventSeverity = '4'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

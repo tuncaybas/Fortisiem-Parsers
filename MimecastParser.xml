@@ -1,0 +1,511 @@
+<eventParser name="MimecastParser">
+  <deviceType>
+    <Vendor>Mimecast</Vendor>
+    <Model>Cloud Gateway</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patExceptColon"><![CDATA[[^:]+]]></pattern>
+    <pattern name="patExceptComma"><![CDATA[[^,]+]]></pattern>
+    <pattern name="patEpochSec"><![CDATA[\d{10}]]></pattern>
+  </patternDefinitions>
+
+  <testEvents>
+    <testEvent><![CDATA[Mar 01 2024 01:30:05Z Mimecast_CloudAgent,phCustId=1,reptDevIpAddr=1.1.1.1,reptDevName=api.services.mimecast.com,eventType=delivery: {"aggregateId":"MG1tyMHwODip8fjzZY1234","processingId":"QuF7JkbK3d_-2a14mc-zxeaM7g12345Wh6x-U_jQ","accountId":"CUSxxxxx","timestamp":1709167265054,"senderEnvelope":"postmaster@demo.example.com","messageId":null,"subject":"We found suspicious files in a message","recipients":"user1@example.com","delivered":"false","destinationIp":"2.2.2.2","Hostname":"null","numberAttachments":"0","direction":"Outbound","totalSizeAttachments":"0","deliveryAttempts":"13","tlsVersion":null,"tlsCipher":null,"emailSize":"0","tlsUsed":"No","route":"Outbound","deliveryErrors":null,"rejectionType":"Recipient server unavailable or busy","rejectionCode":"421","rejectionInfo":"4.7.0 Not allowed.","type":"delivery","subtype":"false","_offset":126832258,"_partition":191}]]></testEvent>
+    <testEvent><![CDATA[Mar 01 2024 18:18:00Z Mimecast_CloudAgent,phCustId=1,reptDevIpAddr=1.1.1.1,reptDevName=api.services.mimecast.com,eventType=get-audit-events: {"id": "eNoVzt0KgjAAQOF32a1C_mRS0MXQVrOorLQ2usltmFlN3CZU9O7ZAxy-8wFKMNOKioMJkMeQZZdyjJcdRV1sBNpjRput1an1DVevOmJJPcxPIYFkU8Q6O-D4alB6HtAkpTX3UN6kK9wKyBOaWpgFt03hbwlscIgWM70zUYA1Kef5W02BDS6GV_ouyz_ujRx37AeBawNmlJYP0TLJRX8VZXvoOg4cOn7fdKJVlXyCifv9AQ_OPIs", "auditType": "User Logged On", "user": "outbound-auth@demo-svc.example.com", "eventTime": "2024-03-01T18:15:05+0000", "eventInfo": "Successful authentication for outbound-auth@demo-svc.example.com <SMTP Outbound Auth>, Date: 2024-03-01, Time: 13:15:05 GMT-05:00, IP: 2.2.2.2, Application: SMTP-MTA2, Method: Cloud", "category": "authentication_logs"}]]></testEvent>
+    <testEvent><![CDATA[Mar 01 2024 18:20:45Z Mimecast_CloudAgent,phCustId=1,reptDevIpAddr=1.1.1.1,reptDevName=api.services.mimecast.com,eventType=attachment protect: {"aggregateId":"Vp6gqQX8M8O10Qyf4ulSCQ_1709187146","processingId":"A0U5xB38AszykADkkJZ01Y5JBkuAWZYphRM_ufDenc4_1709187146","accountId":"CUSxxxxx","timestamp":1709187149673,"fileName":"attach-11111111-1111-1111-1111-111111111111.pdf","sha256":"36231ee4f31b1e5ce9b28198404ec68701f7f0d68d2c9b56cbb813806fe67d24","fileExtension":"pdf","sha1":"eedb2c841b8de2cbcc8a3daf7b619cb4206cbbf8","md5":"73197578e930200e0da997ca1937e666","type":"attachment protect","subtype":null,"_offset":126900434,"_partition":191}]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[^<:gPatMon>\s<:gPatDay>\s<:gPatYear>\s<:gPatTime><:gPatTimeZone>\sMimecast_CloudAgent]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^<_mon:gPatMon>\s<_day:gPatDay>\s<_year:gPatYear>\s<_time:gPatTime><_tz:gPatTimeZone>\sMimecast_CloudAgent,phCustId=<phCustId:gPatInt>,reptDevIpAddr=<reptDevIpAddr:gPatIpAddr>,reptDevName=<reptDevName:patExceptComma>,eventType=<_et:patExceptColon>:\s+<_json:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="_et">replaceStringByRegex($_et, "[\s-]+", "_")</setEventAttribute>
+        <setEventAttribute attr="eventType">combineMsgId("Mimecast_", $_et)</setEventAttribute>
+      </case>
+      <default>
+        <setEventAttribute attr="eventType">Mimecast_Generic</setEventAttribute>
+      </default>
+    </switch>
+    <setEventAttribute attr="extEventRecvProto">MIMECAST_API</setEventAttribute>
+
+    <choose>
+      <when test="not_exist _et"/>
+      <when test="$_et = 'delivery'">
+        <collectAndSetAttrByJSON src="$_json">
+          <attrKeyMap attr="_aggId" key="aggregateId"/>
+          <attrKeyMap attr="correlationId" key="processingId"/>
+          <attrKeyMap attr="accountId" key="accountId"/>
+          <attrKeyMap attr="_epochTimestamp" key="timestamp"/>
+          <attrKeyMap attr="senderMailAddr" key="senderEnvelope"/>
+          <attrKeyMap attr="receiverMailAddr" key="recipients"/>
+          <attrKeyMap attr="mailSubject" key="subject"/>
+          <attrKeyMap attr="_isDelivered" key="delivered"/>
+          <attrKeyMap attr="destIpAddr" key="destinationIp"/>
+          <attrKeyMap attr="destName" key="Hostname"/>
+          <attrKeyMap attr="_numAttachments" key="numberAttachments"/>
+          <attrKeyMap attr="direction" key="direction"/>
+          <attrKeyMap attr="_sizeAttachments" key="totalSizeAttachments"/>
+          <attrKeyMap attr="_retryCount" key="deliveryAttempts"/>
+          <attrKeyMap attr="tlsVersion" key="tlsVersion"/>
+          <attrKeyMap attr="tlsCipher" key="tlsCipher"/>
+          <attrKeyMap attr="_emailSize" key="emailSize"/>
+          <attrKeyMap attr="_tlsUsed" key="tlsUsed"/>
+          <attrKeyMap attr="_routeUsed" key="route"/>
+          <attrKeyMap attr="msg" key="rejectionType"/>
+          <attrKeyMap attr="errorCode" key="rejectionCode"/>
+          <attrKeyMap attr="errReason" key="rejectionInfo"/>
+          <attrKeyMap attr="type" key="type"/>
+          <attrKeyMap attr="subtype" key="subtype"/>
+        </collectAndSetAttrByJSON>
+
+        <when test="exist errReason">
+          <setEventAttribute attr="errReason">trimAttribute($errReason, ".")</setEventAttribute>
+        </when>
+        <!-- email Size is the total sent or received bytes based on direction -->
+        <when test="exist direction">
+          <setEventAttribute attr="direction">toLower($direction)</setEventAttribute>
+          <when test="$direction = 'outbound'">
+            <setEventAttribute attr="sentBytes64">$_emailSize</setEventAttribute>
+          </when>
+          <when test="$direction = 'inbound'">
+            <setEventAttribute attr="recvBytes64">$_emailSize</setEventAttribute>
+          </when>
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "_", $direction)</setEventAttribute>
+        </when>
+
+        <choose>
+          <when test="not_exist _isDelivered"/>
+          <when test="$_isDelivered = 'true'">
+            <setEventAttribute attr="action">success</setEventAttribute>
+            <setEventAttribute attr="eventAction">0</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "_success")</setEventAttribute>
+          </when>
+          <when test="$_isDelivered = 'false'">
+            <setEventAttribute attr="eventAction">1</setEventAttribute>
+            <setEventAttribute attr="action">failed</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "_failed")</setEventAttribute>
+          </when>
+        </choose>
+
+      </when>
+      <when test="$_et = 'receipt'">
+        <collectAndSetAttrByJSON src="$_json">
+          <attrKeyMap attr="_aggId" key="aggregateId"/>
+          <attrKeyMap attr="correlationId" key="processingId"/>
+          <attrKeyMap attr="accountId" key="accountId"/>
+          <attrKeyMap attr="_epochTimestamp" key="timestamp"/>
+          <attrKeyMap attr="action" key="action"/>
+          <attrKeyMap attr="senderMailAddr" key="senderEnvelope"/>
+          <attrKeyMap attr="receiverMailAddr" key="recipients"/>
+          <attrKeyMap attr="mailSubject" key="subject"/>
+          <attrKeyMap attr="srcIpAddr" key="senderIp"/>
+          <attrKeyMap attr="_numAttachments" key="numberAttachments"/>
+          <attrKeyMap attr="_senderHeader" key="senderHeader"/>
+          <attrKeyMap attr="direction" key="direction"/>
+          <attrKeyMap attr="_sizeAttachments" key="totalSizeAttachments"/>
+          <attrKeyMap attr="tlsVersion" key="tlsVersion"/>
+          <attrKeyMap attr="tlsCipher" key="tlsCipher"/>
+          <attrKeyMap attr="_tlsUsed" key="tlsUsed"/>
+          <attrKeyMap attr="msg" key="rejectionType"/>
+          <attrKeyMap attr="errorCode" key="rejectionCode"/>
+          <attrKeyMap attr="errReason" key="rejectionInfo"/>
+          <attrKeyMap attr="type" key="type"/>
+          <attrKeyMap attr="subtype" key="subtype"/>
+          <attrKeyMap attr="_spamType" key="spamInfo"/>
+          <attrKeyMap attr="details" key="spamProcessingDetail"/>
+          <attrKeyMap attr="virusName" key="virusFound"/>
+        </collectAndSetAttrByJSON>
+
+        <!-- email Size is the total sent or received bytes based on direction -->
+        <when test="exist direction">
+          <setEventAttribute attr="direction">toLower($direction)</setEventAttribute>
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "_", $direction)</setEventAttribute>
+        </when>
+
+        <when test="exist action">
+          <setEventAttribute attr="action">replaceStringByRegex($action, "[\s-]+", "_")</setEventAttribute>
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "_", $action)</setEventAttribute>
+        </when>
+
+        <when test="exist _spamType">
+          <when test="$_spamType != '[]'">
+            <setEventAttribute attr="spamType">$_spamType</setEventAttribute>
+            <setEventAttribute attr="spamType">replaceStringByRegex($spamType, "[\[\]]+", "")</setEventAttribute>
+          </when>
+        </when>
+        <!-- End Receipt -->
+      </when>
+
+      <when test="$_et = 'url_protect'">
+        <collectAndSetAttrByJSON src="$_json">
+          <attrKeyMap attr="_aggId" key="aggregateId"/>
+          <attrKeyMap attr="correlationId" key="processingId"/>
+          <attrKeyMap attr="msgId" key="messageId"/>
+          <attrKeyMap attr="accountId" key="accountId"/>
+          <attrKeyMap attr="_epochTimestamp" key="timestamp"/>
+          <attrKeyMap attr="action" key="action"/>
+          <attrKeyMap attr="senderMailAddr" key="senderEnvelope"/>
+          <attrKeyMap attr="receiverMailAddr" key="recipients"/>
+          <attrKeyMap attr="mailSubject" key="subject"/>
+          <attrKeyMap attr="webCategory" key="urlCategory"/>
+          <attrKeyMap attr="downloadURL" key="url"/>
+          <attrKeyMap attr="status" key="analysis"/>
+          <attrKeyMap attr="reason" key="blockReason"/>
+          <attrKeyMap attr="srcIpAddr" key="sourceIp"/>
+          <attrKeyMap attr="srcDomain" key="senderDomain"/>
+          <attrKeyMap attr="details" key="similarMimecastExternalDomain"/>
+          <attrKeyMap attr="type" key="type"/>
+          <attrKeyMap attr="subtype" key="subtype"/>
+        </collectAndSetAttrByJSON>
+      </when>
+
+      <when test="$_et = 'internal_email_protect'">
+        <collectAndSetAttrByJSON src="$_json">
+          <attrKeyMap attr="_aggId" key="aggregateId"/>
+          <attrKeyMap attr="correlationId" key="processingId"/>
+          <attrKeyMap attr="msgId" key="messageId"/>
+          <attrKeyMap attr="accountId" key="accountId"/>
+          <attrKeyMap attr="_epochTimestamp" key="timestamp"/>
+          <attrKeyMap attr="senderMailAddr" key="senderEnvelope"/>
+          <attrKeyMap attr="receiverMailAddr" key="recipients"/>
+          <attrKeyMap attr="mailSubject" key="subject"/>
+          <attrKeyMap attr="webCategory" key="urlCategory"/>
+          <attrKeyMap attr="status" key="scanResults"/>
+          <attrKeyMap attr="srcDomain" key="monitoredDomainSource"/>
+          <attrKeyMap attr="_similarDomain" key="similarDomain"/>
+          <attrKeyMap attr="type" key="type"/>
+          <attrKeyMap attr="subtype" key="subtype"/>
+        </collectAndSetAttrByJSON>
+      </when>
+
+      <when test="$_et = 'process'">
+        <collectAndSetAttrByJSON src="$_json">
+          <attrKeyMap attr="_aggId" key="aggregateId"/>
+          <attrKeyMap attr="correlationId" key="processingId"/>
+          <attrKeyMap attr="accountId" key="accountId"/>
+          <attrKeyMap attr="_epochTimestamp" key="timestamp"/>
+          <attrKeyMap attr="action" key="action"/>
+          <attrKeyMap attr="_numAttachments" key="numberAttachments"/>
+          <attrKeyMap attr="_sizeAttachments" key="totalSizeAttachments"/>
+          <!-- filenames of attachments -->
+          <attrKeyMap attr="fileName" key="attachments"/>
+          <attrKeyMap attr="reason" key="holdReason"/>
+          <attrKeyMap attr="user" key="ipUserName"/>
+          <attrKeyMap attr="srcDomain" key="ipNewDomain"/>
+          <attrKeyMap attr="_replyMismatch" key="ipReplyMismatch"/>
+          <attrKeyMap attr="_similarDomain" key="ipSimilarDomain"/>
+          <attrKeyMap attr="threatType" key="ipThreatDictionary"/>
+          <attrKeyMap attr="msgId" key="messageId"/>
+          <attrKeyMap attr="senderMailAddr" key="senderEnvelope"/>
+          <attrKeyMap attr="_emailSize" key="emailSize"/>
+          <attrKeyMap attr="mailSubject" key="subject"/>
+          <attrKeyMap attr="type" key="type"/>
+          <attrKeyMap attr="subtype" key="subtype"/>
+        </collectAndSetAttrByJSON>
+
+        <when test="exist _emailSize">
+          <setEventAttribute attr="totBytes64">_emailSize</setEventAttribute>
+        </when>
+
+        <when test="exist action">
+          <setEventAttribute attr="action">replaceStringByRegex($action, "[\s-]+", "_")</setEventAttribute>
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "_", $action)</setEventAttribute>
+        </when>
+
+      </when>
+
+      <when test="$_et = 'attachment_protect'">
+        <collectAndSetAttrByJSON src="$_json">
+          <attrKeyMap attr="_aggId" key="aggregateId"/>
+          <attrKeyMap attr="correlationId" key="processingId"/>
+          <attrKeyMap attr="accountId" key="accountId"/>
+          <attrKeyMap attr="_epochTimestamp" key="timestamp"/>
+          <attrKeyMap attr="msgId" key="messageId"/>
+          <attrKeyMap attr="hashSHA256" key="sha256"/>
+          <attrKeyMap attr="fileExt" key="fileExtension"/>
+          <attrKeyMap attr="fileName" key="fileName"/>
+          <attrKeyMap attr="senderMailAddr" key="senderEnvelope"/>
+          <attrKeyMap attr="srcDomain" key="senderDomain"/>
+          <attrKeyMap attr="mailSubject" key="subject"/>
+          <attrKeyMap attr="receiverMailAddr" key="recipients"/>
+          <attrKeyMap attr="srcIpAddr" key="senderIp"/>
+          <attrKeyMap attr="_sizeAttachments" key="sizeAttachment"/>
+          <attrKeyMap attr="_routeUsed" key="route"/>
+          <attrKeyMap attr="type" key="type"/>
+          <attrKeyMap attr="subtype" key="subtype"/>
+        </collectAndSetAttrByJSON>
+      </when>
+
+      <!-- /api/ttp/attachment/get-logs -->
+      <when test="$_et = 'attachmentLogs'">
+        <collectAndSetAttrByJSON src="$_json">
+          <attrKeyMap attr="_aggId" key="aggregateId"/>
+          <attrKeyMap attr="correlationId" key="processingId"/>
+          <attrKeyMap attr="accountId" key="accountId"/>
+          <attrKeyMap attr="_timestamp" key="date"/>
+          <attrKeyMap attr="msgId" key="messageId"/>
+          <attrKeyMap attr="hashSHA256" key="fileHash"/>
+          <attrKeyMap attr="fileType" key="fileType"/>
+          <attrKeyMap attr="fileName" key="fileName"/>
+          <attrKeyMap attr="senderMailAddr" key="senderAddress"/>
+          <attrKeyMap attr="receiverMailAddr" key="recipientAddress"/>
+          <attrKeyMap attr="mailSubject" key="subject"/>
+          <attrKeyMap attr="direction" key="route"/>
+          <attrKeyMap attr="type" key="type"/>
+          <attrKeyMap attr="subtype" key="subtype"/>
+          <attrKeyMap attr="status" key="result"/>
+          <attrKeyMap attr="details" key="details"/>
+          <attrKeyMap attr="action" key="actionTriggered"/>
+        </collectAndSetAttrByJSON>
+        <when test="exist status">
+          <!-- safe, malicious, timeout, error, unsafe -->
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "_", $status)</setEventAttribute>
+        </when>
+      </when>
+
+      <!-- /api/ttp/url/get-logs -->
+      <when test="$_et = 'clickLogs'">
+        <collectAndSetAttrByJSON src="$_json">
+          <attrKeyMap attr="_timestamp" key="date"/>
+          <attrKeyMap attr="msgId" key="messageId"/>
+          <attrKeyMap attr="senderMailAddr" key="fromUserEmailAddress"/>
+          <attrKeyMap attr="receiverMailAddr" key="userEmailAddress"/>
+          <attrKeyMap attr="mailSubject" key="subject"/>
+          <attrKeyMap attr="_sourceIp" key="sendingIp"/>
+          <attrKeyMap attr="direction" key="route"/>
+          <!-- unknown, allow, warn, wait, block; default: block -->
+          <attrKeyMap attr="action" key="action"/>
+          <!-- Unknown, Allow, Warn, Block, 'None, None', 'None, Remove Attachment', 'None, Remove Message', 'Hold, None', 'Hold, Remove Attachment', 'Hold, Remove Message', 'Bounce, None', 'Bounce, Remove Attachment', 'Bounce, Remove Message', None, Remove Attachment, Remove Message -->
+          <attrKeyMap attr="mailAction" key="actions"/>
+          <attrKeyMap attr="infoURL" key="url"/>
+          <attrKeyMap attr="policyName" key="ttpDefinition"/>
+          <attrKeyMap attr="_adminOverride" key="adminOverride"/>
+          <attrKeyMap attr="_userOverride" key="userOverride"/>
+          <attrKeyMap attr="scanStatus" key="scanResult"/>
+          <attrKeyMap attr="webCategory" key="category"/>
+          <attrKeyMap attr="eventSource" key="creationMethod"/>
+          <attrKeyMap attr="_emailPartDesc" key="emailPartsDescription[0]"/>
+        </collectAndSetAttrByJSON>
+
+        <when test="exist action">
+          <!-- safe, malicious, timeout, error, unsafe -->
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "_", $action)</setEventAttribute>
+        </when>
+      </when>
+
+      <!-- siem batch api spam category -->
+      <when test="$_et = 'spam'">
+        <collectAndSetAttrByJSON src="$_json">
+          <attrKeyMap attr="_aggId" key="aggregateId"/>
+          <attrKeyMap attr="correlationId" key="processingId"/>
+          <attrKeyMap attr="accountId" key="accountId"/>
+          <attrKeyMap attr="_epochTimestamp" key="timestamp"/>
+          <attrKeyMap attr="msgId" key="messageId"/>
+          <attrKeyMap attr="senderMailAddr" key="senderEnvelope"/>
+          <attrKeyMap attr="receiverMailAddr" key="recipients"/>
+          <attrKeyMap attr="mailSubject" key="subject"/>
+          <attrKeyMap attr="_senderHeader" key="senderHeader"/>
+          <attrKeyMap attr="direction" key="route"/>
+          <attrKeyMap attr="srcDomain" key="senderDomain"/>
+          <attrKeyMap attr="srcIpAddr" key="senderIp"/>
+          <attrKeyMap attr="type" key="type"/>
+          <attrKeyMap attr="subtype" key="subtype"/>
+        </collectAndSetAttrByJSON>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "_email_found")</setEventAttribute>
+
+      </when>
+
+      <!-- siem batch api av category -->
+      <when test="$_et = 'av'">
+        <collectAndSetAttrByJSON src="$_json">
+          <attrKeyMap attr="_aggId" key="aggregateId"/>
+          <attrKeyMap attr="correlationId" key="processingId"/>
+          <attrKeyMap attr="accountId" key="accountId"/>
+          <attrKeyMap attr="_epochTimestamp" key="timestamp"/>
+          <attrKeyMap attr="msgId" key="messageId"/>
+          <attrKeyMap attr="senderMailAddr" key="senderEnvelope"/>
+          <attrKeyMap attr="receiverMailAddr" key="recipients"/>
+          <attrKeyMap attr="mailSubject" key="subject"/>
+          <attrKeyMap attr="srcDomain" key="senderDomain"/>
+          <attrKeyMap attr="_senderHeader" key="senderHeader"/>
+          <attrKeyMap attr="_routeUsed" key="route"/>
+          <attrKeyMap attr="srcIpAddr" key="senderIp"/>
+          <attrKeyMap attr="hashSHA256" key="sha256"/>
+          <attrKeyMap attr="fileExt" key="fileExtension"/>
+          <attrKeyMap attr="fileName" key="fileName"/>
+          <attrKeyMap attr="virusName" key="virusFound"/>
+          <attrKeyMap attr="_emailSize" key="emailSize"/>
+          <attrKeyMap attr="type" key="type"/>
+          <attrKeyMap attr="subtype" key="subtype"/>
+        </collectAndSetAttrByJSON>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "_email_virusFound")</setEventAttribute>
+
+        <when test="exist _emailSize">
+          <setEventAttribute attr="totBytes64">_emailSize</setEventAttribute>
+        </when>
+
+      </when>
+
+      <!-- siem batch api journal category -->
+      <when test="$_et = 'journal'">
+        <collectAndSetAttrByJSON src="$_json">
+          <attrKeyMap attr="_aggId" key="aggregateId"/>
+          <attrKeyMap attr="correlationId" key="processingId"/>
+          <attrKeyMap attr="accountId" key="accountId"/>
+          <attrKeyMap attr="_epochTimestamp" key="timestamp"/>
+          <attrKeyMap attr="senderMailAddr" key="senderEnvelope"/>
+          <attrKeyMap attr="receiverMailAddr" key="recipients"/>
+          <attrKeyMap attr="direction" key="direction"/>
+          <attrKeyMap attr="type" key="type"/>
+          <attrKeyMap attr="subtype" key="subtype"/>
+        </collectAndSetAttrByJSON>
+      </when>
+      <!-- Get audit events api -->
+      <when test="$_et = 'get_audit_events'">
+        <collectAndSetAttrByJSON src="$_json">
+          <attrKeyMap attr="subtype" key="auditType"/>
+          <attrKeyMap attr="user" key="user"/>
+          <attrKeyMap attr="type" key="category"/>
+          <attrKeyMap attr="msg" key="eventInfo"/>
+          <attrKeyMap attr="_timestamp" key="eventTime"/>
+        </collectAndSetAttrByJSON>
+        <setEventAttribute attr="subtype">replaceStringByRegex($subtype, "[\s-]+", "_")</setEventAttribute>
+        <setEventAttribute attr="eventType">combineMsgId("Mimecast_Audit_", $_et)</setEventAttribute>
+
+        <choose>
+          <when test="not_exist subtype"/>
+          <when test="not_exist msg"/>
+          <when test="$subtype = 'User_Logged_On'">
+            <switch>
+              <case>
+                <collectFieldsByRegex src="$msg">
+                  <regex><![CDATA[Successful authentication for.*,\s+IP:\s+<srcIpAddr:gPatIpAddr>,\s+Application:\s+<appName:patExceptComma>,\s+Method:\s+<authenMethod:patExceptComma>]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">Mimecast_Audit_UserLogonSuccess</setEventAttribute>
+              </case>
+              <default/>
+            </switch>
+          </when>
+        </choose>
+      </when>
+      <otherwise>
+        <!-- Best effort parsing for unknown event types -->
+        <collectAndSetAttrByJSON src="$_json">
+          <attrKeyMap attr="_aggId" key="aggregateId"/>
+          <attrKeyMap attr="correlationId" key="processingId"/>
+          <attrKeyMap attr="accountId" key="accountId"/>
+          <attrKeyMap attr="_epochTimestamp" key="timestamp"/>
+          <attrKeyMap attr="senderMailAddr" key="senderEnvelope"/>
+          <attrKeyMap attr="receiverMailAddr" key="recipients"/>
+          <attrKeyMap attr="mailSubject" key="subject"/>
+          <attrKeyMap attr="srcDomain" key="senderDomain"/>
+          <attrKeyMap attr="srcIpAddr" key="senderIp"/>
+          <attrKeyMap attr="direction" key="direction"/>
+          <attrKeyMap attr="hashSHA256" key="sha256"/>
+          <attrKeyMap attr="fileExt" key="fileExtension"/>
+          <attrKeyMap attr="fileName" key="fileName"/>
+          <attrKeyMap attr="virusName" key="virusFound"/>
+          <attrKeyMap attr="type" key="type"/>
+          <attrKeyMap attr="subtype" key="subtype"/>
+          <attrKeyMap attr="subtype" key="auditType"/>
+          <attrKeyMap attr="msg" key="eventInfo"/>
+          <attrKeyMap attr="user" key="user"/>
+          <attrKeyMap attr="action" key="action"/>
+          <attrKeyMap attr="_eventType" key="eventType"/>
+        </collectAndSetAttrByJSON>
+        <when test="exist _eventType">
+          <!-- some raw event log bodies have their own event type, in absence of well defined we can check this -->
+          <setEventAttribute attr="eventType">combineMsgId("Mimecast_", $_eventType)</setEventAttribute>
+        </when>
+      </otherwise>
+    </choose>
+
+    <!-- Remove any lingering spaces in ET -->
+    <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "[\s-]+", "_")</setEventAttribute>
+
+    <choose>
+      <when test="exist _timestamp">
+        <!-- 2023-08-16T10:20:35.193Z -->
+        <collectFieldsByRegex src="$_timestamp">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>(?:\.\d+)?(?:<_tz:gPatTimeZone>)?]]></regex>
+        </collectFieldsByRegex>
+        <choose>
+          <when test="exist _tz">
+            <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+      <when test="exist _epochTimestamp">
+        <switch>
+          <case>
+            <!-- timestamp already in epoch seconds or millis -->
+            <collectFieldsByRegex src="$_epochTimestamp">
+              <regex><![CDATA[^<deviceTime:patEpochSec>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+    </choose>
+
+    <!-- Some source ip fields use strings such as Internal IP instead of actual ip -->
+    <when test="exist _sourceIp">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_sourceIp">
+            <regex><![CDATA[^<srcIpAddr:gPatIpAddr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist senderMailAddr">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$senderMailAddr">
+            <regex><![CDATA[^<:gPatStr>@<srcDomain:gPatStr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <when test="exist receiverMailAddr">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$receiverMailAddr">
+            <regex><![CDATA[^<:gPatStr>@<destDomain:gPatStr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist _severity"/>
+      <when test="$_severity = 'low'">
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+      <when test="$_severity = 'moderate'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$_severity = 'high'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+    </choose>
+
+  </parsingInstructions>
+</eventParser>

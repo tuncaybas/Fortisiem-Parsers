@@ -1,0 +1,146 @@
+<eventParser name="NozomiParser">
+  <deviceType>
+    <Vendor>Nozomi Networks</Vendor>
+    <Model>SCADAGuardian</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[2017-04-01T06:41:11.292039+02:00 nozomi-dev n2osalerts[55672]: CEF:0|Nozomi Networks|N2OS|17.0.0-7677C|VI:NEW-MAC|New MAC address|5|app=tcp/502 cs1=5.000000 cs1Label=Risk cs2=true cs2Label=IsSecurity dmac=08:00:27:44:92:18 dpt=502 dst=10.0.1.10 dvc=10.0.2.15 dvchost=nozomi-dev msg=New MAC 0a:00:27:00:00:01 detected for IP 10.0.1.1 proto=TCP smac=0a:00:27:00:00:01 spt=51918 src=10.0.1.1 start=1384348369709]]></testEvent>
+    <testEvent><![CDATA[<14>May 15 12:14:27 NOZFW-NOZ n2osaudit[984]: CEF:0|Nozomi Networks|N2OS|17.0.0-AADCC|AUDIT:CLI:EXEC|Entered CLI command|0|dvchost=NOZFW-NOZ.local cs1=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36 cs1Label=browser msg=Entered CLI command, command: 'meta_info ' src=172.30.212.150 suser=admin start=1494875667925]]></testEvent>
+    <testEvent><![CDATA[<137>Jun 15 2018 09:25:31 nozomi.tclab.tv n2osevents[0]: CEF:0|Nozomi Networks|N2OS|17.5.3-2872D|SIGN:SCADA-MALFORMED|Malformed SCADA packet|7|app=modbus dvc=10.0.30.8 dvchost=nozomi.tclab.tv cs1=7.0 cs2=true cs1Label=Risk cs2Label=IsSecurity dhost=CP 443-2 EX37 dmac=00:0c:29:f8:d2:13 dpt=502 msg=Empty quantity of registers (0) shost=EngLinux1 smac=90:6c:ac:4b:f5:7c spt=41443 proto=TCP start=1529072731116]]></testEvent>
+    <testEvent><![CDATA[<137>Mar 11 2019 17:39:04 nozomi-demo.local n2osevents[0]: CEF:0|Nozomi Networks|N2OS|18.5.3-02131638_727D8|SIGN:MALWARE-DETECTED|Malware detected|10|app=smb dvc=172.26.45.205 dvchost=nozomi-demo.local cs1=10.0 cs2=true cs1Label=Risk cs2Label=IsSecurity dst=172.16.0.55 dmac=00:0c:29:28:dd:c5 dpt=445 msg=Suspicious transferring of malware named 'TemplateAttack_DragonFly_2_0' was detected involving resource '\\172.16.0.55\ADMIN\CVcontrolEngineer.docx' after a 'read' operation [rule author: US-CERT Code Analysis Team - improved by Nozomi Networks] [yara file name: MALW_DragonFly2_TemplateAttack_DragonFly_2_0.yar] src=172.16.0.253 smac=00:04:23:e0:04:1c spt=1148 proto=TCP start=1552322344136]]></testEvent>
+    <testEvent><![CDATA[<134>Mar 04 2019 17:13:49 nozomi-sg.local n2osevents[0]: CEF:0|Nozomi Networks|N2OS|18.5.3-02131638_727D8|AUDIT:DATE_AND_TIME:SAVE_NTP_SETTINGS|Configured NTP|0|dvchost=nozomi-sg.local cs1=Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:65.0) Gecko/20100101 Firefox/65.0 cs1Label=browser msg=Configured NTP, status: enabled, servers\=>'0.freebsd.pool.ntp.org,1.freebsd.pool.ntp.org' src=172.26.45.13 suser=admin start=1551716029341]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patVbar"><![CDATA[[^|]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[CEF:\d+\|Nozomi Networks\|N2OS\|\d]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[(?:<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d{6}<_tz:gPatTimeZone>|<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>|<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>)?\s+<reptDevName:gPatHostName>\s+<procName:gPatStr>\[\d+\]:\s+CEF:\d+\|Nozomi Networks\|N2OS\|<:patVbar>\|<_et:patVbar>\|<eventDesc:patVbar>\|<_sev:gPatInt>\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="_et">replaceStringByRegex($_et, "[\s:]+", "-")</setEventAttribute>
+    <setEventAttribute attr="_et">trimAttribute($_et, "-")</setEventAttribute>
+
+    <when test="$_et = 'AUDIT'">
+      <setEventAttribute attr="_et">AUDIT-Generic</setEventAttribute>
+    </when>
+    <setEventAttribute attr="eventType">combineMsgId("Nozomi-SCADAGuardian-", $_et)</setEventAttribute>
+
+    <choose>
+      <when test="exist _year">
+        <choose>
+          <when test="exist _tz">
+            <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="appTransportProto" key="app"/>
+      <attrKeyMap attr="destMACAddr" key="dmac"/>
+      <attrKeyMap attr="destIpPort" key="dpt"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="_proto" key="proto"/>
+      <attrKeyMap attr="srcMACAddr" key="smac"/>
+      <attrKeyMap attr="srcIpPort" key="spt"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="_cs1label" key="cs1Label"/>
+      <attrKeyMap attr="_cs1" key="cs1"/>
+      <attrKeyMap attr="_flexString1Label" key="flexString1Label"/>
+      <attrKeyMap attr="_flexString2Label" key="flexString2Label"/>
+      <attrKeyMap attr="_flexString3Label" key="flexString3Label"/>
+      <attrKeyMap attr="_flexString1" key="flexString1"/>
+      <attrKeyMap attr="_flexString2" key="flexString2"/>
+      <attrKeyMap attr="_flexString3" key="flexString3"/>
+      <attrKeyMap attr="user" key="suser"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist _flexString1Label">
+      <choose>
+        <when test="not_exist _flexString1"/>
+        <when test="$_flexString1Label = 'Mitre attack techniques'">
+          <setEventAttribute attr="attackTechniqueId">$_flexString1</setEventAttribute>
+        </when>
+        <otherwise/>
+      </choose>
+    </when>
+
+    <when test="exist _flexString2Label">
+      <choose>
+        <when test="not_exist _flexString2"/>
+        <when test="$_flexString2Label = 'Mitre attack tactics'">
+          <setEventAttribute attr="attackTactic">$_flexString2</setEventAttribute>
+        </when>
+        <otherwise/>
+      </choose>
+    </when>
+
+    <when test="exist _flexString3Label">
+      <choose>
+        <when test="not_exist _flexString3"/>
+        <when test="$_flexString3Label = 'Name'">
+          <setEventAttribute attr="ruleName">$_flexString3</setEventAttribute>
+        </when>
+        <otherwise/>
+      </choose>
+    </when>
+
+    <when test="exist appTransportProto">
+      <!-- app=tcp/502 -->
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$appTransportProto">
+            <regex><![CDATA[^<appTransportProto:gPatMesgBodyMin>/]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+
+    <when test="exist _cs1label">
+      <choose>
+        <when test="$_cs1label = 'browser'">
+          <setEventAttribute attr="httpUserAgent">$_cs1</setEventAttribute>
+        </when>
+        <when test="$_cs1label = 'Risk'">
+          <setEventAttribute attr="riskScore">$_cs1</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <choose>
+      <when test="$_et = 'AUDIT-CONFIGURATION-CONFIGURE'">
+        <setEventAttribute attr="eventType">Nozomi-SCADAGuardian-AUDIT-CONFIG-CHANGE</setEventAttribute>
+      </when>
+      <when test="matches($_et, '^AUDIT-COREOS-\w+-LOG(?:IN|OUT)')">
+        <setEventAttribute attr="eventType">Nozomi-SCADAGuardian-AUDIT-COREOS-LOGIN</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_et">
+              <regex><![CDATA[^AUDIT-COREOS-<authenMethod:gPatWord>-<action:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Nozomi-SCADAGuardian-AUDIT-COREOS-", $action)</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,46 @@
+<eventParser name="MicrosoftUAGParser">
+  <deviceType>
+    <Vendor>Microsoft</Vendor>
+    <Model>Forefront UAG</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[:ACFPRDUAG1:]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<134>Aug  2 09:02:08 172.20.9.102 6513:ACFPRDUAG1:172.20.9.102:SessionMgr:[MsgID: 60]Session 11111111-1111-1111-1111-111111111111 was started on trunk trunkoutlook (secure=1). The source IP address is 1.1.1.1.]]></testEvent>
+    <testEvent><![CDATA[<134>Aug  2 09:02:32 172.20.9.102 6513:ACFPRDUAG1:172.20.9.102:SessionMgr:[MsgID: 61]Session 11111111-1111-1111-1111-111111111111 was stopped on trunk trunkoutlook (secure=1). The source IP address is 1.1.1.1.]]></testEvent>
+    <testEvent><![CDATA[<36>Aug  2 09:02:08 172.20.9.102 6513:ACFPRDUAG1:172.20.9.101:Filter:[MsgID: 51]A request from source IP address 1.1.1.1, user  on trunk trunkoutlook; Secure=1 for application Unknown application name of type Unknown application type failed because the  method used OPTIONS is not valid for requested URL /Microsoft-Server-ActiveSync.]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<reptDevIpAddr:gPatIpAddr>\s+<:gPatIpPort>:ACFPRDUAG1:<:gPatIpAddr>:<:gPatWord>:\[MsgID:\s+<:gPatInt>\]<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[Session .* was started on .* \(secure=<:gPatInt>\)\.\s+The source IP address is <srcIpAddr:gPatIpAddr>\.]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Microsoft-UAG-Session_Started</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[Session .* was stopped on .* \(secure=<:gPatInt>\)\.\s+The source IP address is <srcIpAddr:gPatIpAddr>\.]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Microsoft-UAG-Session_Stopped</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[A request from source IP address <srcIpAddr:gPatIpAddr>,.* failed ]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Microsoft-UAG-Request_Failed</setEventAttribute>
+      </case>
+    </switch>
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,170 @@
+<eventParser name="NeXposeParser">
+
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Rapid7</Vendor>
+    <Model>NeXpose Security Scanner</Model>
+    <Version>ANY</Version>
+    <Name>NeXpose Vulnerability Scanner</Name>
+  </appType>
+
+  <patternDefinitions>
+    <pattern name="patStrEndWithRightSquareBracket"><![CDATA[[^\]]*]]></pattern>
+    <pattern name="patStrEndBrack"><![CDATA[[^\]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\[NeXpose-]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<134>Jul 14 14:30:39 192.168.20.207 java: [NeXpose-Vuln-Detected]:[eventSeverity]=PHL_INFO, [reptVendor]=Rapid7, [reptModel]=NeXpose Scan Report, [nexposeUserName]=admin, [nexposeDeviceTime]=Tue Jul 08 16:05:19 PDT 2014, [nexposeScanName]=/reports/00000003/0000006C/report.xml, [nexposeScannedIP]=192.168.1.2, [nexposeScannedMac]=001122334455, [nexposeScannedName]=example.com, [nexposeSiteName]=San Jose, [nexposeScannedDeviceVendor]=Ubuntu, [nexposeScannedDeviceProduct]=Linux, [nexposeScannedDeviceVersion]=12.04, [nexposeScannedDeviceRiskScore]=20582.193, [nexposeVulnTitle]=OpenSSH config allows SSHv1 protocol, [nexposeVulnSeverity]=4, [nexposeVulnFoundSince]=Sat Jun 28 16:05:19 PDT 2014, [nexposeVulnFoundForDays]=10, [nexposeVulnCVE]=CVE-2001-0361, [nexposeVulnBID]=2344, [nexposeVulnOSVDB]=2116, [nexposeVulnCvssScore]=4.0, [nexposeVulnCvssBaseScore]=4.0, [nexposeVulnRiskScore]=651.7627, [nexposeVulnPCISeverity]=3, [nexposeVulnPCIComplianceStatus]=fail, [nexposeVulnIsExploitable]=yes, [nexposeVulnCIAC]=L-047, [nexposeVulnDebianId]=DSA-023, DSA-027, DSA-086, [nexposeVulnSuseId]=SuSE-SA:2001:04, [nexposeVulnURL]=http://example.com/advisories/ssh1_sessionkey_recovery.htm, http://example.com/common/showdoc.php?idxseccion=10, [nexposeVulnXF]=6082]]></testEvent>
+    <testEvent><![CDATA[<134>Jul 14 14:30:39 192.168.20.207 java: [NeXpose-Vuln-Detected]:[eventSeverity]=PHL_INFO, [reptVendor]=Rapid7, [reptModel]=NeXpose Scan Report, [nexposeUserName]=admin, [nexposeDeviceTime]=Tue Jul 08 16:05:19 PDT 2014, [nexposeScanName]=/reports/00000003/0000006C/report.xml, [nexposeScannedIP]=192.168.1.2, [nexposeScannedMac]=001122334455, [nexposeScannedName]=example.com, [nexposeSiteName]=San Jose, [nexposeScannedDeviceVendor]=Ubuntu, [nexposeScannedDeviceProduct]=Linux, [nexposeScannedDeviceVersion]=12.04, [nexposeScannedDeviceRiskScore]=20582.193, [nexposeVulnTitle]=USN-2097-1: curl vulnerability, [nexposeVulnSeverity]=4, [nexposeVulnFoundSince]=Sat Jun 28 16:05:19 PDT 2014, [nexposeVulnFoundForDays]=10, [nexposeVulnCVE]=CVE-2014-0015, [nexposeVulnBID]=65270, [nexposeVulnSecunia]=56728, 56731, 56734, [nexposeVulnCvssScore]=4.0, [nexposeVulnCvssBaseScore]=4.0, [nexposeVulnRiskScore]=152.71642, [nexposeVulnPCISeverity]=3, [nexposeVulnPCIComplianceStatus]=fail, [nexposeVulnIsExploitable]=no, [nexposeVulnDebianId]=DSA-2849, [nexposeVulnAppleId]=APPLE-SA-2014-06-30-2]]></testEvent>
+    <testEvent><![CDATA[<134>Jul 14 13:49:05 192.168.20.207 java: [NeXpose-Vuln-Detected]:[eventSeverity]=PHL_INFO, [reptVendor]=Rapid7, [reptModel]=NeXpose Scan Report, [nexposeUserName]=admin, [nexposeDeviceTime]=Tue Jul 08 16:05:19 PDT 2014, [nexposeScanName]=/reports/00000003/00000069/report.xml, [nexposeScannedIP]=192.168.1.2, [nexposeScannedMac]=001122334455, [nexposeScannedName]=example.com, [nexposeSiteName]=San Jose, [nexposeScannedDeviceVendor]=Ubuntu, [nexposeScannedDeviceProduct]=Linux, [nexposeScannedDeviceVersion]=12.04, [nexposeScannedDeviceRiskScore]=20582.193, [nexposeVulnId]=generic-ip-source-routing-enabled, [nexposeVulnSeverity]=8, [nexposeVulnFoundSince]=Sat Jun 28 16:05:19 PDT 2014, [nexposeVulnFoundForDays]=10, [nexposeVulnCVE]=CVE-1999-0510, CVE-1999-0909, [nexposeVulnBID]=646, [nexposeVulnTitle]=IP Source Routing Enabled, [nexposeVulnCvssScore]=7.5, [nexposeVulnCvssBaseScore]=7.5, [nexposeVulnRiskScore]=746.645, [nexposeVulnPCISeverity]=5, [nexposeVulnPCIComplianceStatus]=pass, [nexposeVulnIsExploitable]=yes, [nexposeVulnMSId]=MS99-038, [nexposeVulnMSKB]=238453, [nexposeVulnURL]=http://example.com/advisories/nai/nai.99-09-20.windows_ip_source_routing]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<serverName:gPatStr>\s+java:\s*\[<eventType:patStrEndWithRightSquareBracket>\]:<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="extEventRecvProto">NeXposeAPI</setEventAttribute>
+    <when test="$eventType = 'NeXpose-Get-Error'">
+      <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+    </when>
+
+    <when test="matches($serverName, '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')">
+      <setEventAttribute attr="reptDevIpAddr">$serverName</setEventAttribute>
+    </when>
+
+    <collectAndSetAttrByKeyValuePair sep=", [" src="$_body">
+      <attrKeyMap attr="user" key="[nexposeUserName]="/>
+      <attrKeyMap attr="_reptTime" key="[nexposeDeviceTime]="/>
+      <attrKeyMap attr="scanProfile" key="[nexposeScanName]="/>
+      <attrKeyMap attr="hostIpAddr" key="[nexposeScannedIP]="/>
+      <attrKeyMap attr="_hostMACAddr" key="[nexposeScannedMac]="/>
+      <attrKeyMap attr="hostName" key="[nexposeScannedName]="/>
+      <attrKeyMap attr="site" key="[nexposeSiteName]="/>
+      <attrKeyMap attr="hostVendor" key="[nexposeScannedDeviceVendor]="/>
+      <attrKeyMap attr="hostModel" key="[nexposeScannedDeviceProduct]="/>
+      <attrKeyMap attr="osVersion" key="[nexposeScannedDeviceVersion]="/>
+
+      <attrKeyMap attr="vulnName" key="[nexposeVulnTitle]="/>
+      <attrKeyMap attr="_severity" key="[nexposeVulnSeverity]="/>
+      <attrKeyMap attr="vulnCVEId" key="[nexposeVulnCVE]="/>
+      <attrKeyMap attr="vulnConseq" key="[nexposeVulnConseq]="/>
+      <attrKeyMap attr="vulnPCISeverity" key="[nexposeVulnPCISeverity]="/>
+      <attrKeyMap attr="vulnCvssScore" key="[nexposeVulnCvssScore]="/>
+      <attrKeyMap attr="vulnCvssBaseScore" key="[nexposeVulnCvssBaseScore]="/>
+      <attrKeyMap attr="vulnScore" key="[nexposeVulnCvssBaseScore]="/>
+      <attrKeyMap attr="pciComplianceStatus" key="[nexposeVulnPCIComplianceStatus]="/>
+      <attrKeyMap attr="isExploitable" key="[nexposeVulnIsExploitable]="/>
+      <attrKeyMap attr="_vulnerableSince" key="[nexposeVulnFoundSince]="/>
+      <attrKeyMap attr="vulnerableFor" key="[nexposeVulnFoundForDays]="/>
+
+      <attrKeyMap attr="vulnBugTraqID" key="[nexposeVulnBID]="/>
+      <attrKeyMap attr="vulnSecuniaId" key="[nexposeVulnSecunia]="/>
+      <attrKeyMap attr="vulnOSVDBId" key="[nexposeVulnOSVDB]="/>
+      <attrKeyMap attr="vulnRedhatId" key="[nexposeVulnRedhatId]="/>
+      <attrKeyMap attr="vulnDebianId" key="[nexposeVulnDebianId]="/>
+      <attrKeyMap attr="vulnSuseId" key="[nexposeVulnSuseId]="/>
+      <attrKeyMap attr="vulnAppleId" key="[nexposeVulnAppleId]="/>
+      <attrKeyMap attr="vulnMSId" key="[nexposeVulnMSId]="/>
+      <attrKeyMap attr="vulnMSKB" key="[nexposeVulnMSKB]="/>
+      <attrKeyMap attr="vulnCIAC" key="[nexposeVulnCIAC]="/>
+      <attrKeyMap attr="vulnIAVM" key="[nexposeVulnIAVM]="/>
+      <attrKeyMap attr="vulnXF" key="[nexposeVulnXF]="/>
+      <attrKeyMap attr="vulnCertVN" key="[nexposeVulnCertVN]="/>
+      <attrKeyMap attr="vulnDISASeverity" key="[nexposeVulnDISASeverity]="/>
+      <attrKeyMap attr="vulnDISAVMSKey" key="[nexposeVulnDISAVMSKey]="/>
+      <attrKeyMap attr="infoURL" key="[nexposeVulnURL]="/>
+
+      <attrKeyMap attr="ipPort" key="[nexposeVulnServicePort]="/>
+      <attrKeyMap attr="serviceName" key="[nexposeVulnServiceName]="/>
+      <attrKeyMap attr="_proto" key="[nexposeVulnServiceProtocol]="/>
+      <attrKeyMap attr="appName" key="[nexposeVulnServiceProduct]="/>
+
+      <attrKeyMap attr="errorString" key="[nexposeErrorContent]="/>
+
+    </collectAndSetAttrByKeyValuePair>
+
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+
+    <when test="$eventType = 'NeXpose-Vuln-Detected'">
+      <when test="exist _reptTime">
+        <collectFieldsByRegex src="$_reptTime">
+          <regex><![CDATA[<:gPatStr>\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatStr>\s+<_year:gPatYear>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="scanEnd">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </when>
+
+      <when test="exist _hostMACAddr">
+        <setEventAttribute attr="hostMACAddr">normalizeMAC($_hostMACAddr)</setEventAttribute>
+      </when>
+
+      <when test="exist _vulnerableSince">
+        <collectFieldsByRegex src="$_vulnerableSince">
+          <regex><![CDATA[<:gPatStr>\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatStr>\s+<_year:gPatYear>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="vulnerableSince">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </when>
+
+      <when test="not_exist vulnCvssBaseScore">
+        <choose>
+          <when test="not_exist _severity">
+            <setEventAttribute attr="vulnCvssBaseScore">5</setEventAttribute>
+          </when>
+          <when test="exist _severity">
+            <setEventAttribute attr="vulnCvssBaseScore">$_severity</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <choose>
+        <when test="exist vulnScore">
+          <!-- >=7 high; >=4 med -->
+          <setEventAttribute attr="_result">compare($vulnScore, 7)</setEventAttribute>
+          <choose>
+            <when test="$_result IN 'GREATER, EQUAL'">
+              <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+            </when>
+            <otherwise>
+              <setEventAttribute attr="_result">compare($vulnScore, 4)</setEventAttribute>
+              <when test="$_result IN 'GREATER, EQUAL'">
+                <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+              </when>
+            </otherwise>
+          </choose>
+        </when>
+        <when test="not_exist _severity">
+          <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        </when>
+        <when test="$_severity = '1'">
+          <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+        </when>
+        <when test="$_severity = '2'">
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </when>
+        <when test="$_severity = '3'">
+          <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        </when>
+        <when test="$_severity = '4'">
+          <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+        </when>
+        <when test="matches($_severity, '^[5-9]|[1-9][0-9]$')">
+          <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist infoURL">
+      <setEventAttribute attr="destName">extractHostFromURL($infoURL)</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>

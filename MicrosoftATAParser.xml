@@ -1,0 +1,126 @@
+<eventParser name="MicrosoftATAParser">
+  <!-- Parser for Microsoft ATA Center (on premise) appliance -->
+  <deviceType>
+    <Vendor>Microsoft</Vendor>
+    <Model>ATA Center</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<116>Jul 2 15:04:42 POCWINATA01 ATA:CEF:0|Microsoft|ATA|1.9.7478.57683|GatewayDirectoryServicesClientAccountPasswordExpiryMonitoringAlert|GatewayDirectoryServicesClientAccountPasswordExpiryMonitoringAlert|5|externalId=1006 cs1Label=url cs1=https://win-n48g0pv3k7m/monitoring msg=The password for the read-only user, domain\user.name, expires on 7/4/2019 1:57:41 PM UTC. The read-only user is used by the Gateway services to perform LDAP queries against the domain controllers in the environment. If the password expires, ATA will stop functioning as expected.]]></testEvent>
+    <testEvent><![CDATA[<36>Aug 26 10:54:45 POCWINATA01 ATA:CEF:0|Microsoft|ATA|1.9.7478.57683|DnsReconnaissanceSuspiciousActivity|Reconnaissance using DNS|5|start=2019-08-26T10:54:26.9220983Z app=Dns shost=POCWINATA01 msg=Suspicious DNS activity was observed, originating from POCWINATA01 (which is not a DNS server) against BU-SEC-APP2. externalId=2007 cs1Label=url cs1=https://pocwinata01.domain.local/suspiciousActivity/5d543b2da37c620bd88c8b7d]]></testEvent>
+    <testEvent><![CDATA[<116>Jul 2 15:02:42 POCWINATA01 ATA:CEF:0|Microsoft|ATA|1.9.7478.57683|GatewayStartFailureMonitoringAlert|GatewayStartFailureMonitoringAlert|5|externalId=1018 cs1Label=url cs1=https://win-n48g0pv3k7m/monitoring msg=The Gateway service on POCWINATA01 failed to start. It was last seen running on 6/18/2019 11:31:20 PM UTC.]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\s+ATA:CEF:\d+\|Microsoft\|ATA\|]]></eventFormatRecognizer>
+
+  <patternDefinitions>
+    <pattern name="patStrEndSep"><![CDATA[[^|]+]]></pattern>
+  </patternDefinitions>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>?<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+ATA:CEF:\d+\|Microsoft\|ATA\|<appVersion:patStrEndSep>\|<alertCategory:patStrEndSep>\|<alertName:patStrEndSep>\|<eventSeverity:gPatInt>\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">Microsoft-ATA</setEventAttribute>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_body">
+      <attrKeyMap attr="appTransportProto" key="app"/>
+      <attrKeyMap attr="count" key="cnt"/>
+      <attrKeyMap attr="_cs1" key="cs1"/>
+      <attrKeyMap attr="_cs1Label" key="cs1Label"/>
+      <attrKeyMap attr="_cs2" key="cs2"/>
+      <attrKeyMap attr="_cs2Label" key="cs2Label"/>
+      <attrKeyMap attr="_cs3" key="cs3"/>
+      <attrKeyMap attr="_cs3Label" key="cs3Label"/>
+      <attrKeyMap attr="_cs4" key="cs4"/>
+      <attrKeyMap attr="_cs4Label" key="cs4Label"/>
+      <attrKeyMap attr="_cs6" key="cs6"/>
+      <attrKeyMap attr="_cs6Label" key="cs6Label"/>
+      <attrKeyMap attr="srcIpAddr" key="dvc"/>
+      <attrKeyMap attr="_endTime" key="end"/>
+      <attrKeyMap attr="_id" key="externalId"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="result" key="outcome"/>
+      <attrKeyMap attr="srcAppVersion" key="requestClientApplication"/>
+      <attrKeyMap attr="_eventTime" key="rt"/>
+      <attrKeyMap attr="srcName" key="shost"/>
+      <attrKeyMap attr="_startTime" key="start"/>
+      <attrKeyMap attr="user" key="suser"/>
+    </collectFieldsByKeyValuePair>
+
+    <!-- Every event contains an externalId corresponding to the eventID -->
+    <when test="exist _id">
+      <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $_id)</setEventAttribute>
+    </when>
+    <when test="exist _result">
+      <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $_result)</setEventAttribute>
+    </when>
+
+    <when test="exist _startTime">
+      <!-- 2018-12-12T17:52:34.3287329Z -->
+      <collectFieldsByRegex src="$_startTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="startTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+    <when test="exist _endTime">
+      <!-- 2018-12-12T17:52:34.3287329Z -->
+      <collectFieldsByRegex src="$_endTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="endTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <!-- process cs fields -->
+    <when test="exist _cs1Label">
+      <when test="exist _cs1">
+        <when test="$_cs1Label = 'portalURL'">
+          <setEventAttribute attr="infoURL">$_cs1</setEventAttribute>
+        </when>
+        <when test="$_cs1Label = 'url'">
+          <setEventAttribute attr="infoURL">$_cs1</setEventAttribute>
+        </when>
+      </when>
+    </when>
+
+    <when test="exist _cs2Label">
+      <when test="exist _cs2">
+        <when test="$_cs2Label = 'uniqueServiceAppIds'">
+          <setEventAttribute attr="appSvrName">$_cs2</setEventAttribute>
+        </when>
+      </when>
+    </when>
+
+    <when test="exist _cs3Label">
+      <when test="exist _cs3">
+        <when test="$_cs3Label = 'targetObjects'">
+          <setEventAttribute attr="targetName">$_cs3</setEventAttribute>
+        </when>
+      </when>
+    </when>
+
+    <when test="exist _cs4Label">
+      <when test="exist _cs4">
+        <when test="$_cs4Label = 'policyIDs'">
+          <setEventAttribute attr="policyId">$_cs4</setEventAttribute>
+        </when>
+      </when>
+    </when>
+
+    <choose>
+      <when test="matches($_id, '^1')">
+        <setEventAttribute attr="categoryType">"Health"</setEventAttribute>
+      </when>
+      <when test="matches($_id, '^2')">
+        <setEventAttribute attr="categoryType">"Security"</setEventAttribute>
+      </when>
+      <when test="matches($_id, '^3')">
+        <setEventAttribute attr="categoryType">"Audit"</setEventAttribute>
+      </when>
+      <otherwise/>
+    </choose>
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,414 @@
+<eventParser name="NetBotzCMCTrapParser">
+  <deviceType>
+    <Vendor>APC</Vendor>
+    <Model>NetBotz</Model>
+    <Version>ANY</Version>
+  </deviceType>
+  <eventFormatRecognizer><![CDATA[SNMPv2-SMI::enterprises.5528]]></eventFormatRecognizer>
+  <testEvents>
+    <testEvent><![CDATA[2012-01-18 14:49:17 0.0.0.0(via UDP: [192.168.20.247]:161) TRAP2, SNMP v2c, community public                . Cold Start Trap (0) Uptime: 0:00:00.00          DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (50430787) 5 days, 20:05:07.87     SNMPv2-MIB::snmpTrapOID.0 = OID: SNMPv2-SMI::enterprises.5528.100.10.2.2.0.1          SNMPv2-SMI::enterprises.5528.100.11.1 = STRING: "0"    SNMPv2-SMI::enterprises.5528.100.11.2 = STRING: "0"              SNMPv2-SMI::enterprises.5528.100.11.3 = STRING: "0"    SNMPv2-SMI::enterprises.5528.100.11.4 = STRING: "0"              SNMPv2-SMI::enterprises.5528.100.11.5 = STRING: "0"    SNMPv2-SMI::enterprises.5528.100.11.6 = STRING: "0"              SNMPv2-SMI::enterprises.5528.100.11.7 = STRING: "0"    SNMPv2-SMI::enterprises.5528.100.11.8 = STRING: "0"              SNMPv2-SMI::enterprises.5528.100.11.9 = STRING: "0"    SNMPv2-SMI::enterprises.5528.100.11.10 = INTEGER: 0 SNMPv2-SMI::enterprises.5528.100.11.11 = INTEGER: 0          SNMPv2-SMI::enterprises.5528.100.11.12 = INTEGER: 0 SNMPv2-SMI::enterprises.5528.100.11.13 = INTEGER: 0          SNMPv2-SMI::enterprises.5528.100.11.14 = STRING: "0"           SNMPv2-SMI::enterprises.5528.100.11.15 = INTEGER: 0          SNMPv2-SMI::enterprises.5528.100.11.16 = INTEGER: 0]]></testEvent>
+  </testEvents>
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">NetBotz-CMC-Generic</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">Snmp Trap</setEventAttribute>
+
+    <collectAndSetAttrByKeyValuePair sep="\t\\| SNMP" src="$_body">
+      <attrKeyMap attr="_id" key="SNMPv2-MIB::snmpTrapOID.0 = OID: "/>
+      <attrKeyMap attr="_netBotzV2TrapErrorID" key="SNMPv2-SMI::enterprises.5528.100.11.1 = STRING: "/>
+      <attrKeyMap attr="_netBotzV2TrapErrorType" key="SNMPv2-SMI::enterprises.5528.100.11.2 = STRING: "/>
+      <attrKeyMap attr="_netBotzV2TrapErrorTypeLabel" key="SNMPv2-SMI::enterprises.5528.100.11.3 = STRING: "/>
+      <attrKeyMap attr="envSensorId" key="SNMPv2-SMI::enterprises.5528.100.11.4 = STRING: "/>
+      <attrKeyMap attr="envSensorLabel" key="SNMPv2-SMI::enterprises.5528.100.11.5 = STRING: "/>
+      <attrKeyMap attr="_netBotzV2TrapPodID" key="SNMPv2-SMI::enterprises.5528.100.11.6 = STRING: "/>
+      <attrKeyMap attr="_netBotzV2TrapPodLabel" key="SNMPv2-SMI::enterprises.5528.100.11.7 = STRING: "/>
+      <attrKeyMap attr="devPort" key="SNMPv2-SMI::enterprises.5528.100.11.8 = STRING: "/>
+      <attrKeyMap attr="devPortLabel" key="SNMPv2-SMI::enterprises.5528.100.11.9 = STRING: "/>
+      <attrKeyMap attr="_netBotzV2TrapStartTime" key="SNMPv2-SMI::enterprises.5528.100.11.10 = INTEGER: "/>
+      <attrKeyMap attr="_netBotzV2TrapNotifyTime" key="SNMPv2-SMI::enterprises.5528.100.11.11 = INTEGER: "/>
+      <attrKeyMap attr="_netBotzV2TrapResolveTime" key="SNMPv2-SMI::enterprises.5528.100.11.12 = INTEGER: "/>
+      <attrKeyMap attr="_eventSeverity" key="SNMPv2-SMI::enterprises.5528.100.11.13 = INTEGER: "/>
+      <attrKeyMap attr="sensorValue" key="SNMPv2-SMI::enterprises.5528.100.11.14 = STRING: "/>
+      <attrKeyMap attr="sensorValueInt" key="SNMPv2-SMI::enterprises.5528.100.11.15 = INTEGER: "/>
+      <attrKeyMap attr="sensorValueFraction" key="SNMPv2-SMI::enterprises.5528.100.11.16 = INTEGER: "/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <choose>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.4.0.9'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAirFlowDecreasingTooQuickly"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.4.0.1'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAirFlowError"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.4.0.101'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAirFlowErrorRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.4.0.8'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAirFlowIncreasingTooQuickly"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.4.0.109'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAirFlowNotDecreasingTooQuickly"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.4.0.108'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAirFlowNotIncreasingTooQuickly"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.4.0.106'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAirFlowReplugged"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.4.0.2'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAirFlowTooHigh"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.4.0.102'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAirFlowTooHighRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.4.0.4'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAirFlowTooHighTooLong"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.4.0.104'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAirFlowTooHighTooLongRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.4.0.3'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAirFlowTooLow"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.4.0.105'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAirFlowTooLowForTooLongRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.4.0.103'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAirFlowTooLowRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.4.0.5'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAirFlowTooLowTooLong"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.4.0.6'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAirFlowUnplugged"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.6.0.9'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAmpDetectDecreasingTooQuickly"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.6.0.1'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAmpDetectError"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.6.0.101'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAmpDetectErrorRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.6.0.8'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAmpDetectIncreasingTooQuickly"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.6.0.109'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAmpDetectNotDecreasingTooQuickly"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.6.0.108'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAmpDetectNotIncreasingTooQuickly"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.6.0.106'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAmpDetectReplugged"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.6.0.2'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAmpDetectTooHigh"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.6.0.102'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAmpDetectTooHighRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.6.0.4'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAmpDetectTooHighTooLong"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.6.0.104'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAmpDetectTooHighTooLongRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.6.0.3'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAmpDetectTooLow"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.6.0.105'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAmpDetectTooLowForTooLongRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.6.0.103'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAmpDetectTooLowRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.6.0.5'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAmpDetectTooLowTooLong"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.6.0.6'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAmpDetectUnplugged"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.5.0.9'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAudioDecreasingTooQuickly"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.5.0.1'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAudioError"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.5.0.101'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAudioErrorRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.5.0.8'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAudioIncreasingTooQuickly"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.5.0.109'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAudioNotDecreasingTooQuickly"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.5.0.108'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAudioNotIncreasingTooQuickly"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.5.0.106'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAudioReplugged"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.5.0.2'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAudioTooHigh"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.5.0.102'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAudioTooHighRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.5.0.4'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAudioTooHighTooLong"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.5.0.104'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAudioTooHighTooLongRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.5.0.3'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAudioTooLow"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.5.0.105'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAudioTooLowForTooLongRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.5.0.103'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAudioTooLowRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.5.0.5'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAudioTooLowTooLong"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.5.0.6'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzAudioUnplugged"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.8.0.1'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzCameraMotionSensorError"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.8.0.101'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzCameraMotionSensorErrorRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.8.0.106'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzCameraMotionSensorReplugged"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.8.0.6'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzCameraMotionSensorUnplugged"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.8.0.10'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzCameraMotionSensorValueError"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.8.0.110'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzCameraMotionSensorValueErrorRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.3.3.0.107'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzCameraPodReplugged"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.3.3.0.7'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzCameraPodUnplugged"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.3.0.9'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDewPointDecreasingTooQuickly"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.3.0.1'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDewPointError"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.3.0.101'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDewPointErrorRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.3.0.8'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDewPointIncreasingTooQuickly"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.3.0.109'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDewPointNotDecreasingTooQuickly"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.3.0.108'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDewPointNotIncreasingTooQuickly"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.3.0.106'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDewPointReplugged"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.3.0.2'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDewPointTooHigh"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.3.0.102'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDewPointTooHighRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.3.0.4'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDewPointTooHighTooLong"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.3.0.104'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDewPointTooHighTooLongRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.3.0.3'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDewPointTooLow"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.3.0.105'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDewPointTooLowForTooLongRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.3.0.103'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDewPointTooLowRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.3.0.5'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDewPointTooLowTooLong"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.3.0.6'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDewPointUnplugged"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.9.0.1'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDoorSensorError"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.9.0.101'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDoorSensorErrorRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.9.0.106'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDoorSensorReplugged"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.9.0.6'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDoorSensorUnplugged"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.9.0.10'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDoorSensorValueError"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.9.0.110'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDoorSensorValueErrorRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.3.0.12'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDriveNotFoundError"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.3.0.112'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDriveNotFoundErrorResolved"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.7.0.1'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDryContactError"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.7.0.101'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDryContactErrorRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.7.0.106'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDryContactReplugged"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.7.0.6'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDryContactUnplugged"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.7.0.10'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDryContactValueError"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.7.0.110'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzDryContactValueErrorRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.2.0.9'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzHumidityDecreasingTooQuickly"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.2.0.1'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzHumidityError"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.2.0.101'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzHumidityErrorRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.2.0.8'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzHumidityIncreasingTooQuickly"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.2.0.109'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzHumidityNotDecreasingTooQuickly"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.2.0.108'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzHumidityNotIncreasingTooQuickly"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.2.0.106'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzHumidityReplugged"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.2.0.2'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzHumidityTooHigh"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.2.0.102'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzHumidityTooHighRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.2.0.4'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzHumidityTooHighTooLong"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.2.0.104'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzHumidityTooHighTooLongRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.2.0.3'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzHumidityTooLow"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.2.0.105'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzHumidityTooLowForTooLongRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.2.0.103'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzHumidityTooLowRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.2.0.5'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzHumidityTooLowTooLong"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.2.0.6'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzHumidityUnplugged"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.3.0.11'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzLogonError"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.3.0.111'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzLogonErrorResolved"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.3.0.107'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzPodReplugged"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.3.0.7'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzPodUnplugged"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.3.2.0.107'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzSensorPodReplugged"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.3.2.0.7'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzSensorPodUnplugged"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.1.0.9'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzTempDecreasingTooQuickly"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.1.0.1'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzTempError"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.1.0.101'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzTempErrorRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.1.0.8'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzTempIncreasingTooQuickly"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.1.0.109'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzTempNotDecreasingTooQuickly"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.1.0.108'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzTempNotIncreasingTooQuickly"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.1.0.106'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzTempReplugged"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.1.0.2'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzTempTooHigh"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.1.0.102'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzTempTooHighRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.1.0.4'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzTempTooHighTooLong"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.1.0.104'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzTempTooHighTooLongRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.1.0.3'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzTempTooLow"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.1.0.105'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzTempTooLowForTooLongRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.1.0.103'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzTempTooLowRTN"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.1.0.5'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzTempTooLowTooLong"</setEventAttribute>
+      </when>
+      <when test="$_id = 'SNMPv2-SMI::enterprises.5528.100.10.2.1.0.6'">
+        <setEventAttribute attr="eventType">"NetBotz-CMC-netBotzTempUnplugged"</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

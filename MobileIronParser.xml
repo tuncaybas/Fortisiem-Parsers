@@ -1,0 +1,130 @@
+<eventParser name="MobileIronParser">
+
+  <deviceType>
+    <Vendor>MobileIron</Vendor>
+    <Model>MobileIron</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[Apr  3 01:00:02 mobile-apptunnel.xxxxx.com miserviceswatch: PRODUCT=Sentry_9.4.0_4,2019-04-03 01:00:00,323  DNS, success, DNS server 11.11.11.11 is reachable., DNS server 10.1.1.1 is reachable.,]]></testEvent>
+    <testEvent><![CDATA[Apr  3 04:16:51 mobile-apptunnel.xxxxx.com mi: PRODUCT=Sentry_9.4.0_4,2019 Apr  3 04:16:48 WARN   (Device=11111111-1111-1111-1111-111111111111, DeviceIPPort=10.1.1.1:60995, User=Username2, Command=POST, Server=25678:domain3.local, Service=Traveler) (AlertOrigin=Sentry, AlertId=HTTP503) Got exception during device-to-server processing, Sentry reporting error to client:java.net.SocketTimeoutException: Read timed out]]></testEvent>
+    <testEvent><![CDATA[Apr  3 05:47:45 mobile-apptunnel.xxxxx.com mi: PRODUCT=Sentry_9.4.0_4,2019 Apr  3 05:47:43 WARN   (Device=11111111-1111-1111-1111-111111111111, DeviceIPPort=10.1.1.1:60431, User=Username1, Command=GET, Server=33148:domain2.local, Service=nomservice1) (AlertOrigin=Server, AlertId=HTTP401E) Server returned status HTTP 401 . Unauthorized]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patProduct"><![CDATA[Core|Sentry|Connector]]></pattern>
+    <pattern name="patServer"><![CDATA[NTP|DNS|EMM|Core]]></pattern>
+    <pattern name="patSwVer"><![CDATA[\d[.\d_]*]]></pattern>
+    <pattern name="patStrRightParen"><![CDATA[[^\)]*]]></pattern>
+    <pattern name="patSeverity"><![CDATA[ERROR|WARN|INFORMATIONAL|INFO]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\s*PRODUCT\=<:patProduct>_<:patSwVer>,]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<hostName:gPatStr>\s+<procName:gPatStrEndColon>:\s*PRODUCT\=<_product:patProduct>\_<version:patSwVer>,<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+    <choose>
+      <when test="$_product = 'Core'">
+        <setEventAttribute attr="eventType">MobileIron-Core</setEventAttribute>
+        <setEventAttribute attr="msg">$_body</setEventAttribute>
+      </when>
+      <when test="$_product = 'Sentry'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[.*<_server:patServer>\s+server\s+(?:<destIpAddr:gPatIpV4Dot>|<destName:gPatStr>)\s+is\s+reachable.*]]></regex>
+            </collectFieldsByRegex>
+            <choose>
+              <when test="exist destIpAddr">
+                <setEventAttribute attr="msg">combineMsgId($_server, " server ", $destIpAddr, " is available")</setEventAttribute>
+              </when>
+              <when test="exist destName">
+                <setEventAttribute attr="msg">combineMsgId($_server, " server ", $destName, " is available")</setEventAttribute>
+              </when>
+              <otherwise/>
+            </choose>
+            <setEventAttribute attr="eventType">combineMsgId("MobileIron-Sentry-",$_server,"-Available")</setEventAttribute>
+          </case>
+          <case>
+            <!--WARN   (Device=11111111-1111-1111-1111-111111111111, DeviceIPPort=10.1.1.1:60431, User=Username1, Command=GET, Server=33148:domain2.local, Service=nomservice1) (AlertOrigin=Server, AlertId=HTTP401E) Server returned status HTTP 401 . Unauthorized-->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[.*<_severity:patSeverity>\s+\(Device=<deviceIdentification:gPatStrComma>, DeviceIPPort=<srcIpAddr:gPatIpV4Dot>:<srcIpPort:gPatInt>, User=<user:gPatStrComma>, Command=<command:gPatStrComma>, Server=<destIpPort:gPatInt>:<domain:gPatStrComma>, Service=<serviceName:patStrRightParen>\)\s*\(AlertOrigin=<alertCategory:gPatStrComma>, AlertId=<alertName:patStrRightParen>\)\s*<msg:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <!--ERROR|WARN|INFORMATIONAL|INFO-->
+            <choose>
+              <when test="$_severity = 'WARN'">
+                <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+              </when>
+              <when test="$_severity = 'ERROR'">
+                <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+              </when>
+              <otherwise>
+                <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+              </otherwise>
+            </choose>
+
+            <switch>
+              <case>
+                <collectFieldsByRegex src="$msg">
+                  <regex><![CDATA[Server returned status HTTP <httpStatusCode:gPatInt>\s*\.\s*Unauthorized]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">MobileIron-Sentry-HTTP-Unauthorized</setEventAttribute>
+              </case>
+              <case>
+                <collectFieldsByRegex src="$msg">
+                  <regex><![CDATA[Read timed out]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">MobileIron-Sentry-HTTP-Time-Out</setEventAttribute>
+              </case>
+              <default>
+                <setEventAttribute attr="eventType">combineMsgId("MobileIron-Sentry-",$_severity,"-Generic")</setEventAttribute>
+              </default>
+            </switch>
+          </case>
+          <default>
+            <setEventAttribute attr="msg">$_body</setEventAttribute>
+            <setEventAttribute attr="eventType">MobileIron-Sentry-Generic</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+      <when test="$_product = 'Connector'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[.*t=<_server:patServer>\s+status=<status:gPatStr>\s+successes='<_server:patServer>\s+server\s+(?:<destIpAddr:gPatIpV4Dot>|<destName:gPatStr>)\s+is\s+reachable.*]]></regex>
+            </collectFieldsByRegex>
+            <choose>
+              <when test="exist destIpAddr">
+                <setEventAttribute attr="msg">combineMsgId($_server, " server ", $destIpAddr, " is available")</setEventAttribute>
+              </when>
+              <when test="exist destName">
+                <setEventAttribute attr="msg">combineMsgId($_server, " server ", $destName, " is available")</setEventAttribute>
+              </when>
+              <otherwise/>
+            </choose>
+            <setEventAttribute attr="eventType">combineMsgId("MobileIron-Connector-",$_server,"-Available")</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[.*Successful authentication for <userId:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="msg">combineMsgId("Successful authentication for ", $userId)</setEventAttribute>
+            <setEventAttribute attr="eventType">MobileIron-Connector-Authentication-Success</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="msg">$_body</setEventAttribute>
+            <setEventAttribute attr="eventType">MobileIron-Connector-Generic</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">MobileIron-Generic</setEventAttribute>
+        <setEventAttribute attr="msg">$_body</setEventAttribute>
+      </otherwise>
+    </choose>
+  </parsingInstructions>
+</eventParser>

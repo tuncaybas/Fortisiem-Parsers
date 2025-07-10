@@ -1,0 +1,135 @@
+<eventParser name="NutanixParser">
+  <deviceType>
+    <Vendor>Nutanix</Vendor>
+    <Model>Controller VM</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<135>2020-06-03T12:12:19.716894+00:00 node-1 flow-hitCount4: INFO:2020/06/03 12:12:18  [11111111-1111-1111-1111-111111111111] dt_isolation [Update] SRC=10.16.37.47 DST=10.16.38.41 PROTO=TCP SPORT=22 DPORT=40726 ACTION=DROP ORIG: PKTS=9 BYTES=468 REPLY: PKTS=0 BYTES=0]]></testEvent>
+    <testEvent><![CDATA[<134>2020-06-08T05:27:47.978858-07:00 node-1 consolidated_audit: {"affectedEntityList":[{"entityType":"cluster","name":"Unnamed","uuid":"c6162d80-9d3c-41ba-9928-123456"}],"alertUid":"PairingAudit","creationTimestampUsecs":"1590479209937393","defaultMsg":"Failed to pair with remote prism central None: Internal Server Error. Could not create remote connection. Skip pairing","opEndTimestampUsecs":"1590479209649077","opStartTimestampUsecs":"1590479209649077","operationType":"Create","originatingClusterUuid":"c6162d80-9d3c-41ba-9928-123456","params":{"remote_cluster_url":""},"recordType":"Audit","severity":"Audit","tenantUuid":"11111111-1111-1111-1111-111111111111","userName":"perpetuuiti-1@nutanixbd.local","userUuid":"3a8c19be-336d-52f0-bb52-10123456","uuid":"11111111-1111-1111-1111-111111111111"}]]></testEvent>
+    <testEvent><![CDATA[<134>2020-05-29T06:27:22.225134-07:00 node-1 api_audit: INFO  2020-05-29 06:27:13,742 clientType=External||userName=11111111-1111-1111-1111-111111111111||NutanixApiVersion=1.0||httpMethod=GET||restEndpoint=/v1/users/details||entityUuid=||queryParams=||payload=]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patLogType"><![CDATA[consolidated_audit|api_audit|flow-hitCount]]></pattern>
+    <pattern name="patExceptBracket"><![CDATA[[^\[\]]+]]></pattern>
+  </patternDefinitions>
+  <!-- Prevent broad recognizer given common identifiers such as api_audit -->
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatYear>-<:gPatMon>-<:gPatDay>T<:gPatTime>\.\d+<:gPatTimeZone>\s+<:gPatHostName>\s+<:patLogType><:gPatInt>?:]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">Nutanix-Generic</setEventAttribute>
+    <switch>
+      <case>
+        <!-- <134>2020-05-29T06:27:22.225134-07:00 hostname1 logType: -->
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+<_logType:patLogType><totFlows:gPatInt>?:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+
+    <!-- Set Device Time -->
+    <choose>
+      <when test="exist _tz">
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <choose>
+      <when test="not_exist _logType"/>
+      <when test="$_logType = 'flow-hitCount'">
+        <switch>
+          <case>
+            <!-- INFO:2020/06/03 12:13:18  [11111111-1111-1111-1111-111111111111] dt_isolation [Destroy] SRC=10.16.37.47 DST=10.16.38.41 PROTO=TCP SPORT=22 DPORT=40726 ACTION=DROP ORIG: PKTS=10 BYTES=520 REPLY: PKTS=0 BYTES=0 -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\w+:<:patExceptBracket>\[<:patExceptBracket>\]\s+<policyName:gPatStr>\s+\[<opName:patExceptBracket>\]<_body2:gPatMesgBody>\s+ORIG:\s+PKTS=<recvPkts:gPatInt>\s+BYTES=<recvBytes:gPatInt>\s+REPLY:\s+PKTS=<sentPkts:gPatInt>\s+BYTES=<sentBytes:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Nutanix-flowlog</setEventAttribute>
+            <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body2">
+              <attrKeyMap attr="srcIpAddr" key="SRC"/>
+              <attrKeyMap attr="destIpAddr" key="DST"/>
+              <attrKeyMap attr="_proto" key="PROTO"/>
+              <attrKeyMap attr="srcIpPort" key="SPORT"/>
+              <attrKeyMap attr="destIpPort" key="DPORT"/>
+              <attrKeyMap attr="fwAction" key="ACTION"/>
+            </collectFieldsByKeyValuePair>
+            <when test="exist _proto">
+              <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+            </when>
+            <when test="exist opName">
+              <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$opName)</setEventAttribute>
+            </when>
+            <when test="exist fwAction">
+              <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$fwAction)</setEventAttribute>
+            </when>
+          </case>
+          <case>
+            <!-- INFO:2020/05/11 01:07:36 Starting flow hit count log -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^.*Starting flow hit count log$]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Nutanix-flowHitCount-LogStart</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_logType = 'api_audit'">
+        <setEventAttribute attr="eventType">Nutanix-API-Audit</setEventAttribute>
+        <switch>
+          <case>
+            <!-- INFO  2020-05-29 06:25:54,679 clientType=ui||userName=user1||NutanixApiVersion=1.0||httpMethod=GET||restEndpoint=/v1/progress_monitors||entityUuid=||queryParams={hasSubTaskDetail=[false], _=[1590758754657], count=[500], page=[1], filterCriteria=[internal_task==false;(display_failures==[no_val],display_failures==true,(display_failures==false;status!=kFailed));(status==kRunning,complete_time_usecs=gt=1590585954657000);last_updated_time_usecs=gt=1590758316183121]}||payload= -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\w+\s+<:gPatYear>-<:gPatMon>-<:gPatDay>\s+<:gPatTime>,\d+<_body2:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <collectFieldsByKeyValuePair sep="||" kvsep="=" src="$_body2">
+              <attrKeyMap attr="type" key="clientType"/>
+              <attrKeyMap attr="user" key="userName"/>
+              <attrKeyMap attr="appVersion" key="NutanixApiVersion"/>
+              <attrKeyMap attr="httpMethod" key="httpMethod"/>
+              <attrKeyMap attr="uriStem" key="restEndpoint"/>
+              <attrKeyMap attr="uriQuery" key="queryParams"/>
+            </collectFieldsByKeyValuePair>
+          </case>
+          <default/>
+        </switch>
+
+      </when>
+      <when test="$_logType = 'consolidated_audit'">
+        <setEventAttribute attr="eventType">Nutanix-Consolidated-Audit</setEventAttribute>
+
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="targetType" key="affectedEntityList[0].entityType"/>
+          <attrKeyMap attr="targetName" key="affectedEntityList[0].name"/>
+          <attrKeyMap attr="alertName" key="alertUid"/>
+          <attrKeyMap attr="msg" key="defaultMsg"/>
+          <attrKeyMap attr="opName" key="operationType"/>
+          <attrKeyMap attr="clusterId" key="originatingClusterUuid"/>
+          <attrKeyMap attr="fwAction" key="params.rule_action"/>
+          <attrKeyMap attr="ruleName" key="params.rule_name"/>
+          <attrKeyMap attr="subtype" key="params.rule_type"/>
+          <attrKeyMap attr="type" key="recordType"/>
+          <attrKeyMap attr="user" key="userName"/>
+          <attrKeyMap attr="userId" key="userUuid"/>
+          <attrKeyMap attr="uuid" key="uuid"/>
+          <attrKeyMap attr="_opEndTime" key="opEndTimestampUsecs"/>
+          <attrKeyMap attr="_opStartTime" key="opStartTimestampUsecs"/>
+        </collectAndSetAttrByJSON>
+
+        <when test="exist alertName">
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$alertName)</setEventAttribute>
+        </when>
+        <when test="exist opName">
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$opName)</setEventAttribute>
+        </when>
+
+      </when>
+      <otherwise/>
+    </choose>
+
+  </parsingInstructions>
+</eventParser>

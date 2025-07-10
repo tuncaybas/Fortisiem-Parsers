@@ -1,0 +1,209 @@
+<eventParser name="MikroTikFirewallParser">
+  <deviceType>
+    <Vendor>MikroTik</Vendor>
+    <Model>Firewall</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[dns,packet vayner: --- got query from 10.30.10.90:28379:]]></testEvent>
+    <testEvent><![CDATA[dns,packet vayner: answer:]]></testEvent>
+    <testEvent><![CDATA[dns,packet vayner: question: example.com:A:IN]]></testEvent>
+    <testEvent><![CDATA[dns,packet vayner: <4.sophosxl.net:A:2=1.1.1.1>]]></testEvent>
+    <testEvent><![CDATA[system,info router rebooted]]></testEvent>
+    <testEvent><![CDATA[system,info,account user admin logged in from 10.1.101.212 via winbox]]></testEvent>
+    <testEvent><![CDATA[system,info item added by admin]]></testEvent>
+    <testEvent><![CDATA[system,info mangle rule added by admin]]></testEvent>
+    <testEvent><![CDATA[system,info,account user admin logged in from 10.1.101.212 via telnet]]></testEvent>
+    <testEvent><![CDATA[firewall,info input: in:ether1 out:(none), src-mac 00:21:29:6d:82:07, proto UDP, 10.1.101.1:520->10.1.101.255:520, len 452]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patMode"><![CDATA[account|bfd|caps|ddns|dns|error|gsm|info|iscsi|l2tp|manager|ntp|packet|pppoe|radvd|rip|script|smb|sstp|system|timer|vrrp|web-proxy|async|bgp|certificate|debug|dude|event|hotspot|interface|isdn|ldp|mme|ospf|pim|pptp|raw|route|sertcp|snmp|state|telephony|upnp|warning|wireless|backup|calc|critical|dhcp|e-mail|firewall|igmp-proxy|ipsec|kvm|lte|mpls|ovpn|ppp|radius|read|rsvp|simulator|ssh|store|tftp|ups|watchdog|write]]></pattern>
+    <pattern name="patStrRightParen"><![CDATA[[^\)]*]]></pattern>
+    <pattern name="patRightBracket"><![CDATA[[^\>]*]]></pattern>
+    <pattern name="patAction"><![CDATA[answer|authority|additional]]></pattern>
+    <pattern name="patSingleQuot"><![CDATA[[^']*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[^(?:<:patMode>,)*<:patMode>\s+]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^<topicName:gPatStr>\s+<procName:gPatStrEndColon>\s*:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^<topicName:gPatStr>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default>
+        <setEventAttribute attr="_body">$_rawmsg</setEventAttribute>
+      </default>
+    </switch>
+
+    <setEventAttribute attr="eventType">MikroTik-Firewall-Generic</setEventAttribute>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[in:<:gPatStrComma>,\s*src-mac\s+<srcMACAddr:gPatStrComma>,\s*proto <_ipProto:gPatProto>(?:\s*\(<:patStrRightParen>\))?,\s*<srcIpAddr:gPatIpV4Dot>(?::<srcIpPort:gPatIpPort>)?\s*-\>\s*<destIpAddr:gPatIpV4Dot>(?::<destIpPort:gPatIpPort>)?(?:,<:gPatStrComma>)?,\s*len <totPkts:gPatInt>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">MikroTik-Firewall-Network-Packet</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[in:<:gPatStrComma>,\s*proto <_ipProto:gPatProto>(?:\s*\(<:patStrRightParen>\))?,\s*<srcIpAddr:gPatIpV4Dot>(?::<srcIpPort:gPatIpPort>)?\s*-\>\s*<destIpAddr:gPatIpV4Dot>(?::<destIpPort:gPatIpPort>)?(?:,<:gPatStrComma>)?,\s*len <totPkts:gPatInt>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">MikroTik-Firewall-Network-Packet</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[id:\S+ rd:\d+ tc:\d+ aa:\d+ qr:\d+ ra:\d+ QUERY '<status:patSingleQuot>']]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">MikroTik-Firewall-Query-Status</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<appName:gPatMesgBody> client <srcMACAddr:gPatStr> declines IP address <destIpAddr:gPatIpV4Dot>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">MikroTik-Firewall-Declines-IP</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<appName:gPatMesgBody> offering lease <destIpAddr:gPatIpV4Dot> for <srcMACAddr:gPatStr> without success]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">MikroTik-Firewall-Offering-Lease</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[got <_action:gPatStr> from <srcIpAddr:gPatIpV4Dot>:<srcIpPort:gPatIpPort>:]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId("MikroTik-Firewall-Got-", $_action)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[\<<srcName:gPatStrEndColon>:A:\d+=<destIpAddr:gPatIpV4Dot>\>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">MikroTik-Firewall-Connection</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[\<<srcName:gPatStrEndColon>:CNAME:\d+=<destName:patRightBracket>\>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">MikroTik-Firewall-Connection</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[\<<srcName:gPatStrEndColon>:TXT:\d+=rawbytes:<totBytes:gPatInt>\>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">MikroTik-Firewall-Connection</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[router rebooted]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">MikroTik-Firewall-Router-Rebooted</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[item <_action:gPatStr> by <user:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId("MikroTik-Firewall-Item-", $_action)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[mangle rule <_action:gPatStr> by <user:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId("MikroTik-Firewall-Rule-", $_action)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[user <user:gPatStr> logged in from <srcIpAddr:gPatIpV4Dot> via <srcApp:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">MikroTik-Firewall-User-Logged-In</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[user <user:gPatStr> logged out from <srcIpAddr:gPatIpV4Dot> via <srcApp:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">MikroTik-Firewall-User-Logged-Out</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[\S+ Packet <srcIpAddr:gPatIpV4Dot> -\> <destIpAddr:gPatIpV4Dot> on <srcIntfName:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">MikroTik-Firewall-Send-Packet</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[ignoring received \S+(?: short)? packet \(<totBytes:gPatInt> bytes\)]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">MikroTik-Firewall-Ignoring-Received-Packet</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<appName:gPatMesgBody>\s+received\s+<_type:gPatStr> with id <userId:gPatInt> from <srcIpAddr:gPatIpV4Dot>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId("MikroTik-Firewall-Received-", $_type)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<appName:gPatMesgBody>\s+sending\s+<_type:gPatStr> with id <userId:gPatInt> to <destIpAddr:gPatIpV4Dot>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId("MikroTik-Firewall-Sending-", $_type)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[--- sending reply to <destIpAddr:gPatIpV4Dot>:<destIpPort:gPatInt>:]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">MikroTik-Firewall-Sending-reply</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[--- sending <_ipProto:gPatProto> query to <destIpAddr:gPatIpV4Dot>:<destIpPort:gPatInt>:]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">MikroTik-Firewall-Sending-query</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[received \S+ packet \(<totBytes:gPatInt> bytes\)]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">MikroTik-Firewall-Received-Packet</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[sending to <destIpAddr:gPatIpV4Dot> \S+ packet \(<totBytes:gPatInt> bytes\)]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">MikroTik-Firewall-Sending-Packet</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<_action:patAction>:\s*$]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId("MikroTik-Firewall-", $_action)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[question:\s*<srcName:gPatStrEndColon>:A:IN]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">MikroTik-Firewall-Question</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^\s*(?:KeyID=<accessKeyId:gPatInt>|Mode=\d+\s*\(<connMode:patStrRightParen>\)|Address-Request\s*=\s*<srcIpAddr:gPatIpV4Dot>|ciaddr\s*=\s*<srcIpAddr:gPatIpV4Dot>|Class-Id\s*=\s*<classifier:gPatStr>|Client-Id\s*=\s*<srcName:gPatStr>|Client-FQDN\s*=\s*<srcName:gPatStr>|Domain-Server\s*=\s*<domain:gPatStr>|Host-Name\s*=\s*<hostName:gPatStr>|Max-DHCP-Message-Size\s*=\s*<msgLen:gPatInt>|Msg-Type\s*=\s*<type:gPatStr>|Parameter-List\s*=\s*<paraName:gPatStr>|Server-Id\s*=\s*<serverIpAddr:gPatIpV4Dot>|Subnet-Mask\s*=\s*<netmask:gPatIpV4Dot>
+)\s*$]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+
+    <when test="exist _ipProto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_ipProto)</setEventAttribute>
+    </when>
+
+  </parsingInstructions>
+</eventParser>
+

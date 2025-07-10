@@ -1,0 +1,125 @@
+<eventParser name="MicrosoftCloudAppSecurityCEFParser">
+  <deviceType>
+    <Vendor>Microsoft</Vendor>
+    <Model>Cloud App Security</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+
+  <testEvents>
+    <testEvent><![CDATA[<109>2018-05-22T04:17:28.340Z SP204 CEF:0|MCAS|SIEM_Agent|0.123.162|EVENT_CATEGORY_LOGIN|Log on|0|externalId=70e988af3b82e19b872d12a91860d300d968f47e0bb245a0e765d9dbfbdb02ce rt=1526962648340 start=1526962648340 end=1526962648340 msg=Log on suser=yanlong@shashiaccelops.onmicrosoft.com destinationServiceName=Microsoft Azure dvc=43.254.220.13 requestClientApplication=;Windows 10;Edge 17.17134; cs1Label=portalURL cs1=https://shashiaccelops.us2.portal.cloudappsecurity.com/#/audits?activity.id\=eq(70e988af3b82e19b872d12a91860d300d968f47e0bb245a0e765d9dbfbdb02ce,) cs2Label=uniqueServiceAppIds cs2=APPID_AZURE cs3Label=targetObjects cs3=Azure Portal,yanlong,yanlong cs4Label=policyIDs cs4= c6a1Label="Device IPv6 Address" c6a1=]]></testEvent>
+    <testEvent><![CDATA[<109>2018-05-22T03:13:07.640Z SP204 CEF:0|MCAS|SIEM_Agent|0.123.162|EVENT_CATEGORY_LOGIN|Log on|0|externalId=ba1756a969040896a1069314c30da6ce9621ebd80d363f6a1731311848b360e8 rt=1526958787640 start=1526958787640 end=1526958787640 msg=Log on suser=cuiping.wang@shashiaccelops.onmicrosoft.com destinationServiceName=Office 365 dvc=96.45.34.126 requestClientApplication=;Mac OS X 10;Chrome 66.0; cs1Label=portalURL cs1=https://shashiaccelops.us2.portal.cloudappsecurity.com/#/audits?activity.id\=eq(ba1756a969040896a1069314c30da6ce9621ebd80d363f6a1731311848b360e8,) cs2Label=uniqueServiceAppIds cs2=APPID_O365 cs3Label=targetObjects cs3=Office 365 Suite Shell,Cuiping Wang,Cuiping Wang cs4Label=policyIDs cs4= c6a1Label="Device IPv6 Address" c6a1=]]></testEvent>
+    <testEvent><![CDATA[<109>2018-05-22T03:11:11.000Z SP204 CEF:0|MCAS|SIEM_Agent|0.123.162|EVENT_CATEGORY_REMOVE_SERVICE_PRINCIPAL|Remove service principal|0|externalId=69581667_11161_4d8b4ac9-b9ff-41d8-89ed-c3b1ea8223c8 rt=1526958671000 start=1526958671000 end=1526958671000 msg=Remove service principal: Azure Service Principal meiliumeiliu  suser=cuiping.wang@shashiaccelops.onmicrosoft.com destinationServiceName=Office 365 dvc= requestClientApplication=null cs1Label=portalURL cs1=https://shashiaccelops.us2.portal.cloudappsecurity.com/#/audits?activity.id\=eq(69581667_11161_4d8b4ac9-b9ff-41d8-89ed-c3b1ea8223c8,) cs2Label=uniqueServiceAppIds cs2=APPID_O365 cs3Label=targetObjects cs3=meiliumeiliu,,Cuiping Wang,Cuiping Wang cs4Label=policyIDs cs4= c6a1Label="Device IPv6 Address" c6a1=]]></testEvent>
+  </testEvents>
+
+
+  <patternDefinitions>
+    <pattern name="patStrEndSep"><![CDATA[[^|]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\s*CEF\s*:\d+\|MCAS\|SIEM_Agent\|(?:<:patStrEndSep>\|){4}]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTimeMSec><_zone:gPatTimeZone>\s+(?:\S+\s+)?CEF:\d+\|MCAS\|SIEM_Agent\|<appVersion:patStrEndSep>\|<_action:patStrEndSep>\|<_type:patStrEndSep>\|\d+\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_zone)</setEventAttribute>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_body">
+      <attrKeyMap attr="_eventTime" key="rt"/>
+      <attrKeyMap attr="_startTime" key="start"/>
+      <attrKeyMap attr="_endTime" key="end"/>
+      <attrKeyMap attr="details" key="msg"/>
+      <attrKeyMap attr="user" key="suser"/>
+      <attrKeyMap attr="appName" key="destinationServiceName"/>
+      <attrKeyMap attr="srcIpAddr" key="dvc"/>
+      <attrKeyMap attr="srcAppVersion" key="requestClientApplication"/>
+      <attrKeyMap attr="_id" key="externalId"/>
+      <attrKeyMap attr="_label1" key="cs1Label"/>
+      <attrKeyMap attr="_value1" key="cs1"/>
+      <attrKeyMap attr="_label2" key="cs2Label"/>
+      <attrKeyMap attr="_value2" key="cs2"/>
+      <attrKeyMap attr="_label3" key="cs3Label"/>
+      <attrKeyMap attr="_value3" key="cs3"/>
+      <attrKeyMap attr="_label4" key="cs4Label"/>
+      <attrKeyMap attr="_value4" key="cs4"/>
+      <attrKeyMap attr="_label6" key="c6a1Label"/>
+      <attrKeyMap attr="_value6" key="c6a1"/>
+    </collectFieldsByKeyValuePair>
+
+    <choose>
+      <when test="not_exist _type"/>
+      <when test="matches($_action, 'EVENT_CATEGORY')">
+        <setEventAttribute attr="activityType">$_type</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="policyName">$_type</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <choose>
+      <when test="not_exist _id"/>
+      <when test="matches($_action, 'EVENT_CATEGORY')">
+        <setEventAttribute attr="uuid">$_id</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="alertName">$_id</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist _eventTime">
+      <setEventAttribute attr="eventTime">divide($_eventTime, 1000)</setEventAttribute>
+    </when>
+
+    <when test="exist _startTime">
+      <setEventAttribute attr="startTime">divide($_startTime, 1000)</setEventAttribute>
+    </when>
+
+    <when test="exist _endTime">
+      <setEventAttribute attr="endTime">divide($_endTime, 1000)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist _label1"/>
+      <when test="not_exist _value1"/>
+      <when test="$_label1 = 'portalURL'">
+        <setEventAttribute attr="infoURL">$_value1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _label2"/>
+      <when test="not_exist _value2"/>
+      <when test="$_label2 = 'uniqueServiceAppIds'">
+        <setEventAttribute attr="appSvrName">$_value2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _label3"/>
+      <when test="not_exist _value3"/>
+      <when test="$_label3 = 'targetObjects'">
+        <setEventAttribute attr="targetName">$_value3</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _label4"/>
+      <when test="not_exist _value4"/>
+      <when test="$_label4 = 'policyIDs'">
+        <setEventAttribute attr="policyId">$_value4</setEventAttribute>
+      </when>
+    </choose>
+
+    <setEventAttribute attr="eventType">MS-Azure-CloudAppSec</setEventAttribute>
+    <when test="exist appName">
+      <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $appName)</setEventAttribute>
+    </when>
+    <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $_action)</setEventAttribute>
+    <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "\s+", "-")</setEventAttribute>
+    <setEventAttribute attr="eventType">replaceStrInStr($eventType, "EVENT_CATEGORY", "EVENT")</setEventAttribute>
+    <setEventAttribute attr="eventType">replaceStrInStr($eventType, "ALERT_CABINET_EVENT", "ALERT")</setEventAttribute>
+    <setEventAttribute attr="eventType">replaceStrInStr($eventType, "_", "-")</setEventAttribute>
+  </parsingInstructions>
+</eventParser>

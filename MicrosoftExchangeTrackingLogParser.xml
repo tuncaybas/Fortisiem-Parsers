@@ -1,0 +1,83 @@
+<eventParser name="MicrosoftExchangeTrackingLogParser">
+
+  <deviceType>
+    <Vendor>Microsoft</Vendor>
+    <Model>Windows</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Microsoft</Vendor>
+    <Model>Exchange Server</Model>
+    <Version>ANY</Version>
+    <Name>Microsoft Exchange Server</Name>
+  </appType>
+
+  <eventFormatRecognizer><![CDATA[ExchTrackLog]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<13>Oct  9 12:19:05 ExchServer.example.com ExchTrackLog              0              2012-02-14T00:00:00.549Z,192.168.83.39,abc.abc.local,192.168.99.85,abc.abc.local,wuiatqrwsp,ojcopqkjvr,SMTP,RECEIVE,7879570,xxx,<joeUser@abc.abc.local>,joeUser@abc.local,,3577,1,,,"Redacted subject ycvghuemld",joeUser@abc.local,joeUser@abc.local,pkiryfjmjo,192.168.219.64,,,,lgtvbnqnxx]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <!-- parsing common fields -->
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatStr>\s+ExchTrackLog(?:\t|\s+)<:gPatInt>(?:\t|\s+)<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatStr>\s+ExchTrackLog(?:\t|\s+)<:gPatInt>(?:\t|\s+)<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <setEventAttribute attr="eventAction">0</setEventAttribute>
+
+    <!-- message specific parsing
+       #Fields: date-time,client-ip,client-hostname,server-ip,server-hostname,source-context,connector-id,source,event-id,internal-message-id,message-id,recipient-address,recipient-status,total-bytes,recipient-count,related-recipient-address,reference,message-subject,sender-address,return-path,message-info,directionality,tenant-id,original-client-ip,original-server-ip,custom-data
+    -->
+
+    <collectAndSetAttrByPosWithNestedSep src="$_body" L1Sep="," L2Sep="&quot;&quot;">
+      <attrPosMap attr="_dateTime" pos="1"/>
+      <attrPosMap attr="srcIpAddr" pos="2"/>
+      <attrPosMap attr="srcName" pos="3"/>
+      <attrPosMap attr="destIpAddr" pos="4"/>
+      <attrPosMap attr="destName" pos="5"/>
+      <attrPosMap attr="exchSrcContext" pos="6"/>
+      <attrPosMap attr="exchConnectorId" pos="7"/>
+      <attrPosMap attr="exchTransport" pos="8"/>
+      <attrPosMap attr="_eventId" pos="9"/>
+      <attrPosMap attr="exchIntMsgId" pos="10"/>
+      <attrPosMap attr="exchMsgId" pos="11"/>
+      <attrPosMap attr="msgId" pos="12"/>
+      <attrPosMap attr="receiverMailAddr" pos="13"/>
+      <attrPosMap attr="receiverMailStatus" pos="14"/>
+      <attrPosMap attr="totBytes64" pos="15"/>
+      <attrPosMap attr="receiverMailCount" pos="16"/>
+      <attrPosMap attr="relatedReceiverMailAddr" pos="17"/>
+      <attrPosMap attr="exchMsgReference" pos="18"/>
+      <attrPosMap attr="mailSubject" pos="19"/>
+      <attrPosMap attr="senderMailAddr" pos="20"/>
+      <attrPosMap attr="mailReturnPath" pos="21"/>
+      <attrPosMap attr="exchMsgInfo" pos="22"/>
+      <attrPosMap attr="exchMsgDirection" pos="23"/>
+      <attrPosMap attr="exchTenantId" pos="24"/>
+      <attrPosMap attr="mailOrigClientIp" pos="25"/>
+      <attrPosMap attr="mailOrigServerIp" pos="26"/>
+      <attrPosMap attr="exchCustomData" pos="27"/>
+    </collectAndSetAttrByPosWithNestedSep>
+
+    <!-- parse device time
+          2012-02-14T00:00:00.549Z
+      -->
+    <collectAndSetAttrByRegex src="$_dateTime">
+      <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\w<_time:gPatTimeMSec>.*]]></regex>
+    </collectAndSetAttrByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+
+    <setEventAttribute attr="eventType">combineMsgId("MS-EXCHG-",$_eventId)</setEventAttribute>
+  </parsingInstructions>
+</eventParser>

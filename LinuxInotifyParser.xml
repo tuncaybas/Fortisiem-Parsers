@@ -1,0 +1,59 @@
+<eventParser name="LinuxInotifyParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Linux</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[LINUX_FILE_]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[Tue Oct 19 18:18:49 2010 myTesterAttr: [LINUX_FILE_ATTRIB_CHANGED]: [objectType]=Dir,[objectName]=/MyAutomation/All,[objectAction]=ATTRIB,[targetObjType]=File,[targetObjName]="newFile2.txt",[user]=newUser]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <!--
+      Thu Sep 16 19:03:20 2010 PowerEdgeSC440A: [LINUX_FILE_OPEN]: [objectType]=Dir,[objectName]=./,[objectAction]=OPEN,[targetObjType]=File,[targetObjName]="test2"
+    -->
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\w+\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>\s+<hostName:gPatStrEndColon>:\s+\[<eventType:gPatStr>\]:\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <collectAndSetAttrByKeyValuePair sep="," src="$_body">
+      <attrKeyMap attr="osObjType" key="[objectType]="/>
+      <attrKeyMap attr="osObjName" key="[objectName]="/>
+      <attrKeyMap attr="osObjAction" key="[objectAction]="/>
+      <attrKeyMap attr="targetOsObjType" key="[targetObjType]="/>
+      <attrKeyMap attr="targetOsObjName" key="[targetObjName]="/>
+      <attrKeyMap attr="user" key="[user]="/>
+      <attrKeyMap attr="hashCode" key="[hashCode]="/>
+      <attrKeyMap attr="targetHashCode" key="[targetHashCode]="/>
+      <attrKeyMap attr="hashAlgo" key="[hashAlgo]="/>
+      <attrKeyMap attr="fileOwner" key="[fileOwner]="/>
+      <attrKeyMap attr="fileName" key="[fileName]="/>
+      <attrKeyMap attr="userGrp" key="[groupName]="/>
+      <attrKeyMap attr="userPerm" key="[userPerm]="/>
+      <attrKeyMap attr="groupPerm" key="[groupPerm]="/>
+      <attrKeyMap attr="otherPerm" key="[otherPerm]="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <setEventAttribute attr="reptDevName">$hostName</setEventAttribute>
+    <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+    <when test="not_exist extEventRecvProto">
+      <setEventAttribute attr="extEventRecvProto">Syslog</setEventAttribute>
+    </when>
+
+    <when test="exist targetOsObjType">
+      <when test="$targetOsObjType = 'File'">
+        <when test="not_exist fileName">
+          <when test="exist targetOsObjName">
+            <setEventAttribute attr="fileName">$targetOsObjName</setEventAttribute>
+          </when>
+        </when>
+      </when>
+    </when>
+  </parsingInstructions>
+</eventParser>

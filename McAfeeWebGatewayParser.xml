@@ -1,0 +1,318 @@
+<eventParser name="McAfeeWebGatewayParser">
+
+  <deviceType>
+    <Vendor>McAfee</Vendor>
+    <Model>WebGateway</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[^(?:<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatStr>\s+mwg(?:\[\d+\])?:\s*)?(?:"*\[<:gPatDay>/<:gPatMon>/<:gPatYear>:<:gPatTime>\s+[+-]\d+\]\s+"|\(<:patMod>\)\s+CMD\s+\(<:patStrRightParen>\))]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA["[21/Feb/2012:11:44:19  -0500]  """"""""""""    ""10.200.11.170 200 """"GET http://abc.com/ HTTP/1.1"""" """"General News"""" """"Minimal Risk"""" """"text/html"""" 101527 """""""" """""""" """"0""""""]]></testEvent>
+    <testEvent><![CDATA[[30/May/2012:10:39:44 -0400] "" 10.19.2.63 200 "GET http://abc.com/html.ng/site=cnn&cnn_pagetype=main&cnn_position=126x31_spon2&cnn_rollup=homepage&page.allowcompete=no&params.styles=fs&Params.User.UserID=4fc6251c068c9f0aa51475025d0040b8&transactionID=7179860628805012&tile=4893878838331&domId=135492 HTTP/1.1" "Web Ads, Forum/Bulletin Boards" "MinimalRisk" "text/html" 1 "" "" "0"]]></testEvent>
+    <testEvent><![CDATA[<30>Jan  3 16:25:30 MAWG2 mwg: [03/Jan/2019:16:25:30 -0500] "llara" 10.1.1.0 403 "HEAD https://log.example.com/?event=auth_fail&type=extension&xuid=E5qCGcWvQ63N&xv=cr3.0.992 HTTP/1.1" "Blogs/Wiki" "Minimal Risk" "" 206 1922 "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.62 Safari/537.36" "" "0" ""]]></testEvent>
+    <testEvent><![CDATA[<30>Jan  3 16:25:30 MAWG2 mwg: [03/Jan/2019:16:25:30 -0500] "MAWG2" "llara" 10.1.1.0 10.1.1.0 "log.example.com" 403 "-" 1922 0 "HEAD https://log.example.com/?event=auth_fail&type=extension&xuid=E5qCGcWvQ63N&xv=cr3.0.992 HTTP/1.1" "Blogs/Wiki, Social Networking" "Minimal Risk" 7 "Internet-Basico/Categorias Bloqueadas Total" 0 "-" false "-" false "-" "-" "-" "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.62 Safari/537.36"]]></testEvent>
+    <testEvent><![CDATA[<30>Jan  3 16:23:47 MAWG2 mwg: [03/Jan/2019:16:23:46 -0500] "MAWG2" "-" 10.1.1.1 10.1.1.1 "log.example.com" 407 "-" 312 0 "CONNECT log.example.com:443 HTTP/1.1" "-" "-" 0 "Authenticate with User Database/NTLM Authentication" 81 "Authentication Required" false "-" false "-" "-" "-" "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/10.1.1.1 Safari/537.36"]]></testEvent>
+  </testEvents>
+
+  <!-- pattern definitions -->
+  <patternDefinitions>
+    <pattern name="patStrQuote"><![CDATA[[^"]*]]></pattern>
+    <pattern name="patStrRightParen"><![CDATA[[^\)]*]]></pattern>
+    <pattern name="patMod"><![CDATA[tomcat|mwg|root]]></pattern>
+  </patternDefinitions>
+
+  <parsingInstructions>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<hostName:gPatStr>\s+<procName:gPatStrEndColon>:\s*\[<_day:gPatDay>/<_mon:gPatMon>/<_year:gPatYear>:<_time:gPatTime>\s+(?:\+|-)\d+\]\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        <setEventAttribute attr="eventType">combineMsgId("McAfee-WebGw-", "Generic")</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<hostName:gPatStr>\s+<procName:gPatStrEndColon>:\s+\(<:patStrRightParen>\)\s+CMD\s+\(<command:patStrRightParen>\)]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">McAfee-WebGw-Run-Cmd</setEventAttribute>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </case>
+      <default>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[\[<_day:gPatDay>/<_mon:gPatMon>/<_year:gPatYear>:<_time:gPatTime>\s+(?:\+|-)\d+\]\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        <setEventAttribute attr="eventType">combineMsgId("McAfee-WebGw-", "Generic")</setEventAttribute>
+      </default>
+    </switch>
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+
+    <when test="exist _body">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_body">
+            <regex><![CDATA["<srcName:patStrQuote>"\s+<srcIpAddr:gPatIpAddr>\s+<httpStatusCode:gPatInt>\s+"<httpMethod:gPatStr>\s+<uriStem:gPatStr>\s+<httpVersion:patStrQuote>"\s+"<webCategory:patStrQuote>"\s+"<_eventSeverity:patStrQuote>"\s+"<httpContentType:patStrQuote>"\s+<sentBytes:gPatInt>\s+<recvBytes:gPatInt>\s+"<httpUserAgent:patStrQuote>"\s+"<:patStrQuote>"\s+"<_block:patStrQuote>"]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_body">
+            <regex><![CDATA["<srcName:patStrQuote>"\s+"<destName:patStrQuote>"\s+<srcIpAddr:gPatIpAddr>\s+<destIpAddr:gPatIpAddr>\s+"<domain:patStrQuote>"\s+<httpStatusCode:gPatInt>\s+"<:patStrQuote>"\s+<sentBytes:gPatInt>\s+<recvBytes:gPatInt>\s+"<httpMethod:gPatStr>\s+<uriStem:gPatStr>\s+<httpVersion:patStrQuote>"\s+"<webCategory:patStrQuote>"\s+"<_eventSeverity:patStrQuote>"\s+<:gPatStr>\s+"<alertCategory:patStrQuote>"\s+<_block:gPatStr>\s+"<remedyAction:patStrQuote>"\s+<:gPatStr>\s+"<:patStrQuote>"\s+<:gPatStr>\s+(?:"<:patStrQuote>"\s+){3}"<httpUserAgent:patStrQuote>"]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <collectFieldsByRegex src="$_body">
+            <regex><![CDATA[<srcIpAddr:gPatIpAddr>\s+<httpStatusCode:gPatInt>\s+"+<httpMethod:gPatStr>\s+<uriStem:gPatStr>\s+<httpVersion:patStrQuote>"+\s+"+<webCategory:patStrQuote>"+\s+"+<_eventSeverity:patStrQuote>"+\s+"+<httpContentType:patStrQuote>"+\s+<sentBytes:gPatInt>\s+"+<httpUserAgent:patStrQuote>"+\s+"+<:patStrQuote>"+\s+"+<_block:patStrQuote>"+]]></regex>
+          </collectFieldsByRegex>
+        </default>
+      </switch>
+    </when>
+
+    <choose>
+      <when test="not_exist _block"/>
+      <when test="$_block = '0'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Permit</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+      </when>
+
+      <when test="$_block IN '10, 11'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-URL</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_block IN '12, 13'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-ExtList</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_block = '14'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-URL-Expr</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_block = '15'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-RTClassifier</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_block = '20'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-NoContentType</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_block = '21'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-UnmatchedMagicBytes</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_block = '22'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-Matching MediaType</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_block = '23'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-GenBodyFilter</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_block = '24'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-GenHeaderFilter</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_block = '30'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-Multipart-Archive</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_block = '31'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-CorruptArchive</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_block = '32'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-MailBomb</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_block = '33'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-RecursArchive</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_block = '34'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-EncryptArchive</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_block = '35'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-UnknownArchive</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_block = '40'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-TextCategorization</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_block = '41'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-DocInspector</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_block = '42'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-ActiveXFilter</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_block = '43'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-EncryptOfficeDoc</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_block = '44'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-UnreadableOfficeDoc</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_block = '45'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-MacroFilter</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_block = '46'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-MaliciousCode</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_block = '50'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-LowSpam</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_block = '51'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-MedSpam</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_block = '52'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-HighSpam</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_block = '53'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-ExcessAttach</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_block = '54'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-LargeEmail</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_block = '55'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-BadRecipient</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_block = '56'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-ExcessRecipient</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_block = '57'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-ExcessDomain</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_block = '58'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-BadSender</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_block = '59'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-BadSubject</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_block = '70'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-BadLicense</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_block = '71'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-LicenseOverload</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_block = '80'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-VirusFound</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_block = '81'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-UnauthAccess</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_block = '82'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-BadRequest</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_block = '83'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-ForbiddenUpload</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_block = '84'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-LongPost</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_block = '90'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-UnsignedContent</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_block = '91'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-ChecksumMismatch</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_block = '92'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-CertExpire</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_block = '93'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-CertRevoke</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_block = '94'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-ForbiddenCA</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_block = '95'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-UnknownCA</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_block = '96'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-BadVendor</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_block = '97'">
+        <setEventAttribute attr="eventType">McAfee-WebGw-Blocked-SelfsignedCert</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+    </choose>
+
+  </parsingInstructions>
+
+</eventParser>

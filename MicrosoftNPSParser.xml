@@ -1,0 +1,98 @@
+<eventParser name="MicrosoftNPSParser">
+  <deviceType>
+    <Vendor>Microsoft</Vendor>
+    <Model>Network Policy Server</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA["HOSTXXVPN","RAS",03/10/2019,03:47:04,4,"domain\user",,"10.1.1.130","192.168.22.2",,"172.17.220.130","HOSTXXVPN","10.5.5.212",387,,"10.5.5.212","HOSTXXVPN",1552214822,,5,,1,2,,,0,"311 1 fe80::a1bf:5c1c:7ebc:6ab7 02/07/2019 04:24:00 4805",,,,,2,,268050551,253119217,"4806",3,69101,833955,726102,1,"1251",1,,79617,1,"192.168.22.2","10.1.1.130",,,,,,,"MSRASV5.20",311,,"0x00504F4C42",0,,"Microsoft Routing and Remote Access Service Policy",,,,"MSRAS-0-HOST123413","MSRASV5.20"]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patStrQuote"><![CDATA[[^"]+]]></pattern>
+    <pattern name="patMSNPSMod"><![CDATA[IAS|RAS|RADIUS]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA["<:patStrQuote>","<:patMSNPSMod>",<:gPatMonNum>/<:gPatDay>/<:gPatYear>,<:gPatTime>,<:gPatInt>]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">MS-NPS-Generic</setEventAttribute>
+    <collectAndSetAttrByPosWithQuotes src="$_rawmsg" sep="," quo="&quot;">
+      <attrPosMap attr="computer" pos="1"/>
+      <attrPosMap attr="serviceName" pos="2"/>
+      <attrPosMap attr="_date" pos="3"/>
+      <attrPosMap attr="_time" pos="4"/>
+      <attrPosMap attr="_packetType" pos="5"/>
+      <attrPosMap attr="user" pos="6"/>
+      <attrPosMap attr="fqdnName" pos="7"/>
+      <attrPosMap attr="calledStationId" pos="8"/>
+      <attrPosMap attr="callingStationId" pos="9"/>
+      <attrPosMap attr="nasId" pos="12"/>
+      <attrPosMap attr="nasPortId" pos="14"/>
+      <attrPosMap attr="srcIpAddr" pos="16"/>
+      <attrPosMap attr="srcName" pos="17"/>
+      <attrPosMap attr="deviceTime" pos="18"/>
+      <attrPosMap attr="nasPortType" pos="20"/>
+      <attrPosMap attr="serviceType" pos="23"/>
+      <attrPosMap attr="authenMethod" pos="24"/>
+      <attrPosMap attr="policyName" pos="25"/>
+      <attrPosMap attr="sessionTimeoutSec" pos="28"/>
+      <attrPosMap attr="eapType" pos="31"/>
+      <attrPosMap attr="remoteVpnIpAddr" pos="47"/>
+      <attrPosMap attr="localVpnIpAddr" pos="48"/>
+      <attrPosMap attr="policyName" pos="61"/>
+    </collectAndSetAttrByPosWithQuotes>
+
+    <setEventAttribute attr="hostName">$computer</setEventAttribute>
+
+    <when test="exist _date">
+      <collectFieldsByRegex src="$_date">
+        <regex><![CDATA[<_mon:gPatMonNum>/<_day:gPatDay>/<_year:gPatYear>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+
+    <setEventAttribute attr="eventType">combineMsgId("MS-NPS-", $serviceName)</setEventAttribute>
+    <when test="exist _packetType">
+      <choose>
+        <when test="$_packetType = 1">
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "-Access-Request")</setEventAttribute>
+        </when>
+        <when test="$_packetType = 2">
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "-Access-Accept")</setEventAttribute>
+        </when>
+        <when test="$_packetType = 3">
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "-Access-Reject")</setEventAttribute>
+        </when>
+        <when test="$_packetType = 4">
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "-Accounting-Request")</setEventAttribute>
+        </when>
+        <when test="$_packetType = 5">
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "-Accounting-Response")</setEventAttribute>
+        </when>
+        <when test="$_packetType = 11">
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "-Access-Challenge")</setEventAttribute>
+        </when>
+        <when test="$_packetType = 12">
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "-Status-Server")</setEventAttribute>
+        </when>
+        <when test="$_packetType = 13">
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "-Status-Client")</setEventAttribute>
+        </when>
+        <when test="$_packetType = 255">
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "-Reserved")</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$user">
+          <regex><![CDATA[<domain:gPatMesgBody>[\\]<user:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+  </parsingInstructions>
+</eventParser>

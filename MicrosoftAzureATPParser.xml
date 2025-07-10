@@ -1,0 +1,118 @@
+<eventParser name="MicrosoftAzureATPParser">
+  <deviceType>
+    <Vendor>Microsoft</Vendor>
+    <Model>Azure ATP</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[02-21-2018 16:20:21 Auth.Warning 192.168.0.220 1 2018-02-21T14:20:06.156238+00:00 CENTER CEF 6076 LdapBruteForceSecurityAlert 0|Microsoft|Azure ATP|2.22.4228.22540|LdapBruteForceSecurityAlert|Brute force attack using LDAP simple bind|5|start=2018-02-21T14:19:41.7422810Z app=Ldap suser=Wofford Thurston shost=CLIENT1 msg=A brute force attack using the Ldap protocol was attempted on Wofford Thurston (Software Engineer) from CLIENT1 (100 guess attempts). cnt=100 externalId=2004 cs1Label=url cs1=https://contoso-corp.atp.azure.com/securityAlert/11111111-1111-1111-1111-111111111111]]></testEvent>
+    <testEvent><![CDATA[02-21-2018 16:21:22 Auth.Error 192.168.0.220 1 2018-02-21T14:21:13.978554+00:00 CENTER CEF 6076 DirectoryServicesReplicationSecu 0|Microsoft|Azure ATP|2.22.4228.22540|DirectoryServicesReplicationSecurityAlert|Malicious replication of directory services|10|start=2018-02-21T14:19:03.9975656Z app=Drsr shost=CLIENT1 msg=Malicious replication requests were successfully performed by user1, from CLIENT1 against DC1. outcome=Success externalId=2006 cs1Label=url cs1=https://contoso-corp.atp.azure.com/securityAlert/11111111-1111-1111-1111-111111111111]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patMod"><![CDATA[Microsoft|Azure ATP]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[CEF\s+\d+\s+<:gPatMesgBodyMin>\|<:patMod>\|]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatMesgBodyMin>CEF\s+\d+\s+<:gPatMesgBodyMin>\|<:patMod>\|<:gPatStr>\|<alertCategory:gPatStr>\|<:gPatMesgBodyMin>\|<:gPatInt>\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">MS-AzureATP-GenericAlert</setEventAttribute>
+    <when test="exist alertCategory">
+      <setEventAttribute attr="eventType">combineMsgId("MS-AzureATP-", $alertCategory)</setEventAttribute>
+    </when>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="_startTime" key="start"/>
+      <attrKeyMap attr="appTransportProto" key="app"/>
+      <attrKeyMap attr="srcName" key="shost"/>
+      <attrKeyMap attr="user" key="suser"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="destIpPort" key="dpt"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="recvBytes64" key="in"/>
+      <attrKeyMap attr="count" key="cnt"/>
+      <attrKeyMap attr="actionResult" key="outcome"/>
+      <attrKeyMap attr="extEventId" key="externalId"/>
+      <attrKeyMap attr="_cs1" key="cs1"/>
+      <attrKeyMap attr="_cs1Label" key="cs1Label"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist _cs1Label">
+      <when test="$_cs1Label = 'url'">
+        <setEventAttribute attr="infoURL">$_cs1</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _startTime">
+      <collectFieldsByRegex src="$_startTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTimeMSec>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="$eventType = 'MS-AzureATP-GenericAlert'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS-AzureATP-LdapBruteForceSecurityAlert'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS-AzureATP-BruteForceSecurityAlert'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS-AzureATP-ForgedPacSecurityAlert'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS-AzureATP-GoldenTicketSecurityAlert'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS-AzureATP-HoneytokenActivitySecurityAlert'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS-AzureATP-DirectoryServicesReplicationSecurityAlert'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS-AzureATP-RetrieveDataProtectionBackupKeySecurityAlert'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS-AzureATP-PassTheHashSecurityAlert'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS-AzureATP-AccountEnumerationSecurityAlert'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS-AzureATP-DnsReconnaissanceSecurityAlert'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS-AzureATP-EnumerateSessionsSecurityAlert'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS-AzureATP-SamrReconnaissanceSecurityAlert'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS-AzureATP-RemoteExecutionSecurityAlert'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS-AzureATP-EncryptionDowngradeSecurityAlert'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS-AzureATP-AbnormalProtocolSecurityAlert'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS-AzureATP-MaliciousServiceCreationSecurityAlert'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS-AzureATP-PassTheTicketSecurityAlert'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </otherwise>
+    </choose>
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,94 @@
+<eventParser name="MicrosoftGraphAPIParser">
+
+  <deviceType>
+    <Vendor>Microsoft</Vendor>
+    <Model>Graph API Platform</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patKeyword"><![CDATA[graph_risky_users]]></pattern>
+    <pattern name="patExceptSlash"><![CDATA[[^/]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[^\s*<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatYear>\s+<:gPatHostName>\s+<:gPatIpAddr>\s+<:patKeyword>:?]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[Nov 02 12:38:10 2023 graph.microsoft.com 1.1.1.1 graph_risky_users: {"id": "123456", "isDeleted": false, "isProcessing": false, "riskLevel": "none", "riskState": "dismissed", "riskDetail": "adminDismissedAllRiskForUser", "riskLastUpdatedDateTime": "2023-11-01T15:57:37.5356848Z", "userDisplayName": "example user", "userPrincipalName": "exampleuser"}]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <!-- This parser is fed by the FortiSIEM Generic Log API Poller (HTTPS Advanced) event pulling integration -->
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[^\s*<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>\s+<reptDevName:gPatHostName>\s+<reptDevIpAddr:gPatIpAddr>\s+<:patKeyword>:?\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">MS_GRAPH_Generic</setEventAttribute>
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">HTTPS_ADVANCED</setEventAttribute>
+
+    <!-- MS Graph List Risky Users API call using FSM generic log api poller -->
+    <collectAndSetAttrByJSON src="$_body">
+      <attrKeyMap attr="_isDeleted" key="isDeleted"/>
+      <attrKeyMap attr="_isProcessing" key="isProcessing"/>
+      <attrKeyMap attr="_lastUpdateTime" key="riskLastUpdatedDateTime"/>
+      <!-- low, medium, high, none -->
+      <attrKeyMap attr="threatLevel" key="riskLevel"/>
+      <!-- none,confirmedSafe,remediated,dismissed,atRisk,confirmedCompromised -->
+      <attrKeyMap attr="status" key="riskState"/>
+      <attrKeyMap attr="details" key="riskDetail"/>
+      <attrKeyMap attr="userFullName" key="userDisplayName"/>
+      <attrKeyMap attr="user" key="userPrincipalName"/>
+    </collectAndSetAttrByJSON>
+
+    <choose>
+      <when test="not_exist threatLevel"/>
+      <when test="$threatLevel IN 'none,low'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$threatLevel = 'medium'">
+        <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+      </when>
+      <when test="$threatLevel = 'high'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist status">
+      <setEventAttribute attr="eventType">combineMsgId("MS_GRAPH_RiskyUserStatus_", $status)</setEventAttribute>
+    </when>
+
+    <when test="exist _isDeleted">
+      <when test="$_isDeleted = 'true'">
+        <setEventAttribute attr="deletedItem">$user</setEventAttribute>
+      </when>
+    </when>
+
+    <!-- Set event time -->
+    <choose>
+      <when test="not_exist _mon"/>
+      <when test="not_exist _day"/>
+      <when test="not_exist _time"/>
+      <when test="not_exist _year"/>
+      <otherwise>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist user">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$user">
+            <regex><![CDATA[^<user:gPatStr>@<domain:gPatStr>$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+  </parsingInstructions>
+
+</eventParser>

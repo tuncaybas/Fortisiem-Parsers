@@ -1,0 +1,915 @@
+<eventParser name="NetAppParser">
+  <deviceType>
+    <Vendor>NetApp</Vendor>
+    <Model>DataONTAP</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[SNMPv2-SMI::enterprises\.789]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[2013-09-30 12:51:45 10.100.1.86(via UDP: [10.100.1.8]:38778) TRAP, SNMP v1, community publicSNMPv2-SMI::enterprises.789 Enterprise Specific Trap (176) Uptime: 183 days, 22:13:40.35SNMPv2-SMI::enterprises.789.1.1.12.0 = STRING: Quota Event: status=exceeded, type=hard, volume=pandata, limit_item=disk, limit_value=36700160, treeid=112SNMPv2-SMI::enterprises.789.1.1.9.0 = STRING: 200000208115]]></testEvent>
+    <testEvent><![CDATA[2013-09-30 13:29:41 10.100.1.86(via UDP: [10.100.1.8]:38778) TRAP, SNMP v1, community publicSNMPv2-SMI::enterprises.789 Enterprise Specific Trap (176) Uptime: 183 days, 22:51:37.13SNMPv2-SMI::enterprises.789.1.1.12.0 = STRING: Quota Event: status=exceeded, type=hard, volume=pandata, limit_item=disk, limit_value=10485760, treeid=241SNMPv2-SMI::enterprises.789.1.1.9.0 = STRING: 200000208115]]></testEvent>
+    <testEvent><![CDATA[2013-09-29 22:11:51 10.100.1.86(via UDP: [10.100.1.8]:38778) TRAP, SNMP v1, community publicSNMPv2-SMI::enterprises.789 Enterprise Specific Trap (266) Uptime: 183 days, 7:33:37.81SNMPv2-SMI::enterprises.789.1.1.12.0 = STRING: CIFS: Virus scan server \\NLALM1TS06 (192.168.4.84) notified the filer that its version has changedSNMPv2-SMI::enterprises.789.1.1.9.0 = STRING: 200000208115]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+<hostIpAddr:gPatIpAddr>.*SNMPv2-SMI::enterprises\.789 Enterprise Specific Trap\s+\(<_id:gPatInt>\)\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+<hostName:gPatStr>\s.*SNMPv2-SMI::enterprises\.789 Enterprise Specific Trap\s+\(<_id:gPatInt>\)\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventType">NetApp-Generic</setEventAttribute>
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+    <setEventAttribute attr="msg">$_body</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">Snmp Trap</setEventAttribute>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[SNMPv2-SMI::enterprises\.789\.1\.1\.12\.0 = STRING:\s+<_msg:gPatStr>\s+Event:\s+status=<:gPatStrComma>,\s+type=<quotaType:gPatStrComma>,\s+volume=<volName:gPatStrComma>,\s+limit_item=<item:gPatStrComma>,\s+limit_value=<quotaHardThresholdBytes:gPatInt>,]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <default/>
+    </switch>
+
+    <choose>
+
+      <when test="$_id = '6'">
+        <setEventAttribute attr="eventType">NetApp-dhmNoticeDegradedIO</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '7'">
+        <setEventAttribute attr="eventType">NetApp-dhmNoticePFAEvent</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '11'">
+        <setEventAttribute attr="eventType">NetApp-emergencyTrap</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_id = '11'">
+        <setEventAttribute attr="eventType">NetApp-alertTrap</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_id = '13'">
+        <setEventAttribute attr="eventType">NetApp-criticalTrap</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_id = '14'">
+        <setEventAttribute attr="eventType">NetApp-errorTrap</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '15'">
+        <setEventAttribute attr="eventType">NetApp-warningTrap</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '16'">
+        <setEventAttribute attr="eventType">NetApp-notificationTrap</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+
+      <when test="$_id = '17'">
+        <setEventAttribute attr="eventType">NetApp-informationalTrap</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_id = '18'">
+        <setEventAttribute attr="eventType">NetApp-dbgTrap</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_id = '21'">
+        <setEventAttribute attr="eventType">NetApp-diskFailedShutdown</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+        <setEventAttribute attr="errorNo">21</setEventAttribute>
+      </when>
+
+      <when test="$_id = '22'">
+        <setEventAttribute attr="eventType">NetApp-diskFailed</setEventAttribute>
+        <setEventAttribute attr="errorNo">21</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_id = '26'">
+        <setEventAttribute attr="eventType">NetApp-diskRepaired</setEventAttribute>
+        <setEventAttribute attr="errorNo">21</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_id = '31'">
+        <setEventAttribute attr="eventType">NetApp-fanFailureShutdown</setEventAttribute>
+        <setEventAttribute attr="errorNo">31</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+
+      <when test="$_id = '33'">
+        <setEventAttribute attr="eventType">NetApp-fanFailed</setEventAttribute>
+        <setEventAttribute attr="errorNo">31</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_id = '35'">
+        <setEventAttribute attr="eventType">NetApp-fanWarning</setEventAttribute>
+        <setEventAttribute attr="errorNo">31</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="$_id = '36'">
+        <setEventAttribute attr="eventType">NetApp-fanRepaired</setEventAttribute>
+        <setEventAttribute attr="errorNo">31</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_id = '41'">
+        <setEventAttribute attr="eventType">NetApp-powerSupplyFailureShutdown</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+        <setEventAttribute attr="errorNo">41</setEventAttribute>
+      </when>
+
+      <when test="$_id = '43'">
+        <setEventAttribute attr="eventType">NetApp-powerSupplyFailed</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">41</setEventAttribute>
+      </when>
+
+      <when test="$_id = '45'">
+        <setEventAttribute attr="eventType">NetApp-powerSupplyWarning</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">41</setEventAttribute>
+      </when>
+
+      <when test="$_id = '46'">
+        <setEventAttribute attr="eventType">NetApp-powerSupplyRepaired</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">41</setEventAttribute>
+      </when>
+
+      <when test="$_id = '55'">
+        <setEventAttribute attr="eventType">NetApp-cpuTooBusy</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">55</setEventAttribute>
+      </when>
+
+      <when test="$_id = '56'">
+        <setEventAttribute attr="eventType">NetApp-cpuOk</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">55</setEventAttribute>
+      </when>
+
+      <when test="$_id = '62'">
+        <setEventAttribute attr="eventType">NetApp-nvramBatteryDischarged</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '63'">
+        <setEventAttribute attr="eventType">NetApp-nvramBatteryLow</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '72'">
+        <setEventAttribute attr="eventType">NetApp-clusterNodeFailed</setEventAttribute>
+        <setEventAttribute attr="errorNo">72</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_id = '75'">
+        <setEventAttribute attr="eventType">NetApp-clusterNodeTakenOver</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">72</setEventAttribute>
+      </when>
+
+      <when test="$_id = '76'">
+        <setEventAttribute attr="eventType">NetApp-clusterNodeRepaired</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">72</setEventAttribute>
+      </when>
+
+      <when test="$_id = '82'">
+        <setEventAttribute attr="eventType">NetApp-volumeFull</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">82</setEventAttribute>
+      </when>
+
+      <when test="$_id = '85'">
+        <setEventAttribute attr="eventType">NetApp-volumeNearlyFull</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">82</setEventAttribute>
+      </when>
+
+      <when test="$_id = '86'">
+        <setEventAttribute attr="eventType">NetApp-volumeRepaired</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">82</setEventAttribute>
+      </when>
+
+      <when test="$_id = '87'">
+        <setEventAttribute attr="eventType">NetApp-volumesStillFull </setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">82</setEventAttribute>
+      </when>
+
+      <when test="$_id = '91'">
+        <setEventAttribute attr="eventType">NetApp-overTempShutdown</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+        <setEventAttribute attr="errorNo">91</setEventAttribute>
+      </when>
+
+      <when test="$_id = '92'">
+        <setEventAttribute attr="eventType">NetApp-overTemp</setEventAttribute>
+        <setEventAttribute attr="errorNo">91</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_id = '93'">
+        <setEventAttribute attr="eventType">NetApp-overTempRepaired</setEventAttribute>
+        <setEventAttribute attr="errorNo">91</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_id = '103'">
+        <setEventAttribute attr="eventType">NetApp-shelfFault</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">103</setEventAttribute>
+      </when>
+
+      <when test="$_id = '106'">
+        <setEventAttribute attr="eventType">NetApp-shelfRepaired</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">103</setEventAttribute>
+      </when>
+
+      <when test="$_id = '111'">
+        <setEventAttribute attr="eventType">NetApp-globalStatusNonRecoverable</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+        <setEventAttribute attr="errorNo">111</setEventAttribute>
+      </when>
+
+      <when test="$_id = '113'">
+        <setEventAttribute attr="eventType">NetApp-globalStatusCritical</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">111</setEventAttribute>
+      </when>
+
+      <when test="$_id = '115'">
+        <setEventAttribute attr="eventType">NetApp-globalStatusNonCritical</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+        <setEventAttribute attr="errorNo">111</setEventAttribute>
+      </when>
+
+      <when test="$_id = '116'">
+        <setEventAttribute attr="eventType">NetApp-globalStatusOk</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">111</setEventAttribute>
+      </when>
+
+      <when test="$_id = '126'">
+        <setEventAttribute attr="eventType">NetApp-softQuotaExceeded</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">126</setEventAttribute>
+      </when>
+
+      <when test="$_id = '127'">
+        <setEventAttribute attr="eventType">NetApp-softQuotaNormal</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">126</setEventAttribute>
+      </when>
+
+      <when test="$_id = '134'">
+        <setEventAttribute attr="eventType">NetApp-autosupportSendError</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '135'">
+        <setEventAttribute attr="eventType">NetApp-autosupportConfigurationError</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '136'">
+        <setEventAttribute attr="eventType">NetApp-autosupportSent</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '142'">
+        <setEventAttribute attr="eventType">NetApp-upsLinePowerOff</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">142</setEventAttribute>
+      </when>
+
+      <when test="$_id = '143'">
+        <setEventAttribute attr="eventType">NetApp-upsBatteryCritical</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+        <setEventAttribute attr="errorNo">142</setEventAttribute>
+      </when>
+
+      <when test="$_id = '144'">
+        <setEventAttribute attr="eventType">NetApp-upsShuttingDown</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+        <setEventAttribute attr="errorNo">142</setEventAttribute>
+      </when>
+
+      <when test="$_id = '145'">
+        <setEventAttribute attr="eventType">NetApp-upsBatteryWarning</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">142</setEventAttribute>
+      </when>
+
+      <when test="$_id = '146'">
+        <setEventAttribute attr="eventType">NetApp-upsLinePowerRetored</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">142</setEventAttribute>
+      </when>
+
+      <when test="$_id = '151'">
+        <setEventAttribute attr="eventType">NetApp-appEmergency</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+
+      <when test="$_id = '152'">
+        <setEventAttribute attr="eventType">NetApp-appAlert</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_id = '153'">
+        <setEventAttribute attr="eventType">NetApp-appCritical</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_id = '154'">
+        <setEventAttribute attr="eventType">NetApp-appError</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '155'">
+        <setEventAttribute attr="eventType">NetApp-appWarning</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="$_id = '156'">
+        <setEventAttribute attr="eventType">NetApp-appNotice</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_id = '157'">
+        <setEventAttribute attr="eventType">NetApp-appInfo</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_id = '158'">
+        <setEventAttribute attr="eventType">NetApp-appTrap</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_id = '162'">
+        <setEventAttribute attr="eventType">NetApp-alfFilewrap</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '166'">
+        <setEventAttribute attr="eventType">NetApp-alfFileSaved</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_id = '167'">
+        <setEventAttribute attr="eventType">NetApp-alfFileNearlyFull</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_id = '176'">
+        <setEventAttribute attr="eventType">NetApp-quotaExceeded</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">176</setEventAttribute>
+      </when>
+
+      <when test="$_id = '177'">
+        <setEventAttribute attr="eventType">NetApp-quotaNormal</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">176</setEventAttribute>
+      </when>
+
+      <when test="$_id = '186'">
+        <setEventAttribute attr="eventType">NetApp-waflDirNearlyFull</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '187'">
+        <setEventAttribute attr="eventType">NetApp-waflDirFull</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_id = '192'">
+        <setEventAttribute attr="eventType">NetApp-eccSummary </setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+
+      <when test="$_id = '195'">
+        <setEventAttribute attr="eventType">NetApp-eccMasked</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_id = '204'">
+        <setEventAttribute attr="eventType">NetApp-ftpdError</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '206'">
+        <setEventAttribute attr="eventType">NetApp-ftpdMaxConnNotice</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '216'">
+        <setEventAttribute attr="eventType">NetApp-ftpdMaxConnThresholdNotice</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '222'">
+        <setEventAttribute attr="eventType">NetApp-scsitgtFCPLinkBreak</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_id = '224'">
+        <setEventAttribute attr="eventType">NetApp-scsitgtPartnerPathMisconfigured</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '226'">
+        <setEventAttribute attr="eventType">NetApp-scsitgtThrottleNotice</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '237'">
+        <setEventAttribute attr="eventType">NetApp-vifPrimaryLinkFailed</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '238'">
+        <setEventAttribute attr="eventType">NetApp-vifAllLinksFailed</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+
+      <when test="$_id = '245'">
+        <setEventAttribute attr="eventType">NetApp-vfStopped</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+        <setEventAttribute attr="errorNo">245</setEventAttribute>
+      </when>
+
+      <when test="$_id = '246'">
+        <setEventAttribute attr="eventType">NetApp-vfStarted</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">245</setEventAttribute>
+      </when>
+
+      <when test="$_id = '254'">
+        <setEventAttribute attr="eventType">NetApp-vscanVirusDetectedError</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '255'">
+        <setEventAttribute attr="eventType">NetApp-vscanDisConnection</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '256'">
+        <setEventAttribute attr="eventType">NetApp-vscanConfigurationChange</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '257'">
+        <setEventAttribute attr="eventType">NetApp-vscanConnection</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="$_id = '266'">
+        <setEventAttribute attr="eventType">NetApp-vscanServerUpgrade</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '272'">
+        <setEventAttribute attr="eventType">NetApp-volumeRestrictedByMirrorBigIo</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+
+      <when test="$_id = '274'">
+        <setEventAttribute attr="eventType">NetApp-volumeInconsistentUmount</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '275'">
+        <setEventAttribute attr="eventType">NetApp-volumeStateChanged</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">275</setEventAttribute>
+      </when>
+
+      <when test="$_id = '276'">
+        <setEventAttribute attr="eventType">NetApp-volumeOnline</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">276</setEventAttribute>
+      </when>
+
+      <when test="$_id = '283'">
+        <setEventAttribute attr="eventType">NetApp-rmcCardNeedsReplacement</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+
+      <when test="$_id = '284'">
+        <setEventAttribute attr="eventType">NetApp-rmcCardMissingCables</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+
+      <when test="$_id = '294'">
+        <setEventAttribute attr="eventType">NetApp-volumeRemoteUnreachable</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+        <setEventAttribute attr="errorNo">294</setEventAttribute>
+      </when>
+
+      <when test="$_id = '296'">
+        <setEventAttribute attr="eventType">NetApp-volumeRemoteOk</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">294</setEventAttribute>
+      </when>
+
+      <when test="$_id = '297'">
+        <setEventAttribute attr="eventType">NetApp-volumeRemoteRestored</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_id = '298'">
+        <setEventAttribute attr="eventType">NetApp-volumeRemoteRestoreBegin</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_id = '304'">
+        <setEventAttribute attr="eventType">NetApp-volumeRestrictedRootConflict</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '314'">
+        <setEventAttribute attr="eventType">NetApp-volumeOfflineTooBig</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '324'">
+        <setEventAttribute attr="eventType">NetApp-volumeOffline</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '334'">
+        <setEventAttribute attr="eventType">NetApp-volumeRestricted</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '344'">
+        <setEventAttribute attr="eventType">NetApp-volumeDegradedDirty</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+
+      <when test="$_id = '354'">
+        <setEventAttribute attr="eventType">NetApp-volumeError</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+
+      <when test="$_id = '364'">
+        <setEventAttribute attr="eventType">NetApp-snapmirrorSyncFailed</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+        <setEventAttribute attr="errorNo">364</setEventAttribute>
+      </when>
+
+      <when test="$_id = '366'">
+        <setEventAttribute attr="eventType">NetApp-snapmirrorSyncOk</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">364</setEventAttribute>
+      </when>
+
+      <when test="$_id = '371'">
+        <setEventAttribute attr="eventType">NetApp-chassisTemperatureShutdown</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+        <setEventAttribute attr="errorNo">371</setEventAttribute>
+      </when>
+
+      <when test="$_id = '372'">
+        <setEventAttribute attr="eventType">NetApp-chassisTemperatureWarning</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">371</setEventAttribute>
+      </when>
+
+      <when test="$_id = '375'">
+        <setEventAttribute attr="eventType">NetApp-chassisTemperatureUnknown</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '376'">
+        <setEventAttribute attr="eventType">NetApp-chassisTemperatureOk</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">371</setEventAttribute>
+      </when>
+
+      <when test="$_id = '381'">
+        <setEventAttribute attr="eventType">NetApp-chassisCPUFanStopped</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+        <setEventAttribute attr="errorNo">381</setEventAttribute>
+      </when>
+
+      <when test="$_id = '383'">
+        <setEventAttribute attr="eventType">NetApp-chassisCPUFanSlow</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">381</setEventAttribute>
+      </when>
+
+      <when test="$_id = '386'">
+        <setEventAttribute attr="eventType">NetApp-chassisCPUFanOk</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">381</setEventAttribute>
+      </when>
+
+      <when test="$_id = '391'">
+        <setEventAttribute attr="eventType">NetApp-chassisPowerSuppliesFailed</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+        <setEventAttribute attr="errorNo">391</setEventAttribute>
+      </when>
+
+      <when test="$_id = '392'">
+        <setEventAttribute attr="eventType">NetApp-chassisPowerSupplyDegraded</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+        <setEventAttribute attr="errorNo">391</setEventAttribute>
+      </when>
+
+      <when test="$_id = '393'">
+        <setEventAttribute attr="eventType">NetApp-chassisPowerSupplyFailed</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+        <setEventAttribute attr="errorNo">391</setEventAttribute>
+      </when>
+
+      <when test="$_id = '394'">
+        <setEventAttribute attr="eventType">NetApp-chassisPowerSupplyRemoved</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">391</setEventAttribute>
+      </when>
+
+      <when test="$_id = '395'">
+        <setEventAttribute attr="eventType">NetApp-chassisPowerSupplyOff</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">391</setEventAttribute>
+      </when>
+
+      <when test="$_id = '396'">
+        <setEventAttribute attr="eventType">NetApp-chassisPowerSuppliesOk</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">391</setEventAttribute>
+      </when>
+
+      <when test="$_id = '397'">
+        <setEventAttribute attr="eventType">NetApp-chassisPowerSupplyOk</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">391</setEventAttribute>
+      </when>
+
+      <when test="$_id = '403'">
+        <setEventAttribute attr="eventType">NetApp-chassisPowerDegraded</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">403</setEventAttribute>
+      </when>
+
+      <when test="$_id = '406'">
+        <setEventAttribute attr="eventType">NetApp-chassisPowerOk</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">403</setEventAttribute>
+      </when>
+
+      <when test="$_id = '412'">
+        <setEventAttribute attr="eventType">NetApp-chassisFanDegraded</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">412</setEventAttribute>
+      </when>
+
+      <when test="$_id = '413'">
+        <setEventAttribute attr="eventType">NetApp-chassisFanRemoved</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">412</setEventAttribute>
+      </when>
+
+      <when test="$_id = '414'">
+        <setEventAttribute attr="eventType">NetApp-chassisFanStopped</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">412</setEventAttribute>
+      </when>
+
+      <when test="$_id = '415'">
+        <setEventAttribute attr="eventType">NetApp-chassisFanWarning</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">412</setEventAttribute>
+      </when>
+
+      <when test="$_id = '416'">
+        <setEventAttribute attr="eventType">NetApp-chassisFanOk</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">412</setEventAttribute>
+      </when>
+
+      <when test="$_id = '424'">
+        <setEventAttribute attr="eventType">NetApp-writeVerificationFailed</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '435'">
+        <setEventAttribute attr="eventType">NetApp-domainControllerDisconnect</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '436'">
+        <setEventAttribute attr="eventType">NetApp-dcPasswdChangeFailed</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '437'">
+        <setEventAttribute attr="eventType">NetApp-domainControllerConnected</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '444'">
+        <setEventAttribute attr="eventType">NetApp-plexFailed</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '454'">
+        <setEventAttribute attr="eventType">NetApp-plexOffline</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '464'">
+        <setEventAttribute attr="eventType">NetApp-shelfSESElectronicsFailed</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '467'">
+        <setEventAttribute attr="eventType">NetApp-shelfSESElectronicsInfo</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '473'">
+        <setEventAttribute attr="eventType">NetApp-shelfIFModuleFailed</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+
+      <when test="$_id = '475'">
+        <setEventAttribute attr="eventType">NetApp-shelfIFModuleWarning</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+
+      <when test="$_id = '477'">
+        <setEventAttribute attr="eventType">NetApp-shelfIFModuleInfo</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_id = '482'">
+        <setEventAttribute attr="eventType">NetApp-maxDirSizeAlert</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_id = '485'">
+        <setEventAttribute attr="eventType">NetApp-maxDirSizeWarning</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '497'">
+        <setEventAttribute attr="eventType">NetApp-cifsStatsExhaustMemCtrlBlk</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '501'">
+        <setEventAttribute attr="eventType">NetApp-chassisPSRemovedxMinShutdown</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_id = '505'">
+        <setEventAttribute attr="eventType">NetApp-hassisPSUsMismatch</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '511'">
+        <setEventAttribute attr="eventType">NetApp-chassisFanFailxMinShutdown</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+
+      <when test="$_id = '515'">
+        <setEventAttribute attr="eventType">NetApp-chassisPSUwrongInput</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '521'">
+        <setEventAttribute attr="eventType">NetApp-powerSupplyFanFailxMinShutdown</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+
+      <when test="$_id = '532'">
+        <setEventAttribute attr="eventType">NetApp-remoteSystemMgtAlert</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_id = '535'">
+        <setEventAttribute attr="eventType">NetApp-remoteSystemMgmtWarning</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '536'">
+        <setEventAttribute attr="eventType">NetApp-remoteSystemMgmtNotification</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+
+      <when test="$_id = '547'">
+        <setEventAttribute attr="eventType">NetApp-remoteSystemMgmtPeriodic</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_id = '556'">
+        <setEventAttribute attr="eventType">NetApp-remotesystemMgmtTest</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_id = '562'">
+        <setEventAttribute attr="eventType">NetApp-diskMultipathOneSwitch</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '563'">
+        <setEventAttribute attr="eventType">NetApp-diskMultipathNoTakeover</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_id = '565'">
+        <setEventAttribute attr="eventType">NetApp-diskMultipathWarning</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="$_id = '574'">
+        <setEventAttribute attr="eventType">NetApp-driveDisableErr</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+
+      <when test="$_id = '587'">
+        <setEventAttribute attr="eventType">NetApp-hbaOfflineInformation</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_id = '606'">
+        <setEventAttribute attr="eventType">NetApp-lunSnapRestoreStatus</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_id = '616'">
+        <setEventAttribute attr="eventType">NetApp-lunCloneCreate</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_id = '626'">
+        <setEventAttribute attr="eventType">NetApp-lunCloneSplitStart</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_id = '627'">
+        <setEventAttribute attr="eventType">NetApp-lunCloneSplitComplete</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_id = '636'">
+        <setEventAttribute attr="eventType">NetApp-flexCloneSplitStart</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_id = '637'">
+        <setEventAttribute attr="eventType">NetApp-flexCloneSplitComplete</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_id = '646'">
+        <setEventAttribute attr="eventType">NetApp-volumeCloneCreate </setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_id = '656'">
+        <setEventAttribute attr="eventType">NetApp-snapAutoDelete</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_id = '666'">
+        <setEventAttribute attr="eventType">NetApp-volumeAutogrow</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+    </choose>
+  </parsingInstructions>
+</eventParser>

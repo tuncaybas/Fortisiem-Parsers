@@ -1,0 +1,253 @@
+<eventParser name="MS365DefenderParser">
+  <deviceType>
+    <Vendor>Microsoft</Vendor>
+    <Model>365 Defender</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[May 21 14:29:18 2015 host 1.2.3.4 Microsoft 365 Defender Alert: {"id": "da637822407467033679_1147136674", "providerAlertId": "da637822407467033679_1147136674", "incidentId": "14", "status": "new", "severity": "medium", "classification": null, "determination": null, "serviceSource": "microsoftDefenderForEndpoint", "detectionSource": "microsoftDefenderForEndpoint", "detectorId": "11111111-1111-1111-1111-111111111111", "tenantId": "11111111-1111-1111-1111-111111111111", "title": "Anomaly detected in ASEP registry", "description": "A process registered a suspicious command or file in ASEP registry key, where it will be run after a reboot.\nAn attacker may place a malicious piece of software in such a location to prevent losing access if a machine is turned off.", "recommendedActions": "Validate the alert, collect artifacts, and determine scope \n1. Inspect the process initiated the registry write for suspicious characteristics \u2013 is it digitally signed? How prevalent is it? Where is it located? Do the domain registration and hosting history look normal? \n2. Review the machine timeline for suspicious activities that may have occurred before and after the time of the alert. \n3. Look for the presence of relevant artifacts on other systems. Identify commonalities and differences between potentially compromised systems. \n4. Submit relevant files for deep analysis and review resulting detailed behavioral information. \n5. If alert characteristics and machine behavioral evidence constitute a true positive, consider some of the initial mitigation actions below. Then, contact your incident response team for potential forensic analysis and remediation. \n\nInitiate containment & mitigation \n1. Record all relevant artifacts to be used in mitigation rules and as new threat intel \n2. Contact the user to check if the observed behavior was intended. \n3. Update AV signatures and run a full scan. The scan might reveal and remove previously-undetected malware components. \n4. Ensure that the machine has the latest security updates. In particular, ensure that you have installed the latest software, web browser, and Operating System versions. \n5. If credential theft is suspected, reset all relevant users passwords.\n6. Remove the suspicious registry entry\n7. Disconnect the machine from the network to prevent any threat attack progression.", "category": "Persistence", "assignedTo": null, "alertWebUrl": "https://security.microsoft.com/alerts/da637822407467033679_1147136674?tid=11111111-1111-1111-1111-111111111111", "incidentWebUrl": "https://security.microsoft.com/incidents/14?tid=11111111-1111-1111-1111-111111111111", "actorDisplayName": null, "threatDisplayName": null, "threatFamilyName": null, "mitreTechniques": ["T1112", "T1547.001"], "createdDateTime": "2022-03-07T09:05:46.7034052Z", "lastUpdateDateTime": "2022-03-07T09:05:50.3433333Z", "resolvedDateTime": null, "firstActivityDateTime": "2022-03-07T09:02:52.0970992Z", "lastActivityDateTime": "2022-03-07T09:02:52.0970992Z", "comments": [], "evidence": [{"@odata.type": "#microsoft.graph.security.deviceEvidence", "createdDateTime": "2022-03-07T09:05:46.7133333Z", "verdict": "unknown", "remediationStatus": "none", "remediationStatusDetails": null, "firstSeenDateTime": "2022-03-07T09:00:34.358Z", "mdeDeviceId": "1395901362bf9d08c37dcf450a97e29ec3bd1d27", "azureAdDeviceId": null, "deviceDnsName": "mprtdev-win10a.mprtdev.com", "osPlatform": "Windows10", "osBuild": 19043, "version": "21H1", "healthStatus": "active", "riskScore": "high", "rbacGroupId": 0, "rbacGroupName": null, "onboardingStatus": "onboarded", "defenderAvStatus": "updated", "loggedOnUsers": [{"accountName": "Darol", "domainName": "MPRTDEV"}]}, {"@odata.type": "#microsoft.graph.security.processEvidence", "createdDateTime": "2022-03-07T09:05:46.7133333Z", "verdict": "unknown", "remediationStatus": "none", "remediationStatusDetails": null, "processId": 9412, "parentProcessId": 7348, "processCommandLine": "REG  ADD HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce /f /v Troj /t REG_EXPAND_SZ /d %userprofile%\\desktop\\WinATP-Intro-Backdoor.exe", "processCreationDateTime": "2022-03-07T09:02:51.9007553Z", "parentProcessCreationDateTime": "2022-03-07T09:02:50.794442Z", "detectionStatus": "detected", "mdeDeviceId": "1395901362bf9d08c37dcf450a97e29ec3bd1d27", "imageFile": {"sha1": "c0db341defa8ef40c03ed769a9001d600e0f4dae", "sha256": "c0e25b1f9b22de445298c1e96ddfcead265ca030fa6626f61a4a4786cc4a3b7d", "fileName": "reg.exe", "filePath": "C:\\Windows\\System32", "fileSize": 77312, "filePublisher": "Microsoft Corporation", "signer": null, "issuer": null}, "parentProcessImageFile": {"sha1": null, "sha256": null, "fileName": "cmd.exe", "filePath": "C:\\Windows\\System32", "fileSize": 289792, "filePublisher": "Microsoft Corporation", "signer": null, "issuer": null}, "userAccount": {"accountName": "darol", "domainName": "MPRTDEV", "userSid": "S-1-5-21-1173617622-559850574-1006406051-1103", "azureAdUserId": null, "userPrincipalName": "Darol@mprtdev.com"}}, {"@odata.type": "#microsoft.graph.security.registryValueEvidence", "createdDateTime": "2022-03-07T09:05:46.7133333Z", "verdict": "unknown", "remediationStatus": "none", "remediationStatusDetails": null, "registryKey": "S-1-5-21-1173617622-559850574-1006406051-1103\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Runonce", "registryHive": "HKEY_CURRENT_USER", "registryValue": "", "registryValueName": "Troj", "registryValueType": "Unknown"}, {"@odata.type": "#microsoft.graph.security.userEvidence", "createdDateTime": "2022-03-07T09:05:46.7133333Z", "verdict": "unknown", "remediationStatus": "none", "remediationStatusDetails": null, "userAccount": {"accountName": "darol", "domainName": "MPRTDEV", "userSid": "S-1-5-21-1173617622-559850574-1006406051-1103", "azureAdUserId": "2f8ba9d5-f377-1111-8907-11111d2bce", "userPrincipalName": "test@mprtdev.onmicrosoft.com"}}]}]]></testEvent>
+    <testEvent><![CDATA[May 21 14:29:18 2015 host 1.2.3.4 Microsoft 365 Defender Incident: {"id": "3", "tenantId": "11111111-1111-1111-1111-111111111111", "status": "resolved", "incidentWebUrl": "https://security.microsoft.com/incidents/3?tid=11111111-1111-1111-1111-111111111111", "redirectIncidentId": null, "displayName": "Multi-stage incident involving Credential access & Lateral movement on one endpoint", "createdDateTime": "2022-01-28T04:56:08.9633333Z", "lastUpdateDateTime": "2022-01-28T07:11:29.67Z", "assignedTo": "tenantadmin@mprtdev.onmicrosoft.com", "classification": "unknown", "determination": "unknown", "severity": "high", "tags": [], "comments": []}]]></testEvent>
+  </testEvents>
+
+  <!-- This parser relies on the Generic HTTPS Log API poller integration (Protocol: HTTPS Advanced) -->
+  <!-- Your HTTPS Advanced Credential must use Log Header: Microsoft Defender365 Alert: or Microsoft Defender365 Incident: -->
+  <eventFormatRecognizer><![CDATA[<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatYear>\s+<:gPatHostName>\s+<:gPatIpAddr>\s+Microsoft 365 Defender\s+(?:Alert|Incident):]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatYear>\s+<reptDevName:gPatHostName>\s+<reptDevIpAddr:gPatIpAddr>\s+Microsoft 365 Defender\s+<_ET:gPatWord>:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId("M365Defender-",$_ET)</setEventAttribute>
+      </case>
+      <default>
+        <setEventAttribute attr="eventType">M365Defender-Generic</setEventAttribute>
+      </default>
+    </switch>
+
+    <setEventAttribute attr="extEventRecvProto">HTTPS_ADVANCED</setEventAttribute>
+
+    <when test="exist _ET">
+      <when test="$_ET = 'Alert'">
+        <collectAndSetAttrByJSON src="$_body">
+          <!-- Required Fields for Alert -->
+          <attrKeyMap attr="alertIdStr" key="id"/>
+          <attrKeyMap attr="_providerAlertId" key="providerAlertId"/>
+          <attrKeyMap attr="incidentExtTicketId" key="incidentId"/>
+          <!-- new,inProgress,resolved, unknownFutureValue -->
+          <attrKeyMap attr="status" key="status"/>
+          <attrKeyMap attr="eventSeverityCat" key="severity"/>
+          <attrKeyMap attr="srcApp" key="serviceSource"/>
+          <attrKeyMap attr="eventSource" key="detectionSource"/>
+          <attrKeyMap attr="alertName" key="title"/>
+          <attrKeyMap attr="msg" key="description"/>
+          <attrKeyMap attr="recommendedActions" key="recommendedActions"/>
+          <!-- Mitre Kill Chain category -->
+          <attrKeyMap attr="attackTactic" key="category"/>
+          <attrKeyMap attr="infoURL" key="alertWebUrl"/>
+          <attrKeyMap attr="parentObjUrl" key="incidentWebUrl"/>
+          <attrKeyMap attr="_createdTime" key="createdDateTime"/>
+          <attrKeyMap attr="_lastUpdateTime" key="lastUpdateDateTime"/>
+          <attrKeyMap attr="_firstActivity" key="firstActivityDateTime"/>
+          <attrKeyMap attr="_lastActivity" key="lastActivityDateTime"/>
+          <!-- optional fields -->
+          <attrKeyMap attr="classifier" key="classification"/>
+          <attrKeyMap attr="attackType" key="determination"/>
+          <attrKeyMap attr="detectorId" key="detectorId"/>
+          <!-- Azure tenant if applicable -->
+          <attrKeyMap attr="tenantId" key="tenantId"/>
+          <attrKeyMap attr="incidentExtUser" key="assignedTo"/>
+          <!-- Adversary or activity group associated with attack, not user -->
+          <attrKeyMap attr="actorName" key="actorDisplayName"/>
+          <attrKeyMap attr="virusName" key="threatDisplayName"/>
+          <attrKeyMap attr="virusFamily" key="threatFamilyName"/>
+          <attrKeyMap attr="attackTechniqueId" key="mitreTechniques[0]"/>
+          <attrKeyMap attr="_resolveDateTime" key="resolvedDateTime"/>
+          <attrKeyMap attr="comment" key="comments"/>
+          <!-- Stuff all of evidence into details -->
+          <attrKeyMap attr="details" key="evidence"/>
+          <!-- Alert Evidence required fields -->
+          <attrKeyMap attr="_verdict" key="evidence[0].verdict"/>
+          <attrKeyMap attr="_remedStatus" key="evidence[0].remediationStatus"/>
+          <!-- end parsed required alert evidence fields -->
+          <!-- Array of evidence objects, attempt to get first 2 if existing -->
+          <attrKeyMap attr="user" key="evidence[0].loggedOnUsers[0].accountName"/>
+          <attrKeyMap attr="domain" key="evidence[0].loggedOnUsers[0].domainName"/>
+          <attrKeyMap attr="_userAccount0" key="evidence[0].userAccount.accountName"/>
+          <attrKeyMap attr="_userAccountDomain0" key="evidence[0].userAccount.domainName"/>
+          <attrKeyMap attr="securityId" key="evidence[0].userAccount.userSid"/>
+          <attrKeyMap attr="userId" key="evidence[0].userAccount.azureAdUserId"/>
+          <attrKeyMap attr="userPrincipalName" key="evidence[0].userAccount.userPrincipalName"/>
+          <!-- Look for second evidence object if existing -->
+          <attrKeyMap attr="_loggedOnUser1" key="evidence[1].loggedOnUsers[0].accountName"/>
+          <attrKeyMap attr="_loggedOnUserDomain1" key="evidence[1].loggedOnUsers[0].domainName"/>
+          <attrKeyMap attr="_userAccount1" key="evidence[1].userAccount.accountName"/>
+          <attrKeyMap attr="_userAccountDomain1" key="evidence[1].userAccount.domainName"/>
+          <attrKeyMap attr="_userAccountSid1" key="evidence[1].userAccount.userSid"/>
+          <attrKeyMap attr="_userAccountAzureId1" key="evidence[1].userAccount.azureAdUserId"/>
+          <attrKeyMap attr="_userAccountUPN1" key="evidence[1].userAccount.userPrincipalName"/>
+          <!-- Mailbox Evidence Collection -->
+          <attrKeyMap attr="emailId" key="evidence[0].mailboxEvidence.primaryAddress"/>
+          <attrKeyMap attr="user" key="evidence[0].mailboxEvidence.userAccount"/>
+          <!-- IP Address evidence -->
+          <attrKeyMap attr="srcIpAddr" key="evidence[0].ipAddress"/>
+          <!-- URL evidence -->
+          <attrKeyMap attr="downloadURL" key="evidence[0].url"/>
+          <!-- Process evidence imageFile file details -->
+          <attrKeyMap attr="hashSHA1" key="evidence[0].imageFile.sha1"/>
+          <attrKeyMap attr="hashSHA256" key="evidence[0].imageFile.sha256"/>
+          <attrKeyMap attr="fileName" key="evidence[0].imageFile.fileName"/>
+          <attrKeyMap attr="filePath" key="evidence[0].imageFile.filePath"/>
+          <attrKeyMap attr="fileSize64" key="evidence[0].imageFile.fileSize"/>
+        </collectAndSetAttrByJSON>
+
+        <!-- status (status) and category (attackTactic) are required fields for alerts -->
+        <!-- srcApp identifies the serviceSource -->
+        <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$attackTactic,"-",$status)</setEventAttribute>
+
+      </when>
+      <when test="$_ET = 'Incident'">
+        <collectAndSetAttrByJSON src="$_body">
+          <!-- Required Fields for Incident -->
+          <attrKeyMap attr="incidentExtTicketId" key="id"/>
+          <attrKeyMap attr="infoURL" key="incidentWebUrl"/>
+          <attrKeyMap attr="_createdTime" key="createdDateTime"/>
+          <attrKeyMap attr="_lastUpdateTime" key="lastUpdateDateTime"/>
+          <!-- active, resolved, redirected, unknownFutureValue -->
+          <attrKeyMap attr="status" key="status"/>
+          <attrKeyMap attr="eventSeverityCat" key="severity"/>
+          <!-- Optional -->
+          <attrKeyMap attr="_redirectInicident" key="redirectIncidentId"/>
+          <attrKeyMap attr="tenantId" key="tenantId"/>
+          <attrKeyMap attr="incidentTitle" key="displayName"/>
+          <attrKeyMap attr="incidentExtUser" key="assignedTo"/>
+          <attrKeyMap attr="classifier" key="classification"/>
+          <attrKeyMap attr="attackType" key="determination"/>
+          <attrKeyMap attr="_tags" key="tags"/>
+          <attrKeyMap attr="details" key="comments"/>
+          <attrKeyMap attr="_alertData" key="alerts"/>
+        </collectAndSetAttrByJSON>
+
+        <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$eventSeverityCat,"-",$status)</setEventAttribute>
+      </when>
+    </when>
+
+    <!-- Treat lastUpdateTime as deviceTime, as alerts are living -->
+    <!-- If missing, use createdDateTime -->
+    <choose>
+      <when test="exist _lastUpdateTime">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_lastUpdateTime">
+              <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>?]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="exist _createdTime">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_createdTime">
+              <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>?]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+    </choose>
+    <!-- First Seen Time for events that triggered alert -->
+    <when test="exist _firstActivity">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_firstActivity">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>?]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="firstSeenTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <!-- Last Seen Time for events that triggered alert -->
+    <when test="exist _lastActivity">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_lastActivity">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>?]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="lastSeenTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <!-- Try our best to normalize user based on evidence array's first two objects -->
+    <when test="not_exist user">
+      <choose>
+        <when test="exist _userAccount0">
+          <setEventAttribute attr="user">$_userAccount0</setEventAttribute>
+        </when>
+        <when test="exist userId">
+          <setEventAttribute attr="user">$_userId</setEventAttribute>
+        </when>
+        <when test="exist _loggedOnUser1">
+          <setEventAttribute attr="user">$_loggedOnUser1</setEventAttribute>
+        </when>
+        <when test="exist _userAccount1">
+          <setEventAttribute attr="user">$_userAccount1</setEventAttribute>
+        </when>
+        <when test="exist _userAccountAzureId1">
+          <setEventAttribute attr="user">$_userAccountAzureId1</setEventAttribute>
+        </when>
+        <when test="exist emailId">
+          <setEventAttribute attr="user">$emailId</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="not_exist domain">
+      <choose>
+        <when test="exist _userAccountDomain0">
+          <setEventAttribute attr="user">$_userAccountDomain0</setEventAttribute>
+        </when>
+        <when test="exist _loggedOnUserDomain1">
+          <setEventAttribute attr="user">$_loggedOnUserDomain1</setEventAttribute>
+        </when>
+        <when test="exist _userAccountDomain1">
+          <setEventAttribute attr="user">$ _userAccountDomain1</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist eventSeverityCat">
+      <choose>
+        <!-- Err on side of caution -->
+        <when test="$eventSeverityCat = 'unknown'">
+          <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        </when>
+        <when test="$eventSeverityCat = 'informational'">
+          <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        </when>
+        <when test="$eventSeverityCat = 'low'">
+          <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+        </when>
+        <when test="$eventSeverityCat = 'medium'">
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </when>
+        <when test="$eventSeverityCat = 'high'">
+          <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        </when>
+        <otherwise>
+          <!-- Err on side of caution -->
+          <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        </otherwise>
+      </choose>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

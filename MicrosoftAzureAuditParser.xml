@@ -1,0 +1,92 @@
+<eventParser name="MicrosoftAzureAuditParser">
+  <deviceType>
+    <Vendor>Microsoft</Vendor>
+    <Model>Windows</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patStrSlash"><![CDATA[[^ /]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[ AccelOps-Azure,]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[2016-02-26 15:19:10 AccelOps-Azure,[action]=Microsoft.ClassicCompute/virtualmachines/shutdown/action,[caller]=user@example.com,[level]=Error,[resourceId]=/subscriptions/11111111-1111-1111-1111-111111111111/resourcegroups/china/providers/Microsoft.ClassicCompute/virtualmachines/china,[resourceGroupName]=china,[eventTimestamp]=2016-02-14T06:12:18.5539709Z,[status]=Failed,[subStatus]=Conflict,[resourceType]=Microsoft.ClassicCompute/virtualmachines,[category]=Administrative]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+AccelOps-Azure,<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">Microsoft-Azure-Generic</setEventAttribute>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">AZURE_CLI</setEventAttribute>
+
+    <collectAndSetAttrByKeyValuePair src="$_body" sep=",">
+      <attrKeyMap attr="details" key="[action]="/>
+      <attrKeyMap attr="caller" key="[caller]="/>
+      <attrKeyMap attr="_level" key="[level]="/>
+      <attrKeyMap attr="resourceName" key="[resourceId]="/>
+      <attrKeyMap attr="_eventtime" key="[eventTimestamp]="/>
+      <attrKeyMap attr="status" key="[status]="/>
+      <attrKeyMap attr="azureSubstatus" key="[subStatus]="/>
+      <attrKeyMap attr="groupName" key="[resourceGroupName]="/>
+      <attrKeyMap attr="resourceType" key="[resourceType]="/>
+      <attrKeyMap attr="azureEventCategory" key="[category]="/>
+      <attrKeyMap attr="azureEventId" key="[eventDataId]="/>
+      <attrKeyMap attr="azureCorrelationId" key="[correlationId]="/>
+      <attrKeyMap attr="phCustId" key="[phCustId]="/>
+      <attrKeyMap attr="reptDevIpAddr" key="[reptDevIpAddr]="/>
+      <attrKeyMap attr="reptDevName" key="[reptDevName]="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <when test="exist details">
+      <setEventAttribute attr="_action">replaceStringByRegex($details, "^Microsoft\.|/+action$", "")</setEventAttribute>
+      <setEventAttribute attr="_action">replaceStringByRegex($_action, "/+", "-")</setEventAttribute>
+      <setEventAttribute attr="eventType">combineMsgId("Microsoft-Azure-", $_action)</setEventAttribute>
+    </when>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_eventtime">
+          <regex><![CDATA[<_eyear:gPatYear>-<_emon:gPatMonNum>-<_eday:gPatDay>T<_etime:gPatTime>\.\d+<_eZone:gPatTimeZone>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventTime">toDateTime($_emon, $_eday, $_eyear, $_etime, $_eZone)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_eventtime">
+          <regex><![CDATA[<_eyear:gPatYear>-<_emon:gPatMonNum>-<_eday:gPatDay>T<_etime:gPatTime>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventTime">toDateTime($_emon, $_eday, $_eyear, $_etime)</setEventAttribute>
+      </case>
+      <default/>
+    </switch>
+
+    <choose>
+      <when test="not_exist _level"/>
+      <when test="$_level = Informational">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_level = Warning">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$_level = Error">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_level = Critical">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+    </choose>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$resourceName">
+          <regex><![CDATA[/Microsoft.ClassicCompute/virtualMachines/<hostName:patStrSlash>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+  </parsingInstructions>
+</eventParser>

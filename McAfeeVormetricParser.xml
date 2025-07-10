@@ -1,0 +1,71 @@
+<eventParser name="McAfeeVormetricParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Thales</Vendor>
+    <Model>Vormetric Data Security Manager</Model>
+    <Version>ANY</Version>
+    <Name>McAfee Vormetric Data Security Manager</Name>
+  </appType>
+
+  <testEvents>
+    <testEvent><![CDATA[<14> 2013-06-29T18:44:42.420Z 10.10.10.1 CEF:0|Vormetric, Inc.|dsm|5.2.0.1|DAO0048I|update host|3|cs4Label=logger cs4=DAO spid=4322 rt=1388986263954 dvchost=example.com suser=USER_1 shost=test_cpu]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\s+CEF:0\|Vormetric,\s*Inc\.\|]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>\s*<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>\.\d{3}<_tz:gPatTimeZone>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+CEF:\d+\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <collectAndSetAttrByPos sep="|" src="$_body">
+      <attrPosMap attr="_name" pos="5"/>
+      <attrPosMap attr="eventSeverity" pos="6"/>
+      <attrPosMap attr="_extension" pos="7"/>
+    </collectAndSetAttrByPos>
+
+    <setEventAttribute attr="eventType">Vormetric-Generic</setEventAttribute>
+    <setEventAttribute attr="_voreventname">replaceStringByRegex($_name, "\s+", "-")</setEventAttribute>
+    <setEventAttribute attr="eventType">combineMsgId("Vormetric-", $_voreventname)</setEventAttribute>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_extension">
+      <attrKeyMap attr="command" key="act"/>
+      <attrKeyMap attr="actionName" key="cat"/>
+      <attrKeyMap attr="policyName" key="cs1"/>
+      <attrKeyMap attr="_eventAction" key="denyStr"/>
+      <attrKeyMap attr="destName" key="dvchost="/>
+      <attrKeyMap attr="fileId" key="fileId"/>
+      <attrKeyMap attr="filePath" key="filePath"/>
+      <attrKeyMap attr="newRegValue" key="key"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="policyName" key="pol"/>
+      <attrKeyMap attr="errReason" key="reason"/>
+      <attrKeyMap attr="srcName" key="shost"/>
+      <attrKeyMap attr="errReason" key="showStr"/>
+      <attrKeyMap attr="appName" key="sproc"/>
+      <attrKeyMap attr="user" key="suser"/>
+      <attrKeyMap attr="user" key="uinfo"/>
+      <attrKeyMap attr="infoURL" key="url"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist user">
+      <setEventAttribute attr="user">replaceStringByRegex($user, ",.*", "")</setEventAttribute>
+    </when>
+
+    <when test="exist _eventAction">
+      <choose>
+        <when test="$_eventAction = 'PERMIT'">
+          <setEventAttribute attr="eventAction">0</setEventAttribute>
+        </when>
+        <when test="$_eventAction = 'DENY'">
+          <setEventAttribute attr="eventAction">1</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+  </parsingInstructions>
+</eventParser>

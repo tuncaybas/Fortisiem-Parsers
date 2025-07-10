@@ -1,0 +1,223 @@
+<eventParser name="NessusParser">
+
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Tenable</Vendor>
+    <Model>Nessus Security Scanner</Model>
+    <Version>ANY</Version>
+    <Name>Nessus Vulnerability Scanner</Name>
+  </appType>
+
+  <patternDefinitions>
+    <pattern name="patStrEndWithRightSquareBracket"><![CDATA[[^\]]*]]></pattern>
+    <pattern name="patStrEndBrack"><![CDATA[[^\]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\[Nessus-]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<134>Apr 09 16:43:00 60.60.60.60 java: [Nessus-Vuln-Detected]:[eventSeverity]=PHL_INFO, [reptVendor]=Tenable, [reptModel]=Nessus Scan Report, [nessusUserName]=joeUser, [nessusDeviceTime]=Wed May 19 10:19:42 2010, [nessusScanName]=Network Scan -Test2, [nessusScannedIP]=10.1.2.26, [nessusScannedHostName]=example.com, [nessusOS]=Linux Kernel 2.6, [nessusVulnCategory]=Web Servers, [nessusScannedPort]=9443, [nessusVulnTitle]=The web server running on the remote host has an information disclosure vulnerability., [nessusVulnSeverity]=1, [nessusVulnCveId]=CVE-2009-0783, [nessusVulnBugTraqID]=35416, [nessusVulnCvssBaseScore]=3.6, [nessusVulnConseq]=According to its self-reported version number, the remote host is running a vulnerable version of Apache Tomcat. Affected versions permit a web application to replace the XML parser used to process the XML and TLD files of other applications. This could allow a malicious web app to read or modify 'web.xml', 'context.xml', or TLD files of arbitrary web applications.]]></testEvent>
+    <testEvent><![CDATA[<134>Dec 01 16:43:00 60.60.60.60 java: [Nessus-Vuln-Detected]:[eventSeverity]=PHL_INFO, [reptVendor]=Tenable, [reptModel]=Nessus Scan Report, [nessusUserName]=joeUser, [nessusDeviceTime]=Tue Dec 01 10:19:42 2015, [nessusScanName]=Network Scan -Test, [nessusScannedIP]=10.1.2.26, [nessusScannedHostName]=QA-1.example.com, [nessusOS]=Linux Kernel 2.6, [nessusVulnSeverity]=3, [nessusVulnPluginID]=81792, [nessusVulnPluginName]=CentOS 6 : kernel (CESA-2015:0674), [nessusVulnCategory]=CentOS Local Security Checks, [nessusScannedPort]=0, [nessusVulnProtocol]=tcp, [nessusVulnTitle]=The remote CentOS host is missing one or more security updates., [nessusVulnCveId]=CVE-2009-0783, [nessusVulnBugTraqID]=35416, [nessusVulnOSVDBID]=117131, 117810, 119630, [nessusVulnCertVN]=836068, [nessusVulnIAVA]=2015-A-0250, [nessusVulnRHSA]=2015:0674, [nessusVulnCvssBaseScore]=5.0, [nessusVulnCvssTemporalScore]=4.1, [nessusVulnExploitAvailable]=false, [nessusVulnExploitabilityEase]=No known exploits are available, [nessusVulnSeeAlso]=http://www.nessus.org/u?5d9012d3, [nessusVulnSolution]=Customers are advised to upgrade to &lt;A HREF="http://www.openssh.org/" TARGET="_blank"&gt;OpenSSH 6.2&lt;/A&gt; and apply the associated server configuration settings to remediate this vulnerability.&lt;P&gt; &lt;P&gt;Patch:&lt;BR&gt; Following are links for downloading patches to fix the vulnerabilities: &lt;P&gt; &lt;A HREF="http://www.openssh.org/" TARGET="_blank"&gt;OpenSSH 6.2&lt;/A&gt;, [nessusVulnPluginOutput]=Remote package installed : kernel-2.6.32-504.1.3.el6 Should be : kernel-2.6.32-504.12.2.el6 Remote package installed : kernel-devel-2.6.32-504.1.3.el6 Should be : kernel-devel-2.6.32-504.12.2.el6 Remote package installed : kernel-firmware-2.6.32-504.1.3.el6 Should be : kernel-firmware-2.6.32-504.12.2.el6 Remote package installed : kernel-headers-2.6.32-504.1.3.el6 Should be : kernel-headers-2.6.32-504.12.2.el6, [nessusVulnConseq]=According to its self-reported version number, the remote host is running a vulnerable version of Apache Tomcat. Affected versions permit a web application to replace the XML parser used to process the XML and TLD files of other applications. This could allow a malicious web app to read or modify 'web.xml', 'context.xml', or TLD files of arbitrary web applications.]]></testEvent>
+    <testEvent><![CDATA[[Nessus-Vuln-Detected] : [serverIp]=10.30.21.81, [serverName]=10.30.21.81, [Plugin ID]="35716", [CVE]=, [CVSS]=, [Risk]=None, [Host]=10.30.20.99, [Protocol]=tcp, [Port]=0, [Name]=Ethernet Card Manufacturer Detection, [Synopsis]=The manufacturer can be identified from the Ethernet OUI., [Description]=Each ethernet MAC address starts with a 24-bit Organizationally Unique Identifier (OUI). These OUIs are registered by IEEE., [Solution]=n/a, [See Also]=https://standards.ieee.org/faqs/regauth.html http://www.nessus.org/u?794673b4, [Plugin Output]=The following card manufacturers were identified : 00:0C:29:00:B1:3D : VMware, Inc.]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <!-- sample event
+     <134>Apr 09 16:43:00 172.16.10.60 java: [Nessus_Report_Vuln]:[eventSeverity]=PHL_INFO, [reptVendor]=Tenable, [reptModel]=Nessus Scan Report, [nessusUserName]=joeUser, [nessusDeviceTime]=Wed May 19 10:19:42 2010, [nessusScanName]=Network Scan -Test2, [nessusScannedIP]=10.1.2.26, [nessusOS]=Linux Kernel 2.6, [nessusVulnCategory]=Web Servers, [nessusScannedPort]=9443, [nessusVulnTitle]=The web server running on the remote host has an information disclosure vulnerability., [nessusVulnSeverity]=1, [nessusVulnCveId]=CVE-2009-0783, [nessusVulnBugTraqID]=35416, [nessusVulnCvssBaseScore]=3.6, [nessusVulnConseq]=According to its self-reported version number, the remote host is running a vulnerable version of Apache Tomcat. Affected versions permit a web application to replace the XML parser used to process the XML and TLD files of other applications. This could allow a malicious web app to read or modify 'web.xml', 'context.xml', or TLD files of arbitrary web applications.
+     -->
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^\[<eventType:patStrEndWithRightSquareBracket>\]\s*:\s*<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<serverName:gPatStr>\s+java:\s*\[<eventType:patStrEndWithRightSquareBracket>\]:<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </default>
+    </switch>
+
+
+    <collectAndSetAttrByKeyValuePair sep=", [" src="$_body">
+      <attrKeyMap attr="user" key="[nessusUserName]="/>
+      <attrKeyMap attr="_reptTime" key="[nessusDeviceTime]="/>
+      <attrKeyMap attr="scanEnd" key="[scanEndTime]="/>
+      <attrKeyMap attr="scanProfile" key="[nessusScanName]="/>
+      <attrKeyMap attr="hostIpAddr" key="[nessusScannedIP]="/>
+      <attrKeyMap attr="hostName" key="[nessusScannedHostName]="/>
+      <attrKeyMap attr="ipPort" key="[nessusScannedPort]="/>
+      <attrKeyMap attr="_ipProto" key="[nessusVulnProtocol]="/>
+      <attrKeyMap attr="osType" key="[nessusOS]="/>
+      <attrKeyMap attr="vulnType" key="[nessusVulnCategory]="/>
+      <attrKeyMap attr="vulnName" key="[nessusVulnTitle]="/>
+      <attrKeyMap attr="_severity" key="[nessusVulnSeverity]="/>
+      <attrKeyMap attr="vulnCVEId" key="[nessusVulnCveId]="/>
+      <attrKeyMap attr="vulnBugTraqID" key="[nessusVulnBugTraqID]="/>
+      <attrKeyMap attr="vulnOSVDBId" key="[nessusVulnOSVDBID]="/>
+      <attrKeyMap attr="vulnCertVN" key="[nessusVulnCertVN]="/>
+      <attrKeyMap attr="vulnIAVM" key="[nessusVulnIAVA]="/>
+      <attrKeyMap attr="vulnRedhatId" key="[nessusVulnRHSA]="/>
+      <attrKeyMap attr="vulnConseq" key="[nessusVulnConseq]="/>
+      <attrKeyMap attr="vulnCvssBaseScore" key="[nessusVulnCvssBaseScore]="/>
+      <attrKeyMap attr="vulnCvssBaseTemporal" key="[nessusVulnCvssTemporalScore]="/>
+      <attrKeyMap attr="isExploitable" key="[nessusVulnExploitAvailable]="/>
+      <attrKeyMap attr="exploitabilityEase" key="[nessusVulnExploitabilityEase]="/>
+      <attrKeyMap attr="nessusPluginId" key="[nessusVulnPluginID]="/>
+      <attrKeyMap attr="nessusPluginName" key="[nessusVulnPluginName]="/>
+      <attrKeyMap attr="nessusPluginOutput" key="[nessusVulnPluginOutput]="/>
+      <attrKeyMap attr="_vulnSolution" key="[nessusVulnSolution]="/>
+      <attrKeyMap attr="infoURL" key="[nessusVulnSeeAlso]="/>
+      <attrKeyMap attr="errorString" key="[nessusErrorContent]="/>
+      <!--CPP-->
+      <attrKeyMap attr="extEventRecvProto" key="[extEventRecvProto]="/>
+      <attrKeyMap attr="phCustId" key="[phCustId]="/>
+      <attrKeyMap attr="reptDevIpAddr" key="[serverIp]="/>
+      <attrKeyMap attr="reptDevName" key="[serverName]="/>
+      <attrKeyMap attr="serverIpAddr" key="[serverIp]="/>
+      <attrKeyMap attr="serverName" key="[serverName]="/>
+      <attrKeyMap attr="nessusPluginId" key="[Plugin ID]="/>
+      <attrKeyMap attr="vulnCVEId" key="[CVE]="/>
+      <attrKeyMap attr="vulnCvssScore" key="[CVSS]="/>
+      <attrKeyMap attr="vulnCvssBaseScore" key="[CVSS]="/>
+      <attrKeyMap attr="_level" key="[Risk]="/>
+      <attrKeyMap attr="_host" key="[Host]="/>
+      <attrKeyMap attr="_ipProto" key="[Protocol]="/>
+      <attrKeyMap attr="ipPort" key="[Port]="/>
+      <attrKeyMap attr="vulnName" key="[Name]="/>
+      <attrKeyMap attr="description" key="[Description]="/>
+      <attrKeyMap attr="_vulnSolution" key="[Solution]="/>
+      <attrKeyMap attr="infoURL" key="[See Also]="/>
+      <attrKeyMap attr="nessusPluginOutput" key="[Plugin Output]="/>
+      <attrKeyMap attr="profileDetails" key="[Synopsis]="/>
+      <attrKeyMap attr="osType" key="[OS]="/>
+      <attrKeyMap attr="vulnCvssScore" key="[CVSS Score]="/>
+      <attrKeyMap attr="vulnCvssScore" key="[CVSS3 Score]="/>
+      <attrKeyMap attr="vulnCvssBaseScore" key="[CVSS Base Score]="/>
+      <attrKeyMap attr="vulnCvssBaseScore" key="[CVSS v2.0 Base Score]="/>
+      <attrKeyMap attr="vulnCvssBaseScore" key="[CVSS3 Base Score]="/>
+      <attrKeyMap attr="vulnCvssBaseTemporal" key="[CVSS Temporal Score]="/>
+      <attrKeyMap attr="vulnCvssBaseTemporal" key="[CVSS3 Temporal Score]="/>
+      <attrKeyMap attr="cvssAccessVector" key="[CVSS Vector]="/>
+      <attrKeyMap attr="cvssAccessVector" key="[CVSS3 Vector]="/>
+      <attrKeyMap attr="vulnPriRating" key="[Vulnerability Priority Rating (VPR)]="/>
+    </collectAndSetAttrByKeyValuePair>
+
+
+    <when test="$eventType = 'Nessus-Get-Error'">
+      <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+    </when>
+
+    <when test="exist serverName">
+      <when test="matches($serverName, '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')">
+        <setEventAttribute attr="reptDevIpAddr">$serverName</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist infoURL">
+      <setEventAttribute attr="destName">extractHostFromURL($infoURL)</setEventAttribute>
+    </when>
+
+    <when test="exist _host">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_host">
+            <regex><![CDATA[^<hostIpAddr:gPatIpAddr>$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="hostName">$_host</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+    <when test="$eventType = 'Nessus-Vuln-Detected'">
+      <when test="exist _reptTime">
+        <collectFieldsByRegex src="$_reptTime">
+          <regex><![CDATA[<:gPatStr> <_mon:gPatMon> <_day:gPatDay> <_time:gPatTime> <_year:gPatYear>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="scanEnd">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </when>
+
+      <when test="exist _ipProto">
+        <setEventAttribute attr="ipProto">convertStrToIntIpProto($_ipProto)</setEventAttribute>
+      </when>
+
+      <when test="exist _vulnSolution">
+        <setEventAttribute attr="vulnSolution">unescapeXML($_vulnSolution)</setEventAttribute>
+      </when>
+
+      <when test="not_exist vulnCvssBaseScore">
+        <choose>
+          <when test="not_exist _severity">
+            <setEventAttribute attr="vulnCvssBaseScore">5</setEventAttribute>
+          </when>
+          <when test="$_severity = '1'">
+            <setEventAttribute attr="vulnCvssBaseScore">2</setEventAttribute>
+          </when>
+          <when test="$_severity = '2'">
+            <setEventAttribute attr="vulnCvssBaseScore">4</setEventAttribute>
+          </when>
+          <when test="$_severity = '3'">
+            <setEventAttribute attr="vulnCvssBaseScore">6</setEventAttribute>
+          </when>
+          <when test="$_severity = '4'">
+            <setEventAttribute attr="vulnCvssBaseScore">8</setEventAttribute>
+          </when>
+          <when test="matches($_severity, '^[5-9]|[1-9][0-9]$')">
+            <setEventAttribute attr="vulnCvssBaseScore">10</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="vulnCvssBaseScore">5</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+
+      <setEventAttribute attr="vulnScore">$vulnCvssBaseScore</setEventAttribute>
+      <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      <choose>
+        <when test="not_exist _level"/>
+        <when test="$_level = 'None'">
+          <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+        </when>
+        <when test="$_level = 'Low'">
+          <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+        </when>
+        <when test="$_level = 'Medium'">
+          <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+        </when>
+        <when test="$_level = 'High'">
+          <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        </when>
+        <when test="$_level = 'Critical'">
+          <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+        </when>
+      </choose>
+
+      <choose>
+        <when test="not_exist _severity"/>
+        <when test="$_severity = '1'">
+          <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+        </when>
+        <when test="$_severity = '2'">
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </when>
+        <when test="$_severity = '3'">
+          <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        </when>
+        <when test="$_severity = '4'">
+          <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+        </when>
+        <when test="matches($_severity, '^[5-9]|[1-9][0-9]$')">
+          <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+  </parsingInstructions>
+</eventParser>

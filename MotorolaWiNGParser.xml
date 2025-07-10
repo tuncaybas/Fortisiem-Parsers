@@ -1,0 +1,217 @@
+<eventParser name="MotorolaWiNGParser">
+  <deviceType>
+    <Vendor>Motorola</Vendor>
+    <Model>WiNG WLAN AP</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patMacAddr"><![CDATA[(?:[0-9A-Fa-f]{2}-){5}(?:[0-9A-Fa-f]{1,2})]]></pattern>
+    <pattern name="patWiNGMod"><![CDATA[DAEMON|DATAPLANE|DIAG|DOT11|KERN|NSM|RADIO|SMRT|SYSTEM|USER|WIPS]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatYear>-<:gPatMonNum>-<:gPatDay>T<:gPatTime>\.\d{6}[+-]\d{2}:\d{2}\s+<:gPatStr>\s+%<:patWiNGMod>-<:gPatInt>-<:gPatStr>:]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[2015-11-10T14:26:34.330612-05:00 usscfs1colu-ap03 %DOT11-5-EAP_FAILED: Client 'C0-BD-D1-21-E9-E5' failed 802.1x/EAP authentication on wlan 'OFFICE-WAREHOUSE-RADIUS-WLAN' radio 'usscfs1colu-ap03:R2']]></testEvent>
+    <testEvent><![CDATA[2015-11-11T13:00:25.053044-06:00 caskcc1regi-ap14 %DOT11-5-EAP_CLIENT_TIMEOUT: Client '9C-FC-01-5C-CC-65' timeout attempting 802.1x/EAP authentication on wlan 'OFFICE-WAREHOUSE-RADIUS-WLAN' radio 'caskcc1regi-ap14:R2']]></testEvent>
+    <testEvent><![CDATA[2015-11-11T14:00:23.646882-05:00 usmasd1ston-ap04 %DOT11-5-WPA_WPA2_FAILED: Client '00-15-70-F6-DC-F5' failed group key handshake on wlan 'SDO-PSK-WLAN' radio 'usmasd1ston-ap04:R1']]></testEvent>
+    <testEvent><![CDATA[2015-11-11T16:00:21.042263-03:00 canscc1hali-ap08 %DATAPLANE-5-IGMPSNOOP: IP Multicast group <10.10.10.10> Vlan 580 created.]]></testEvent>
+    <testEvent><![CDATA[2015-11-11T12:57:12.182678-06:00 uswinf1belo-ap06 %DATAPLANE-4-ARPPOISON: ARP CACHE POISONING:  Conflicting ethernet header and inner arp header :Ethernet Src Mac: 00-19-88-24-93-1E, Ethernet Dst Mac: 00-19-88-43-4F-2A, ARP Src Mac: 10-73-01-00-2C-17, ARP Dst Mac: 00-19-88-43-4F-2A, ARP Src IP: 10.10.10.10, ARP Target IP: 10.10.10.10 .]]></testEvent>
+    <testEvent><![CDATA[2015-11-11T18:09:25.991143+00:00 ukcora-ap39 %DATAPLANE-4-DOSATTACK: INVALID PACKET:  Truncated TCP header : Src IP : 10.10.10.10, Dst IP: 10.10.10.10, Src Mac: A4-4E-31-67-75-98, Dst Mac: E0-89-9D-27-5B-CD, Src Port = 63974, Dst Port = 443, Proto = 6.]]></testEvent>
+    <testEvent><![CDATA[2015-11-11T18:55:51.973869+00:00 usmonf1kansrfs600002 %DIAG-4-FREE_FLASH_DISK: Free flash: file system space, 1.1% is less than limit 90.0%]]></testEvent>
+    <testEvent><![CDATA[2015-11-11T13:12:27.550411-05:00 usmafrarfs70001 %USER-3-ERR: hslogin.c: CP Login: Invalid query string, POST form is not complete]]></testEvent>
+    <testEvent><![CDATA[2015-11-11T10:55:25.660596-08:00 uscarf1rialrfs600001 %WIPS-4-ROGUE_AP_ACTIVE: Rogue AP 10-A5-D0-F8-E1-CC vendor 10-A5-D0 on channel 11 with vlan 100 and rssi -59 active from uscarf1rial-ap38]]></testEvent>
+    <testEvent><![CDATA[2015-11-11T13:59:05.785280-05:00 NDCNACNX951001 %DAEMON-5-NOTICE: radiusd[5971]: Login incorrect: [SteCa002] (from client localhost port 1 cli 40-0E-85-02-33-CC)]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d{6}[+-]\d{2}:\d{2}\s+<reptDevName:gPatStr>\s+%<_prefix:patWiNGMod>-<_level:gPatInt>-<_suffix:gPatStr>:\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="eventType">combineMsgId("Motorola-WiNG-", $_prefix, "-", $_suffix)</setEventAttribute>
+    <choose>
+      <when test="$_level IN '6, 7'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_level = '1'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+      <when test="$_level = '2'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$_level IN '3, 4'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_level = '5'">
+        <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="$eventType = 'Motorola-WiNG-DOT11-EAP_FAILED'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[Client\s+'<_smacaddr:patMacAddr>'\s+failed\s+<authenMethod:gPatStr>\s+authentication\s+on\s+wlan\s+'<wlanSsid:gPatStr>'\s+radio\s+'<:gPatStr>:<radioBand:gPatStr>']]></regex>
+        </collectFieldsByRegex>
+      </when>
+      <when test="$eventType = 'Motorola-WiNG-DOT11-EAP_CLIENT_TIMEOUT'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[Client\s+'<_smacaddr:patMacAddr>'\s+timeout\s+attempting\s+<authenMethod:gPatStr>\s+authentication\s+on\s+wlan\s+'<wlanSsid:gPatStr>'\s+radio\s+'<:gPatStr>:<radioBand:gPatStr>']]></regex>
+        </collectFieldsByRegex>
+      </when>
+      <when test="$eventType = 'Motorola-WiNG-DOT11-WPA_WPA2_FAILED'">
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[Client\s+'<_smacaddr:patMacAddr>'\s+failed\s+group\s+key\s+handshake\s+on\s+wlan\s+'<wlanSsid:gPatStr>'\s+radio\s+'<:gPatStr>:<radioBand:gPatStr>']]></regex>
+            </collectAndSetAttrByRegex>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[Client\s+'<_smacaddr:patMacAddr>'\s+failed\s+WPA2-AES\s+handshake\s+on\s+wlan\s+'<wlanSsid:gPatStr>'\s+radio\s+'<:gPatStr>:<radioBand:gPatStr>']]></regex>
+            </collectAndSetAttrByRegex>
+          </case>
+        </switch>
+      </when>
+      <when test="$eventType = 'Motorola-WiNG-DATAPLANE-IGMPSNOOP'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[Multicast\s+group\s+\<<srcIpAddr:gPatIpAddr>\>\s+<_reason:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_reason">
+              <regex><![CDATA[Vlan\s+<srcVLAN:gPatInt>]]></regex>
+            </collectAndSetAttrByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$eventType = 'Motorola-WiNG-DATAPLANE-ARPPOISON'">
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[ARP\s+CACHE\s+POISONING:\s+<testResult:gPatSentence>:Ethernet\s+Src\s+Mac:\s+<_smacaddr:patMacAddr>,\s+Ethernet\s+Dst\s+Mac:\s+<_dmacaddr:patMacAddr>,\s+ARP\s+Src\s+Mac:\s+<_pmacaddr:patMacAddr>,\s+ARP\s+Dst\s+Mac:\s+<_interface:patMacAddr>,\s+ARP\s+Src\s+IP:\s+<arpSrcIpAddr:gPatIpAddr>,\s+ARP\s+Target\s+\IP:\s+<arpDestIpAddr:gPatIpAddr>]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="arpSrcMACAddr">normalizeMAC($_pmacaddr)</setEventAttribute>
+            <setEventAttribute attr="arpDestMACAddr">normalizeMAC($_interface)</setEventAttribute>
+          </case>
+        </switch>
+      </when>
+      <when test="$eventType = 'Motorola-WiNG-DATAPLANE-DOSATTACK'">
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[Src\s+IP\s+:\s+<srcIpAddr:gPatIpAddr>,\s+Dst\s+IP:\s+<destIpAddr:gPatIpAddr>,\s+Src\s+Mac:\s+<_smacaddr:patMacAddr>,\s+Dst\s+Mac:\s+<_dmacaddr:patMacAddr>,\s+Src\s+Port\s+=\s+<srcIpPort:gPatIpPort>,\s+Dst\s+Port\s+=\s+<destIpPort:gPatIpPort>,\s+Proto\s+=\s+<ipProto:gPatInt>]]></regex>
+            </collectAndSetAttrByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$eventType = 'Motorola-WiNG-DIAG-FREE_FLASH_DISK'">
+      </when>
+      <when test="$eventType = 'Motorola-WiNG-DAEMON-ERR'">
+        <setEventAttribute attr="errReason">$_body</setEventAttribute>
+      </when>
+      <when test="$eventType = 'Motorola-WiNG-USER-ERR'">
+        <setEventAttribute attr="errReason">$_body</setEventAttribute>
+      </when>
+      <when test="$eventType = 'Motorola-WiNG-SMRT-POWER_ADJUSTMENT'">
+        <setEventAttribute attr="msg">$_body</setEventAttribute>
+      </when>
+      <when test="$eventType = 'Motorola-WiNG-WIPS-ROGUE_AP_ACTIVE'">
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[Rogue\s+AP\s+<_hostmac:patMacAddr>\s+vendor\s+<hostVendor:gPatStr>\s+on\s+channel\s+<wlanChannelId:gPatInt>\s+with\s+vlan\s+<hostVLAN:gPatInt>\s+and\s+rssi\s+<wlanRssi:gPatStr>\s+active\s+from\s+<srcName:gPatStr>]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="hostMACAddr">normalizeMAC($_hostmac)</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$eventType = 'Motorola-WiNG-DAEMON-NOTICE'">
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[radiusd<_detail:gPatMesgBody>\s+\(from\s+client\s+<:gPatHostName>\s+port\s+<:gPatInt>\s+<:gPatStr>\s+<_smacaddr:patMacAddr>]]></regex>
+            </collectAndSetAttrByRegex>
+            <choose>
+              <when test="not_exist _detail"/>
+              <when test="matches($_detail, 'Login incorrect')">
+                <setEventAttribute attr="eventType">Motorola-WiNG-RADIUS-LOGIN-FAILURE</setEventAttribute>
+              </when>
+              <when test="matches($_detail, 'auth: Failed')">
+                <setEventAttribute attr="eventType">Motorola-WiNG-RADIUS-AUTH-FAILURE</setEventAttribute>
+              </when>
+            </choose>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$eventType = 'Motorola-WiNG-DIAG-CPU_LOAD'">
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[minute\s+average\s+load\s+limit\s+exceeded,\s+value\s+is\s+<cpuUtil:gPatStr>%]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Motorola-WiNG-HIGH-CPU_LOAD</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$eventType = 'Motorola-WiNG-KERN-ERR'">
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[on\s+vlan\s+<intfName:gPatInt>]]></regex>
+            </collectAndSetAttrByRegex>
+          </case>
+          <default/>
+        </switch>
+        <setEventAttribute attr="msg">$_body</setEventAttribute>
+      </when>
+      <when test="$eventType = 'Motorola-WiNG-SMRT-COV_HOLE_RECOVERY'">
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[on\s+AP\s+<_hostmac:patMacAddr>\s+due\s+to\s+client\s+<_smacaddr:patMacAddr>]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="hostMACAddr">normalizeMAC($_hostmac)</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+        <setEventAttribute attr="eventDesc">$_body</setEventAttribute>
+      </when>
+      <when test="$eventType = 'Motorola-WiNG-SMRT-COV_HOLE_RECOVERY_DONE'">
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[Radio\s+<hostName:gPatStr>:<radioBand:gPatStr>]]></regex>
+            </collectAndSetAttrByRegex>
+          </case>
+          <default/>
+        </switch>
+        <setEventAttribute attr="eventDesc">$_body</setEventAttribute>
+      </when>
+      <when test="$eventType = 'Motorola-WiNG-SMRT-NEIGHBOR_RECOVERY'">
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[Radio\s+<hostName:gPatStr>:<radioBand:gPatStr>]]></regex>
+            </collectAndSetAttrByRegex>
+          </case>
+          <default/>
+        </switch>
+        <setEventAttribute attr="eventDesc">$_body</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _smacaddr">
+      <setEventAttribute attr="srcMACAddr">normalizeMAC($_smacaddr)</setEventAttribute>
+    </when>
+    <when test="exist _dmacaddr">
+      <setEventAttribute attr="destMACAddr">normalizeMAC($_dmacaddr)</setEventAttribute>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

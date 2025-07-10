@@ -1,0 +1,163 @@
+<eventParser name="KinesisCloudTrailParser">
+  <deviceType>
+    <Vendor>Amazon</Vendor>
+    <Model>AWS CloudTrail</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[2021-04-28T14:29:51.783Z [FSM-AWSKinesis] {"eventVersion":"1.08","userIdentity":{"type":"Root","principalId":"921045424829","arn":"arn:aws:iam::111111111111:root","accountId":"921045424829","accessKeyId":"AXXXXXXXXXXXXXXXXXXX","sessionContext":{"sessionIssuer":{},"webIdFederationData":{},"attributes":{"mfaAuthenticated":"false","creationDate":"2021-04-28T20:37:47Z"}}},"eventTime":"2021-04-28T21:13:07Z","eventSource":"health.amazonaws.com","eventName":"DescribeEventAggregates","awsRegion":"us-east-1","sourceIPAddress":"10.20.30.40","userAgent":"console.amazonaws.com","requestParameters":{"aggregateField":"eventTypeCategory","filter":{"eventStatusCodes":["open","upcoming"],"startTimes":[{"from":"Apr 21, 2021 9:13:07 PM"}]}},"responseElements":null,"requestID":"11111111-1111-1111-1111-111111111111","eventID":"11111111-1111-1111-1111-111111111111","readOnly":true,"eventType":"AwsApiCall","managementEvent":true,"eventCategory":"Management","recipientAccountId":"921045424829"}]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[<:gPatYear>-<:gPatMonNum>-<:gPatDay>T<:gPatTime>\.\d+Z\s+\[FSM-AWSKinesis\]\s+{\s*"eventVersion":"<:gPatStrDQ>"\s*,\s*"userIdentity"]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>\s+\[FSM-AWSKinesis\]\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time,$_tz)</setEventAttribute>
+    <setEventAttribute attr="eventType">AWS_CloudTrail_Generic</setEventAttribute>
+
+    <collectAndSetAttrByJSON src="$_body">
+      <attrKeyMap attr="accessKeyId" key="accessKeyId"/>
+      <attrKeyMap attr="accountId" key="accountId"/>
+      <attrKeyMap attr="awsRegion" key="awsRegion"/>
+      <attrKeyMap attr="details" key="DescribeDetail"/>
+      <attrKeyMap attr="errorString" key="errorCode"/>
+      <attrKeyMap attr="errReason" key="errorMessage"/>
+      <attrKeyMap attr="categoryType" key="eventCategory"/>
+      <attrKeyMap attr="awsEventId" key="eventID"/>
+      <attrKeyMap attr="_eventName" key="eventName"/>
+      <attrKeyMap attr="serviceName" key="eventSource"/>
+      <attrKeyMap attr="actionName" key="eventType"/>
+      <attrKeyMap attr="version" key="eventVersion"/>
+      <attrKeyMap attr="instanceArchitecture" key="requestParameters.architecture"/>
+      <attrKeyMap attr="diskName" key="requestParameters.blockDeviceMapping.items[0].deviceName"/>
+      <attrKeyMap attr="snapshotId" key="requestParameters.blockDeviceMapping.items[0].ebs.snapshotId"/>
+      <attrKeyMap attr="description" key="requestParameters.description"/>
+      <attrKeyMap attr="_ec2Name" key="requestParameters.filterSet.items[0].name"/>
+      <attrKeyMap attr="_hostIpAddr" key="requestParameters.filterSet.items[0].valueSet.items[0].value"/>
+      <attrKeyMap attr="groupID" key="requestParameters.groupId"/>
+      <attrKeyMap attr="userGrp" key="requestParameters.groupName"/>
+      <attrKeyMap attr="imageName" key="requestParameters.imageId"/>
+      <attrKeyMap attr="ec2InstanceId" key="requestParameters.instanceId"/>
+      <attrKeyMap attr="profileName" key="requestParameters.instanceProfileName"/>
+      <attrKeyMap attr="ec2InstanceId" key="requestParameters.instances[0].instanceId"/>
+      <attrKeyMap attr="ec2InstanceId" key="requestParameters.instancesSet.item.0.instanceId"/>
+      <attrKeyMap attr="ec2InstanceId" key="requestParameters.instancesSet.items.0.instanceId"/>
+      <attrKeyMap attr="srcIpPort" key="requestParameters.ipPermissions.items[0].fromPort"/>
+      <attrKeyMap attr="ipProto" key="requestParameters.ipPermissions.items[0].ipProtocol"/>
+      <attrKeyMap attr="destIpPort" key="requestParameters.ipPermissions.items[0].toPort"/>
+      <attrKeyMap attr="kernelId" key="requestParameters.kernelId"/>
+      <attrKeyMap attr="launchConfigName" key="requestParameters.launchConfigurationName"/>
+      <attrKeyMap attr="loadBalancerName" key="requestParameters.loadBalancerName"/>
+      <attrKeyMap attr="elasticLoadBalancerPageSize" key="requestParameters.pageSize"/>
+      <attrKeyMap attr="policyName" key="requestParameters.policyName"/>
+      <attrKeyMap attr="role" key="requestParameters.roleName"/>
+      <attrKeyMap attr="snapshotId" key="requestParameters.snapshotId"/>
+      <attrKeyMap attr="targetUser" key="requestParameters.userName"/>
+      <attrKeyMap attr="volumeId" key="requestParameters.volumeId"/>
+      <attrKeyMap attr="vpcId" key="requestParameters.vpcId"/>
+      <attrKeyMap attr="accountId" key="resources/0/accountId"/>
+      <attrKeyMap attr="resourceType" key="resourceType"/>
+      <attrKeyMap attr="awsActionResult" key="responseElements._return"/>
+      <attrKeyMap attr="_status" key="responseElements.ConsoleLogin"/>
+      <attrKeyMap attr="accessKeyId" key="responseElements.credentials.accessKeyId"/>
+      <attrKeyMap attr="ec2CurrentState" key="responseElements.instances.currentState.name"/>
+      <attrKeyMap attr="ec2InstanceId" key="responseElements.instances.instanceId"/>
+      <attrKeyMap attr="ec2PreviousState" key="responseElements.instances.previousState.name"/>
+      <attrKeyMap attr="ec2InstanceId" key="responseElements.instances[0].instanceId"/>
+      <attrKeyMap attr="_srcIpAddr" key="sourceIPAddress"/>
+      <attrKeyMap attr="appClientVersion" key="userAgent"/>
+      <attrKeyMap attr="userArn" key="userArn"/>
+      <attrKeyMap attr="accessKeyId" key="userIdentity.accessKeyId"/>
+      <attrKeyMap attr="accountId" key="userIdentity.accountId"/>
+      <attrKeyMap attr="userArn" key="userIdentity.arn"/>
+      <attrKeyMap attr="caller" key="userIdentity.invokedBy"/>
+      <attrKeyMap attr="principal" key="userIdentity.principalId"/>
+      <attrKeyMap attr="_date" key="userIdentity.sessionContext.attributes.creationDate"/>
+      <attrKeyMap attr="mfaAuthenticated" key="userIdentity.sessionContext.attributes.mfaAuthenticated"/>
+      <attrKeyMap attr="userType" key="userIdentity.type"/>
+      <attrKeyMap attr="user" key="userIdentity.userName"/>
+      <attrKeyMap attr="user" key="userName"/>
+      <attrKeyMap attr="principal" key="userPrincipalId"/>
+      <attrKeyMap attr="userType" key="userType"/>
+    </collectAndSetAttrByJSON>
+
+    <when test="exist _srcIpAddr">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_srcIpAddr">
+            <regex><![CDATA[^<srcIpAddr:gPatIpAddr>$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="srcName">$_srcIpAddr</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+    <when test="exist _date">
+      <collectFieldsByRegex src="$_date">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>Z]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="tempCredCreationDate">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+
+    <setEventAttribute attr="eventType">combineMsgId("AWS-CloudTrail-", $serviceName, "-", $_eventName)</setEventAttribute>
+    <when test="exist _status">
+      <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $_status)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="$_eventName = 'DescribeInstances'">
+        <choose>
+          <when test="not_exist _hostIpAddr"/>
+          <when test="exist _ec2Name">
+            <when test="$_ec2Name = 'instance-state-name'">
+              <setEventAttribute attr="ec2CurrentState">$_hostIpAddr</setEventAttribute>
+            </when>
+
+            <when test="$_ec2Name = 'private-ip-address'">
+              <switch>
+                <case>
+                  <collectFieldsByRegex src="$_hostIpAddr">
+                    <regex><![CDATA[^<hostIpAddr:gPatIpAddr>$]]></regex>
+                  </collectFieldsByRegex>
+                </case>
+                <default>
+                  <setEventAttribute attr="hostName">$_hostIpAddr</setEventAttribute>
+                </default>
+              </switch>
+            </when>
+          </when>
+        </choose>
+      </when>
+      <when test="$_eventName = 'RegisterImage'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="imageName" key="requestParameters.name"/>
+        </collectAndSetAttrByJSON>
+      </when>
+      <when test="$_eventName = 'CreateImage'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="imageName" key="requestParameters.name"/>
+        </collectAndSetAttrByJSON>
+      </when>
+      <when test="$_eventName = 'ConsoleLogin'">
+        <when test="exist userArn">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$userArn">
+                <regex><![CDATA[^arn.*/<user:gPatStr>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+        </when>
+      </when>
+    </choose>
+
+  </parsingInstructions>
+
+</eventParser>

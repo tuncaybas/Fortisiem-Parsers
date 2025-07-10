@@ -1,0 +1,282 @@
+<eventParser name="NetskopeCEParser">
+  <deviceType>
+    <Vendor>Netskope</Vendor>
+    <Model>Cloud Exchange</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<14>Apr 10 06:44:33 netskopece-tcp-json {"_id": "b00c436c6c528f55b9e71d1b", "_insertion_epoch_timestamp": 1670699243, "access_method": "API Connector", "act_user": "Introspection", "activity": "Download", "alert": "no", "app": "Box", "app_activity": "DOWNLOAD", "appcategory": "Cloud Storage", "browser": "unknown", "category": "Cloud Storage", "cci": 89, "ccl": "high", "count": 1, "device": "Other", "dstip": "ef82::1a12:1234:1b12", "instance_id": "intro_test", "object": "Test-Cards.txt", "object_id": "877926276911", "object_type": "File", "organization_unit": "", "os": "unknown", "other_categories": [], "site": "Box", "src_country": "NL", "src_geoip_src": 2, "src_latitude": 4.8883, "src_location": "Amsterdam", "src_longitude": 52.3716, "src_region": "North Holland", "src_zipcode": "1012", "srcip": "ef82::1a12:1234:1b12", "timestamp": 1670699243, "traffic_type": "CloudApp", "type": "nspolicy", "ur_normalized": "support@netskope.com", "user": "support@netskope.com", "user_category": "Internal", "user_id": "support@netskope.com", "user_name": "Support", "user_role": "Coadmin", "usergroup": [], "userip": "192.168.2.1", "userkey": "support@netskope.com", "event_type": "application"}]]></testEvent>
+    <testEvent><![CDATA[<14>Apr 10 06:27:02 netskopece-tcp-json {"createdAt": "04/10/2024 06:22:55 AM", "type": "info", "message": "Transforming 2 [logs][error] log(s) for FortiSIEM UDP Syslog configuration."}]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patExceptPipe"><![CDATA[[^\|]+]]></pattern>
+    <pattern name="patStrEndQuote"><![CDATA[[^"]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>\s*<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+netskopece-<:gPatStr>-json\s+]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>\s*<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+netskopece-<:gPatStr>-json\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[.*"alert_type":\s*"<_et:patStrEndQuote>"]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[.*"type":\s*"<_et:patStrEndQuote>"]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+
+    <when test="exist _et">
+      <setEventAttribute attr="_et">toLower($_et)</setEventAttribute>
+    </when>
+
+    <setEventAttribute attr="eventType">Netskope-CE-Generic</setEventAttribute>
+
+    <choose>
+      <when test="not_exist _et"/>
+      <when test="$_et = 'infrastructure'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="alertIdStr" key="_id"/>
+          <attrKeyMap attr="deviceTime" key="_insertion_epoch_timestamp"/>
+          <attrKeyMap attr="alarm" key="alarm_name"/>
+          <attrKeyMap attr="description" key="alarm_description"/>
+          <attrKeyMap attr="_createTime" key="createdAt"/>
+          <attrKeyMap attr="hostName" key="device_name"/>
+          <attrKeyMap attr="metric" key="metric_value"/>
+          <attrKeyMap attr="serialNumber" key="serial"/>
+          <attrKeyMap attr="_sev" key="severity"/>
+          <attrKeyMap attr="msg" key="supporting_data"/>
+          <attrKeyMap attr="deviceTime" key="timestamp"/>
+        </collectAndSetAttrByJSON>
+
+        <setEventAttribute attr="eventType">Netskope-CE-infrastructure</setEventAttribute>
+      </when>
+
+      <when test="$_et IN 'nspolicy, connection, network, endpoint, watchlist, ctep, malsite, malware, remediation, quarantine, policy, uba, dlp, security assessment, compromised credential'">
+        <collectAndSetAttrByJSON src="$_body">
+          <!-- nspolicy -->
+          <attrKeyMap attr="alertIdStr" key="_id"/>
+          <attrKeyMap attr="deviceTime" key="_insertion_epoch_timestamp"/>
+          <attrKeyMap attr="activityName" key="activity"/>
+          <attrKeyMap attr="appName" key="app"/>
+          <attrKeyMap attr="activityType" key="act_user"/>
+          <attrKeyMap attr="appCategory" key="appcategory"/>
+          <attrKeyMap attr="browserName" key="browser"/>
+          <attrKeyMap attr="appCategory" key="category"/>
+          <attrKeyMap attr="confidence" key="ccl"/>
+          <attrKeyMap attr="count" key="count"/>
+          <attrKeyMap attr="_createTime" key="createdAt"/>
+          <attrKeyMap attr="deviceType" key="device"/>
+          <attrKeyMap attr="destIpAddr" key="dstip"/>
+          <attrKeyMap attr="vmId" key="instance_id"/>
+          <attrKeyMap attr="osObjName" key="object"/>
+          <attrKeyMap attr="oid" key="object_id"/>
+          <attrKeyMap attr="objType" key="object_type"/>
+          <attrKeyMap attr="orgUnit" key="organization_unit"/>
+          <attrKeyMap attr="osName" key="os"/>
+          <attrKeyMap attr="site" key="site"/>
+          <attrKeyMap attr="srcGeoCountry" key="src_country"/>
+          <attrKeyMap attr="srcGeoLatitude" key="src_latitude"/>
+          <attrKeyMap attr="hostLocation" key="src_location"/>
+          <attrKeyMap attr="srcGeoLongitude" key="src_longitude"/>
+          <attrKeyMap attr="srcTimeZone" key="src_timezone"/>
+          <attrKeyMap attr="srcIpAddr" key="srcip"/>
+          <attrKeyMap attr="deviceTime" key="timestamp"/>
+          <attrKeyMap attr="type" key="type"/>
+          <attrKeyMap attr="user" key="user"/>
+          <attrKeyMap attr="userType" key="user_category"/>
+          <attrKeyMap attr="userId" key="user_id"/>
+          <attrKeyMap attr="userFullName" key="user_name"/>
+          <attrKeyMap attr="role" key="user_role"/>
+          <attrKeyMap attr="userGrp" key="usergroup"/>
+          <attrKeyMap attr="hostIpAddr" key="userip"/>
+          <attrKeyMap attr="userKey" key="userkey"/>
+          <!-- connection -->
+          <attrKeyMap attr="sessionId" key="app_session_id"/>
+          <attrKeyMap attr="appVersion" key="browser_version"/>
+          <attrKeyMap attr="sentBytes" key="client_bytes"/>
+          <attrKeyMap attr="durationMSec" key="conn_duration"/>
+          <attrKeyMap attr="endTime" key="conn_endtime"/>
+          <attrKeyMap attr="startTime" key="conn_starttime"/>
+          <attrKeyMap attr="ipConnId" key="connection_id"/>
+          <attrKeyMap attr="domain" key="domain"/>
+          <attrKeyMap attr="destGeoCountry" key="dst_country"/>
+          <attrKeyMap attr="destGeoLatitude" key="dst_latitude"/>
+          <attrKeyMap attr="destGeoLongitude" key="dst_longitude"/>
+          <attrKeyMap attr="destTimeZone" key="dst_timezone"/>
+          <attrKeyMap attr="totBytes" key="numbytes"/>
+          <attrKeyMap attr="osVersion" key="os_version"/>
+          <attrKeyMap attr="webAppName" key="page"/>
+          <attrKeyMap attr="_userNormalized" key="ur_normalized"/>
+          <attrKeyMap attr="httpUserAgent" key="useragent"/>
+          <!-- network -->
+          <attrKeyMap attr="action" key="action"/>
+          <attrKeyMap attr="sentPkts" key="client_packets"/>
+          <attrKeyMap attr="destName" key="dsthost"/>
+          <attrKeyMap attr="destIpPort" key="dstport"/>
+          <attrKeyMap attr="_ipProto" key="ip_protocol"/>
+          <attrKeyMap attr="activeSessions" key="num_sessions"/>
+          <attrKeyMap attr="policyName" key="policy"/>
+          <attrKeyMap attr="appTransportProto" key="protocol"/>
+          <attrKeyMap attr="srcIpPort" key="srcport"/>
+          <attrKeyMap attr="sessionId" key="tnetwork_session_id"/>
+          <attrKeyMap attr="headerTunnelId" key="tunnel_id"/>
+          <attrKeyMap attr="tunnelUpTime" key="tunnel_up_time"/>
+          <attrKeyMap attr="_trafficType" key="traffic_type"/>
+          <!-- endpoint -->
+          <attrKeyMap attr="hostName" key="computer_name"/>
+          <attrKeyMap attr="hashCode" key="executable_hash"/>
+          <attrKeyMap attr="destFileName" key="destination_file_name"/>
+          <attrKeyMap attr="destFilePath" key="destination_file_path"/>
+          <attrKeyMap attr="deviceIdentification" key="device_id"/>
+          <attrKeyMap attr="serialNumber" key="device_sn"/>
+          <attrKeyMap attr="deviceType" key="device_type"/>
+          <attrKeyMap attr="fileType" key="file_type"/>
+          <attrKeyMap attr="fileSize" key="file_size"/>
+          <attrKeyMap attr="action" key="policy_action"/>
+          <attrKeyMap attr="policyName" key="policy_name"/>
+          <attrKeyMap attr="hashSHA256" key="sha256"/>
+          <attrKeyMap attr="subtype" key="sub_type"/>
+          <!-- Alerts -->
+          <attrKeyMap attr="alertName" key="alert_name"/>
+          <attrKeyMap attr="alertCategory" key="alert_type"/>
+          <attrKeyMap attr="alertIdStr" key="alert_id"/>
+        </collectAndSetAttrByJSON>
+
+        <setEventAttribute attr="eventType">combineMsgId("Netskope-CE-", $_et)</setEventAttribute>
+      </when>
+
+      <when test="$_et = 'admin_audit_logs'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="alertIdStr" key="_id"/>
+          <attrKeyMap attr="deviceTime" key="_insertion_epoch_timestamp"/>
+          <attrKeyMap attr="msg" key="audit_log_event"/>
+          <attrKeyMap attr="appCategory" key="appcategory"/>
+          <attrKeyMap attr="confidence" key="ccl"/>
+          <attrKeyMap attr="count" key="count"/>
+          <attrKeyMap attr="_createTime" key="createdAt"/>
+          <attrKeyMap attr="_details" key="details"/>
+          <attrKeyMap attr="orgUnit" key="organization_unit"/>
+          <attrKeyMap attr="eventSeverity" key="severity_level"/>
+          <attrKeyMap attr="deviceTime" key="timestamp"/>
+          <attrKeyMap attr="type" key="type"/>
+          <attrKeyMap attr="_userNormalized" key="ur_normalized"/>
+          <attrKeyMap attr="user" key="user"/>
+          <attrKeyMap attr="reason" key="supporting_data.data_values"/>
+        </collectAndSetAttrByJSON>
+
+        <!-- details is a json array -->
+        <when test="exist _details">
+          <collectAndSetAttrByJsonArray src="$_details" sep=",">
+            <attrKeyMap attr="policyDetails" key="diff"/>
+            <attrKeyMap attr="policyId" key="id"/>
+            <attrKeyMap attr="_emailId" key="last_modified_by"/>
+            <attrKeyMap attr="activityType" key="modify_type"/>
+            <attrKeyMap attr="policyName" key="name"/>
+            <attrKeyMap attr="modifiedItem" key="type"/>
+          </collectAndSetAttrByJsonArray>
+        </when>
+
+        <setEventAttribute attr="eventType">Netskope-CE-audit</setEventAttribute>
+
+        <when test="exist msg">
+          <setEventAttribute attr="_msg">replaceStringByRegex($msg, "\s+", "-")</setEventAttribute>
+          <setEventAttribute attr="_msg">toLower($_msg)</setEventAttribute>
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-", $_msg)</setEventAttribute>
+        </when>
+
+        <when test="exist reason">
+          <setEventAttribute attr="reason">replaceStringByRegex($reason, "[\[\]\n\"\t]+", "")</setEventAttribute>
+          <setEventAttribute attr="reason">replaceStringByRegex($reason, ",\s+", ",")</setEventAttribute>
+        </when>
+
+        <when test="exist _emailId">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_emailId">
+                <regex><![CDATA[\[<emailId:patExceptPipe>\|<:gPatStr>\]]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default>
+              <setEventAttribute attr="emailId">$_emailId</setEventAttribute>
+            </default>
+          </switch>
+        </when>
+      </when>
+      <otherwise>
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="_createTime" key="createdAt"/>
+          <attrKeyMap attr="msg" key="message"/>
+          <attrKeyMap attr="type" key="type"/>
+        </collectAndSetAttrByJSON>
+        <setEventAttribute attr="eventType">combineMsgId("Netskope-CE-", $type)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <choose>
+      <when test="exist _userNormalized">
+        <setEventAttribute attr="user">$_userNormalized</setEventAttribute>
+      </when>
+      <when test="exist user"/>
+      <when test="exist userKey">
+        <setEventAttribute attr="user">$userKey</setEventAttribute>
+      </when>
+      <when test="exist userFullName">
+        <setEventAttribute attr="user">$userFullName</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="exist action">
+        <setEventAttribute attr="_action">toLower($action)</setEventAttribute>
+        <setEventAttribute attr="eventType">combineMsgId($eventType,"-", $_action)</setEventAttribute>
+      </when>
+      <when test="exist activityName">
+        <setEventAttribute attr="_activityName">toLower($activityName)</setEventAttribute>
+        <setEventAttribute attr="eventType">combineMsgId($eventType,"-", $_activityName)</setEventAttribute>
+      </when>
+      <otherwise/>
+    </choose>
+
+    <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "[\s_]", "-")</setEventAttribute>
+
+    <when test="exist _createTime">
+      <collectFieldsByRegex src="$_createTime">
+        <regex><![CDATA[<_mon:gPatMonNum>/<_day:gPatDay>/<_year:gPatYear>\s*<_time:gPatTime>\s<_apm:gPatStr>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="createTime">toDateTime($_mon, $_day, $_year, $_time, $_apm)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist _severity"/>
+      <when test="$_severity = 'high'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_severity = 'medium'">
+        <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+      </when>
+      <when test="$_severity = 'low'">
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+      <when test="$_severity = 'unknown'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <otherwise/>
+    </choose>
+
+    <when test="exist _ipProto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_ipProto)</setEventAttribute>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

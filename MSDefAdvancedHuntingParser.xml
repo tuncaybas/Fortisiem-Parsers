@@ -1,0 +1,218 @@
+<eventParser name="MSDefAdvancedHuntingParser">
+  <deviceType>
+    <Vendor>Microsoft</Vendor>
+    <Model>Defender for Endpoint</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <!-- These events come via Microsoft Azure Event Hub Forwarding -->
+  <testEvents>
+    <testEvent><![CDATA[MS_EVENT_HUB eventHubName=xxxx event={"category":"AdvancedHunting-AlertInfo","operationName":"Publish","properties":{"AlertId":"da637801291442337370_2831234","AttackTechniques":"[\"Ingress Tool Transfer (T1105)\",\"Deobfuscate/Decode Files or Information (T1140)\",\"Signed Script Proxy Execution (T1216)\",\"Signed Binary Proxy Execution (T1218)\",\"CMSTP (T1218.003)\",\"InstallUtil (T1218.004)\",\"Mshta (T1218.005)\",\"Regsvr32 (T1218.010)\",\"Rundll32 (T1218.011)\",\"XSL Script Processing (T1220)\"]","Category":"Execution","DetectionSource":"EDR","MachineGroup":null,"ServiceSource":"Microsoft Defender for Endpoint","Severity":"Low","Timestamp":"2022-02-10T22:29:51.4127262Z","Title":"Use of living-off-the-land binary to run malicious code"},"tenantId":"cdf65b83-41f2-4c0e-97ee-11111111111","time":"2022-02-10T22:32:24.5796030Z"}]]></testEvent>
+    <testEvent><![CDATA[MS_EVENT_HUB eventHubName=xxxx event={"Tenant":"DefaultTenant","category":"AdvancedHunting-EmailEvents","operationName":"Publish","properties":{"AdditionalFields":null,"AttachmentCount":2,"AuthenticationDetails":"{\"DKIM\":\"none\",\"DMARC\":\"none\"}","ConfidenceLevel":null,"Connectors":null,"DeliveryAction":"Delivered","DeliveryLocation":"On-premises/external","DetectionMethods":null,"EmailAction":null,"EmailActionPolicy":null,"EmailActionPolicyGuid":null,"EmailClusterId":2347921674,"EmailDirection":"Outbound","EmailLanguage":"zh-cn","InternetMessageId":"<DM6PR02MB6729500EBA1D4E912345ECFAEF9@DM6PR02MB6729.namprd02.prod.outlook.com>","NetworkMessageId":"11111111-1111-1111-1111-111111111111","OrgLevelAction":null,"OrgLevelPolicy":null,"RecipientEmailAddress":"recipientmailaddress","RecipientObjectId":null,"ReportId":"11111111-1111-1111-1111-111111111111-2441106773969003864-1","SenderDisplayName":"Lastname, Firstname","SenderFromAddress":"Emailaddress","SenderFromDomain":"Domain","SenderIPv4":"1.1.1.1","SenderIPv6":null,"SenderMailFromAddress":"Emailaddress","SenderMailFromDomain":"Domain","SenderObjectId":"11111111-1111-1111-1111-111111111111","Subject":"FSM\u5236\u7a0b\u68c0\u67e5\u8868","ThreatNames":null,"ThreatTypes":null,"Timestamp":"2022-04-14T08:49:10Z","UrlCount":0,"UserLevelAction":null,"UserLevelPolicy":null},"tenantId":"12345-1966-1234-a5b7-b712344dab64","time":"2022-04-14T08:53:19.7028116Z"}]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patExceptParen"><![CDATA[[^\(\)]+]]></pattern>
+    <pattern name="patAdvHuntSchemaAlert"><![CDATA[Alert(?:Evidence|Info)]]></pattern>
+    <pattern name="patAdvHuntSchemaCloudApp"><![CDATA[CloudAppEvents]]></pattern>
+    <pattern name="patAdvHuntSchemaDevice" list="begin"><![CDATA[Device(?:Events|FileCertificateInfo|FileEvents|ImageLoadEvents|]]></pattern>
+    <pattern name="patAdvHuntSchemaDevice" list="continue"><![CDATA[Info|LogonEvents|NetworkEvents|NetworkInfo|ProcessEvents|]]></pattern>
+    <pattern name="patAdvHuntSchemaDevice" list="end"><![CDATA[RegistryEvents|TvmSecureConfiguration\w+|TvmSoftware\w+)]]></pattern>
+    <pattern name="patAdvHuntSchemaEmail"><![CDATA[Email(?:AttachmentInfo|Events|PostDeliveryEvents|UrlInfo)]]></pattern>
+    <pattern name="patAdvHuntSchemaIdentity"><![CDATA[Identity(?:DirectoryEvents|Info|LogonEvents|QueryEvents)]]></pattern>
+  </patternDefinitions>
+  <!-- Very generic JSON event without a formal header - parsing priority should be very low to prevent mismatch -->
+  <!-- "category":"AdvancedHunting-<schema table>" as defined in https://docs.microsoft.com/en-us/microsoft-365/security/defender/advanced-hunting-schema-tables?view=o365-worldwide -->
+  <eventFormatRecognizer><![CDATA[^MS_EVENT_HUB eventHubName=\S+ event=\{.*"category":"AdvancedHunting-(?:<:patAdvHuntSchemaAlert>|<:patAdvHuntSchemaCloudApp>|<:patAdvHuntSchemaDevice>|<:patAdvHuntSchemaEmail>|<:patAdvHuntSchemaIdentity>)".*\}]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <!-- This parser assumes MS Defender for Endpoint AdvancedHunting events are being streamed to Azure Event Hub -->
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[^MS_EVENT_HUB eventHubName=<eventHubName:gPatStr> event=<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <!-- attribute mapping -->
+    <collectAndSetAttrByJSON src="$_body">
+      <!-- general fields and AlertInfo fields -->
+      <attrKeyMap attr="categoryType" key="category"/>
+      <attrKeyMap attr="opName" key="operationName"/>
+      <attrKeyMap attr="alertIdStr" key="properties.AlertId"/>
+      <attrKeyMap attr="_attackTechniqueArray" key="properties.AttackTechniques"/>
+      <attrKeyMap attr="alertCategory" key="properties.Category"/>
+      <attrKeyMap attr="eventSource" key="properties.DetectionSource"/>
+      <attrKeyMap attr="groupName" key="properties.MachineGroup"/>
+      <attrKeyMap attr="serviceType" key="properties.ServiceSource"/>
+      <attrKeyMap attr="_severity" key="properties.Severity"/>
+      <attrKeyMap attr="alertName" key="properties.Title"/>
+      <attrKeyMap attr="tenantId" key="tenantId"/>
+      <attrKeyMap attr="tenantName" key="Tenant"/>
+      <attrKeyMap attr="_time" key="time"/>
+      <!-- AlertEvidence fields -->
+      <attrKeyMap attr="domain" key="properties.AccountDomain"/>
+      <attrKeyMap attr="user" key="properties.AccountName"/>
+      <attrKeyMap attr="accountId" key="properties.AccountObjectId"/>
+      <attrKeyMap attr="securityId" key="properties.AccountSid"/>
+      <attrKeyMap attr="_upn" key="properties.AccountUpn"/>
+      <attrKeyMap attr="_addFields" key="properties.AdditionalFields"/>
+      <attrKeyMap attr="appName" key="properties.Application"/>
+      <attrKeyMap attr="applicationIdStr" key="properties.ApplicationId"/>
+      <attrKeyMap attr="deviceIdentification" key="properties.DeviceId"/>
+      <attrKeyMap attr="hostName" key="properties.DeviceName"/>
+      <attrKeyMap attr="mailSubject" key="properties.EmailSubject"/>
+      <attrKeyMap attr="managedEntity" key="properties.EntityType"/>
+      <attrKeyMap attr="direction" key="properties.EvidenceDirection"/>
+      <attrKeyMap attr="role" key="properties.EvidenceRole"/>
+      <attrKeyMap attr="fileName" key="properties.FileName"/>
+      <attrKeyMap attr="fileSize64" key="properties.FileSize"/>
+      <attrKeyMap attr="filePath" key="properties.FolderPath"/>
+      <attrKeyMap attr="srcIpAddr" key="properties.LocalIP"/>
+      <attrKeyMap attr="msgId" key="properties.NetworkMessageId"/>
+      <attrKeyMap attr="_oauthAppId" key="properties.OAuthApplicationId"/>
+      <attrKeyMap attr="command" key="properties.ProcessCommandLine"/>
+      <attrKeyMap attr="regKeyPath" key="properties.RegistryKey"/>
+      <attrKeyMap attr="newRegValue" key="properties.RegistryValueData"/>
+      <attrKeyMap attr="regValueName" key="properties.RegistryValueName"/>
+      <attrKeyMap attr="srcIpAddr" key="properties.RemoteIP"/>
+      <attrKeyMap attr="downloadURL" key="properties.RemoteUrl"/>
+      <attrKeyMap attr="hashSHA1" key="properties.SHA1"/>
+      <attrKeyMap attr="hashSHA256" key="properties.SHA256"/>
+      <attrKeyMap attr="threatCategory" key="properties.ThreatFamily"/>
+      <!-- DeviceEvents unique fields -->
+      <attrKeyMap attr="action" key="properties.ActionType"/>
+      <attrKeyMap attr="deviceIdentification" key="properties.DeviceId"/>
+      <attrKeyMap attr="hostName" key="properties.DeviceName"/>
+      <attrKeyMap attr="domain" key="properties.InitiatingProcessAccountDomain"/>
+      <attrKeyMap attr="user" key="properties.InitiatingProcessAccountName"/>
+      <attrKeyMap attr="accountId" key="properties.InitiatingProcessAccountObjectId"/>
+      <attrKeyMap attr="securityId" key="properties.InitiatingProcessAccountSid"/>
+      <attrKeyMap attr="_upn" key="properties.InitiatingProcessAccountUpn"/>
+      <attrKeyMap attr="command" key="properties.InitiatingProcessCommandLine"/>
+      <attrKeyMap attr="fileName" key="properties.InitiatingProcessFileName"/>
+      <attrKeyMap attr="fileSize64" key="properties.InitiatingProcessFileSize"/>
+      <attrKeyMap attr="filePath" key="properties.InitiatingProcessFolderPath"/>
+      <attrKeyMap attr="procId" key="properties.InitiatingProcessId"/>
+      <attrKeyMap attr="hashMD5" key="properties.InitiatingProcessMD5"/>
+      <attrKeyMap attr="parentFileName" key="properties.InitiatingProcessParentFileName"/>
+      <attrKeyMap attr="parentProcId" key="properties.InitiatingProcessParentId"/>
+      <attrKeyMap attr="hashSHA1" key="properties.InitiatingProcessSHA1"/>
+      <attrKeyMap attr="hashSHA256" key="properties.InitiatingProcessSHA256"/>
+      <attrKeyMap attr="srcIpAddr" key="LocalIP"/>
+      <attrKeyMap attr="_srcType" key="LocalIPType"/>
+      <attrKeyMap attr="srcIpPort" key="LocalPort"/>
+      <attrKeyMap attr="_proto" key="Protocol"/>
+      <attrKeyMap attr="destIpAddr" key="RemoteIP"/>
+      <attrKeyMap attr="_destType" key="RemoteIPType"/>
+      <attrKeyMap attr="destIpPort" key="RemotePort"/>
+      <attrKeyMap attr="downloadURL" key="RemoteUrl"/>
+      <!-- Email specific fields -->
+      <!-- o365 unique id -->
+      <attrKeyMap attr="exchMsgId" key="properties.NetworkMessageId"/>
+      <!-- sender unique message id -->
+      <attrKeyMap attr="smtpMsgId" key="properties.InternetMessageId"/>
+      <attrKeyMap attr="senderMailAddr" key="properties.SenderMailFromAddress"/>
+      <attrKeyMap attr="srcDomain" key="properties.SenderMailFromDomain"/>
+      <attrKeyMap attr="srcIpAddr" key="properties.SenderIPv4"/>
+      <attrKeyMap attr="srcIpAddr" key="properties.SenderIPv6"/>
+      <attrKeyMap attr="receiverMailAddr" key="properties.RecipientEmailAddress"/>
+      <attrKeyMap attr="mailSubject" key="properties.Subject"/>
+      <attrKeyMap attr="direction" key="properties.EmailDirection"/>
+      <!-- Delivered, Junked, Blocked, Replaced -->
+      <attrKeyMap attr="action" key="properties.DeliveryAction"/>
+      <attrKeyMap attr="threatType" key="properties.ThreatTypes"/>
+      <attrKeyMap attr="virusName" key="properties.ThreatNames"/>
+      <attrKeyMap attr="detection" key="properties.DetectionMethods "/>
+      <attrKeyMap attr="confidence" key="properties.ConfidenceLevel"/>
+      <attrKeyMap attr="mailAction" key="properties.EmailAction"/>
+      <attrKeyMap attr="policyName" key="properties.EmailActionPolicy"/>
+      <attrKeyMap attr="attachmentFlag" key="properties.AttachmentCount"/>
+      <attrKeyMap attr="httpAcceptLang" key="properties.EmailLanguage"/>
+
+    </collectAndSetAttrByJSON>
+
+    <when test="exist _time">
+      <collectFieldsByRegex src="$_time">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>?]]></regex>
+      </collectFieldsByRegex>
+      <choose>
+        <when test="exist _tz">
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </when>
+        <otherwise>
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </otherwise>
+      </choose>
+    </when>
+
+    <!-- handle event type formation -->
+    <choose>
+      <when test="exist alertCategory">
+        <choose>
+          <when test="$alertCategory != 'None'">
+            <!-- This is usually the Mitre tactic -->
+            <setEventAttribute attr="attackTactic">$alertCategory</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId("MS-Defender-Endpoint-Alert-", $alertCategory)</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">MS-Defender-Endpoint-Alert</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+      <when test="exist categoryType">
+        <!-- We quickly realized that Advanced Hunting can forward more than just Defender for Endpoint events, also O365 Defender, Cloud Apps , Identity -->
+        <choose>
+          <when test="matches($categoryType, 'Email')">
+            <setEventAttribute attr="eventType">combineMsgId("M365Defender-", $categoryType)</setEventAttribute>
+          </when>
+          <when test="matches($categoryType, 'CloudAppEvents')">
+            <setEventAttribute attr="eventType">combineMsgId("M365Defender-", $categoryType)</setEventAttribute>
+          </when>
+          <when test="matches($categoryType, 'Identity')">
+            <setEventAttribute attr="eventType">combineMsgId("M365Defender-", $categoryType)</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">combineMsgId("MS-Defender-Endpoint-", $categoryType)</setEventAttribute>
+          </otherwise>
+        </choose>
+        <!-- strip "AdvancedHunting-" from the category field -->
+        <setEventAttribute attr="eventType">replaceStrInStr($eventType, "AdvancedHunting-", "")</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">MS-Defender-Endpoint-Generic</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <!-- In specific events that contain an action, append to event type -->
+    <when test="exist action">
+      <setEventAttribute attr="eventType">combineMsgId($eventType,"-", $action)</setEventAttribute>
+      <setEventAttribute attr="eventType">replaceStrInStr($eventType, " ", "_")</setEventAttribute>
+    </when>
+
+    <when test="exist _attackTechniqueArray">
+      <setEventAttribute attr="details">$_attackTechniqueArray</setEventAttribute>
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_attackTechniqueArray">
+            <!-- ["Ingress Tool Transfer (T1105)","Deobfuscate/Decode Files or Information (T1140)","Signed Script Proxy Execution (T1216)","Signed Binary Proxy Execution (T1218)","CMSTP (T1218.003)","InstallUtil (T1218.004)","Mshta (T1218.005)","Regsvr32 (T1218.010)","Rundll32 (T1218.011)","XSL Script Processing (T1220)"] -->
+            <!-- attempt to extract the first technique ID from the list -->
+            <regex><![CDATA[\["<attackTechnique:patExceptParen>\(<attackTechniqueId:patExceptParen>\)]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <!-- if user doesnt exist but upn does, set user as upn -->
+    <choose>
+      <when test="exist user"/>
+      <when test="exist _upn">
+        <setEventAttribute attr="user">$_upn</setEventAttribute>
+      </when>
+    </choose>
+
+    <!-- handle proto -->
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

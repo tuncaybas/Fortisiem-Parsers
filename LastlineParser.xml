@@ -1,0 +1,147 @@
+<eventParser name="LastlineParser">
+
+  <deviceType>
+    <Vendor>Lastline</Vendor>
+    <Model>Network Defender</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[Aug 13 14:48:37 fortisiem CEF:0|Lastline|Enterprise|7.10|appliance-status|Appliance Status|1|cat=Online cs1=SENSOR cs1Label=deviceType cs2=https://example/portal#/appliances/config/status/76b80c7ac11a4d37bc6b29e66726b01d cs2Label=deviceStatusLink deviceExternalId=76b80c7ac11a4d37bc6b29e66726b01d dvc=10.31.61.152 dvchost=example.com end=Aug 13 2018 16:48:37 CEST rt=Aug 13 2018 16:48:37 CEST start=Aug 13 2018 16:48:37 CEST]]></testEvent>
+    <testEvent><![CDATA[Aug 16 04:41:58 fortisiem CEF:0|Lastline|Enterprise|7.10|email-url|Suspicious Email Url|0|act=LOG cn1=2 cn1Label=impact cs1=Re: Job | Exceptional opportunity in MNC: Assistant Manager- Sales & Purchase Ã¢â‚¬â€œ immediate vacancy! cs1Label=EmailSubject cs2=<BE.A0.12899.720057B5@example> cs2Label=MessageID cs3=http://example.com/resume-writing-services?fftid\=700003 cs3Label=mailUrl cs4=e57a2d9d30579589cefcad0f6181ed62 cs4Label=mailUrlHash cs5=https://example.com/portal#/mail/message/2995037731/2641852753/63385?date\=2018-08-16 cs5Label=EventDetailLink deviceExternalId=2995037731:2641852753 duser=user1@example.com end=Aug 16 2018 06:41:47 CEST start=Aug 16 2018 06:41:47 CEST suser=info@example.com]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\s+CEF:\d+\|Lastline\|]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <!-- parsing common fields -->
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatMesgBodyMin>CEF:\d\|<:gPatMesgBodyMin>\|<:gPatStr>\|<version:gPatStr>\|<:gPatStr>\|<_eventtype:gPatMesgBodyMin>\|<eventSeverity:gPatInt>\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">combineMsgId("Lastline-", $_eventtype)</setEventAttribute>
+    <setEventAttribute attr="eventType">replaceStrInStr($eventType, " ", "_")</setEventAttribute>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[start=<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>\s+<:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[start=<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>\s+<_time:gPatTimeMSec>\s+<:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+    <setEventAttribute attr="startTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[end=<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>\s+<:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[end=<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>\s+<_time:gPatTimeMSec>\s+<:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+    <setEventAttribute attr="endTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+
+    <collectFieldsByKeyValuePair src="$_body" sep=" " kvsep="=">
+      <attrKeyMap attr="appCategory" key="cat"/>
+      <attrKeyMap attr="activityName" key="act"/>
+      <attrKeyMap attr="deviceIdentification" key="deviceExternalId"/>
+      <attrKeyMap attr="destUser" key="duser"/>
+      <attrKeyMap attr="srcUser" key="suser"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="srcIpPort" key="spt"/>
+      <attrKeyMap attr="srcMACAddr" key="smac"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="destIpPort" key="dpt"/>
+      <attrKeyMap attr="destMACAddr" key="dmac"/>
+      <attrKeyMap attr="reptDevName" key="dvchost"/>
+      <attrKeyMap attr="reptDevIpAddr" key="dvc"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="_cn1Label" key="cn1Label"/>
+      <attrKeyMap attr="_cn1Value" key="cn1"/>
+      <attrKeyMap attr="_cs1Label" key="cs1Label"/>
+      <attrKeyMap attr="_cs1Value" key="cs1"/>
+      <attrKeyMap attr="_cs2Label" key="cs2Label"/>
+      <attrKeyMap attr="_cs2Value" key="cs2"/>
+      <attrKeyMap attr="_cs3Label" key="cs3Label"/>
+      <attrKeyMap attr="_cs3Value" key="cs3"/>
+      <attrKeyMap attr="_cs4Label" key="cs4Label"/>
+      <attrKeyMap attr="_cs4Value" key="cs4"/>
+      <attrKeyMap attr="_cs5Label" key="cs5Label"/>
+      <attrKeyMap attr="_cs5Value" key="cs5"/>
+      <attrKeyMap attr="_cs6Label" key="cs6Label"/>
+      <attrKeyMap attr="_cs6Value" key="cs6"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist _cn1Value">
+      <choose>
+        <when test="$_cn1Label = 'impact'">
+          <setEventAttribute attr="phIncidentImpacts">$_cn1Value</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist _cs1Value">
+      <choose>
+        <when test="$_cs1Label = 'EmailSubject'">
+          <setEventAttribute attr="mailSubject">$_cs1Value</setEventAttribute>
+        </when>
+        <when test="$_cs1Label = 'deviceType'">
+          <setEventAttribute attr="deviceType">$_cs1Value</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist _cs2Value">
+      <when test="$_cs2Label = 'MessageID'">
+        <setEventAttribute attr="emailId">$_cs2Value</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _cs3Value">
+      <choose>
+        <when test="$_cs3Label = 'mailUrl'">
+          <setEventAttribute attr="infoURL">$_cs3Value</setEventAttribute>
+        </when>
+        <when test="$_cs3Label = 'msgIdentifier'">
+          <setEventAttribute attr="activityType">$_cs3Value</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist _cs4Value">
+      <choose>
+        <when test="$_cs4Label = 'mailUrlHash'">
+          <setEventAttribute attr="hashCode">$_cs4Value</setEventAttribute>
+        </when>
+        <when test="$_cs4Label = 'fileSHA1'">
+          <setEventAttribute attr="hashSHA1">$_cs4Value</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist _cs5Value">
+      <when test="$_cs5Label = 'EventDetailLink'">
+        <setEventAttribute attr="details">$_cs5Value</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _cs6Value">
+      <when test="$_cs6Label = 'EventDetailLink'">
+        <setEventAttribute attr="details">$_cs6Value</setEventAttribute>
+      </when>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,199 @@
+<eventParser name="NginxParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Nginx</Vendor>
+    <Model>Web Server</Model>
+    <Version>ANY</Version>
+    <Name>Nginx Web Server</Name>
+  </appType>
+
+  <!-- examples
+<29>Jun 15 07:59:03 ny-n1-p2 nginx: "2.2.2.2","-","Mozilla/5.0 (Windows NT 5.1 WOW64; rv:9.0.1) Gecko/20100178 Firefox/9.0.1","/images/design/header-2-logo.jpg","GET","http://abc.com/images/design/header-2-logo.jpg","200","0","/ypf-cookie_auth/index.html","0.000","877","-","10.4.200.203","80","abc.com","no-cache, no-store, must-revalidate","-","1.64","_","-","-"
+	   -->
+
+  <testEvents>
+    <testEvent><![CDATA[<29>Jun 15 07:59:03 ny-n1-p2 nginx: "2.2.2.2","-","Mozilla/5.0 (Windows NT 5.1 WOW64; rv:9.0.1) Gecko/20100178 Firefox/9.0.1","/images/design/header-2-logo.jpg","GET","http://abc.com/images/design/header-2-logo.jpg","200","0","/ypf-cookie_auth/index.html","0.000","877","-","10.4.200.203","80","abc.com","no-cache, no-store, must-revalidate","-","1.64","_","-","-"]]></testEvent>
+    <testEvent><![CDATA[<190>Sep  7 15:15:08 host1 nginx: 10.30.202.52 - - [07/Sep/2016:15:15:08 +0200] "GET /share/service/modules/authenticated?noCache=1473254108370&a=user HTTP/1.1" 200 23 "https://abc.com/share/page/user/andrea.micozzi/dashboard" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36" "-"]]></testEvent>
+    <testEvent><![CDATA[<179>Mar 21 18:14:54 lab1.example.com nginx_AccessLog: 192.168.1.30 - - [21/Mar/2022:18:12:42 -0700] "GET / HTTP/1.1" 200 4057 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.74 Safari/537.36" "-"]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\s+nginx\w*:\s+]]></eventFormatRecognizer>
+
+  <patternDefinitions>
+    <pattern name="patStrQuoted"><![CDATA[[^"]*]]></pattern>
+    <pattern name="patExceptParen"><![CDATA[[^\(\)]+]]></pattern>
+  </patternDefinitions>
+
+  <parsingInstructions>
+    <!-- parsing common fields -->
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+nginx\w*:\s+<_body:gPatMesgBody>\s*]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="eventType">Nginx-Generic</setEventAttribute>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+    <setEventAttribute attr="totFlows">1</setEventAttribute>
+    <switch>
+      <!-- technically, int after status code is client sentBytes64, but from server perspective it is recv bytes -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^<srcIpAddr:gPatIpAddr>\s+-\s+-\s+\[<_day:gPatDay>/<_mon:gPatMon>/<_year:gPatYear>:<_time:gPatTime>\s+<_tz:gPatTimeZone>\]\s+"<httpMethod:gPatStr>\s+<uriStem:gPatStr>\s+HTTP/<httpVersion:patStrQuoted>"\s+<httpStatusCode:gPatStr>\s+<recvBytes64:gPatStr>\s+"<httpReferrer:patStrQuoted>"\s+"<httpUserAgent:patStrQuoted>"\s*]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+      </case>
+      <case>
+        <!-- Error Log format -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<_year:gPatYear>\/<_mon:gPatMon>\/<_day:gPatDay>\s+<_time:gPatTime>\s+\[<logLevel:gPatWord>\]\s+<procId:gPatInt>#<threadId:gPatInt>:\s+(?:\*<ipConnId:gPatInt>\s+)?<msg:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^"<_body1:gPatMesgBody>"]]></regex>
+        </collectFieldsByRegex>
+        <collectAndSetAttrByPos sep="&quot;,&quot;" src="$_body1">
+          <attrPosMap attr="srcIpAddr" pos="1"/>
+          <attrPosMap attr="user" pos="2"/>
+          <attrPosMap attr="httpUserAgent" pos="3"/>
+          <attrPosMap attr="uriStem" pos="4"/>
+          <attrPosMap attr="httpMethod" pos="5"/>
+          <attrPosMap attr="httpReferrer" pos="6"/>
+          <attrPosMap attr="httpStatusCode" pos="7"/>
+          <attrPosMap attr="httpLimitRate" pos="8"/>
+          <attrPosMap attr="httpEndUri" pos="9"/>
+          <attrPosMap attr="httpRequestTime" pos="10"/>
+          <attrPosMap attr="sentBytes64" pos="11"/>
+          <attrPosMap attr="_upstream" pos="12"/>
+          <attrPosMap attr="destIpAddr" pos="13"/>
+          <attrPosMap attr="destIpPort" pos="14"/>
+          <attrPosMap attr="destDomain" pos="15"/>
+          <attrPosMap attr="httpHeaderCacheControl" pos="16"/>
+          <attrPosMap attr="httpHeaderExpires" pos="17"/>
+          <attrPosMap attr="httpGzipRatio" pos="18"/>
+          <attrPosMap attr="destName" pos="19"/>
+          <attrPosMap attr="nginxCv1" pos="20"/>
+          <attrPosMap attr="nginxCv2" pos="21"/>
+        </collectAndSetAttrByPos>
+      </case>
+      <default/>
+    </switch>
+
+    <when test="exist _upstream">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_upstream">
+            <regex><![CDATA[<upstreamIpAddr:gPatIpAddr>:<upstreamIpPort:gPatInt>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <when test="exist httpStatusCode">
+      <choose>
+        <when test="matches($httpStatusCode, '^401')">
+          <setEventAttribute attr="eventType">Nginx-Web-Client-Access-Denied</setEventAttribute>
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </when>
+        <when test="matches($httpStatusCode, '^403')">
+          <setEventAttribute attr="eventType">Nginx-Web-Forbidden-Access-Denied</setEventAttribute>
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </when>
+        <when test="matches($httpStatusCode, '^400')">
+          <setEventAttribute attr="eventType">Nginx-Web-Bad-Request</setEventAttribute>
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </when>
+        <when test="matches($httpStatusCode, '^411')">
+          <setEventAttribute attr="eventType">Nginx-Web-Length-Reqd-Access-Denied</setEventAttribute>
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </when>
+        <when test="matches($httpStatusCode, '^2')">
+          <!-- <when test="$httpStatus in "2xx")'> -->
+          <setEventAttribute attr="eventType">Nginx-Web-Request-Success</setEventAttribute>
+          <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        </when>
+        <when test="matches($httpStatusCode, '^3')">
+          <setEventAttribute attr="eventType">Nginx-Web-Request-Redirect</setEventAttribute>
+          <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        </when>
+        <when test="matches($httpStatusCode, '^4')">
+          <setEventAttribute attr="eventType">Nginx-Web-Client-Error</setEventAttribute>
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </when>
+        <when test="matches($httpStatusCode, '^5')">
+          <setEventAttribute attr="eventType">Nginx-Web-Server-Error</setEventAttribute>
+          <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+    <when test="exist msg">
+      <collectFieldsByKeyValuePair sep=", " kvsep=":" src="$msg">
+        <attrKeyMap attr="srcIpAddr" key="client"/>
+        <attrKeyMap attr="_server" key="server"/>
+        <attrKeyMap attr="_request" key="request"/>
+        <attrKeyMap attr="_host" key="host"/>
+        <attrKeyMap attr="_referrer" key="referrer"/>
+      </collectFieldsByKeyValuePair>
+      <when test="exist _server">
+        <when test="$_server != '_'">
+          <setEventAttribute attr="destName">$_server</setEventAttribute>
+        </when>
+      </when>
+      <when test="exist _request">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_request">
+              <regex><![CDATA[^\s*"<httpMethod:gPatStr>\s+<uriStem:gPatStr>\s+HTTP/<httpVersion:patStrQuoted>"]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="exist _host">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_host">
+              <regex><![CDATA[^\s*"<hostIpAddr:gPatIpAddr>:<destIpPort:gPatInt>"]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="exist _referrer">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_referrer">
+              <regex><![CDATA[^\s*"<httpReferrer:patStrQuoted>"]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <!-- Handle detailed messages -->
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$msg">
+            <regex><![CDATA[^open\(\)\s+"<uriStem:patStrQuoted>"\s+failed]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventType">Nginx-Web-Server-URI-NOT-VALID</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$msg">
+            <regex><![CDATA[^bind\(\) to (?:\[<hostIpAddr:gPatIpAddr>\]|<hostIpAddr:gPatIpAddr>):<destIpPort:gPatInt> failed\s+\(\d+: Address already in use\)]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventType">Nginx-Web-Server-Bind-Failed-Address-In-Use</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <when test="not_private_ip destIpAddr">
+      <when test="exist destName">
+        <setEventAttribute attr="domainEntropy">calcDomainEntropy($destName)</setEventAttribute>
+      </when>
+    </when>
+  </parsingInstructions>
+</eventParser>

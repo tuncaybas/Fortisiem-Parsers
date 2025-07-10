@@ -1,0 +1,89 @@
+<eventParser name="MotorolaAirDefenseParser">
+  <deviceType>
+    <Vendor>Motorola</Vendor>
+    <Model>AirDefense</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+.*,Category=[\w\s]+,CriticalityLevel=\w+,Desc=<:gPatStrComma>,device=<:gPatStrComma>,sensor=]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[Nov 12 13:33:00 Cleared or Expired Alarm: ClearOrExpiredTime=2015-11-12T13:33:00,Category=Performance,CriticalityLevel=Minor,Desc=Wireless Client Excessive Roaming or Reassociations,device=b4:b6:76:93:bd:bd(FRA45615),sensor=fc:0a:81:12:7e:c5(FRA-SENS304L[a,b,g,n])]]></testEvent>
+    <testEvent><![CDATA[Nov 12 13:33:00 Time=2015-11-12T08:47:00,Category=Exploits,CriticalityLevel=Critical,Desc=NAV Attack - CTS,device=5c:0e:8b:cb:d5:40(5c:0e:8b:cb:d5:40),sensor=fc:0a:81:12:77:3f(FRA-SENS201EA[a,b,g,n])]]></testEvent>
+    <testEvent><![CDATA[Nov  8 18:48:00 Time=2014-10-29T05:39:00,Category=Rogue Activity,CriticalityLevel=Severe,Desc=Rogue AP on Wired Network,device=00:22:cf:5d:ee:60(00:22:cf:5d:ee:60),sensor=fc:0a:81:12:7b:4b(FRA-SENS302EA[a,b,g,n])]]></testEvent>
+    <testEvent><![CDATA[Nov  8 18:52:00 Time=2014-03-12T09:13:00,Category=Platform Health,CriticalityLevel=Critical,Desc=Certificate Expiry Warning,device=00:00:00:00:00:00(Default),sensor=00:00:00:00:00:00(Default)]]></testEvent>
+    <testEvent><![CDATA[Nov  8 19:00:01 Time=2014-11-03T02:40:00,Category=Vulnerabilities,CriticalityLevel=Major,Desc=Duplicate Information Elements,device=a2:be:0e:59:1e:9b(a2:be:0e:59:1e:9b),sensor=fc:0a:81:12:7d:9b(FRA-SENS403EB[a,b,g,n])]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+[\w ]+:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+
+    <collectAndSetAttrByKeyValuePair src="$_body" sep=",">
+      <attrKeyMap attr="_etime" key="Time="/>
+      <attrKeyMap attr="_clearOrExpiredTime" key="ClearOrExpiredTime="/>
+      <attrKeyMap attr="_category" key="Category="/>
+      <attrKeyMap attr="_level" key="CriticalityLevel="/>
+      <attrKeyMap attr="eventDesc" key="Desc="/>
+      <attrKeyMap attr="_device" key="device="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <setEventAttribute attr="_category">replaceStringByRegex($_category, "\s+", "-")</setEventAttribute>
+    <setEventAttribute attr="eventType">combineMsgId("Motorola-AirDefense-", $_category)</setEventAttribute>
+    <choose>
+      <when test="exist _etime">
+        <collectFieldsByRegex src="$_etime">
+          <regex><![CDATA[<_eyear:gPatYear>-<_emonth:gPatMonNum>-<_eday:gPatDay>T<_etime:gPatTime>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventTime">toDateTime($_emonth, $_eday, $_eyear, $_etime)</setEventAttribute>
+      </when>
+    </choose>
+    <when test="exist _clearOrExpiredTime">
+      <collectFieldsByRegex src="$_clearOrExpiredTime">
+        <regex><![CDATA[<_coeyear:gPatYear>-<_coemonth:gPatMonNum>-<_coeday:gPatDay>T<_coetime:gPatTime>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="clearOrExpiredTime">toDateTime($_coemonth, $_coeday, $_coeyear, $_coetime)</setEventAttribute>
+    </when>
+    <choose>
+      <when test="not_exist _level"/>
+      <when test="$_level = Safe">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_level = Minor">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$_level = Major">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_level = Critical">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_level = Severe">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+    </choose>
+
+    <collectFieldsByRegex src="$_device">
+      <regex><![CDATA[<srcMACAddr:gPatStr>\(<srcName:gPatStr>\)]]></regex>
+    </collectFieldsByRegex>
+    <collectFieldsByRegex src="$_body">
+      <regex><![CDATA[,sensor=<destMACAddr:gPatStr>\(<destName:gPatStr>\)]]></regex>
+    </collectFieldsByRegex>
+
+  </parsingInstructions>
+</eventParser>

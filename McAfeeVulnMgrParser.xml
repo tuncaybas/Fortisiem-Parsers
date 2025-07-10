@@ -1,0 +1,61 @@
+<eventParser name="McAfeeVulnMgrParser">
+
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>McAfee</Vendor>
+    <Model>Vulnerability Manager</Model>
+    <Version>ANY</Version>
+    <Name>McAfee Vulnerability Manager</Name>
+  </appType>
+
+  <patternDefinitions>
+    <pattern name="patStrEndWithRightSquareBracket"><![CDATA[[^\]]*]]></pattern>
+    <pattern name="patStrEndBrack"><![CDATA[[^\]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\[McAfee-Vuln-]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<134>Apr 09 16:43:00 60.60.60.60 java: [McAfee-Vuln-Found]:[eventSeverity]=PHL_INFO,[reptVendor]=McAfee,[reptModel]=Scan Report,[user]=admin,[deviceTime]=Wed May 19 10:19:42 2010,[hostIpAddr]=10.1.2.26,[osType]=Linux Kernel 2.6,[vulnType]=Web Servers,[ipPort]=9443,[vulnName]=The web server running on the remote host has an information disclosure vulnerability.,[eventSeverity]=1,[vulnCveId]=CVE-2009-0783,[vulnScore]=3.6,[vulnConseq]=According to its self-reported version number, the remote host is running a vulnerable version of Apache Tomcat. Affected versions permit a web application to replace the XML parser used to process the XML and TLD files of other applications. This could allow a malicious web app to read or modify 'web.xml', 'context.xml', or TLD files of arbitrary web applications.]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<serverName:gPatStr>\s+java:\s*\[<eventType:patStrEndWithRightSquareBracket>\]:<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="extEventRecvProto">JDBC</setEventAttribute>
+    <when test="matches($serverName, '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')">
+      <setEventAttribute attr="reptDevIpAddr">$serverName</setEventAttribute>
+    </when>
+
+    <when test="$eventType = 'McAfee-Vuln-Pull-Error'">
+      <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+    </when>
+
+    <when test="$eventType = 'McAfee-Vuln-Conn-Error'">
+      <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+    </when>
+
+    <collectAndSetAttrBySymbol src="$_body" sep=",[" symStart="[" symEnd="]=">
+      <excludeAttr>lineNumber,phLogDetail</excludeAttr>
+    </collectAndSetAttrBySymbol>
+    <when test="exist deviceTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$deviceTime">
+            <regex><![CDATA[<:gPatWeekday>\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+  </parsingInstructions>
+</eventParser>

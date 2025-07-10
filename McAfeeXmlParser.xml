@@ -1,0 +1,90 @@
+<eventParser name="McAfeeXmlParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>McAfee</Vendor>
+    <Model>ePolicy Orchestrator</Model>
+    <Version>ANY</Version>
+    <Name>McAfee ePolicy Orchestrator Server</Name>
+  </appType>
+
+  <testEvents>
+    <testEvent><![CDATA[<29>1 2019-05-29T15:43:47.0Z example.com EPOEvents - EventFwd [agentInfo@3401 tenantId="1" bpsId="1" tenantGUID="{11111111-1111-1111-1111-111111111111}" tenantNodePath="1\2"] ?<?xml version="1.0" encoding="utf-8"?><UpdateEvents><MachineInfo><AgentGUID>{11111111-1111-1111-1111-111111111111}</AgentGUID><MachineName>L-74348</MachineName><RawMACAddress>9C7BEF95B7C8</RawMACAddress><IPAddress>1.2.3.4</IPAddress><AgentVersion>5.5.1.388</AgentVersion><OSName>Windows 10</OSName><TimeZoneBias>240</TimeZoneBias><UserName></UserName></MachineInfo><McAfeeCommonUpdater ProductName="McAfee Agent" ProductVersion="5.0.0" ProductFamily="TVD"><UpdateEvent><EventID>2411</EventID><Severity>0</Severity><GMTTime>2019-05-29T15:39:13</GMTTime><ProductID>EEGO____1000</ProductID><Locale>0409</Locale><Error>0</Error><Type>Install</Type><Version>7.2.8</Version><InitiatorID>EPOSERVER_RUNNOW</InitiatorID><InitiatorType>DeploymentTask</InitiatorType><SiteName>ePO_CBOPUBMEPO1001V</SiteName></UpdateEvent></McAfeeCommonUpdater></UpdateEvents>]]></testEvent>
+    <testEvent><![CDATA[<29>1 2021-06-30T09:11:08.0Z test-EPO EPOEvents - EventFwd [agentInfo@3401 tenantId="1" bpsId="1" tenantGUID="{11111111-1111-1111-1111-111111111111}" tenantNodePath="1\2"] ?<?xml version="1.0" encoding="UTF-8"?><SCORData><MachineInfo><MachineName>host1</MachineName><AgentGUID>{11111111-1111-1111-1111-111111111111}</AgentGUID><IPAddress>192.168.1.22</IPAddress><OSName>Windows 10 Workstation</OSName><UserName>SYSTEM</UserName><TimeZoneBias>-180</TimeZoneBias><RawMACAddress>a4bb6d61ceaa</RawMACAddress></MachineInfo><SCORSoftware ProductName="Solidifier" ProductVersion="8.3.2.133" ProductFamily="Secure"><SCOREvent><EventID>20720</EventID><Severity>1</Severity><GMTTime>2021-06-30T09:08:20</GMTTime><SCORevent_name>EXECUTION_DENIED</SCORevent_name><SCORevt_id>21</SCORevt_id><SCORevt_type>EVT_CAT_TYPE_MAJOR</SCORevt_type><SCORevt_sink>7</SCORevt_sink><SCORseq_no>1913</SCORseq_no><SCORtime_stamp>1625044100403</SCORtime_stamp><SCORserver_state>0</SCORserver_state><SCORuser_name>NT AUTHORITY\SYSTEM</SCORuser_name><SCORprocess_name>C:\Program Files (x86)\Dell\UpdateService\Service\InvColPC.exe</SCORprocess_name><SCORprocess_id>164040</SCORprocess_id><SCORreputation_score>1000</SCORreputation_score><SCORparent_process_name>C:\Program Files (x86)\Dell\UpdateService\ServiceShell.exe</SCORparent_process_name><SCORfile_name>C:\Windows\Temp\test_tmp\exol.exe</SCORfile_name><SCORfile_sha1>1facad60fef50d6b98ce4151123f757eb6127569</SCORfile_sha1><SCORfile_md5>b705761ca4786017c98e32379498d8fd</SCORfile_md5><SCORfile_sha256>f2a3e41be8907579de412793f81937c2e56be634958ba103217cfd09386d5163</SCORfile_sha256><SCORfile_type>pe32</SCORfile_type><SCORdeny_reason>Local Whitelist - File Not Present</SCORdeny_reason><SCORdeny_reason_code>2</SCORdeny_reason_code></SCOREvent></SCORSoftware></SCORData>]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patXml"><![CDATA[<EE_Event>.*</EE_Event>|<UpdateEvents?>.*</UpdateEvents?>|<EPO[Ee]vent>.*</EPO[Ee]vent>|<SCOR\w+>.*</SCOR\w+>|<DLPAGENT\w+>.*</DLPAGENT\w+>|<BehaviourBlockEvent>.*</BehaviourBlockEvent>|<VSAS\d*PerformanceEvent>.*</VSAS\d*PerformanceEvent>|<TaskStatusEvent>.*</TaskStatusEvent>]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\s<:gPatHostName>\s+EPOEvents\s+.*?<:patXml>]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>\d+\s+<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+EPOEvents\s+.*?<_body:patXml>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    <setEventAttribute attr="eventType">McAfee-EPO-Generic</setEventAttribute>
+
+    <collectAndSetAttrByKeyValuePair sep="&lt;" src="$_body">
+      <!-- Machine Info -->
+      <attrKeyMap attr="machineGUID" key="&lt;AgentGUID&gt;"/>
+      <attrKeyMap attr="version" key="&lt;AgentVersion&gt;"/>
+      <attrKeyMap attr="hostIpAddr" key="&lt;IPAddress&gt;"/>
+      <attrKeyMap attr="hostName" key="&lt;MachineName&gt;"/>
+      <attrKeyMap attr="_hostMAC" key="&lt;RawMACAddress&gt;"/>
+      <attrKeyMap attr="osName" key="&lt;OSName&gt;"/>
+      <attrKeyMap attr="user" key="&lt;UserName&gt;"/>
+      <!-- Common Fields -->
+      <attrKeyMap attr="appName" key="&lt;AnalyzerName&gt;"/>
+      <attrKeyMap attr="appVersion" key="&lt;AnalyzerVersion&gt;"/>
+      <attrKeyMap attr="_detectionMethod" key="&lt;AnalyzerDetectionMethod&gt;"/>
+      <!-- Event -->
+      <attrKeyMap attr="_id" key="&lt;EventID&gt;"/>
+      <attrKeyMap attr="_severity" key="&lt;Severity&gt;"/>
+      <attrKeyMap attr="threatCategory" key="&lt;ThreatCategory&gt;"/>
+      <attrKeyMap attr="attackName" key="&lt;ThreatName&gt;"/>
+      <attrKeyMap attr="threatType" key="&lt;ThreatType&gt;"/>
+      <attrKeyMap attr="fwAction" key="&lt;ThreatActionTaken&gt;"/>
+      <attrKeyMap attr="virusAction" key="&lt;ThreatActionTaken&gt;"/>
+      <attrKeyMap attr="_isHandled" key="&lt;ThreatHandled&gt;"/>
+      <attrKeyMap attr="srcUser" key="&lt;SourceUserName&gt;"/>
+      <attrKeyMap attr="procName" key="&lt;SourceProcessName&gt;"/>
+      <attrKeyMap attr="targetHostName" key="&lt;TargetHostName&gt;"/>
+      <attrKeyMap attr="targetUser" key="&lt;TargetUserName&gt;"/>
+      <attrKeyMap attr="fileName" key="&lt;TargetFileName&gt;"/>
+      <attrKeyMap attr="threatScore" key="&lt;ThreatSeverity&gt;"/>
+      <!-- Custom Fields -->
+      <attrKeyMap attr="hashMD5" key="&lt;SourceProcessHash&gt;"/>
+      <attrKeyMap attr="srcFilePath" key="&lt;SourceFilePath&gt;"/>
+      <!-- SCOR aka Solidcore Event Fields -->
+      <attrKeyMap attr="action" key="&lt;SCORevent_name&gt;"/>
+      <!-- Event ID on systems not used -->
+      <attrKeyMap attr="_scorEventID" key="&lt;SCORevt_id&gt;"/>
+      <attrKeyMap attr="type" key="&lt;SCORevt_type&gt;"/>
+      <attrKeyMap attr="procName" key="&lt;SCORprocess_name&gt;"/>
+      <attrKeyMap attr="procId" key="&lt;SCORprocess_id&gt;"/>
+      <attrKeyMap attr="threatScore" key="&lt;SCORreputation_score&gt;"/>
+      <attrKeyMap attr="parentProcName" key="&lt;SCORparent_process_name&gt;"/>
+      <attrKeyMap attr="fileName" key="&lt;SCORfile_name&gt;"/>
+      <attrKeyMap attr="hashSHA1" key="&lt;SCORfile_sha1&gt;"/>
+      <attrKeyMap attr="hashMD5" key="&lt;SCORfile_md5&gt;"/>
+      <attrKeyMap attr="hashSHA256" key="&lt;SCORfile_sha256&gt;"/>
+      <attrKeyMap attr="fileType" key="&lt;SCORfile_type&gt;"/>
+      <attrKeyMap attr="reason" key="&lt;SCORdeny_reason&gt;"/>
+      <attrKeyMap attr="errorNo" key="&lt;SCORdeny_reason_code&gt;"/>
+    </collectAndSetAttrByKeyValuePair>
+    <when test="exist _id">
+      <setEventAttribute attr="eventType">combineMsgId("McAfee-EPO-", $_id)</setEventAttribute>
+    </when>
+    <when test="exist _hostMAC">
+      <setEventAttribute attr="hostMACAddr">normalizeMAC($_hostMAC)</setEventAttribute>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

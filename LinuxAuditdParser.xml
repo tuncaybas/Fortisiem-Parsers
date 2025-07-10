@@ -1,0 +1,197 @@
+<eventParser name="LinuxAuditdParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Linux</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<182>May 17 16:49:56 supervisor-001 audit_log: type=CRYPTO_KEY_USER msg=audit(1558111787.626:1224732): user pid=32540 uid=0 auid=4294967295 ses=4294967295 msg='op=destroy kind=server fp=34:77:0d:e0:4d:c4:bf:bc:ed:a7:11:a4:e7:f3:98:b2 direction=? spid=32540 suid=0 exe="/usr/sbin/sshd" hostname=? addr=10.10.170.86 terminal=? res=success']]></testEvent>
+    <testEvent><![CDATA[<14>1 2019-06-13T13:55:54.720292+00:00 example.com audispd - - - node=PCI-VC60-BEL type=SYSCALL msg=audit(1560434154.716:1321160): arch=c000003e syscall=87 success=no exit=-13 a0=733a90 a1=fffffffffcbd3e08 a2=7f860f6ef000 a3=10 items=2 ppid=23807 pid=23808 auid=4294967295 uid=1010 gid=100 euid=1010 suid=1010 fsuid=1010 egid=100 sgid=100 fsgid=100 tty=(none) ses=4294967295 comm="cloudvm-ram-siz" exe="/opt/vmware/bin/python2.7" key=(null)]]></testEvent>
+    <testEvent><![CDATA[<182>Nov 30 14:01:01 localhost audispd[3069790]: type=SYSCALL msg=audit(1606773661.381:1866952): arch=c000003e syscall=59 success=yes exit=0 a0=558e4bbb7f30 a1=558e4bbb8000 a2=558e4bbb7b10 a3=8 items=2 ppid=3069943 pid=3069952 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=(none) ses=4294967295 comm="logger" exe="/usr/bin/logger" subj=system_u:system_r:system_cronjob_t:s0-s0:c0.c1023 key="LINUX_PROCESS_EXEC" ARCH=x86_64 SYSCALL=execve AUID="unset" UID="root" GID="root" EUID="root" SUID="root" FSUID="root" EGID="root" SGID="root" FSGID="root" user="root" hashAlgo=sha256 hashCode="30edd2bdfcfd9fa61761ec104543e43f5cb093e56c176877f088c5748c08616c" argc=6 a0="logger" a1="-p" a2="cron.notice" a3="-t" a4="run-parts[3069943]" a5=282F6574632F63726F6E2E686F75726C79292066696E69736865642030616E6163726F6E]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[ type=\S+\s+msg=audit\(\d+\.\d+:\d+\):]]></eventFormatRecognizer>
+
+  <patternDefinitions>
+    <pattern name="cryptoTypeRecord"><![CDATA[CRYPTO_SESSION|CRYPTO_KEY_USER]]></pattern>
+    <pattern name="authTypeRecord"><![CDATA[USER_AUTH|CRED_ACQ|USER_LOGIN]]></pattern>
+    <pattern name="lockTypeRecord"><![CDATA[ACCT_LOCK|RESP_ACCT_REMOTE|RESP_ACCT_LOCK_TIMED|RESP_ACCT_LOCK|RESP_TERM_LOCK]]></pattern>
+    <pattern name="haltTypeRecord"><![CDATA[RESP_HALT|SYSTEM_SHUTDOWN]]></pattern>
+    <pattern name="sshdExecutable"><![CDATA[sshd]]></pattern>
+    <pattern name="patTimeMSec"><![CDATA[\d{1,2}:\d{1,2}:\d{1,2}\.\d{1,6}]]></pattern>
+    <pattern name="patTimeZone"><![CDATA[[+-](?:\d{2}|\d{4}):\d{2}]]></pattern>
+  </patternDefinitions>
+
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">Auditd-Generic</setEventAttribute>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<reptDevName:gPatHostName>\s+\S+:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>\d+\s+<:gPatYear>-<:gPatMon>-<:gPatDay>T<:patTimeMSec><:patTimeZone>\s+<reptDevName:gPatHostName>\s+<:gPatStr>\s+\S+\s+\S+\s+\S+\s+node=<:gPatStr>\s+type=<_auditType:gPatWord>\s+msg=audit\(\d+\.\d+:<msgId:gPatInt>\):\s<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+    <setEventAttribute attr="hostName">$reptDevName</setEventAttribute>
+
+    <!-- Note: AuditD records are usually a chain of logs for a single event linked by the msgId -->
+    <!-- 1) SYSCALL -->
+    <!-- 2) CWD - Shows current directory where syscall was made -->
+    <!-- 3) PATH - One path record for each path passed to syscall as argument -->
+    <!-- 4) PROCTITLE - full command-line that triggered audit event encoded in hex notation -->
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="user" key="acct"/>
+      <attrKeyMap attr="srcIpAddr" key="addr"/>
+      <attrKeyMap attr="procName" key="comm"/>
+      <attrKeyMap attr="dataPayload" key="data"/>
+      <attrKeyMap attr="direction" key="direction"/>
+      <attrKeyMap attr="dirName" key="dirName"/>
+      <attrKeyMap attr="euid" key="euid"/>
+      <attrKeyMap attr="command" key="exe"/>
+      <attrKeyMap attr="exitValue" key="exit"/>
+      <attrKeyMap attr="fileType" key="filetype"/>
+      <attrKeyMap attr="hashAlgo" key="hashAlgo"/>
+      <attrKeyMap attr="hashCode" key="hashCode"/>
+      <attrKeyMap attr="srcName" key="hostname"/>
+      <attrKeyMap attr="_key" key="key"/>
+      <attrKeyMap attr="hashAlgo" key="mac"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="parentProcName" key="parentProc"/>
+      <attrKeyMap attr="resourceName" key="res"/>
+      <attrKeyMap attr="_terminal" key="terminal"/>
+      <attrKeyMap attr="_auditType" key="type"/>
+      <attrKeyMap attr="userId" key="uid"/>
+      <attrKeyMap attr="user" key="user"/>
+      <!-- proctitle contains hex encoded entire command for syscall -->
+      <attrKeyMap attr="_proctitle" key="proctitle"/>
+      <!-- Useful in PATH audit logs: name is path passed as arg : nametype is the operation depending on syscall -->
+      <attrKeyMap attr="osObjName" key="name"/>
+      <attrKeyMap attr="objType" key="nametype"/>
+      <!-- CWD records will contain current working directory, only needed if PATH record is relative -->
+      <attrKeyMap attr="commandPath" key="cwd"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist _proctitle">
+      <setEventAttribute attr="command">decodeHex($_proctitle)</setEventAttribute>
+    </when>
+
+    <when test="exist msg">
+      <!-- Specifically for most audit records, message contains format audit(1646637772.813:20319) vital for correlation -->
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$msg">
+            <!-- format is audit(epoch timestamp:messageid) -->
+            <regex><![CDATA[audit\(\d+\.\d+:<msgId:gPatInt>\)]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+      <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$msg">
+        <attrKeyMap attr="vmName" key="vm"/>
+        <attrKeyMap attr="programName" key="exe"/>
+        <attrKeyMap attr="opName" key="op"/>
+      </collectFieldsByKeyValuePair>
+    </when>
+
+    <choose>
+      <when test="exist resourceName">
+        <when test="matches($resourceName, 'fail')">
+          <when test="matches($_auditType, cryptoTypeRecord)">
+            <setEventAttribute attr="eventType">Generic_Unix_Failed_SSH_Connect</setEventAttribute>
+          </when>
+        </when>
+        <when test="matches($_auditType, authTypeRecord)">
+          <when test="$_terminal = 'ssh'">
+            <setEventAttribute attr="eventType">Generic_Unix_Failed_SSH_Login</setEventAttribute>
+          </when>
+        </when>
+        <when test="matches($resourceName, 'success')">
+          <when test="matches($_auditType, cryptoTypeRecord)">
+            <when test="matches($procName, sshdExecutable)">
+              <setEventAttribute attr="eventType">Generic_Unix_Successful_SSH_Start</setEventAttribute>
+            </when>
+          </when>
+          <when test="matches($_auditType, authTypeRecord)">
+            <when test="$_terminal = 'ssh'">
+              <setEventAttribute attr="eventType">Generic_Unix_Successful_SSH_Login</setEventAttribute>
+            </when>
+          </when>
+        </when>
+      </when>
+
+      <when test="$_auditType = 'lockTypeRecord'">
+        <setEventAttribute attr="eventType">PH_AUDIT_ACCOUNT_LOCKED</setEventAttribute>
+      </when>
+      <when test="$_auditType = 'ADD_GROUP'">
+        <setEventAttribute attr="eventType">Generic_Unix_Group_Add</setEventAttribute>
+      </when>
+      <when test="$_auditType = 'ADD_USER'">
+        <setEventAttribute attr="eventType">PH_AUDIT_USER_ADDED</setEventAttribute>
+      </when>
+      <when test="$_auditType = 'DEL_GROUP'">
+        <setEventAttribute attr="eventType">Generic_Unix_Group_Del</setEventAttribute>
+      </when>
+      <when test="$_auditType = 'DEL_USER'">
+        <setEventAttribute attr="eventType">PH_AUDIT_USER_DELETED</setEventAttribute>
+      </when>
+      <when test="$_auditType = 'NETFILTER_CFG'">
+        <setEventAttribute attr="eventType">PH_DEV_MON_CHANGE_RUN_CONFIG</setEventAttribute>
+      </when>
+      <when test="$_auditType = 'CRYPTO_REPLAY_USER'">
+        <setEventAttribute attr="eventType">PH_RULE_REPLAY_ATTACK</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">combineMsgId("LINUX_Auditd_", $_auditType)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <!-- Key is the user defined string for audit log rule aka auditd rule name -->
+    <when test="exist _key">
+      <when test="not_matches($_key, '\(null\)')">
+        <choose>
+          <!-- Only Fortinet's own Auditd instructions set the key value with this value -->
+          <when test="$_key = 'LINUX_PROCESS_EXEC'">
+            <setEventAttribute attr="eventType">$_key</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="ruleName">$_key</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+    </when>
+
+    <choose>
+      <when test="not_exist userId"/>
+      <when test="exist user"/>
+      <when test="$userId = '0'">
+        <!-- uid 0 is root -->
+        <setEventAttribute attr="user">root</setEventAttribute>
+      </when>
+      <when test="$userId = '65534'">
+        <!-- Used by NFS (Network File System) to represent unprivileged users or user groups when accessing NFS shares -->
+        <setEventAttribute attr="user">NFSnobody</setEventAttribute>
+      </when>
+    </choose>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<:gPatMesgBody>argc=\d+\s+a0=<:gPatStr>\s+a1="?<_args:gPatMesgBodyMin>"?\s*$]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="swParam">replaceStringByRegex($_args, "\"?\s+a\d+=\"?", " ")</setEventAttribute>
+        <!-- Store full path to base command minus arguments -->
+        <setEventAttribute attr="commandPath">$command</setEventAttribute>
+        <setEventAttribute attr="command">combineMsgId($command, " ", $swParam)</setEventAttribute>
+
+      </case>
+      <default/>
+    </switch>
+
+  </parsingInstructions>
+</eventParser>

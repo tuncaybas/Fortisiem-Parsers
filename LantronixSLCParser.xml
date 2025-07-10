@@ -1,0 +1,117 @@
+<eventParser name="LantronixSLCParser">
+  <deviceType>
+    <Vendor>Lantronix</Vendor>
+    <Model>SLC Console Manager</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patLanMod"><![CDATA[xmsd|xasd]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>(?:xmsd|xasd|xwsd)(?:\[\d+\])?:\s+(?:gen|sw|auth)/<:gPatWord>-]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<174>xmsd: gen/info-Syslog server changed to 10.4.3.37]]></testEvent>
+    <testEvent><![CDATA[<174>xmsd: gen/info-User andbr003 logged off of Web session]]></testEvent>
+    <testEvent><![CDATA[<38>xwsd[32415]: auth/info-Web Authentication Success for user andbr003]]></testEvent>
+    <testEvent><![CDATA[<174>xmsd: gen/info-Web Authentication Success for user andbr003]]></testEvent>
+    <testEvent><![CDATA[<174>xmsd: gen/info-DNS server list updated]]></testEvent>
+    <testEvent><![CDATA[<182>xmsd: gen/info-NTP settings updated]]></testEvent>
+    <testEvent><![CDATA[<182>xasd: sw/info-Running /etc/rc.d/init.d/dns]]></testEvent>
+    <testEvent><![CDATA[<182>xasd: sw/info-PID[1348] WIFEXITED on sig Child exited]]></testEvent>
+    <testEvent><![CDATA[<182>xasd: sw/info-[30842] /bin/ntpd started]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>(?:xmsd|xasd|xwsd)(?:\[\d+\])?:\s+<_type:gPatStr>/<:gPatStr>-<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">Lantronix-SLC-Generic</setEventAttribute>
+
+    <choose>
+      <when test="$_type = 'gen'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Syslog\s+server\s+changed\s+to\s+<hostIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Lantronix-SLC-Syslog-ServerChange</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[User\s+<user:gPatStr>\s+logged\s+off]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Lantronix-SLC-User-Logoff</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Web\s+Authentication\s+Success\s+for\s+user\s+<user:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Lantronix-SLC-User-Logon-Success</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[DNS\s+server\s+list\s+updated]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Lantronix-SLC-Update</setEventAttribute>
+            <setEventAttribute attr="command">DNS server list</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[NTP\s+settings\s+updated]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Lantronix-SLC-Update</setEventAttribute>
+            <setEventAttribute attr="command">NTP settings</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_type = 'auth'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Web\s+Authentication\s+Success\s+for\s+user\s+<user:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Lantronix-SLC-User-Logon-Success</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_type = 'sw'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Running\s+<command:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Lantronix-SLC-RunCmd</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[PID\[\d+\]\s+WIFEXITED\s+on\s+sig\s+Child\s+exited]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Lantronix-SLC-ChildExit</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[\d+\]\s+<procName:gPatStr>\s+started]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Lantronix-SLC-ProcessStarted</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+    </choose>
+
+  </parsingInstructions>
+</eventParser>
