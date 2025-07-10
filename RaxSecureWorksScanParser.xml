@@ -1,0 +1,70 @@
+<eventParser name="RaxSecureWorksScanParser">
+  <deviceType>
+    <Vendor>Rackspace</Vendor>
+    <Model>SecureWorks Vulnerability Scan</Model>
+    <Version>Any</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[1.1.1.1,,9/1/2018 14:51,15098,DNSmasq DNS And DHCP Multiple Remote Vulnerabilities,POTENTIAL,H,53,tcp,Linux 2.x,Y,-,7.5,4,Dnsmasq provides functionality for serving DNS  DHCP  router advertisements and network boot.&lt;P&gt; Dnsmasq  DNS server is exposed to following vulnerabilities:  - CVE-2017-14491 Heap based overflow (2 bytes).  - CVE-2017-14495 Lack of free().  - CVE-2017-14496 Invalid boundary checks. Integer underflow leading to a huge memcpy.  - CVE-2017-13704 Denial of Service. Dnsmasq DHCP server is exposed to following vulnerabilities:.  - CVE-2017-14492 Heap based overflow.  - CVE-2017-14493 Stack Based overflow. Affected Versions:&lt;BR&gt; DNSmasq DNS And DHCP prior to 2.78&lt;BR&gt;&lt;P&gt; QID Detection Logic (Unauthenticated):&lt;BR&gt; This QID matches vulnerable versions based on the exposed banner information under the DNS service&lt;P&gt; ,Successful exploitation may allow an attacker to execute code remotely. ,The vendor has released a fix to resolve the issue  please refer to &lt;A HREF= http://www.thekelleys.org.uk/dnsmasq/CHANGELOG  TARGET= _blank &gt;DNSmasq CHANGELOG&lt;/A&gt; for more information.&lt;P&gt; ,5.9,DNS and BIND,Vulnerable version of DNSmasq dnsmasq-2.76 detected on port 53,101085:99954:101977,CVE-2017-14496:CVE-2017-13704:CVE-2017-14491:CVE-2017-14492:CVE-2017-14493:CVE-2017-14494:CVE-2017-14495]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patStrEndWithRightSquareBracket"><![CDATA[[^\]]*]]></pattern>
+    <pattern name="patStrEndBrack"><![CDATA[[^\]+]]></pattern>
+    <pattern name="patTime"><![CDATA[\d{1,2}:\d{1,2}]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatIpV4Dot>,<:gPatStr>,<:gPatMonNum>/<:gPatDay>/<:gPatYear>\s+<:patTime>,\d+,<:gPatStrComma>,<:gPatStrComma>,\w,\d+,]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectAndSetAttrByPos sep="," src="$_rawmsg">
+      <attrPosMap attr="hostIpAddr" pos="1"/>
+      <attrPosMap attr="hostName" pos="2"/>
+      <attrPosMap attr="vulnScanTestDate" pos="3"/>
+      <attrPosMap attr="qualysQID" pos="4"/>
+      <attrPosMap attr="vulnName" pos="5"/>
+      <attrPosMap attr="vulnType" pos="6"/>
+      <attrPosMap attr="_severityText" pos="7"/>
+      <attrPosMap attr="ipPort" pos="8"/>
+      <attrPosMap attr="appTransportProto" pos="9"/>
+      <attrPosMap attr="osType" pos="10"/>
+      <attrPosMap attr="vulnPCIFlag" pos="11"/>
+      <attrPosMap attr="vulnFalsePositive" pos="12"/>
+      <attrPosMap attr="vulnCvssBaseScore" pos="13"/>
+      <attrPosMap attr="_severity" pos="14"/>
+      <attrPosMap attr="vulnThreat" pos="15"/>
+      <attrPosMap attr="vulnConseq" pos="16"/>
+      <attrPosMap attr="_vulnSolution" pos="17"/>
+      <attrPosMap attr="vulnCvssBaseTemporal" pos="18"/>
+      <attrPosMap attr="vulnType" pos="19"/>
+      <attrPosMap attr="vulnScanReportResult" pos="20"/>
+      <attrPosMap attr="vulnBugTraqID" pos="21"/>
+      <attrPosMap attr="vulnCVEId" pos="22"/>
+    </collectAndSetAttrByPos>
+    <setEventAttribute attr="eventType">Qualys-Vuln-Detected</setEventAttribute>
+    <when test="exist appTransportProto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($appTransportProto)</setEventAttribute>
+    </when>
+    <when test="exist _vulnSolution">
+      <setEventAttribute attr="vulnSolution">unescapeXML($_vulnSolution)</setEventAttribute>
+    </when>
+    <choose>
+      <when test="not_exist _severityText">
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+      <when test="$_severityText = &quot;H&quot;">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+        <!--setEventAttribute attr="vulnSeverityText">High</setEventAttribute-->
+      </when>
+      <when test="$_severity = &quot;M&quot;">
+        <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+        <!--setEventAttribute attr="vulnSeverityText">Medium</setEventAttribute-->
+      </when>
+      <when test="$_severity = &quot;L&quot;">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+        <!--setEventAttribute attr="vulnSeverityText">Low</setEventAttribute-->
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

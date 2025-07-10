@@ -1,0 +1,118 @@
+<eventParser name="QualysWAFParser">
+  <deviceType>
+    <Vendor>Qualys</Vendor>
+    <Model>Web Application Firewall</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>\d+\s+<:gPatYear>-<:gPatMonNum>-<:gPatDay>T<:gPatTime>\.\d{6}[+-]\d{2}:\d{2}\s+<:gPatHostName>\s+qualys_waf - QUALYS_WAF - ]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<1350>1 2015-05-15T12:57:30.945000+00:00 localhost qualys_waf - QUALYS_WAF - {"timestamp":"2015-05-15T12:57:30.945-00:00","duration":6011,"id":"11111111-1111-1111-1111-111111111111","clientIp":"172.27.80.170","clientPort":9073,"sensorId":"11111111-1111-1111-1111-111111111111","siteId":"11111111-1111-1111-1111-111111111111","connection":{"id":"11111111-1111-1111-1111-111111111111","clientIp":"172.27.80.170","clientPort":9073,"serverIp":"192.168.60.203","serverPort":443},"request":{"method":"POST","uri":"/","protocol":"HTTP/1.1","host":"foo.com","bandwidth":0,"headers":[{"name":"Content-Length","value":"645"},{"name":"Accept","value":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"},{"name":"User-Agent","value":"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36"},{"name":"Content-Type","value":"application/x-www-form-urlencoded"},{"name":"Referer","value":"http://foo.com/"},{"name":"Accept-Encoding","value":"gzip, deflate"},{"name":"Accept-Language","value":"en-US,en;q=0.8"}],"headerOrder":"HILCAUTRELO"},"response":{"protocol":"HTTP/1.1","status":"200","message":"OK","bandwidth":0,"headers":[{"name":"Content-Type","value":"text/html; charset=utf-8"},{"name":"Server","value":"Microsoft-IIS/8.5"},{"name":"Content-Length","value":"10735"}],"headerOrder":"CTXSDL"},"security":{"auditLogRef":"11111111-1111-1111-1111-111111111111","threatLevel":60,"events":[{"tags":["qid/226015","cat/XPATHi","cat/SQLi","qid/150003","loc/req/body/txtUserId","cfg/pol/applicationSecurity"],"type":"Alert","rule":"main/qrs/sqli/xpathi/condition_escaping/boolean/confidence_high/3","message":"Condition escaping detected (SQL or XPATH injection) - txtUserId.","confidence":80,"severity":60,"id":"262845566"},{"tags":["cat/correlation","qid/226016"],"type":"Observation","rule":"main/correlation/1","message":"Info: Threat level exceeded blocking threshold (60).","confidence":0,"severity":0,"id":"262846018"},{"tags":["cat/correlation","qid/226016"],"type":"Observation","rule":"main/correlation/1","message":"Info: Blocking refused as blocking mode is disabled.","confidence":0,"severity":0,"id":"262846167"},{"tags":["cat/correlation","cat/XPATHi","qid/226015"],"type":"Alert","rule":"main/correlation/1","message":"Detected: XPATHi.","confidence":80,"severity":60,"id":"268789851"}]}}]]></testEvent>
+  </testEvents>
+
+  <parseByTemplate>
+    <templateFunction onSuccess="exit">libphParser.so.Qualys_WAF_Template</templateFunction>
+  </parseByTemplate>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>\d+\s+<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d{6}[+-]\d{2}:\d{2}\s+<:gPatHostName>\s+qualys_waf - QUALYS_WAF - <_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventType">Qualys-WAF</setEventAttribute>
+
+    <collectAndSetAttrByJSON src="$_body">
+      <attrKeyMap attr="_time" key="timestamp"/>
+      <attrKeyMap attr="srcIpAddr" key="clientIp"/>
+      <attrKeyMap attr="srcIpPort" key="clientPort"/>
+      <attrKeyMap attr="srcIpAddr" key="connection.clientIp"/>
+      <attrKeyMap attr="srcIpPort" key="connection.clientPort"/>
+      <attrKeyMap attr="destIpAddr" key="connection.serverIp"/>
+      <attrKeyMap attr="destIpPort" key="connection.serverPort"/>
+      <attrKeyMap attr="httpMethod" key="request.method"/>
+      <attrKeyMap attr="uriStem" key="request.uri"/>
+      <attrKeyMap attr="_proto" key="request.protocol"/>
+      <attrKeyMap attr="destName" key="request.host"/>
+      <attrKeyMap attr="httpStatusCode" key="response.status"/>
+      <attrKeyMap attr="threatLevel" key="security.threatLevel"/>
+      <attrKeyMap attr="httpContentLen64" key="request.headers.find(name='Content-Length', value)"/>
+      <attrKeyMap attr="httpUserAgent" key="request.headers.find(name='User-Agent', value)"/>
+      <attrKeyMap attr="httpContentType" key="request.headers.find(name='Content-Type', value)"/>
+      <attrKeyMap attr="httpReferrer" key="request.headers.find(name='Referer', value)"/>
+    </collectAndSetAttrByJSON>
+
+    <when test="exist _proto">
+      <collectFieldsByRegex src="$_proto">
+        <regex><![CDATA[/<httpVersion:gPatStr>]]></regex>
+      </collectFieldsByRegex>
+    </when>
+
+    <when test="exist _time">
+      <collectFieldsByRegex src="$_time">
+        <regex><![CDATA[^<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d{3}[+-]\d{2}:\d{2}]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+
+    <when test="not_private_ip destIpAddr">
+      <when test="exist destName">
+        <setEventAttribute attr="domainEntropy">calcDomainEntropy($destName)</setEventAttribute>
+      </when>
+    </when>
+
+    <choose>
+      <when test="not_exist httpStatusCode"/>
+
+      <when test="matches($httpStatusCode, '^[12]')">
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-Web-Request-Success")</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="matches($httpStatusCode, '^3')">
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-Web-Request-Redirect")</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="matches($httpStatusCode, '^4')">
+        <choose>
+          <when test="matches($httpStatusCode, '^400')">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-Web-Bad-Request")</setEventAttribute>
+          </when>
+
+          <when test="matches($httpStatusCode, '^401')">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-Web-Client-Access-Denied")</setEventAttribute>
+          </when>
+
+          <when test="matches($httpStatusCode, '^403')">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-Web-Forbidden-Access-Denied")</setEventAttribute>
+          </when>
+
+          <when test="matches($httpStatusCode, '^411')">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-Web-Length-Reqd-Access-Denied")</setEventAttribute>
+          </when>
+
+          <otherwise>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-Web-Client-Error")</setEventAttribute>
+          </otherwise>
+        </choose>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="matches($httpStatusCode, '^5')">
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-Web-Server-Error")</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+      </when>
+
+      <when test="matches($httpStatusCode, '^6')">
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-Web-Bad-Request")</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <otherwise>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-Web-Request")</setEventAttribute>
+      </otherwise>
+    </choose>
+  </parsingInstructions>
+</eventParser>

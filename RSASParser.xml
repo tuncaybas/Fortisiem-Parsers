@@ -1,0 +1,45 @@
+<eventParser name="RSASParser">
+  <deviceType>
+    <Vendor>Green League</Vendor>
+    <Model>RSAS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[AccelOps-RSAS]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[Wed Jul  9 15:10:24 2014 AccelOps-RSAS [eventType]=RSAS-GENERIC [name]=name [risk]=10.0 [solution]=none [description]=none]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">RSAS-GENERIC</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">RSAS_API</setEventAttribute>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatStr>\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>\s+AccelOps\-RSAS\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+    </switch>
+
+    <collectAndSetAttrByKeyValuePair sep=" [" src="$_body">
+      <attrKeyMap attr="_eventType" key="[eventType]="/>
+      <attrKeyMap attr="vulnName" key="[name]="/>
+      <attrKeyMap attr="vulnScore" key="[risk]="/>
+      <attrKeyMap attr="vulnSolution" key="[solution]="/>
+      <attrKeyMap attr="ipPort" key="[port]="/>
+      <attrKeyMap attr="ipProto" key="[protocol]="/>
+      <attrKeyMap attr="memUtil" key="[memory]="/>
+      <attrKeyMap attr="cpuUtil" key="[cpu]="/>
+      <attrKeyMap attr="diskUtil" key="[disk]="/>
+      <attrKeyMap attr="_pluginNum" key="[pluginNum]="/>
+      <attrKeyMap attr="vulnCount" key="[vulNum]="/>
+      <attrKeyMap attr="description" key="[description]="/>
+      <attrKeyMap attr="reptDevIpAddr" key="[reptDevIpAddr]="/>
+    </collectAndSetAttrByKeyValuePair>
+    <setEventAttribute attr="eventType">$_eventType</setEventAttribute>
+
+  </parsingInstructions>
+
+</eventParser>

@@ -1,0 +1,111 @@
+<eventParser name="QOSMOSParser">
+
+  <deviceType>
+    <Vendor>Qosmos</Vendor>
+    <Model>DeepFlow</Model>
+    <Version>ANY</Version>
+  </deviceType>
+  <eventFormatRecognizer><![CDATA[path=eth\.ip]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<14> event_id=939825199 src_ip=2.2.2.2 src_port=80 dest_ip=192.168.26.144 dest_port=55455 path=eth.ip.tcp.http http_version=1.1 http_server_agent=EdgePrism/4.0.1.1 http_location=http://abc.com/id/3032091/device/rss/io]]></testEvent>
+    <testEvent><![CDATA[<14> event_id=942801458 src_ip=2.2.2.2 src_port=80 dest_ip=192.168.26.144 dest_port=56272 path=eth.ip.tcp.http.google_gen.google http_version=1.1 http_location=https://www.abc.com/search?rlz=1C1CHMR_enUS331US331&aq=2&oq=public+ftp+&gcx=w&sourceid=chrome&ie=UTF-8&q=public+ftp+server+list http_content_type=text/html http_server_agent=gws]]></testEvent>
+    <testEvent><![CDATA[<14> event_id=941199383 src_ip=192.168.26.144 src_port=55797 dest_ip=2.2.2.2 dest_port=11356 path=eth.ip.tcp.skype]]></testEvent>
+    <testEvent><![CDATA[<14> event_id=941317504 src_ip=192.168.26.144 src_port=55833 dest_ip=2.2.2.2 dest_port=80 path=eth.ip.tcp.http.facebook http_method=GET uri=/ http_version=1.1 http_user_agent=Mozilla/5.0 (Windows NT 6.0) AppleWebKit/535.1 (KHTML, like Gecko)]]></testEvent>
+    <testEvent><![CDATA[<14> event_id=942339256 src_ip=192.168.26.1 src_port=67 dest_ip=192.168.26.118 dest_port=68 path=eth.ip.udp.dhcp srv_ip=0.0.0.0 r mask=255.255.255.0 gateway=192.168.26.1]]></testEvent>
+    <testEvent><![CDATA[<14> event_id=942819339 src_ip=2.2.2.2 src_port=21 dest_ip=192.168.26.144 dest_port=56305 path=eth.ip.tcp.ftp ftp_login=Guest]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">QOSMOS-FLOW</setEventAttribute>
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+    <setEventAttribute attr="eventAction">0</setEventAttribute>
+
+    <!-- parsing common fields -->
+    <collectAndSetAttrByKeyValuePair sep=" " src="$_rawmsg">
+      <attrKeyMap attr="_qosmosEventId" key="event_id="/>
+      <attrKeyMap attr="srcIpAddr" key="src_ip="/>
+      <attrKeyMap attr="srcIpPort" key="src_port="/>
+      <attrKeyMap attr="destIpAddr" key="dest_ip="/>
+      <attrKeyMap attr="destIpPort" key="dest_port="/>
+      <attrKeyMap attr="protoPath" key="path="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <!-- message specific parsing -->
+
+    <choose>
+
+      <when test="$protoPath = 'eth.ip.tcp.http'">
+        <collectAndSetAttrByKeyValuePair sep=" " src="$_rawmsg">
+          <attrKeyMap attr="destName" key="http_server="/>
+          <attrKeyMap attr="httpMethod" key="http_method="/>
+          <attrKeyMap attr="httpStatusCode" key="http_response="/>
+          <attrKeyMap attr="httpEndUri" key="uri="/>
+          <attrKeyMap attr="cookie" key="http_cookie="/>
+          <attrKeyMap attr="httpContentType" key="http_content_type="/>
+          <attrKeyMap attr="_httpLocation" key="http_location="/>
+          <attrKeyMap attr="httpReferrer" key="http_referrer="/>
+          <attrKeyMap attr="httpReferrerServer" key="http_referrer_server="/>
+          <attrKeyMap attr="httpUserAgent" key="http_user_agent="/>
+          <attrKeyMap attr="_httpDisposition" key="http_disposition="/>
+          <attrKeyMap attr="httpForwardAddr" key="http_forward_addr="/>
+          <attrKeyMap attr="httpProxyAuth" key="http_proxy_auth="/>
+          <attrKeyMap attr="httpProxyLogin" key="http_proxy_login="/>
+          <attrKeyMap attr="httpProxyRealm" key="http_proxy_realm="/>
+          <attrKeyMap attr="httpSmbClient" key="http_smb_client="/>
+          <attrKeyMap attr="httpVersion" key="http_version="/>
+          <attrKeyMap attr="httpServerAgent" key="http_server_agent="/>
+        </collectAndSetAttrByKeyValuePair>
+      </when>
+
+      <when test="$protoPath = 'eth.ip.tcp.ftp'">
+        <collectAndSetAttrByKeyValuePair sep=" " src="$_rawmsg">
+          <attrKeyMap attr="user" key="ftp_login="/>
+          <attrKeyMap attr="password" key="password="/>
+          <attrKeyMap attr="greetingMsg" key="greeting="/>
+          <attrKeyMap attr="fileName" key="ftp_fname="/>
+          <attrKeyMap attr="_loadWay" key="way="/>
+          <attrKeyMap attr="ftpContentType" key="type="/>
+          <attrKeyMap attr="destIpPort" key="port="/>
+          <attrKeyMap attr="fileSize" key="ftp_fsize="/>
+        </collectAndSetAttrByKeyValuePair>
+      </when>
+
+      <when test="$protoPath = 'eth.ip.udp.dhcp'">
+        <collectAndSetAttrByKeyValuePair sep=" " src="$_rawmsg">
+          <attrKeyMap attr="hostIpAddr" key="cur_ip="/>
+          <attrKeyMap attr="newHostIpAddr" key="new_ip="/>
+          <attrKeyMap attr="serverIpAddr" key="srv_ip="/>
+          <attrKeyMap attr="relayDevIpAddr" key="relay_ip="/>
+          <attrKeyMap attr="hostMACAddr" key="client_max="/>
+          <attrKeyMap attr="serverName" key="server="/>
+          <attrKeyMap attr="dhcpReqType" key="type="/>
+          <attrKeyMap attr="dhcpSubnetMask" key="mask="/>
+          <attrKeyMap attr="dhcpGateway" key="gateway="/>
+          <attrKeyMap attr="dnsServer" key="dns_srv="/>
+          <attrKeyMap attr="_bootFileName" key="bootfile="/>
+          <attrKeyMap attr="_circuitId" key="circuit="/>
+          <attrKeyMap attr="_remoteAgent" key="remote_agent="/>
+          <attrKeyMap attr="_remoteSubtype" key="remote_subtype="/>
+          <attrKeyMap attr="dhcpLeaseTime" key="lease_time="/>
+          <attrKeyMap attr="dhcpEndStatus" key="end_status="/>
+        </collectAndSetAttrByKeyValuePair>
+      </when>
+
+      <when test="$protoPath = 'eth.ip.udp.dns'">
+        <collectAndSetAttrByKeyValuePair sep=" " src="$_rawmsg">
+          <attrKeyMap attr="uriQuery" key="query="/>
+          <attrKeyMap attr="dnsQueryType" key="type="/>
+          <attrKeyMap attr="hostIpAddr" key="addr="/>
+          <attrKeyMap attr="dnsTransactionId" key="id="/>
+        </collectAndSetAttrByKeyValuePair>
+      </when>
+
+    </choose>
+    <when test="not_private_ip destIpAddr">
+      <when test="exist destName">
+        <setEventAttribute attr="domainEntropy">calcDomainEntropy($destName)</setEventAttribute>
+      </when>
+    </when>
+  </parsingInstructions>
+</eventParser>

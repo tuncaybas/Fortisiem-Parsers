@@ -1,0 +1,69 @@
+<eventParser name="RadiusParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Linux</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Generic</Vendor>
+    <Model>Linux RADIUS</Model>
+    <Version>ANY</Version>
+    <Name>Linux RADIUS Server</Name>
+  </appType>
+
+  <testEvents>
+    <testEvent><![CDATA[<13>Nov 28 13:54:00 radius04vp.office.customer.com Wed Nov 28 13:54:00 2018 : Auth: Login incorrect (TLS Alert read:fatal:unknown CA): [user] (from client host.nms port 0 cli 40-4e-36-84-6c-0f)]]></testEvent>
+    <testEvent><![CDATA[<13>Nov  7 13:59:01 radius04vp.office.customer.com Wed Nov  7 13:59:00 2018 : Auth: Login incorrect: [user]]]></testEvent>
+    <testEvent><![CDATA[<13>Nov  7 13:59:00 radius04vp.office.customer.com Wed Nov  7 13:58:59 2018 : Auth: Login incorrect: [user] (from client host.nms port 152 cli 34-17-eb-e2-33-9b)]]></testEvent>
+    <testEvent><![CDATA[<13>Nov  7 13:59:56 radius04vp.office.customer.com Wed Nov  7 13:59:56 2018 : Auth: Login OK: [host/user name] (from client host.nms port 0 cli 3c-6a-a7-89-94-5a)]]></testEvent>
+    <testEvent><![CDATA[<13>Nov  7 13:57:46 radius04vp.office.customer.com Wed Nov  7 13:57:45 2018 : Auth: Login OK: [user] (from client customer-host port 0 cli 00-db-70-c7-1d-86)]]></testEvent>
+    <testEvent><![CDATA[<13>Nov  7 13:57:52 radius04vp.office.customer.com Wed Nov  7 13:57:51 2018 : Auth: Login OK: [user] (from client host port 0)]]></testEvent>
+    <testEvent><![CDATA[<13>Nov  7 13:57:51 radius04vp.office.customer.com Wed Nov  7 13:57:50 2018 : Auth: Login OK: [user] (from client host.nms port 0 via TLS tunnel)]]></testEvent>
+    <testEvent><![CDATA[<13>Nov  7 13:58:30 radius04vp.office.customer.com Wed Nov  7 13:58:29 2018 : Error: rlm_eap: SSL error error:140890B2:SSL routines:SSL3_GET_CLIENT_CERTIFICATE:no certificate returned]]></testEvent>
+    <testEvent><![CDATA[<13>Nov  7 13:58:30 radius04vp.office.customer.com Wed Nov  7 13:58:29 2018 : Error: SSL: SSL_read failed in a system call (-1), TLS session fails.]]></testEvent>
+    <testEvent><![CDATA[<13>Nov  7 13:58:30 radius04vp.office.customer.com Wed Nov  7 13:58:29 2018 : Error: TLS Alert write:fatal:certificate expired]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patRadiusMod"><![CDATA[Auth|Error]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+\w{3}\s+<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatYear> : <:patRadiusMod>:\s]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+\w{3}\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear> : <_category:patRadiusMod>:\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">RADIUS-Generic</setEventAttribute>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+
+    <choose>
+      <when test="$_category = 'Auth'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^Login <_action:gPatWord>(?:\s+\([^)]+\))?:\s+\[(?:<hostName:gPatHostName>/)?<user:gPatStrRightSB>\](?:\s+\(from client <srcName:gPatHostName> port <srcIpPort:gPatInt>)?]]></regex>
+        </collectFieldsByRegex>
+        <choose>
+          <when test="$_action = 'OK'">
+            <setEventAttribute attr="eventType">RADIUS-Authentication-Success</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+          </when>
+          <when test="$_action = 'incorrect'">
+            <setEventAttribute attr="eventType">RADIUS-Authentication-Failure</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">RADIUS-Authentication-Generic</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+
+      <when test="$_category = 'Error'">
+        <setEventAttribute attr="msg">$_body</setEventAttribute>
+        <setEventAttribute attr="eventType">RADIUS-Generic-Auth-Error</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

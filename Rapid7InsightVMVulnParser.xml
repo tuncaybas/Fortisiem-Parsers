@@ -1,0 +1,131 @@
+<eventParser name="Rapid7InsightVMVulnParser">
+
+  <deviceType>
+    <Vendor>Rapid7</Vendor>
+    <Model>InsightVM</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[2018-08-17T02:46:33.983Z 10.30.30.161 [eventType]=Rapid7-InsightVM-Vuln-Detected,[assetId]=2,[assetIp]=10.30.30.164,[assetMac]=00:0C:29:8B:83:4E,[assetOs]=Linux 2.6.32,[assetRawRiskScore]=8600.03809,[assetRiskScore]=8600.03809,[assetVersion]=2.6.32,[siteId]=1,[siteName]=test, [VulnPublished]=2010-01-01,[VulnRiskScore]=565.97,[VulnSeverity]=Severe,[VulnSeverityScore]=5,[VulnTitle]=Database Open Access,[VulnModified]=2015-07-29,[VulnDescription]=The database allows any remote system the ability to connect to it. It is recommended to limit direct access to trusted systems because databases may contain sensitive data, and new vulnerabilities and exploits are discovered routinely for them. For this reason, it is a violation of PCI DSS section 1.3.6 to have databases listening on ports accessible from the Internet, even when protected with secure authentication mechanisms.,[VulnExploits]=0,[VulnAdded]=2010-08-19,[VulnCves]=,[VulnCategories]=Database,Network,[VulnCvssv2ExploitScore]=0,[VulnCvssv2ImpactScore]=0,[VulnCvssv2Score]=0,[VulnFoundSince]=2018-08-17T02:46:33.983Z,[VulnId]=database-open-access,[VulnStatus]=vulnerable]]></testEvent>
+    <testEvent><![CDATA[2018-08-21T06:18:03.315Z 10.30.30.161 [eventType]=Rapid7-InsightVM-Scan-Finished,[siteId]=1,[assetsNum]=2,[siteName]=test,[scanName]=Tue 21 Aug 2018 01:46 PM,[status]=finished,[duration]=PT31M35.973S,[startTime]=2018-08-21T05:46:27.342Z,[endTime]=2018-08-21T06:18:03.315Z,[engineId]=3,[engineName]=Local scan engine,[scanId]=3]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[Rapid7-InsightVM-[\w-]+]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[^<:gPatStr>\s+<reptDevIpAddr:gPatIpAddr>\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="extEventRecvProto">INSIGHTVM_API</setEventAttribute>
+    <collectAndSetAttrByKeyValuePair sep=",[" src="$_body">
+      <attrKeyMap attr="eventType" key="[eventType]="/>
+      <attrKeyMap attr="site" key="[siteName]="/>
+      <attrKeyMap attr="scanProfile" key="[scanName]="/>
+      <attrKeyMap attr="status" key="[status]="/>
+      <attrKeyMap attr="_scanBegin" key="[startTime]="/>
+      <attrKeyMap attr="_scanEnd" key="[endTime]="/>
+      <attrKeyMap attr="scanEngine" key="[engineName]="/>
+      <attrKeyMap attr="scanId" key="[scanId]="/>
+      <attrKeyMap attr="siteId" key="[siteId]="/>
+      <attrKeyMap attr="numJob" key="[assetsNum]="/>
+      <attrKeyMap attr="hostIpAddr" key="[assetIp]="/>
+      <attrKeyMap attr="hostMACAddr" key="[assetMac]="/>
+      <attrKeyMap attr="osType" key="[assetOs]="/>
+      <attrKeyMap attr="riskScore" key="[assetRiskScore]="/>
+      <attrKeyMap attr="osVersion" key="[assetVersion]="/>
+      <attrKeyMap attr="site" key="[siteName]="/>
+      <attrKeyMap attr="_vulnerableSince" key="[VulnFoundSince]="/>
+      <attrKeyMap attr="vulnIdStr" key="[VulnId]="/>
+      <attrKeyMap attr="status" key="[VulnStatus]="/>
+      <attrKeyMap attr="_publishedTime" key="[VulnPublished]="/>
+      <attrKeyMap attr="vulnScore" key="[VulnRiskScore]="/>
+      <attrKeyMap attr="eventSeverityCat" key="[VulnSeverity]="/>
+      <attrKeyMap attr="_severity" key="[VulnSeverityScore]="/>
+      <attrKeyMap attr="vulnName" key="[VulnTitle]="/>
+      <attrKeyMap attr="_modifiedTime" key="[VulnModified]="/>
+      <attrKeyMap attr="description" key="[VulnDescription]="/>
+      <attrKeyMap attr="isExploitable" key="[VulnExploits]="/>
+      <attrKeyMap attr="_addedTime" key="[VulnAdded]="/>
+      <attrKeyMap attr="vulnCVEId" key="[VulnCves]="/>
+      <attrKeyMap attr="threatCategory" key="[VulnCategories]="/>
+      <attrKeyMap attr="vulnCvssScore" key="[VulnCvssv2Score]="/>
+      <attrKeyMap attr="vulnCvssScore" key="[VulnCvssv3Score]="/>
+      <!-- This is actually a non numerical value -->
+      <attrKeyMap attr="details" key="[duration]="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <when test="exist _scanEnd">
+      <collectFieldsByRegex src="$_scanEnd">
+        <!--2018-08-21T06:18:03.315Z-->
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="scanEnd">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+    <when test="exist _scanBegin">
+      <collectFieldsByRegex src="$_scanBegin">
+        <!--2018-08-21T06:18:03.315Z-->
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="scanBegin">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+    <choose>
+      <when test="not_exist scanEnd"/>
+      <when test="not_exist scanBegin"/>
+      <otherwise>
+        <setEventAttribute attr="vulnScanDuration">calculateLatency($scanEnd, $scanBegin)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist _vulnerableSince">
+      <collectFieldsByRegex src="$_vulnerableSince">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="vulnerableSince">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+
+    <when test="not_exist vulnCvssBaseScore">
+      <choose>
+        <when test="not_exist _severity">
+          <setEventAttribute attr="vulnCvssBaseScore">5</setEventAttribute>
+        </when>
+        <when test="$_severity = '1'">
+          <setEventAttribute attr="vulnCvssBaseScore">2</setEventAttribute>
+        </when>
+        <when test="$_severity = '2'">
+          <setEventAttribute attr="vulnCvssBaseScore">4</setEventAttribute>
+        </when>
+        <when test="$_severity = '3'">
+          <setEventAttribute attr="vulnCvssBaseScore">6</setEventAttribute>
+        </when>
+        <when test="$_severity = '4'">
+          <setEventAttribute attr="vulnCvssBaseScore">8</setEventAttribute>
+        </when>
+        <when test="matches($_severity, '^[5-9]|[1-9][0-9]$')">
+          <setEventAttribute attr="vulnCvssBaseScore">10</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <choose>
+      <when test="not_exist _severity">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_severity = '1'">
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+      <when test="$_severity = '2'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_severity = '3'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_severity = '4'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="matches($_severity, '^[5-9]|[1-9][0-9]$')">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

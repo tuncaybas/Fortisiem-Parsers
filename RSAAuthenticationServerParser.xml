@@ -1,0 +1,75 @@
+<eventParser name="RSAAuthenticationServerParser">
+
+  <deviceType>
+    <Vendor>RSA</Vendor>
+    <Model>Authentication Server</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<14>2019-03-24 08:23:00,051, example.domain, example.com.xxx.rsa.ims.BatchJobProcessorImpl, INFO, c102c2cd1a0a000a3a927ebb62afc1f4,61564c101a0a000a08026c4b75e8e481,,10.10.10.26,DELETE_BATCH_JOB,16032,SUCCESS,,,,,,,,,,<system>,,,5cfc09151a0a000a5e02867f7ae92222,Batch and Schedule Job Cleaner,]]></testEvent>
+    <testEvent><![CDATA[<14>2019-03-24 16:27:23,432, example.domain, example.com.rsa.ims.AuthenticationBrokerImpl, INFO, 998863041a0a000a36be75721f6caf38,61564c101a0a000a08026c4b75e8e481,10.10.10.23,10.11.11.26,AUTHN_LOGIN_EVENT,13002,SUCCESS,AUTHN_METHOD_SUCCESS,9693a1191a0a000a0818e2d16d25bbcd-vIxR8DIh162T,885a5e13150a000a039fda8d3a398c28,000000000000000000001000d0011000,000000000000000000001000e0011000,username5,firstname5,lastname5,88ccdde4150a000a0347018b548aaafe,000000000000000000001000e0011000,10.1.1.23,10.1.1.23,7,000000000000000000002000f1022000,SecurID_Native,,,AUTHN_LOGIN_EVENT,6,2,,,,,45c5e4001a0a000a482a9e10b82f1fe0,000509970786,,]]></testEvent>
+    <testEvent><![CDATA[<12>2019-03-25 12:24:02,245, example.domain, system.com.rsa.ims.CriticalNotificationAdministrationImpl, WARN, 9044fa0d1a0a000a276483ae7aa260ff,61564c101a0a000a08026c4b75e8e481,,10.10.10.26,CRITICAL_NOTIFICATION,16350,WARN,,,,,,,,," The supply of tokens is low. You might need to order more tokens. Based upon the number of tokens that are assigned or expiring, there might be fewer than 6 software tokens available in 60 days 1 RSA SecurID 700 tokens available in 60 days",,,,,,]]></testEvent>
+    <testEvent><![CDATA[<14>Aug 8 14:15:57 host1 2022-08-08 14:15:57,313, host1.domain, audit.runtime.com.rsa.ims.authn.impl.AuthenticationBrokerImpl, INFO, 682f42e8c751140a41f34232abf7945f,afc53af3c751140a7e70bd3943030324,10.10.10.35,10.20.81.199,AUTHN_LOGIN_EVENT,13002,SUCCESS,AUTHN_METHOD_SUCCESS,6559375cc751140a233d5ae40f457700-w4dzghDp9jyI,0e0683a7c7120a0a2cbdd6280c6742e9,a58fec43c7120a0a3dfeeed1e6250d80,000000000000000000001000e0011000,user6,fn6,ln6,c1814a97c7120a0a42ae1ec06da8aab7,000000000000000000001000e0011000,10.10.10.35,F00JFB020C.MULHOLLAND.LOC,7,000000000000000000002000f1022000,SecurID_Native,,,AUTHN_LOGIN_EVENT,5,1,,,,,51ff77c2c7120a0a3b30aeed55b6ec92,xxxxxxxx2113,,]]></testEvent>
+    <testEvent><![CDATA[<14>Aug 8 13:33:00 host1 2022-08-08 13:33:00,055, , audit.runtime.sa.ims.web.operationsconsole.action.SecurityAction, INFO, a7819050c7120a0a7c784b82198987e1,e973b132c7120a0a7e70bd39277f48af,10.10.20.53,10.10.18.199,OC_ADMIN_LOGIN_EVENT,13006,SUCCESS,,,,,,ocadmin,,,,,,,0,,,,,,,,,,,,,,,]]></testEvent>
+    <testEvent><![CDATA[<11>Jan 17 15:24:26 host1 2024-01-17 15:24:26,734, host1.domain, audit.runtime.com.rsa.authmgr.rest.runtime.SecurIDHandler, ERROR, 5f1a720b82981aac2265e2b55872820e,71234ffc82981aac5e39570df7415dd1,172.26.155.241,172.26.152.130,AUTH_PRINCIPAL_RESOLUTION,23008,FAIL,AUTH_RESOLUTION_FAILED_BY_ID_ALIAS,,,,,Elvis,,,215fca4582981aac7125e0fc28d6e554,000000000000000000001000e0011000,172.26.155.241,FIREPOWER,4,,,,,,,4,,,,,,,,]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[, (?:\w+\.)+(?:rsa|sa)\.(?:ims|authmgr)(?:\.\w+)+, ]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>(?:<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+)?<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>,\d+,\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+
+    <setEventAttribute attr="_body">replaceStringByRegex($_body, "\s*,\s*", ",")</setEventAttribute>
+    <switch>
+      <case>
+        <collectAndSetAttrByPos src="$_body" sep=",">
+          <attrPosMap attr="authServerName" pos="1"/>
+          <attrPosMap attr="procName" pos="2"/>
+          <attrPosMap attr="logLevel" pos="3"/>
+          <attrPosMap attr="hostIpAddr" pos="6"/>
+          <attrPosMap attr="serverIpAddr" pos="7"/>
+          <attrPosMap attr="funName" pos="8"/>
+          <attrPosMap attr="status" pos="10"/>
+          <attrPosMap attr="user" pos="16"/>
+          <attrPosMap attr="_msg" pos="19"/>
+          <attrPosMap attr="policyName" pos="25"/>
+        </collectAndSetAttrByPos>
+      </case>
+      <default/>
+    </switch>
+
+    <choose>
+      <when test="not_exist _msg"/>
+      <when test="$logLevel = 'WARN'">
+        <setEventAttribute attr="msg">$_msg</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="appClientVersion">$_msg</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <setEventAttribute attr="eventType">RSA-Access-Generic</setEventAttribute>
+    <when test="exist funName">
+      <setEventAttribute attr="eventType">combineMsgId("RSA-Access-", $funName)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="$logLevel = 'INFO'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$logLevel = 'WARN'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$logLevel = 'ERROR'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </otherwise>
+    </choose>
+  </parsingInstructions>
+</eventParser>

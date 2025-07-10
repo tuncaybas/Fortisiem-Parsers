@@ -1,0 +1,97 @@
+<eventParser name="RaxRapid7CsvParser">
+  <deviceType>
+    <Vendor>Rapid7</Vendor>
+    <Model>NeXpose Security Scanner</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[Mon Aug  5 16:00:49 2019 1.2.3.4 Rax-Rapid7-CSV [Asset IP Address]=1.1.1.1,[Custom Tag]=RCN-134-447-324,decommissioned,providerid_056999934572,providertype_aws,raxid_1074822,rmsid_ce4cd71e-b9f4-452a-b7a6-6358c01d7920,[Service Port]=0,[Vulnerability Test Result Code]=ve,[Vulnerability ID]=unix-umask-unsafe,[Vulnerability CVE IDs]=,[Vulnerability Severity Level]=4,[Vulnerability Title]=User umask value is unsafe,[Asset Alternate IPv4 Addresses]=1.1.1.1,[Asset Alternate IPv6 Addresses]=,[Asset Criticality]=,[Asset ID]=2545,[Asset Location]=,[Asset MAC Addresses]=02:E7:86:0E:BD:C6,[Asset Names]=ip-1-1-1-1,[Asset OS Family]=Red Hat Linux,[Asset OS Name]=Red Hat Enterprise Linux,[Asset OS Version]=7.6,[Asset Owner]=,[Asset Risk Score]=4,274,[Exploit Count]=0,[Exploit Minimum Skill]=,[Exploit URLs]=,[Malware Kit Count]=0,[Malware Kit Names]=,[Scan ID]=1617,[Scan Template Name]=Full audit without Web Spider,[Service Name]=System,[Service Product]=,[Service Protocol]=ip,[Site Importance]=Normal,[Site Name]=Rapid7 Insight Agents,[Vulnerability Additional URLs]=,[Vulnerability Age]=183 Days,[Vulnerability CVE URLs]=,[Vulnerability CVSS Score]=4.4,[Vulnerability CVSS Vector]=(AV:L/AC:M/Au:N/C:P/I:P/A:P),[Vulnerability Description]=The umask value for the account used to scan this device was found to be unsafe. The umask value determines the file permission for newly created files. It specifies the permissions which should not be given by default to the newly created file. Although the default value of umask in most unix systems is 022, it is a common practice to set it to 077 to be safe.,[Vulnerability PCI Compliance Status]=Fail,[Vulnerability Proof]=The umask value was found to be 0022 but was expected to be 0077,[Vulnerability Published Date]=1/15/05,[Vulnerability Reference IDs]=,[Vulnerability Reference URLs]=,[Vulnerability Risk Score]=720,[Vulnerability Solution]="Reset umask value  To ensure complete access control over newly created files, set the umask value to 077 for root and other user accounts for both interactive and non-interactive processes. The umask value for interactive processes is typically set via PAM. See 'man 8 pam_umask'. For non-interactive processes, /etc/login.defs is a common location for controlling umask on Linux systems. In both cases, you may need to consult your operating system's documentation for the correct file(s) and settings. For Red Hat Enterprise Linux and derivative distributions the umask value is set in /etc/profile and /etc/bashrc shell configuration files. See the  Red Hat manual (https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/System_Administrators_Guide/s1-users-tools.html#s2-setting-default-permissions-for-new-files-using-umask)  for more details.",[Vulnerability Tags]=UNIX,[Vulnerability Test Date]=1/31/19,[Vulnerability Test Result Description]=Vulnerable,[Vulnerable Since]=1/29/19]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[ Rax-Rapid7-CSV ]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>\s+<reptDevIpAddr:gPatIpAddr>\s+Rax-Rapid7-CSV\s+\[<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">Rapid7-NeXpose-Vuln-Detected</setEventAttribute>
+
+    <collectFieldsByKeyValuePair sep=",[" kvsep="]=" src="$_body">
+      <attrKeyMap attr="_hostIpV4" key="Asset Alternate IPv4 Addresses"/>
+      <attrKeyMap attr="_hostIpV6" key="Asset Alternate IPv6 Addresses"/>
+      <attrKeyMap attr="hostIpAddr" key="Asset IP Address"/>
+      <attrKeyMap attr="hostName" key="Asset Names"/>
+      <attrKeyMap attr="osType" key="Asset OS Family"/>
+      <attrKeyMap attr="osName" key="Asset OS Name"/>
+      <attrKeyMap attr="osVersion" key="Asset OS Version"/>
+      <attrKeyMap attr="_custom" key="Custom Tag"/>
+      <attrKeyMap attr="exploitCount" key="Exploit Count"/>
+      <attrKeyMap attr="exploitabilityEase" key="Exploit Minimum Skill"/>
+      <attrKeyMap attr="malwareKitCount" key="Malware Kit Count"/>
+      <attrKeyMap attr="vulnerableFor" key="Vulnerability Age"/>
+      <attrKeyMap attr="vulnCVEId" key="Vulnerability CVE IDs"/>
+      <attrKeyMap attr="vulnCvssScore" key="Vulnerability CVSS Score"/>
+      <attrKeyMap attr="vulnDesc" key="Vulnerability Description"/>
+      <attrKeyMap attr="vulnIdStr" key="Vulnerability ID"/>
+      <attrKeyMap attr="pciComplianceStatus" key="Vulnerability PCI Compliance Status"/>
+      <attrKeyMap attr="vulnProof" key="Vulnerability Proof"/>
+      <attrKeyMap attr="infoURL" key="Vulnerability Reference URLs"/>
+      <attrKeyMap attr="vulnScore" key="Vulnerability Risk Score"/>
+      <attrKeyMap attr="eventSeverity" key="Vulnerability Severity Level"/>
+      <attrKeyMap attr="vulnSolution" key="Vulnerability Solution"/>
+      <attrKeyMap attr="vulnTest" key="Vulnerability Test Date"/>
+      <attrKeyMap attr="vulnName" key="Vulnerability Title"/>
+      <attrKeyMap attr="vulnerableSince" key="Vulnerable Since"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist _custom">
+      <when test="matches($_custom, '^RCN-')">
+        <collectAndSetAttrByPos sep="," src="$_custom">
+          <attrPosMap attr="phAccountNum" pos="1"/>
+        </collectAndSetAttrByPos>
+      </when>
+    </when>
+
+    <when test="exist _hostIpV6">
+      <setEventAttribute attr="hostIpAddrList">$_hostIpV6</setEventAttribute>
+    </when>
+
+    <when test="exist _hostIpV4">
+      <choose>
+        <when test="exist _hostIpV6">
+          <setEventAttribute attr="hostIpAddrList">combineMsgId($_hostIpV6, ", ", $_hostIpV4)</setEventAttribute>
+        </when>
+        <otherwise>
+          <setEventAttribute attr="hostIpAddrList">$_hostIpV4</setEventAttribute>
+        </otherwise>
+      </choose>
+    </when>
+
+    <when test="exist vulnerableSince">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$vulnerableSince">
+            <regex><![CDATA[^<_mon:gPatMonNum>/<_day:gPatDay>/<_year:gPatYear>$]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="vulnerableSince">toDateTime($_mon, $_day, $_year, "00:00:00")</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist vulnTest">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$vulnTest">
+            <regex><![CDATA[^<_mon:gPatMonNum>/<_day:gPatDay>/<_year:gPatYear>$]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="vulnTest">toDateTime($_mon, $_day, $_year, "00:00:00")</setEventAttribute>
+          <setEventAttribute attr="phRecvTime">$vulnTest</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,80 @@
+<eventParser name="QNAPParser">
+  <deviceType>
+    <Vendor>QNAP</Vendor>
+    <Model>Turbo NAS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+qu?logd\[\d+\]:\s]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<30>Jun 25 14:41:36 Galaxy qlogd[8029]: conn log: Users: TESTUSER\abc123, Source IP: 192.168.1.10, Computer name: 192.168.1.10, Connection type: SAMBA, Accessed resources: EXAMPLE/resource - MPLS Project/desktop.ini, Action: Read]]></testEvent>
+    <testEvent><![CDATA[<38>Jun 25 14:42:17 Galaxy qlogd[8029]: conn log: Users: admin, Source IP: 192.168.1.111, Computer name: ---, Connection type: HTTP, Accessed resources: Administration, Action: Login OK]]></testEvent>
+    <testEvent><![CDATA[<30>Jun 25 14:41:36 Galaxy qulogd[8029]: conn log: Users: EXAMPLE\exampleuser123, Source IP: 192.168.1.2, Computer name: 192.168.1.2, Connection type: SAMBA, Accessed resources: TEST/resource - ABC Project/desktop.ini, Action: Read]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatHostName>\s+qu?logd\[\d+\]:\s+conn log:\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">QNAP-Generic</setEventAttribute>
+
+    <collectAndSetAttrByKeyValuePair sep=", " src="$_body">
+      <attrKeyMap attr="fileName" key="Accessed resources: "/>
+      <attrKeyMap attr="fileAccess" key="Action: "/>
+      <attrKeyMap attr="_srcName" key="Computer name: "/>
+      <attrKeyMap attr="appTransportProto" key="Connection type: "/>
+      <attrKeyMap attr="srcIpAddr" key="Source IP: "/>
+      <attrKeyMap attr="user" key="Users: "/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <when test="exist user">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$user">
+            <regex><![CDATA[<domain:gPatStr>[\\]<user:gPatStr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _srcName">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_srcName">
+            <regex><![CDATA[^-+$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_srcName">
+            <regex><![CDATA[^<:gPatIpAddr>$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="srcName">$_srcName</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+    <choose>
+      <when test="not_exist fileAccess"/>
+
+      <when test="matches($fileAccess, '^Login ')">
+        <choose>
+          <when test="$fileAccess = 'Login OK'">
+            <setEventAttribute attr="eventType">QNAP-TurboNAS-Login-Success</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">QNAP-TurboNAS-Login-Failure</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+
+      <when test="$fileAccess IN 'Add, Delete, Read, Write'">
+        <setEventAttribute attr="eventType">QNAP-TurboNAS-File-Access</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

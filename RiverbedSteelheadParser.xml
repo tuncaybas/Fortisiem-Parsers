@@ -1,0 +1,346 @@
+<eventParser name="RiverbedSteelheadParser">
+  <deviceType>
+    <Vendor>Riverbed</Vendor>
+    <Model>Steelhead</Model>
+    <Version>ANY</Version>
+  </deviceType>
+  <eventFormatRecognizer><![CDATA[SNMPv2-SMI::enterprises.17163]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[2013-11-20 23:22:31 1.2.3.4(via UDP: [1.2.3.4]:65052) TRAP, SNMP v1, community c1cs3vents	SNMPv2-SMI::enterprises.17163 Enterprise Specific Trap (636) Uptime: 2:44:03.40	DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (984340) 2:44:03.40	SNMPv2-MIB::snmpTrapOID.0 = OID: SNMPv2-SMI::enterprises.17163.1.1.4.0.11]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">Riverbed-Steelhead-Generic</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">Snmp Trap</setEventAttribute>
+
+    <collectAndSetAttrByKeyValuePair sep="\t\\| SNMP" src="$_body">
+      <attrKeyMap attr="_id" key="SNMPv2-MIB::snmpTrapOID.0 = OID: "/>
+      <attrKeyMap attr="_neighborAddress" key="SNMPv2-SMI::enterprises.17163.1.1.2.12.1.1.2"/>
+      <attrKeyMap attr="_crlFeatureName" key="SNMPv2-SMI::enterprises.17163.1.1.2.11.1.1.2"/>
+      <attrKeyMap attr="_crlErrMsg" key="SNMPv2-SMI::enterprises.17163.1.1.2.11.1.1.4"/>
+      <attrKeyMap attr="_systemVersion" key="SNMPv2-SMI::enterprises.17163.1.1.1.3"/>
+      <attrKeyMap attr="_procName" key="SNMPv2-SMI::enterprises.17163.1.1.2.5.1.2"/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <choose>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.11')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-admissionConnError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1011')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-admissionConnErrorClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.52')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-admissionCpuError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1052')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-admissionCpuErrorClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.60')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-admissionMapiError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1060')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-admissionMapiErrorClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.10')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-admissionMemError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1010')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-admissionMemErrorClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.53')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-admissionTcpError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1053')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-admissionTcpErrorClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.20')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-asymRouteError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1020')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-asymRouteErrorClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.7')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-bypassMode"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1007')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-bypassModeClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.56')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-certsExpiringError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1056')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-certsExpiringErrorClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.32')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-cfAckTimeout"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1032')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-cfAckTimeoutClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.28')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-cfConnFailure"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.29')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-cfConnLostEos"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1029')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-cfConnLostEosClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.30')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-cfConnLostErr"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1030')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-cfConnLostErrClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1028')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-cfConnRestored"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.31')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-cfKeepaliveTimeout"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1031')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-cfKeepaliveTimeoutClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.34')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-cfLatencyExceeded"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1034')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-cfLatencyExceededClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.33')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-cfReadInfoTimeout"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1033')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-cfReadInfoTimeoutClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.47')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-cliUserLogin"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.48')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-cliUserLogout"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.15')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-confModeEnter"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.16')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-confModeExit"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.24')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-configChange"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.41')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-configSave"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.3')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-cpuUtil"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1003')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-cpuUtilClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1036')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-crlClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.36')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-crlError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.37')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-datastoreSyncFailure"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1037')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-datastoreSyncFailureClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.25')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-datastoreWrapped"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.45')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-diskError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1045')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-diskErrorClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.55')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-domainJoinError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1055')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-domainJoinErrorClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.21')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-fanError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1021')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-fanErrorClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.62')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-flashError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1062')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-flashErrorClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.12')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-haltError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1012')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-haltErrorClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.58')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-hardwareError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1058')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-hardwareErrorClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.23')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-ipmi"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1023')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-ipmiClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.57')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-licenseError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1057')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-licenseErrorClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.17')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-linkError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1017')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-linkErrorClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.22')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-memoryError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1022')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-memoryErrorClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.61')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-neighborIncompatibility"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1061')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-neighborIncompatibilityClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.44')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-newUserCreated"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.18')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-nfsV2V4"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1018')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-nfsV2V4Clear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.4')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-pagingActivity"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1004')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-pagingActivityClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.6')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-peerVersionMismatch"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1006')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-peerVersionMismatchClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.19')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-powerSupplyError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1019')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-powerSupplyErrorClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-procCrash"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.2')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-procExit"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.8')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-raidError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1008')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-raidErrorClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.14')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-scheduledJobError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1040')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-secureVaultClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.40')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-secureVaultInitError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.39')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-secureVaultNeedsRekey"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.38')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-secureVaultNeedsUnlock"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.13')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-serviceError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1013')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-serviceErrorClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.5')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-smartError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1035')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-sslPeeringSCEPAutoReenrollClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.35')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-sslPeeringSCEPAutoReenrollError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.9')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-storeCorruption"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1009')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-storeCorruptionClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.59')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-sysdetailError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1059')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-sysdetailErrorClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.54')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-systemDiskFullError"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1054')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-systemDiskFullErrorClear"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.43')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-tcpDumpScheduled"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.42')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-tcpDumpStarted"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.27')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-temperatureCritical"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1027')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-temperatureNonCritical"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.1026')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-temperatureNormal"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.26')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-temperatureWarning"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.51')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-trapTest"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.46')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-wearWarning"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.49')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-webUserLogin"</setEventAttribute>
+      </when>
+      <when test="matches($_id, 'SNMPv2-SMI::enterprises.17163.1.1.4.0.50')">
+        <setEventAttribute attr="eventType">"Riverbed-Steelhead-webUserLogout"</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

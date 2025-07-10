@@ -1,0 +1,103 @@
+<eventParser name="RaxNexposeReportParser">
+  <deviceType>
+    <Vendor>Rapid7</Vendor>
+    <Model>NeXpose Security Scanner</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[1546911160.46238804,2019-01-07,GTS - Managed Backup - DFW3,440,10.5.102.227,,,Severe,http-openssl-cve-2017-3736,OpenSSL bn_sqrx8x_internal carry bug on x86_64 (CVE-2017-3736),FreeBSD,8083,TCP,HTTP,* Running HTTP service * Vulnerable version of component OpenSSL found -- OpenSSL 1.0.2k-fips,Upgrade to OpenSSL version 1.0.2m,10/30/2018,01/01/2019,68.3,2018-12-29,Credentials Failed (Normal for DRAC),"PCI, GTS, MBU, APP0004437, PCI, MBU, PCI, GTS"]]></testEvent>
+    <testEvent><![CDATA[1546911160.46212602,2019-01-07,GTS - Managed Backup - DFW3,440,10.5.102.229,,,Critical,apache-httpd-obsolete,Obsolete Version of Apache HTTPD,FreeBSD,8083,TCP,HTTP,* Running HTTP service * Product HTTPD exists -- Apache HTTPD 2.2.34 * Vulnerable version of product HTTPD found -- Apache HTTPD 2.2.34,Upgrade to the latest version of Apache HTTPD,11/06/2018,01/01/2019,61.3,2018-12-06,Credentials Failed (Normal for DRAC),"MBU, APP0004437, PCI, PCI, GTS, GTS, PCI, MBU"]]></testEvent>
+    <testEvent><![CDATA[1547688372.75640106,2019-01-16,TES - RSI - DCX Fire Engine,210,72.4.123.74,,,Severe,ftp-plaintext-auth,FTP credentials transmitted unencrypted,Linux 2.6.11,21,TCP,FTP,* Running FTP service * Configuration item ftp.plaintext.authentication set to 'true' matched,Disable FTP plaintext authentication,03/29/2018,01/10/2019,288.1,2018-05-28,No Applicable Services Discovered,"APP0004425, PCI, RSI, TES"]]></testEvent>
+    <testEvent><![CDATA[1546911152.97058392,2019-01-07,TES - RSI - DCX Gateway API,820,10.46.19.7,gateway-002.iad3.prod.dcx.rackspace.com,00:50:56:1a:0a:d5,Severe,centos_linux-cve-2017-15275,CentOS: (CVE-2017-15275) (Multiple Advisories): samba4,CentOS Linux 7.4.1708,,,N/A,Vulnerable OS: CentOS Linux 7.4.1708 * libsmbclient - version 0:4.6.2-11.el7_4 is installed,Upgrade libsmbclient,10/30/2018,01/01/2019,68.3,2018-12-29,Credentials Successful,"PCI, TES, TES, APP0001261, PCI, TES, meltdown, PCI, RSI"]]></testEvent>
+    <testEvent><![CDATA[1546911142.88425398,2019-01-07,TES - ARIC 3.0,715,10.5.16.163,374334-RBADB1,,Severe,google-chrome-cve-2018-17472,Google Chrome Vulnerability: CVE-2018-17472,"Microsoft Windows Server 2008 R2, Enterprise Edition SP1",,,N/A,Vulnerable software installed: Google Chrome 66.0.3359.139,Upgrade to the latest version of Google Chrome,01/02/2019,01/02/2019,5.3,2019-03-03,Credentials Successful,"PCI, TES, TES, PCI, meltdown"]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\d{10}\.\d{8},<:gPatYear>-<:gPatMonNum>-<:gPatDay>,<:gPatStrComma>,<:gPatInt>,<:gPatIpAddr>,]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">NeXpose-Vuln-Report</setEventAttribute>
+
+    <collectAndSetAttrByPosWithNestedSep L1Sep="," L2Sep="&quot;&quot;" src="$_rawmsg">
+      <attrPosMap attr="scanBegin" pos="1"/>
+      <attrPosMap attr="_vulnScanReportDate" pos="2"/>
+      <attrPosMap attr="site" pos="3"/>
+      <attrPosMap attr="vulnSiteID" pos="4"/>
+      <attrPosMap attr="hostIpAddr" pos="5"/>
+      <attrPosMap attr="hostName" pos="6"/>
+      <attrPosMap attr="_hostMACAddr" pos="7"/>
+      <attrPosMap attr="_severity" pos="8"/>
+      <attrPosMap attr="vulnIdStr" pos="9"/>
+      <attrPosMap attr="vulnName" pos="10"/>
+      <attrPosMap attr="osType" pos="11"/>
+      <attrPosMap attr="ipPort" pos="12"/>
+      <attrPosMap attr="appTransportProto" pos="13"/>
+      <attrPosMap attr="_appName" pos="14"/>
+      <attrPosMap attr="vulnSolution" pos="16"/>
+      <attrPosMap attr="_vulnerableSince" pos="17"/>
+      <attrPosMap attr="_vulnScanTestDate" pos="18"/>
+      <attrPosMap attr="vulnerableFor" pos="19"/>
+      <attrPosMap attr="_vulnDueDate" pos="20"/>
+    </collectAndSetAttrByPosWithNestedSep>
+
+    <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+    <setEventAttribute attr="eventTime">$scanBegin</setEventAttribute>
+
+    <when test="exist _hostMACAddr">
+      <setEventAttribute attr="hostMACAddr">normalizeMAC($_hostMACAddr)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="$_severity = 'Severe'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_severity = 'Critical'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_severity = 'Moderate'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_severity = 'Low'">
+        <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _appName">
+      <when test="$_appName != 'N/A'">
+        <setEventAttribute attr="appName">$_appName</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist appTransportProto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($appTransportProto)</setEventAttribute>
+    </when>
+
+    <when test="exist _vulnScanReportDate">
+      <collectFieldsByRegex src="$_vulnScanReportDate">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="phRecvTime">toDateTime($_mon, $_day, $_year, "12:00:00")</setEventAttribute>
+    </when>
+
+    <when test="exist _vulnerableSince">
+      <collectFieldsByRegex src="$_vulnerableSince">
+        <regex><![CDATA[<_mon:gPatMonNum>/<_day:gPatDay>/<_year:gPatYear>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="vulnerableSince">toDateTime($_mon, $_day, $_year, "12:00:00")</setEventAttribute>
+    </when>
+
+    <when test="exist _vulnDueDate">
+      <collectFieldsByRegex src="$_vulnDueDate">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="vulnDue">toDateTime($_mon, $_day, $_year, "12:00:00")</setEventAttribute>
+    </when>
+
+    <!--when test="exist _vulnScanTestDate">
+      <collectFieldsByRegex src="$_vulnScanTestDate">
+        <regex><![CDATA[<_mon:gPatMonNum>/<_day:gPatDay>/<_year:gPatYear>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="vulnScanTestDate">toDateTime($_mon, $_day, $_year, "12:00:00")</setEventAttribute>
+    </when-->
+  </parsingInstructions>
+</eventParser>
