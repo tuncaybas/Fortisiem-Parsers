@@ -1,0 +1,73 @@
+<eventParser name="CyberArkParser">
+
+  <deviceType>
+    <Vendor>CyberArk</Vendor>
+    <Model>Enterprise Password Vault</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <!-- pattern definitions -->
+  <patternDefinitions>
+    <pattern name="patSig"><![CDATA[%?CYBERARK]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>\d+\s+<:gPatYear>-<:gPatMonNum>-<:gPatDay>T<:gPatTime>Z\s+<:gPatStr>\s+<:patSig>:\s]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<5>1 2016-02-02T17:24:42Z SJCDVVWCARK01 CYBERARK: Product="Vault";Version="9.20.0000";MessageID="295";Message="Retrieve password";Issuer="Administrator";Station="10.10.110.11";File="Root\snmpCommunity";Safe="TestPasswords";Reason="Test";Severity="Info"]]></testEvent>
+    <testEvent><![CDATA[<5>1 2016-02-29T15:25:13Z WPAMDNVASV02 %CYBERARK: MessageID="88";Version="8.61.0000";Message="Set Password";Issuer="PVWAGWUser";Station="10.4.163.147";File="";Safe="";Location="";Category="";RequestId="";Reason="";Severity="Info";GatewayStation="";TicketID="";PolicyID="";UserName="";LogonDomain="";Address="";CPMStatus="";Port="";Database="";DeviceType="";ExtraDetails=""]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>\d+\s+<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>Z\s+<reptDevName:gPatStr>\s+<:patSig>:\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <collectAndSetAttrByKeyValuePair src="$_body" sep=";">
+      <attrKeyMap attr="version" key="Version="/>
+      <attrKeyMap attr="_messageID" key="MessageID="/>
+      <attrKeyMap attr="msg" key="Message="/>
+      <attrKeyMap attr="srcIpAddr" key="Station="/>
+      <attrKeyMap attr="fileName" key="File="/>
+      <attrKeyMap attr="cyberArkSafe" key="Safe="/>
+      <attrKeyMap attr="errReason" key="Reason="/>
+      <attrKeyMap attr="user" key="Issuer="/>
+      <attrKeyMap attr="cyberArkDB" key="Database="/>
+      <attrKeyMap attr="_severity" key="Severity="/>
+      <attrKeyMap attr="details" key="ExtraDetails="/>
+      <attrKeyMap attr="appPort" key="Port="/>
+      <attrKeyMap attr="policyName" key="PolicyID="/>
+      <attrKeyMap attr="status" key="CPMStatus="/>
+      <attrKeyMap attr="domain" key="LogonDomain="/>
+      <attrKeyMap attr="user" key="UserName="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <choose>
+      <when test="exist _messageID">
+        <setEventAttribute attr="eventType">combineMsgId("CyberArk-Vault-", $_messageID)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">CyberArk-Vault-Generic</setEventAttribute>
+      </otherwise>
+    </choose>
+
+
+    <!-- event severity -->
+    <when test="exist _severity">
+      <choose>
+        <when test="$_severity = 'Info'">
+          <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        </when>
+        <when test="$_severity = 'Error'">
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </when>
+        <when test="$_severity = 'Critical'">
+          <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,136 @@
+<eventParser name="CarbonBlackParser">
+  <deviceType>
+    <Vendor>Carbon Black</Vendor>
+    <Model>Security Platform</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[^(?:<:gPatYear>-<:gPatMonNum>-<:gPatDay>|<:gPatMon>\s+<:gPatDay>)\s+<:gPatTime>\s+\[\d+\]\s+\<\w+\>\s+]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[2015-07-29 13:20:05 [3279] <warning>  reason=watchlist.hit type=module md5=9108540E866F75C7AF2B91DD921A8091 host='ADFS01-PC' sensor_id=2 watchlist_id=6 watchlist_name='Newly Loaded Modules' timestamp='1438190405.48' first_seen='2015-07-29T17:06:31.313Z' group=['Default Group'] desc='ApiSet Stub DLL' company_name='Microsoft Corporation' product_name='Microsoft® Windows® Operating System' product_version='6.2.9200.16492' file_version='6.2.9200.16492 (win8_gdr_oobssr.130113-0015)' signed='Signed']]></testEvent>
+    <testEvent><![CDATA[Mar 13 03:50:19 [1037] <warning> reason=watchlist.hit type=module md5=7931ADC31F0180855E05D6666630B3A3 host=WORKSTATION-2' sensor_id=74 watchlist_id=8 watchlist_name='Newly Loaded Modules' timestamp='1426233008.59' first_seen='2014-11-13T07:47:17.862Z' group=['Default Group'] desc='AntiMalware Definition Update' company_name='Microsoft Corporation' product_name='Microsoft Malware Protection' product_version='1.193.2512.0' file_version='1.193.2512.0' signed='Signed']]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[^(?:<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>|<_mon:gPatMon>\s+<_day:gPatDay>)\s+<_time:gPatTime>\s+\[\d+\]\s+\<<_sev:gPatWord>\>\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <choose>
+      <when test="exist _year">
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </otherwise>
+    </choose>
+    <setEventAttribute attr="eventType">CarbonBlack-Generic</setEventAttribute>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_body">
+      <attrKeyMap attr="appVendor" key="company_name"/>
+      <attrKeyMap attr="srcApp" key="desc"/>
+      <attrKeyMap attr="fileVersion" key="file_version"/>
+      <attrKeyMap attr="_eventTime" key="first_seen"/>
+      <attrKeyMap attr="hostName" key="host"/>
+      <attrKeyMap attr="hashCode" key="md5"/>
+      <attrKeyMap attr="appName" key="product_name"/>
+      <attrKeyMap attr="appVersion" key="product_version"/>
+      <attrKeyMap attr="errReason" key="reason"/>
+      <attrKeyMap attr="envSensorId" key="sensor_id"/>
+      <attrKeyMap attr="type" key="type"/>
+      <attrKeyMap attr="fwRule" key="watchlist_name"/>
+      <attrKeyMap attr="hostIpAddr" key="Interface_ip"/>
+      <attrKeyMap attr="hostIpAddr" key="interface_ip"/>
+      <attrKeyMap attr="hostIpAddr" key="comms_ip"/>
+      <attrKeyMap attr="direction" key="direction"/>
+      <attrKeyMap attr="dnsZone" key="dns_name"/>
+      <attrKeyMap attr="targetProcName" key="dproc"/>
+      <attrKeyMap attr="_eventTime" key="timestamp"/>
+      <attrKeyMap attr="fileDesc" key="desc"/>
+      <attrKeyMap attr="groupName" key="group"/>
+      <attrKeyMap attr="hostName" key="hostname"/>
+      <attrKeyMap attr="procId" key="process_guid"/>
+      <attrKeyMap attr="iocType" key="ioc_type"/>
+      <attrKeyMap attr="iocValue" key="ioc_value"/>
+      <attrKeyMap attr="_update" key="last_update"/>
+      <attrKeyMap attr="srcIpAddr" key="local_ip"/>
+      <attrKeyMap attr="srcIpPort" key="local_port"/>
+      <attrKeyMap attr="procPath" key="process_path"/>
+      <attrKeyMap attr="ipPort" key="port"/>
+      <attrKeyMap attr="appTransportProto" key="protocol"/>
+      <attrKeyMap attr="procId" key="process_id"/>
+      <attrKeyMap attr="procName" key="process_name"/>
+      <attrKeyMap attr="procPath" key="process_path"/>
+      <attrKeyMap attr="product" key="product_name"/>
+      <attrKeyMap attr="destIpAddr" key="remote_ip"/>
+      <attrKeyMap attr="destIpPort" key="remote_port"/>
+      <attrKeyMap attr="reportName" key="report_title"/>
+      <attrKeyMap attr="serverName" key="server_name"/>
+      <attrKeyMap attr="iocName" key="ioc_attr"/>
+      <attrKeyMap attr="osType" key="os_type"/>
+      <attrKeyMap attr="procPath" key="observed_filename"/>
+      <attrKeyMap attr="wlanName" key="internal_name"/>
+      <attrKeyMap attr="comment" key="comments"/>
+      <attrKeyMap attr="command" key="cmdline"/>
+      <attrKeyMap attr="procId" key="process_pid"/>
+      <attrKeyMap attr="user" key="username"/>
+      <attrKeyMap attr="uuid" key="unique_id"/>
+      <attrKeyMap attr="_startTime" key="start_time"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist errReason">
+      <setEventAttribute attr="eventType">combineMsgId("CarbonBlack-", $errReason)</setEventAttribute>
+      <setEventAttribute attr="eventType">replaceStrInStr($eventType, ".", "-")</setEventAttribute>
+    </when>
+    <when test="exist _eventTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_eventTime">
+            <regex><![CDATA[^<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </case>
+        <default>
+          <setEventAttribute attr="eventTime">$_eventTime</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+    <when test="exist _startTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_startTime">
+            <regex><![CDATA[<_mon1:gPatMon>\s+<_day1:gPatDay>\s+<_time1:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="startTime">toDateTime($_mon1, $_day1, $_time1)</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_startTime">
+            <regex><![CDATA[<_year1:gPatYear>-<_mon1:gPatMon>-<_day1:gPatDay>T<_time1:gPatTime>(?:\.\d+)<_tz1:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="startTime">toDateTime($_mon1, $_day1, $_year1, $_time1, $_tz1)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _update">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_update">
+            <regex><![CDATA[<_mon1:gPatMon>\s+<_day1:gPatDay>\s+<_time1:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="updateTime">toDateTime($_mon1, $_day1, $_time1)</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_update">
+            <regex><![CDATA[<_year1:gPatYear>-<_mon1:gPatMon>-<_day1:gPatDay>T<_time1:gPatTime>(?:\.\d+)<_tz1:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="updateTime">toDateTime($_mon1, $_day1, $_year1, $_time1, $_tz1)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

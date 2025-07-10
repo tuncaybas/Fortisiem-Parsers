@@ -1,0 +1,147 @@
+<eventParser name="CalicoParser">
+  <deviceType>
+    <Vendor>Tigera</Vendor>
+    <Model>Calico Enterprise</Model>
+    <Version>ANY</Version>
+  </deviceType>
+  <testEvents>
+    <testEvent><![CDATA[<14>May  8 16:46:53 ip-10-0-0-56.ec2.internal tigera_secure: {"start_time":"2020-05-08T16:41:32.970534591Z","end_time":"2020-05-08T16:46:47.839284739Z","type":"log","count":21,"client_name":"-","client_name_aggr":"alertmanager-calico-node-alertmanager-*","client_namespace":"tigera-prometheus","client_ip":null,"client_labels":{"alertmanager":"calico-node-alertmanager","app":"alertmanager","controller-revision-hash":"alertmanager-calico-node-alertmanager-757d7c46d9","statefulset.kubernetes.io/pod-name":"alertmanager-calico-node-alertmanager-1"},"servers":[{"name":"coredns-5c98db65d4-ztxtb","name_aggr":"coredns-5c98db65d4-*","namespace":"kube-system","ip":"10.48.241.193"},{"name":"coredns-5c98db65d4-9lcwj","name_aggr":"coredns-5c98db65d4-*","namespace":"kube-system","ip":"10.48.241.192"}],"qname":"alertmanager-calico-node-alertmanager-2.alertmanager-operated.tigera-prometheus.svc.cluster.local","qclass":"IN","qtype":"A","rcode":"NoError","rrsets":[{"name":"alertmanager-calico-node-alertmanager-2.alertmanager-operated.tigera-prometheus.svc.cluster.local","class":"IN","type":"A","rdata":["10.48.241.196"]}],"host":"fluentd-node-r8kjj"}]]></testEvent>
+    <testEvent><![CDATA[<14>May  8 16:42:52 ip-10-0-0-240.ec2.internal tigera_secure: {"kind":"Event","apiVersion":"audit.k8s.io/v1","level":"RequestResponse","auditID":"11111111-1111-1111-1111-111111111111","stage":"ResponseComplete","requestURI":"/apis/projectcalico.org/v3/namespaces/storefront/networkpolicies/default.trusted","verb":"update","user":{"username":"system:serviceaccount:default:tigera-admin","groups":["system:serviceaccounts","system:serviceaccounts:default","system:authenticated"]},"sourceIPs":["10.0.0.193","10.0.0.240"],"userAgent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36","objectRef":{"resource":"networkpolicies","namespace":"storefront","name":"default.trusted","uid":"11111111-1111-1111-1111-111111111111","apiGroup":"projectcalico.org","apiVersion":"v3","resourceVersion":"1898131/"},"responseStatus":{"metadata":{},"code":200},"requestObject":{"kind":"NetworkPolicy","apiVersion":"projectcalico.org/v3","metadata":{"name":"default.trusted","namespace":"storefront","uid":"11111111-1111-1111-1111-111111111111","resourceVersion":"1898131/","creationTimestamp":null},"spec":{"tier":"default","order":10,"ingress":[{"action":"Allow","source":{"selector":"fw-zone == \"dmz\""},"destination":{}},{"action":"Allow","source":{"selector":"fw-zone == \"trusted\""},"destination":{}},{"action":"Deny","source":{},"destination":{}}],"egress":[{"action":"Allow","source":{},"destination":{"selector":"fw-zone == \"trusted\""}},{"action":"Allow","source":{},"destination":{"selector":"fw-zone == \"restricted\""}},{"action":"Deny","source":{},"destination":{}}],"selector":"fw-zone == \"trusted\"","types":["Ingress","Egress"]}},"responseObject":{"kind":"NetworkPolicy","apiVersion":"projectcalico.org/v3","metadata":{"name":"default.trusted","namespace":"storefront","selfLink":"/apis/projectcalico.org/v3/namespaces/storefront/networkpolicies/default.trusted","uid":"11111111-1111-1111-1111-111111111111","resourceVersion":"1898231/","creationTimestamp":"2020-04-24T12:57:21Z","labels":{"projectcalico.org/tier":"default"}},"spec":{"tier":"default","order":10,"ingress":[{"action":"Allow","source":{"selector":"fw-zone == \"dmz\""},"destination":{}},{"action":"Allow","source":{"selector":"fw-zone == \"trusted\""},"destination":{}},{"action":"Deny","source":{},"destination":{}}],"egress":[{"action":"Allow","source":{},"destination":{"selector":"fw-zone == \"trusted\""}},{"action":"Allow","source":{},"destination":{"selector":"fw-zone == \"restricted\""}},{"action":"Deny","source":{},"destination":{}}],"selector":"fw-zone == \"trusted\"","types":["Ingress","Egress"]}},"requestReceivedTimestamp":"2020-05-08T16:42:46.552154Z","stageTimestamp":"2020-05-08T16:42:46.559405Z","annotations":{"authorization.k8s.io/decision":"allow","authorization.k8s.io/reason":"RBAC: allowed by ClusterRoleBinding \"tigera-tiered-policy-passthrough\" of ClusterRole \"tigera-tiered-policy-passthrough\" to Group \"system:authenticated\""},"name":"default.trusted"}]]></testEvent>
+    <testEvent><![CDATA[<14>May  8 15:49:58 ip-10-0-0-193.ec2.internal tigera_secure: {"start_time":1588952982,"end_time":1588952992,"source_ip":"10.48.98.2","source_name":"elastic-operator-0","source_name_aggr":"elastic-operator-*","source_namespace":"tigera-eck-operator","source_port":null,"source_type":"wep","source_labels":{"labels":["k8s-app=elastic-operator","statefulset.kubernetes.io/pod-name=elastic-operator-0","control-plane=elastic-operator","controller-revision-hash=elastic-operator-6fc7545df5"]},"dest_ip":"10.48.241.198","dest_name":"tigera-secure-es-es-0","dest_name_aggr":"tigera-secure-es-es-*","dest_namespace":"tigera-elasticsearch","dest_port":9200,"dest_type":"wep","dest_labels":{"labels":["statefulset.kubernetes.io/pod-name=tigera-secure-es-es-0","elasticsearch.k8s.elastic.co/version=7.3.2","controller-revision-hash=tigera-secure-es-es-757895bb98","elasticsearch.k8s.elastic.co/http-scheme=https","elasticsearch.k8s.elastic.co/statefulset-name=tigera-secure-es-es","elasticsearch.k8s.elastic.co/node-data=true","elasticsearch.k8s.elastic.co/config-hash=1585026949","elasticsearch.k8s.elastic.co/node-ml=true","common.k8s.elastic.co/type=elasticsearch","elasticsearch.k8s.elastic.co/node-ingest=true","elasticsearch.k8s.elastic.co/node-master=true","elasticsearch.k8s.elastic.co/cluster-name=tigera-secure"]},"proto":"tcp","action":"allow","reporter":"dst","policies":{"all_policies":["0|allow-tigera|tigera-elasticsearch/allow-tigera.elasticsearch-access|allow"]},"bytes_in":2593,"bytes_out":4617,"num_flows":3,"num_flows_started":1,"num_flows_completed":1,"packets_in":17,"packets_out":10,"http_requests_allowed_in":0,"http_requests_denied_in":0,"original_source_ips":null,"num_original_source_ips":0,"host":"fluentd-node-xzscj"}]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatStr>\s+tigera_secure:\s*\{.*\}]]></eventFormatRecognizer>
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<reptDevName:gPatStr>\s+tigera_secure:\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventType">Calico_Enterprise_Generic_Log</setEventAttribute>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[\"qname\":]]></regex>
+        </collectFieldsByRegex>
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="_startTime" key="start_time"/>
+          <attrKeyMap attr="_endTime" key="end_time"/>
+          <attrKeyMap attr="type" key="type"/>
+          <attrKeyMap attr="count" key="count"/>
+          <attrKeyMap attr="srcName " key="client_name"/>
+          <attrKeyMap attr="srcNameAggr" key="client_name_aggr"/>
+          <attrKeyMap attr="srcNamespace" key="client_namespace"/>
+          <attrKeyMap attr="srcIpAddr" key="client_ip"/>
+          <attrKeyMap attr="appName" key="client_labels.app"/>
+          <attrKeyMap attr="hashCode" key="client_labels.controller-revision-hash"/>
+          <attrKeyMap attr="serverName" key="servers[0].name"/>
+          <attrKeyMap attr="serverNameAggr" key="servers[0].name_aggr"/>
+          <attrKeyMap attr="serverNamespace" key="servers[0].namespace"/>
+          <attrKeyMap attr="serverIpAddr" key="servers[0].ip"/>
+          <attrKeyMap attr="dnsQueryName" key="qname"/>
+          <attrKeyMap attr="dnsQueryClass" key="qclass"/>
+          <attrKeyMap attr="dnsQueryType" key="qtype"/>
+          <attrKeyMap attr="status" key="rcode"/>
+          <attrKeyMap attr="queryData" key="rrsets.rdata"/>
+        </collectAndSetAttrByJSON>
+        <setEventAttribute attr="eventType">Calico_Enterprise_DNS_Log</setEventAttribute>
+        <when test="exist _startTime">
+          <switch>
+            <case>
+              <!--2020-04-22T00:42:47.627684Z-->
+              <collectFieldsByRegex src="$_startTime">
+                <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="startTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+            </case>
+            <default/>
+          </switch>
+        </when>
+        <when test="exist _endTime">
+          <switch>
+            <case>
+              <!--2020-04-22T00:42:47.627684Z-->
+              <collectFieldsByRegex src="$_endTime">
+                <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="endTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+            </case>
+            <default/>
+          </switch>
+        </when>
+
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[\"all_policies\":]]></regex>
+        </collectFieldsByRegex>
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="startTime" key="start_time"/>
+          <attrKeyMap attr="endTime" key="end_time"/>
+          <attrKeyMap attr="srcIpAddr" key="source_ip"/>
+          <attrKeyMap attr="srcName" key="source_name"/>
+          <attrKeyMap attr="srcNameAggr" key="source_name_aggr"/>
+          <attrKeyMap attr="srcNamespace" key="source_namespace"/>
+          <attrKeyMap attr="srcIpPort" key="source_port"/>
+          <attrKeyMap attr="srcType" key="source_type"/>
+          <attrKeyMap attr="destIpAddr" key="dest_ip"/>
+          <attrKeyMap attr="destName" key="dest_name"/>
+          <attrKeyMap attr="destNameAggr" key="dest_name_aggr"/>
+          <attrKeyMap attr="destNamespace" key="dest_namespace"/>
+          <attrKeyMap attr="destIpPort" key="dest_port"/>
+          <attrKeyMap attr="destType" key="dest_type"/>
+          <attrKeyMap attr="_proto" key="proto"/>
+          <attrKeyMap attr="fwAction" key="action"/>
+          <attrKeyMap attr="reportName" key="reporter"/>
+          <attrKeyMap attr="policyDetails" key="policies.all_policies"/>
+          <attrKeyMap attr="recvBytes" key="bytes_in"/>
+          <attrKeyMap attr="sentBytes" key="bytes_out"/>
+          <attrKeyMap attr="totFlows" key="num_flows"/>
+          <attrKeyMap attr="recvPkts" key="packets_in"/>
+          <attrKeyMap attr="sentPkts" key="packets_out"/>
+          <attrKeyMap attr="activeConns" key="http_requests_allowed_in"/>
+          <attrKeyMap attr="connFailure" key="http_requests_allowed_out"/>
+          <attrKeyMap attr="srcIpAddrList" key="original_source_ips"/>
+        </collectAndSetAttrByJSON>
+        <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+        <setEventAttribute attr="eventType">Calico_Enterprise_Flow_Log</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[\"auditID\":]]></regex>
+        </collectFieldsByRegex>
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="categoryType" key="kind"/>
+          <attrKeyMap attr="version" key="apiVersion"/>
+          <attrKeyMap attr="logLevel" key="level"/>
+          <attrKeyMap attr="uuid" key="auditID"/>
+          <attrKeyMap attr="httpConnStatus" key="stage"/>
+          <attrKeyMap attr="uriStem" key="requestURI"/>
+          <attrKeyMap attr="opName" key="verb"/>
+          <attrKeyMap attr="user" key="user.username"/>
+          <attrKeyMap attr="userGrp" key="user.groups"/>
+          <attrKeyMap attr="srcIpAddrList" key="sourceIPs"/>
+          <attrKeyMap attr="httpUserAgent" key="userAgent"/>
+          <attrKeyMap attr="resourceName" key="objectRef.resource"/>
+          <attrKeyMap attr="osObjName" key="objectRef.name"/>
+          <attrKeyMap attr="apiGroup" key="objectRef.apiGroup"/>
+          <attrKeyMap attr="srcAppVersion" key="objectRef.apiVersion"/>
+          <attrKeyMap attr="httpStatusCode" key="responseStatus.code"/>
+          <attrKeyMap attr="_time" key="requestReceivedTimestamp"/>
+        </collectAndSetAttrByJSON>
+        <when test="exist _time">
+          <switch>
+            <case>
+              <!--2020-04-22T00:42:47.627684Z-->
+              <collectFieldsByRegex src="$_time">
+                <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+            </case>
+            <default/>
+          </switch>
+        </when>
+        <setEventAttribute attr="eventType">Calico_Enterprise_Audit_Log</setEventAttribute>
+      </case>
+    </switch>
+  </parsingInstructions>
+</eventParser>

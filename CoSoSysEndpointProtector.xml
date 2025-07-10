@@ -1,0 +1,103 @@
+<eventParser name="CoSoSysEndpointProtector">
+  <deviceType>
+    <Vendor>CoSoSys</Vendor>
+    <Model>Endpoint Protector</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<129>May 17 10:31:58 eppserver EPP-172.24.6.76: EPP-IP - 172.24.6.79 - Device Control - File Read: [Event Name] File Read | [Client Computer] USER-PC | [IP Address] 10.85.98.52 | [MAC Address] 48-4d-7e-e4-bd-be | [Client User] user | [Device Type] Windows Portable Device (Media Transfer Protocol) | [Device] HUAWEI VNS-L53/Huawei Technologies Co., Ltd. | [Device VID] 12d1 | [Device PID] 107e | [Device Serial] G2R4C16C28004601 | [File Name] F:/Autorun.inf | [File Type] Setup Information | [File Size] 72 | [Date/Time(Server)]  2019-05-17 10:31:58 | [Date/Time(Client)] 2019-05-17 10:31:53]]></testEvent>
+    <testEvent><![CDATA[<134>May 17 11:17:32 eppserver EPP-172.24.6.76: EPP-IP - 172.24.6.79 - System Logs - Admin Action: [Administrator] root | [Section] User Authentication | [Action Type] SIGN IN | [Before]  | [After] User Logging--|#012Username--|root#012Last Login--|2019-05-17 11:17:32#012Is super Admin--|Checked#012IP--|172.24.6.78]]></testEvent>
+    <testEvent><![CDATA[<129>May 17 10:17:01 eppserver EPP-172.24.6.76: EPP-IP - - System Logs - Array: [Message] This is an alert notification for your Endpoint Protector's available Licenses. You are running out of available licenses and have used 66% of your licenses.]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatStrEndColon>:\sEPP-IP\s-\s(?:<:gPatIpV4Dot>|)(?:\s-|-)\s(?:Device Control|System Logs)\s*]]></eventFormatRecognizer>
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">CoSoSys-EPP-System_Alert</setEventAttribute>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatStrEndColon>:\sEPP-IP\s-\s(?:<:gPatIpV4Dot>|)(?:\s-|-)\s(?:Device Control|System Logs)\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+
+    <collectAndSetAttrByKeyValuePair sep=" | " src="$_body">
+      <attrKeyMap attr="srcIpAddr" key="[IP Address] "/>
+      <attrKeyMap attr="user" key="[Client User] "/>
+      <attrKeyMap attr="_eventName" key="[Event Name] "/>
+      <attrKeyMap attr="hostName" key="[Client Computer] "/>
+      <attrKeyMap attr="deviceType" key="[Device Type] "/>
+      <attrKeyMap attr="srcName" key="[Device] "/>
+      <attrKeyMap attr="serialNumber" key="[Device Serial] "/>
+      <attrKeyMap attr="fileName" key="[File Name] "/>
+      <attrKeyMap attr="fileType" key="[File Type] "/>
+      <attrKeyMap attr="fileSize" key="[File Size] "/>
+      <attrKeyMap attr="srcMACAddr" key="[MAC Address] "/>
+      <attrKeyMap attr="user" key="[Administrator] "/>
+      <attrKeyMap attr="_eventName" key="[Action Type] "/>
+      <attrKeyMap attr="msg" key="[Section] "/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <choose>
+      <when test="not_exist _eventName"/>
+      <when test="$_eventName = 'File Read'">
+        <setEventAttribute attr="_et">File_Read</setEventAttribute>
+      </when>
+
+      <when test="$_eventName = 'File Write'">
+        <setEventAttribute attr="_et">File_Write</setEventAttribute>
+      </when>
+
+      <when test="$_eventName = 'File Read-Write'">
+        <setEventAttribute attr="_et">File_Read_Write</setEventAttribute>
+      </when>
+
+      <when test="$_eventName = 'File Rename'">
+        <setEventAttribute attr="_et">File_Rename</setEventAttribute>
+      </when>
+
+      <when test="$_eventName = 'File Copy'">
+        <setEventAttribute attr="_et">File_Copy</setEventAttribute>
+      </when>
+
+      <when test="$_eventName = 'File Delete'">
+        <setEventAttribute attr="_et">File_Delete</setEventAttribute>
+      </when>
+
+      <when test="$_eventName = 'Connected'">
+        <setEventAttribute attr="_et">Device_Connected</setEventAttribute>
+      </when>
+
+      <when test="$_eventName = 'Disconnected'">
+        <setEventAttribute attr="_et">Device_Disconnected</setEventAttribute>
+      </when>
+
+      <when test="$_eventName = 'Blocked'">
+        <setEventAttribute attr="_et">Device_Blocked</setEventAttribute>
+      </when>
+
+      <when test="$_eventName = 'Unblocked'">
+        <setEventAttribute attr="_et">Device_Unblocked</setEventAttribute>
+      </when>
+
+      <when test="$_eventName = 'Device TD'">
+        <setEventAttribute attr="_et">Device_Trusted</setEventAttribute>
+      </when>
+
+      <when test="$_eventName = 'Device not TD'">
+        <setEventAttribute attr="_et">Device_Not_Trusted</setEventAttribute>
+      </when>
+
+      <when test="$_eventName = 'SIGN IN'">
+        <setEventAttribute attr="_et">User_Login</setEventAttribute>
+      </when>
+
+      <when test="$_eventName = 'SIGN OUT'">
+        <setEventAttribute attr="_et">User_Logout</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _et">
+      <setEventAttribute attr="eventType">combineMsgId("CoSoSys-EPP-", $_et)</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>

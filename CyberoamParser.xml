@@ -1,0 +1,94 @@
+<eventParser name="CyberoamParser">
+  <deviceType>
+    <Vendor>Sophos</Vendor>
+    <Model>Cyberoam</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<30>date=2019-07-10 time=11:06:48 timezone="GMT" device_name="CR50iNG" device_id=C162213098933-QQ6REI log_id=010101600001 log_type="Firewall" log_component="Firewall Rule" log_subtype="Allowed" status="Allow" priority=Information duration=0 fw_rule_id=12 user_name="" user_gp="" iap=1 ips_policy_id=0 appfilter_policy_id=1 application="" application_risk=0 application_technology="" application_category="" in_interface="PortA" out_interface="" src_mac=00: 0:00: 0:10: 0 src_ip=10.0.70.17 src_country_code=AP dst_ip=1.1.1.1 dst_country_code=IRL protocol="TCP" src_port=61244 dst_port=443 sent_pkts=0 recv_pkts=0 sent_bytes=0 recv_bytes=0 tran_src_ip= tran_src_port=0 tran_dst_ip=10.0.0.13 tran_dst_port=8080 srczonetype="LAN" srczone="ZONE1" dstzonetype="WAN" dstzone="WAN" dir_disp="" connevent="Start" connid="3340934816" vconnid=""]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>date=<:gPatYear>-<:gPatMon>-<:gPatDay>\s+time=<_time:gPatTime>\s+timezone=<_tz:gPatStr>\s+device_name="CR[^"]*"\s+device_id=C\d+-\w+\s+log_id=\d+\s+log_type=]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_pri:gPatSyslogPRI>?\s*<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">Cyberoam-Generic</setEventAttribute>
+
+    <when test="exist _pri">
+      <setEventAttribute attr="eventSeverity">getEventSeverityFromSyslogPriority($_pri)</setEventAttribute>
+    </when>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_body">
+      <attrKeyMap attr="policyId" key="appfilter_policy_id"/>
+      <attrKeyMap attr="appName" key="application"/>
+      <attrKeyMap attr="appName" key="application_name"/>
+      <attrKeyMap attr="webCategory" key="category"/>
+      <attrKeyMap attr="ipConnId" key="conn_id"/>
+      <attrKeyMap attr="connMode" key="connection_event"/>
+      <attrKeyMap attr="connMode" key="connevent"/>
+      <attrKeyMap attr="ipConnId" key="connid"/>
+      <attrKeyMap attr="_date" key="date"/>
+      <attrKeyMap attr="_deviceId" key="device_id"/>
+      <attrKeyMap attr="_deviceName" key="device_name"/>
+      <attrKeyMap attr="direction" key="dir_disp"/>
+      <attrKeyMap attr="destGeoCountryCode" key="dst_country_code"/>
+      <attrKeyMap attr="destIpAddr" key="dst_ip"/>
+      <attrKeyMap attr="destIpPort" key="dst_port"/>
+      <attrKeyMap attr="destFwZone" key="dstzonetype"/>
+      <attrKeyMap attr="fwConnMonDuration" key="duration"/>
+      <attrKeyMap attr="fwRule" key="fw_rule_id"/>
+      <attrKeyMap attr="httpStatusCode" key="httpresponsecode"/>
+      <attrKeyMap attr="accessCtlPolicyId" key="iap"/>
+      <attrKeyMap attr="icmpCode" key="icmp_code"/>
+      <attrKeyMap attr="icmpType" key="icmp_type"/>
+      <attrKeyMap attr="srcIntfName" key="in_interface"/>
+      <attrKeyMap attr="ipsPolicyId" key="ips_policy_id"/>
+      <attrKeyMap attr="_component" key="log_component"/>
+      <attrKeyMap attr="_logId" key="log_id"/>
+      <attrKeyMap attr="_subtype" key="log_subtype"/>
+      <attrKeyMap attr="_type" key="log_type"/>
+      <attrKeyMap attr="destIntfName" key="out_interface"/>
+      <attrKeyMap attr="_priority" key="priority"/>
+      <attrKeyMap attr="_ipProto" key="proto"/>
+      <attrKeyMap attr="_ipProto" key="protocol"/>
+      <attrKeyMap attr="recvPkts" key="received_pkts"/>
+      <attrKeyMap attr="sentPkts" key="sent_pkts"/>
+      <attrKeyMap attr="srcGeoCountryCode" key="src_country_code"/>
+      <attrKeyMap attr="srcIpAddr" key="src_ip"/>
+      <attrKeyMap attr="srcMACAddr" key="src_mac"/>
+      <attrKeyMap attr="srcIpPort" key="src_port"/>
+      <attrKeyMap attr="srcFwZone" key="srczonetype"/>
+      <attrKeyMap attr="fwAction" key="status"/>
+      <attrKeyMap attr="_time" key="time"/>
+      <attrKeyMap attr="_tz" key="timezone"/>
+      <attrKeyMap attr="postNATDestIpAddr" key="trans_dst_ip"/>
+      <attrKeyMap attr="postNATDestIpPort" key="trans_dst_port"/>
+      <attrKeyMap attr="postNATSrcIpAddr" key="trans_src_ip"/>
+      <attrKeyMap attr="postNATSrcIpPort" key="trans_src_port"/>
+      <attrKeyMap attr="infoURL" key="url"/>
+      <attrKeyMap attr="userGrp" key="user_gp"/>
+      <attrKeyMap attr="userGrp" key="user_group"/>
+      <attrKeyMap attr="user" key="user_name"/>
+      <attrKeyMap attr="ipId" key="vconn_id"/>
+      <attrKeyMap attr="ipId" key="vconnid"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist _ipProto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_ipProto)</setEventAttribute>
+    </when>
+
+    <setEventAttribute attr="_type">replaceStringByRegex($_type, "\s+", "")</setEventAttribute>
+    <choose>
+      <when test="exist fwAction">
+        <setEventAttribute attr="eventType">combineMsgId("Cyberoam-", $_type, "-", $fwAction)</setEventAttribute>
+      </when>
+      <when test="exist _subtype">
+        <setEventAttribute attr="eventType">combineMsgId("Cyberoam-", $_type, "-", $_subtype)</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

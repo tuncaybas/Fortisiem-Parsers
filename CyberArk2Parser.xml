@@ -1,0 +1,42 @@
+<eventParser name="CyberArk2Parser">
+  <deviceType>
+    <Vendor>CyberArk</Vendor>
+    <Model>Enterprise Password Vault</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patMod"><![CDATA[AIM|OPM]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+CyberArk\s+<:patMod>\[\d+\]:\s]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<30>Mar 22 20:13:42 VA461_1022 CyberArk AIM[2453]: APPAP097I Connection to the Vault has been restored]]></testEvent>
+    <testEvent><![CDATA[<27>Mar 22 20:10:50 VA461_1022 CyberArk AIM[2453]: APPAP289E Connection to the Vault has failed. Further attempts to connect to the Vault will be avoided for [1] minutes.]]></testEvent>
+    <testEvent><![CDATA[<27>Mar 24 23:41:58 VA461_1022 CyberArk AIM[2453]: APPAU002E Provider [Prov_VA461_1022] has failed to fetch password with query [Safe=TestPutta;Object=Telnet91] for application [AccelOps]. Fetch reason: [APPAP004E Password object matching query [Safe=TestPutta;Object=Telnet91] was not found (Diagnostic Info: 5). Please check that there is a password object that answers your query in the Vault and that both the Provider and the application user have the appropriate permissions needed in order to use the password.]]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatHostName>\s+CyberArk\s+<:patMod>\[\d+\]:\s+<:gPatStr>\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+
+    <choose>
+      <when test="matches($_body, '^Connection to the Vault has been restored\b')">
+        <setEventAttribute attr="eventType">CyberArk-Vault-Connection-restored</setEventAttribute>
+      </when>
+      <when test="matches($_body, '^Connection to the Vault has failed\.')">
+        <setEventAttribute attr="eventType">CyberArk-Vault-Connection-failed</setEventAttribute>
+      </when>
+      <when test="matches($_body, '^Provider .+ has failed to fetch password with query ')">
+        <setEventAttribute attr="eventType">CyberArk-Vault-fetch-password-failed</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">CyberArk-Vault-Generic</setEventAttribute>
+      </otherwise>
+    </choose>
+  </parsingInstructions>
+</eventParser>

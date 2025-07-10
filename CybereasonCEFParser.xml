@@ -1,0 +1,209 @@
+<eventParser name="CybereasonCEFParser">
+  <deviceType>
+    <Vendor>Cybereason</Vendor>
+    <Model>Cybereason</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[Feb 10 13:06:43 xxxx syslogLogger CEF:0|Cybereason|Cybereason||Malop|Malop Created|10|cs1Label=malopId cs1=11.-1587922454714582908 cs2Label=malopDetectionType cs2=CNC cs3Label=malopActivityType cs3=MALICIOUS_INFECTION cs4Label=malopSuspect cs4=powershell.exe cs5Label=malopKeySuspicion cs5=Malicious use of PowerShell / .NET deviceCustomDate1Label=malopCreationTime deviceCustomDate1=Feb 10 2021, 13:06:43 UTC deviceCustomDate2Label=malopUpdateTime deviceCustomDate2=Feb 10 2021, 13:06:43 UTC cn1Label=affectedMachinesCount cn1=1 cn2Label=affectedUsers cn2=1 cs6Label=linkToMalop cs6=https://cripya.cybereason.net:443/#/malop/11.-1587922454714582908]]></testEvent>
+    <testEvent><![CDATA[Feb 9 08:55:48 XXXX syslogLogger CEF:0|Cybereason|Cybereason||Malop|Malop Machine Information|10|cs1Label=malopId cs1=11.7905079038751140000 cs2Label=affectedMachine cs2=MACHINE1 deviceCustomDate1Label=malopUpdateTime deviceCustomDate1=Feb 09 2021, 08:55:48 UTC cn1Label=affectedMachinesCount cn1=6]]></testEvent>
+    <testEvent><![CDATA[Feb 10 13:46:29 XXX auditSyslogLogger CEF:0|Cybereason|Cybereason||UserAction|Investigation/Query|0|cs1Label=username cs1=/user@company.com cn1Label=actionSuccess cn1=1 deviceCustomDate1Label=userActionTime deviceCustomDate1=Feb 10 2021, 13:46:29 UTC cs2Label=QueryDetails cs2=User > Process > Connection]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patStrEndSep"><![CDATA[[^|]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\s*CEF\s*:\d+\|Cybereason\|Cybereason\|(?:<:patStrEndSep>\|){3}\s*]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<hostIpAddr:gPatIpAddr>|<hostName:gPatStr>)\s+<procName:gPatStr>\s+CEF\s*:<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[CEF\s*:<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+
+    <setEventAttribute attr="eventType">Cybereason-CEF-Generic</setEventAttribute>
+
+    <when test="matches($_body, '\\\|')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "\|", "::TEMP::")</setEventAttribute>
+    </when>
+    <setEventAttribute attr="_body">replaceStrInStr($_body, "|", "::SEP::")</setEventAttribute>
+    <when test="matches($_body, '::TEMP::')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "::TEMP::", "|")</setEventAttribute>
+    </when>
+
+    <collectAndSetAttrByPos sep="::SEP::" src="$_body">
+      <attrPosMap attr="version" pos="1"/>
+      <attrPosMap attr="_devVendor" pos="2"/>
+      <attrPosMap attr="_devProduct" pos="3"/>
+      <attrPosMap attr="appVersion" pos="4"/>
+      <attrPosMap attr="signatureType" pos="5"/>
+      <attrPosMap attr="signatureName" pos="6"/>
+      <attrPosMap attr="eventSeverity" pos="7"/>
+      <attrPosMap attr="_extension" pos="8"/>
+    </collectAndSetAttrByPos>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_extension">
+      <attrKeyMap attr="_cs1Label" key="cs1Label"/>
+      <attrKeyMap attr="_cs1" key="cs1"/>
+      <attrKeyMap attr="_cs2Label" key="cs2Label"/>
+      <attrKeyMap attr="_cs2" key="cs2"/>
+      <attrKeyMap attr="_cs3Label" key="cs3Label"/>
+      <attrKeyMap attr="_cs3" key="cs3"/>
+      <attrKeyMap attr="_cs4Label" key="cs4Label"/>
+      <attrKeyMap attr="_cs4" key="cs4"/>
+      <attrKeyMap attr="_cs5Label" key="cs5Label"/>
+      <attrKeyMap attr="_cs5" key="cs5"/>
+      <attrKeyMap attr="_cs6Label" key="cs6Label"/>
+      <attrKeyMap attr="_cs6" key="cs6"/>
+      <attrKeyMap attr="_deviceCustomDate1Label" key="deviceCustomDate1Label"/>
+      <attrKeyMap attr="_deviceCustomDate1" key="deviceCustomDate1"/>
+      <attrKeyMap attr="_deviceCustomDate2Label" key="deviceCustomDate2Label"/>
+      <attrKeyMap attr="_deviceCustomDate2" key="deviceCustomDate2"/>
+      <attrKeyMap attr="_cn1Label" key="cn1Label"/>
+      <attrKeyMap attr="_cn1" key="cn1"/>
+      <attrKeyMap attr="_cn2Label" key="cn2Label"/>
+      <attrKeyMap attr="_cn2" key="cn2"/>
+    </collectFieldsByKeyValuePair>
+
+    <choose>
+      <when test="not_exist _cs1Label"/>
+      <when test="not_exist _cs1"/>
+      <when test="$_cs1Label = 'malopId'">
+        <setEventAttribute attr="sessionId">$_cs1</setEventAttribute>
+      </when>
+      <when test="$_cs1Label = 'username'">
+        <setEventAttribute attr="userId">$_cs1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs2Label"/>
+      <when test="not_exist _cs2"/>
+      <when test="$_cs2Label = 'malopDetectionType'">
+        <setEventAttribute attr="threatType">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label = 'affectedMachine'">
+        <setEventAttribute attr="targetHostName">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label = 'QueryDetails'">
+        <setEventAttribute attr="action">$_cs2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs3Label"/>
+      <when test="not_exist _cs3"/>
+      <when test="$_cs3Label = 'malopActivityType'">
+        <setEventAttribute attr="type">$_cs3</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs4Label"/>
+      <when test="not_exist _cs4"/>
+      <when test="$_cs4Label = 'malopSuspect'">
+        <setEventAttribute attr="swProcName">$_cs4</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs5Label"/>
+      <when test="not_exist _cs5"/>
+      <when test="$_cs5Label = 'malopKeySuspicion'">
+        <setEventAttribute attr="msg">$_cs5</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs6Label"/>
+      <when test="not_exist _cs6"/>
+      <when test="$_cs6Label = 'linkToMalop'">
+        <setEventAttribute attr="infoURL">$_cs6</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cn1Label"/>
+      <when test="not_exist _cn1"/>
+      <when test="$_cn1Label = 'actionSuccess'">
+        <setEventAttribute attr="isSuccess">$_cn1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cn2Label"/>
+      <when test="not_exist _cn2"/>
+      <when test="$_cn2Label = 'affectedUsers'">
+        <setEventAttribute attr="userId">$_cn2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _deviceCustomDate1Label"/>
+      <when test="not_exist _deviceCustomDate1"/>
+      <when test="$_deviceCustomDate1Label = 'malopCreationTime'">
+        <setEventAttribute attr="_createTime">$_deviceCustomDate1</setEventAttribute>
+      </when>
+      <when test="$_deviceCustomDate1Label = 'userActionTime'">
+        <setEventAttribute attr="_actionTime">$_deviceCustomDate1</setEventAttribute>
+      </when>
+      <when test="$_deviceCustomDate1Label = 'malopUpdateTime'">
+        <setEventAttribute attr="_updateTime">$_deviceCustomDate1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _deviceCustomDate2Label"/>
+      <when test="not_exist _deviceCustomDate2"/>
+      <when test="$_deviceCustomDate2Label = 'malopUpdateTime'">
+        <setEventAttribute attr="_updateTime">$_deviceCustomDate2</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _createTime">
+      <collectFieldsByRegex src="$_createTime">
+        <!--Feb 10 2021, 13:06:43 UTC-->
+        <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>,\s*<_time:gPatTime>\s+<_tz:gPatStr>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="createTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <when test="exist _updateTime">
+      <collectFieldsByRegex src="$_updateTime">
+        <!--Feb 10 2021, 13:06:43 UTC-->
+        <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>,\s*<_time:gPatTime>\s+<_tz:gPatStr>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="updateTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <when test="exist _actionTime">
+      <collectFieldsByRegex src="$_actionTime">
+        <!--Feb 10 2021, 13:06:43 UTC-->
+        <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>,\s*<_time:gPatTime>\s+<_tz:gPatStr>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="actionTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="$signatureType = 'UserAction'">
+        <setEventAttribute attr="eventType">"Cybereason-UserAction"</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">combineMsgId("Cybereason-",$signatureName)</setEventAttribute>
+        <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "\s+", "-")</setEventAttribute>
+      </otherwise>
+    </choose>
+  </parsingInstructions>
+</eventParser>

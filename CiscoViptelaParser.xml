@@ -1,0 +1,927 @@
+<eventParser name="CiscoViptelaParser">
+
+  <deviceType>
+    <Vendor>Cisco</Vendor>
+    <Model>Viptela</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<187>154: *Aug 23 19:57:51.681: %Cisco-SDWAN-RP_0-OMPD-3-ERRO-400002: R0/0: OMPD: vSmart peer 1.1.1.5 state changed to Init]]></testEvent>
+    <testEvent><![CDATA[<190>430: *Dec  9 05:41:47.025: %Cisco-SDWAN-Router-OMPD-6-INFO-400005: R0/0: OMPD: Number of vSmarts connected : 2]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patSec"><![CDATA[(?:INFO|ERRO|CRIT)]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[%Cisco-SDWAN-]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[%Cisco-SDWAN-.*-<_sec:patSec>-<_id:gPatInt>]]></regex>
+    </collectFieldsByRegex>
+
+    <choose>
+      <when test="not_exist _sec"/>
+      <when test="$_sec = 'INFO'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_sec = 'ERRO'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_sec = 'CRIT'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _id"/>
+      <when test="$_id = '1000001'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_IF_STATE</setEventAttribute>
+      </when>
+      <when test="$_id = '1000002'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_INIT_FAIL</setEventAttribute>
+      </when>
+      <when test="$_id = '1000003'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_CONFD_FAIL</setEventAttribute>
+      </when>
+      <when test="$_id = '1000004'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_ROUTE_ADD_FAIL</setEventAttribute>
+      </when>
+      <when test="$_id = '1000005'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_SIGTERM</setEventAttribute>
+      </when>
+      <when test="$_id = '1000006'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_RTM_DECODE_FAIL</setEventAttribute>
+      </when>
+      <when test="$_id = '1000007'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_TTM_UP</setEventAttribute>
+      </when>
+      <when test="$_id = '1000008'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_TTM_DOWN</setEventAttribute>
+      </when>
+      <when test="$_id = '1000009'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_BFD_STATE</setEventAttribute>
+      </when>
+      <when test="$_id = '100001'">
+        <setEventAttribute attr="_eventType">CHMGR_SYSLOG_START</setEventAttribute>
+      </when>
+      <when test="$_id = '1000010'">
+        <setEventAttribute attr="_eventType">FTMP_SYSLOG_SPURIOUS_TIMER</setEventAttribute>
+      </when>
+      <when test="$_id = '1000011'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_FP_COREDUMP</setEventAttribute>
+      </when>
+      <when test="$_id = '1000012'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_FIB_GROW</setEventAttribute>
+      </when>
+      <when test="$_id = '1000013'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_FP_CORE_FAIL</setEventAttribute>
+      </when>
+      <when test="$_id = '1000014'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_IFADD_FAIL</setEventAttribute>
+      </when>
+      <when test="$_id = '1000015'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_TUNNEL_ADD_FAIL</setEventAttribute>
+      </when>
+      <when test="$_id = '1000016'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_PMTU_LOWERED</setEventAttribute>
+      </when>
+      <when test="$_id = '1000017'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_PIM_DOWN</setEventAttribute>
+      </when>
+      <when test="$_id = '1000018'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_PIM_UP</setEventAttribute>
+      </when>
+      <when test="$_id = '1000019'">
+        <setEventAttribute attr="_eventType">FTMD_TUNNEL_SLA_CHANGED</setEventAttribute>
+      </when>
+      <when test="$_id = '1000020'">
+        <setEventAttribute attr="_eventType">FTMD_SLA_CLASS_ADD</setEventAttribute>
+      </when>
+      <when test="$_id = '1000021'">
+        <setEventAttribute attr="_eventType">FTMD_SLA_CLASS_MOD</setEventAttribute>
+      </when>
+      <when test="$_id = '1000022'">
+        <setEventAttribute attr="_eventType">FTMD_SLA_CLASS_DEL</setEventAttribute>
+      </when>
+      <when test="$_id = '1000023'">
+        <setEventAttribute attr="_eventType">FTMD_SLA_CLASS_VIOLATION</setEventAttribute>
+      </when>
+      <when test="$_id = '1000024'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_DPI_FLOW_OOM</setEventAttribute>
+      </when>
+      <when test="$_id = '1000025'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_WWAN_STATE</setEventAttribute>
+      </when>
+      <when test="$_id = '1000026'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_FLOW_LOG</setEventAttribute>
+      </when>
+      <when test="$_id = '1000027'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_LR_ADD</setEventAttribute>
+      </when>
+      <when test="$_id = '1000028'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_LR_DEL</setEventAttribute>
+      </when>
+      <when test="$_id = '1000029'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_LR_UP</setEventAttribute>
+      </when>
+      <when test="$_id = '100003'">
+        <setEventAttribute attr="_eventType">CHMGR_FAN_SPEED_HIGH</setEventAttribute>
+      </when>
+      <when test="$_id = '1000030'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_LR_DOWN</setEventAttribute>
+      </when>
+      <when test="$_id = '1000031'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_DOT1X_HOST</setEventAttribute>
+      </when>
+      <when test="$_id = '1000032'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_DPI_WRITE_OFF</setEventAttribute>
+      </when>
+      <when test="$_id = '1000033'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_ROUTE_VERIFY</setEventAttribute>
+      </when>
+      <when test="$_id = '1000034'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_ROUTE_VERIFY_FAIL</setEventAttribute>
+      </when>
+      <when test="$_id = '1000035'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_TCPD_STATE</setEventAttribute>
+      </when>
+      <when test="$_id = '1000036'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_DBGD_STATE</setEventAttribute>
+      </when>
+      <when test="$_id = '1000037'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_ZBFW_FLOW_ADD</setEventAttribute>
+      </when>
+      <when test="$_id = '1000038'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_ZBFW_FLOW_DEL</setEventAttribute>
+      </when>
+      <when test="$_id = '1000039'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_NAT_FLOW_ADD</setEventAttribute>
+      </when>
+      <when test="$_id = '100004'">
+        <setEventAttribute attr="_eventType">CHMGR_FAN_SPEED_NORMAL</setEventAttribute>
+      </when>
+      <when test="$_id = '1000040'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_NAT_FLOW_DELETE</setEventAttribute>
+      </when>
+      <when test="$_id = '100005'">
+        <setEventAttribute attr="_eventType">CHMGR_PORT_INSERTED</setEventAttribute>
+      </when>
+      <when test="$_id = '100006'">
+        <setEventAttribute attr="_eventType">CHMGR_PORT_REMOVED</setEventAttribute>
+      </when>
+      <when test="$_id = '100007'">
+        <setEventAttribute attr="_eventType">CHMGR_MODULE_INSERTED</setEventAttribute>
+      </when>
+      <when test="$_id = '100008'">
+        <setEventAttribute attr="_eventType">CHMGR_MODULE_REMOVED</setEventAttribute>
+      </when>
+      <when test="$_id = '100009'">
+        <setEventAttribute attr="_eventType">CHMGR_CHASSIS_INFO</setEventAttribute>
+      </when>
+      <when test="$_id = '100010'">
+        <setEventAttribute attr="_eventType">CHMGR_GET_HWADDR_FAILED</setEventAttribute>
+      </when>
+      <when test="$_id = '100011'">
+        <setEventAttribute attr="_eventType">CHMGR_EEPROM_READ_FAILED</setEventAttribute>
+      </when>
+      <when test="$_id = '100012'">
+        <setEventAttribute attr="_eventType">CHMGR_EEPROM_VERSION_ERROR</setEventAttribute>
+      </when>
+      <when test="$_id = '100013'">
+        <setEventAttribute attr="_eventType">CHMGR_UNKNOWN_MODULE_TYPE</setEventAttribute>
+      </when>
+      <when test="$_id = '100014'">
+        <setEventAttribute attr="_eventType">CHMGR_UNSUPPORTED_MODULE_TYPE</setEventAttribute>
+      </when>
+      <when test="$_id = '100015'">
+        <setEventAttribute attr="_eventType">CHMGR_IF_RENAME_FAILED</setEventAttribute>
+      </when>
+      <when test="$_id = '100016'">
+        <setEventAttribute attr="_eventType">CHMGR_GET_IFFLAG_FAILED</setEventAttribute>
+      </when>
+      <when test="$_id = '100017'">
+        <setEventAttribute attr="_eventType">CHMGR_SET_IFFLAG_FAILED</setEventAttribute>
+      </when>
+      <when test="$_id = '100018'">
+        <setEventAttribute attr="_eventType">CHMGR_SHORT_RESET_REQUEST</setEventAttribute>
+      </when>
+      <when test="$_id = '100019'">
+        <setEventAttribute attr="_eventType">CHMGR_SHORT_RESET_CLEAR_FAILED</setEventAttribute>
+      </when>
+      <when test="$_id = '100020'">
+        <setEventAttribute attr="_eventType">CHMGR_SHORT_RESET_FAILED</setEventAttribute>
+      </when>
+      <when test="$_id = '100021'">
+        <setEventAttribute attr="_eventType">CHMGR_CONFD_INIT_FAILED</setEventAttribute>
+      </when>
+      <when test="$_id = '100022'">
+        <setEventAttribute attr="_eventType">CHMGR_CONFD_REPLY_FAILED</setEventAttribute>
+      </when>
+      <when test="$_id = '100023'">
+        <setEventAttribute attr="_eventType">CHMGR_CONFD_DATACB_REGISTER_FAILED</setEventAttribute>
+      </when>
+      <when test="$_id = '100024'">
+        <setEventAttribute attr="_eventType">CHMGR_SIGTERM</setEventAttribute>
+      </when>
+      <when test="$_id = '100025'">
+        <setEventAttribute attr="_eventType">CHMGR_IF_GSO_OFF_FAILED</setEventAttribute>
+      </when>
+      <when test="$_id = '100026'">
+        <setEventAttribute attr="_eventType">CHMGR_TEMP_FAULT</setEventAttribute>
+      </when>
+      <when test="$_id = '100027'">
+        <setEventAttribute attr="_eventType">CHMGR_TEMP_OK</setEventAttribute>
+      </when>
+      <when test="$_id = '100028'">
+        <setEventAttribute attr="_eventType">CHMGR_TEMP_RED</setEventAttribute>
+      </when>
+      <when test="$_id = '100029'">
+        <setEventAttribute attr="_eventType">CHMGR_TEMP_YELLOW</setEventAttribute>
+      </when>
+      <when test="$_id = '100030'">
+        <setEventAttribute attr="_eventType">CHMGR_TEMP_GREEN</setEventAttribute>
+      </when>
+      <when test="$_id = '100035'">
+        <setEventAttribute attr="_eventType">CHMGR_SPURIOUS_TIMER</setEventAttribute>
+      </when>
+      <when test="$_id = '100036'">
+        <setEventAttribute attr="_eventType">CHMGR_FLASH_FAULT</setEventAttribute>
+      </when>
+      <when test="$_id = '100037'">
+        <setEventAttribute attr="_eventType">CHMGR_FLASH_OK</setEventAttribute>
+      </when>
+      <when test="$_id = '100038'">
+        <setEventAttribute attr="_eventType">CHMGR_EMMC_FAULT</setEventAttribute>
+      </when>
+      <when test="$_id = '100039'">
+        <setEventAttribute attr="_eventType">CHMGR_EMMC_OK</setEventAttribute>
+      </when>
+      <when test="$_id = '100040'">
+        <setEventAttribute attr="_eventType">CHMGR_FAN_FAULT</setEventAttribute>
+      </when>
+      <when test="$_id = '100041'">
+        <setEventAttribute attr="_eventType">CHMGR_FAN_OK</setEventAttribute>
+      </when>
+      <when test="$_id = '100042'">
+        <setEventAttribute attr="_eventType">CHMGR_PEM_FAULT</setEventAttribute>
+      </when>
+      <when test="$_id = '100043'">
+        <setEventAttribute attr="_eventType">CHMGR_PEM_OK</setEventAttribute>
+      </when>
+      <when test="$_id = '100044'">
+        <setEventAttribute attr="_eventType">CHMGR_PEM_DOWN</setEventAttribute>
+      </when>
+      <when test="$_id = '100045'">
+        <setEventAttribute attr="_eventType">CHMGR_PEM_OPER</setEventAttribute>
+      </when>
+      <when test="$_id = '100046'">
+        <setEventAttribute attr="_eventType">CHMGR_SDCARD_FAULT</setEventAttribute>
+      </when>
+      <when test="$_id = '100047'">
+        <setEventAttribute attr="_eventType">CHMGR_SDCARD_OK</setEventAttribute>
+      </when>
+      <when test="$_id = '100049'">
+        <setEventAttribute attr="_eventType">CHMGR_SYSOUT_OF_RESOURCES</setEventAttribute>
+      </when>
+      <when test="$_id = '100050'">
+        <setEventAttribute attr="_eventType">CHMGR_IFFLAGS_SET_FAIL</setEventAttribute>
+      </when>
+      <when test="$_id = '100051'">
+        <setEventAttribute attr="_eventType">CHMGR_HOTSWAP_DIFF_MOD</setEventAttribute>
+      </when>
+      <when test="$_id = '100052'">
+        <setEventAttribute attr="_eventType">CHMGR_FANTRAY_INSERTED</setEventAttribute>
+      </when>
+      <when test="$_id = '100053'">
+        <setEventAttribute attr="_eventType">CHMGR_FANTRAY_REMOVED</setEventAttribute>
+      </when>
+      <when test="$_id = '100054'">
+        <setEventAttribute attr="_eventType">CHMGR_FANTRAY_DOWN</setEventAttribute>
+      </when>
+      <when test="$_id = '100055'">
+        <setEventAttribute attr="_eventType">CHMGR_FANTRAY_OPER</setEventAttribute>
+      </when>
+      <when test="$_id = '100056'">
+        <setEventAttribute attr="_eventType">CHMGR_PIM_FAULT</setEventAttribute>
+      </when>
+      <when test="$_id = '100057'">
+        <setEventAttribute attr="_eventType">CHMGR_PIM_OK</setEventAttribute>
+      </when>
+      <when test="$_id = '100058'">
+        <setEventAttribute attr="_eventType">CHMGR_USB_INSERTED</setEventAttribute>
+      </when>
+      <when test="$_id = '100059'">
+        <setEventAttribute attr="_eventType">CHMGR_USB_REMOVED</setEventAttribute>
+      </when>
+      <when test="$_id = '10060'">
+        <setEventAttribute attr="_eventType">CHMGR_SFP_UNSUPPORTED</setEventAttribute>
+      </when>
+      <when test="$_id = '1100001'">
+        <setEventAttribute attr="_eventType">FPMD_SYSLOG_START</setEventAttribute>
+      </when>
+      <when test="$_id = '1100002'">
+        <setEventAttribute attr="_eventType">FPMD_SYSLOG_POLICY_PROGRAM_FAILED</setEventAttribute>
+      </when>
+      <when test="$_id = '1100003'">
+        <setEventAttribute attr="_eventType">FPMD_SYSLOG_ACL_PROGRAM_FAILED</setEventAttribute>
+      </when>
+      <when test="$_id = '1100004'">
+        <setEventAttribute attr="_eventType">FPMD_SYSLOG_POLICY_PROGRAM_SUCCESS</setEventAttribute>
+      </when>
+      <when test="$_id = '1100005'">
+        <setEventAttribute attr="_eventType">FPMD_SYSLOG_ACL_PROGRAM_SUCCESS</setEventAttribute>
+      </when>
+      <when test="$_id = '1199999'">
+        <setEventAttribute attr="_eventType">FPMD_SYSLOG_END</setEventAttribute>
+      </when>
+      <when test="$_id = '1300001'">
+        <setEventAttribute attr="_eventType">DHCP_SYSLOG_END</setEventAttribute>
+      </when>
+      <when test="$_id = '1300002'">
+        <setEventAttribute attr="_eventType">DHCP_SYSLOG_IP_ADDR_ASSIGNED</setEventAttribute>
+      </when>
+      <when test="$_id = '1300003'">
+        <setEventAttribute attr="_eventType">DHCP_SYSLOG_IP_ADDR_RELEASED</setEventAttribute>
+      </when>
+      <when test="$_id = '1300004'">
+        <setEventAttribute attr="_eventType">DHCP_SYSLOG_IP_ADDR_REQUEST_RENEW</setEventAttribute>
+      </when>
+      <when test="$_id = '1300005'">
+        <setEventAttribute attr="_eventType">DHCP_SYSLOG_DISCOVER_TIMEOUT</setEventAttribute>
+      </when>
+      <when test="$_id = '1300006'">
+        <setEventAttribute attr="_eventType">DHCP_SYSLOG_CLEAR_INTERFACE</setEventAttribute>
+      </when>
+      <when test="$_id = '1300007'">
+        <setEventAttribute attr="_eventType">DHCP_SYSLOG_IP_ADDR_CONFLICT</setEventAttribute>
+      </when>
+      <when test="$_id = '1300008'">
+        <setEventAttribute attr="_eventType">DHCP_SYSLOG_CLEAR_SERVER_BINDINGS</setEventAttribute>
+      </when>
+      <when test="$_id = '1300010'">
+        <setEventAttribute attr="_eventType">DHCP_SYSLOG_IP_ADDR_RENEWED</setEventAttribute>
+      </when>
+      <when test="$_id = '1399999'">
+        <setEventAttribute attr="_eventType">DHCP_SYSLOG_START</setEventAttribute>
+      </when>
+      <when test="$_id = '1400001'">
+        <setEventAttribute attr="_eventType">VCONFD_SYSLOG_END</setEventAttribute>
+      </when>
+      <when test="$_id = '1400002'">
+        <setEventAttribute attr="_eventType">TRACKER_SYSLOG_NOTIFICATION</setEventAttribute>
+      </when>
+      <when test="$_id = '1499999'">
+        <setEventAttribute attr="_eventType">VCONFD_SYSLOG_START</setEventAttribute>
+      </when>
+      <when test="$_id = '1500001'">
+        <setEventAttribute attr="_eventType">LIBCHMGR_SYSLOG_START</setEventAttribute>
+      </when>
+      <when test="$_id = '1599999'">
+        <setEventAttribute attr="_eventType">LIBCHMGR_SYSLOG_END</setEventAttribute>
+      </when>
+      <when test="$_id = '1600001'">
+        <setEventAttribute attr="_eventType">LIBBSS_SYSLOG_START</setEventAttribute>
+      </when>
+      <when test="$_id = '1699999'">
+        <setEventAttribute attr="_eventType">LIBBSS_SYSLOG_END</setEventAttribute>
+      </when>
+      <when test="$_id = '1700001'">
+        <setEventAttribute attr="_eventType">TRACKER_SYSLOG_END</setEventAttribute>
+      </when>
+      <when test="$_id = '1700002'">
+        <setEventAttribute attr="_eventType">TRACKER_SYSLOG_CONN_UP</setEventAttribute>
+      </when>
+      <when test="$_id = '1700003'">
+        <setEventAttribute attr="_eventType">TRACKER_SYSLOG_CONN_DOWN</setEventAttribute>
+      </when>
+      <when test="$_id = '1799999'">
+        <setEventAttribute attr="_eventType">TRACKER_SYSLOG_START</setEventAttribute>
+      </when>
+      <when test="$_id = '1800001'">
+        <setEventAttribute attr="_eventType">IGMP_SYSLOG_END</setEventAttribute>
+      </when>
+      <when test="$_id = '1899999'">
+        <setEventAttribute attr="_eventType">IGMP_SYSLOG_START</setEventAttribute>
+      </when>
+      <when test="$_id = '1900001'">
+        <setEventAttribute attr="_eventType">IGMP_SYSLOG_END</setEventAttribute>
+      </when>
+      <when test="$_id = '1900002'">
+        <setEventAttribute attr="_eventType">PIM_SYSLOG_NBR_STATE_CHANGE</setEventAttribute>
+      </when>
+      <when test="$_id = '1900003'">
+        <setEventAttribute attr="_eventType">PIM_SYSLOG_IF_STATE_CHANGE</setEventAttribute>
+      </when>
+      <when test="$_id = '1900004'">
+        <setEventAttribute attr="_eventType">PIM_SYSLOG_TUNNEL_STATE_CHANGE</setEventAttribute>
+      </when>
+      <when test="$_id = '1999999'">
+        <setEventAttribute attr="_eventType">FTMD_SYSLOG_END</setEventAttribute>
+      </when>
+      <when test="$_id = '2000001'">
+        <setEventAttribute attr="_eventType">RESOLV_SYSLOG_END</setEventAttribute>
+      </when>
+      <when test="$_id = '200001'">
+        <setEventAttribute attr="_eventType">SYSMGR_SIGTERM</setEventAttribute>
+      </when>
+      <when test="$_id = '200002'">
+        <setEventAttribute attr="_eventType">SYSMGR_SYSTEM_START</setEventAttribute>
+      </when>
+      <when test="$_id = '200003'">
+        <setEventAttribute attr="_eventType">SYSMGR_CONFD_FORK_FAILURE</setEventAttribute>
+      </when>
+      <when test="$_id = '200004'">
+        <setEventAttribute attr="_eventType">SYSMGR_CONFD_SETPGID_FAILURE</setEventAttribute>
+      </when>
+      <when test="$_id = '200005'">
+        <setEventAttribute attr="_eventType">SYSMGR_CONFD_PHASE1_FAILURE</setEventAttribute>
+      </when>
+      <when test="$_id = '200006'">
+        <setEventAttribute attr="_eventType">SYSMGR_CONFD_PHASE2_FAILURE</setEventAttribute>
+      </when>
+      <when test="$_id = '200007'">
+        <setEventAttribute attr="_eventType">SYSMGR_CONFD_PHASE2_SUCCESS</setEventAttribute>
+      </when>
+      <when test="$_id = '200008'">
+        <setEventAttribute attr="_eventType">SYSMGR_CONFD_INIT_FAIL</setEventAttribute>
+      </when>
+      <when test="$_id = '200009'">
+        <setEventAttribute attr="_eventType">SYSMGR_CONFD_REPLY_FAIL</setEventAttribute>
+      </when>
+      <when test="$_id = '200010'">
+        <setEventAttribute attr="_eventType">SYSMGR_CONFD_DATACB_REGISTER_FAIL</setEventAttribute>
+      </when>
+      <when test="$_id = '200011'">
+        <setEventAttribute attr="_eventType">SYSMGR_DAEMON_UP</setEventAttribute>
+      </when>
+      <when test="$_id = '200012'">
+        <setEventAttribute attr="_eventType">SYSMGR_DAEMON_DOWN</setEventAttribute>
+      </when>
+      <when test="$_id = '200013'">
+        <setEventAttribute attr="_eventType">SYSMGR_DAEMON_MSGQ_FAILURE</setEventAttribute>
+      </when>
+      <when test="$_id = '200014'">
+        <setEventAttribute attr="_eventType">SYSMGR_DAEMON_FORK_FAILURE</setEventAttribute>
+      </when>
+      <when test="$_id = '200015'">
+        <setEventAttribute attr="_eventType">SYSMGR_DAEMON_SETPGID_FAILURE</setEventAttribute>
+      </when>
+      <when test="$_id = '200016'">
+        <setEventAttribute attr="_eventType">SYSMGR_DAEMON_EXECV_FAILURE</setEventAttribute>
+      </when>
+      <when test="$_id = '200017'">
+        <setEventAttribute attr="_eventType">SYSMGR_DAEMON_START</setEventAttribute>
+      </when>
+      <when test="$_id = '200018'">
+        <setEventAttribute attr="_eventType">SYSMGR_DAEMON_STOP</setEventAttribute>
+      </when>
+      <when test="$_id = '200019'">
+        <setEventAttribute attr="_eventType">SYSMGR_DAEMON_STOPPED</setEventAttribute>
+      </when>
+      <when test="$_id = '200020'">
+        <setEventAttribute attr="_eventType">SYSMGR_DAEMON_TERMINATED</setEventAttribute>
+      </when>
+      <when test="$_id = '200021'">
+        <setEventAttribute attr="_eventType">SYSMGR_DAEMON_EXIT_NORMAL</setEventAttribute>
+      </when>
+      <when test="$_id = '200022'">
+        <setEventAttribute attr="_eventType">SYSMGR_VPN_DESTROY</setEventAttribute>
+      </when>
+      <when test="$_id = '200023'">
+        <setEventAttribute attr="_eventType">SYSMGR_DAEMON_EXIT_FAIL</setEventAttribute>
+      </when>
+      <when test="$_id = '200024'">
+        <setEventAttribute attr="_eventType">SYSMGR_TRACE_ERROR</setEventAttribute>
+      </when>
+      <when test="$_id = '200025'">
+        <setEventAttribute attr="_eventType">SYSMGR_CLOCK_SET</setEventAttribute>
+      </when>
+      <when test="$_id = '200026'">
+        <setEventAttribute attr="_eventType">SYSMGR_CLOCK_SET_FAIL</setEventAttribute>
+      </when>
+      <when test="$_id = '200027'">
+        <setEventAttribute attr="_eventType">SYSMGR_RTC_CLOCK_SET_FAIL</setEventAttribute>
+      </when>
+      <when test="$_id = '200028'">
+        <setEventAttribute attr="_eventType">SYSMGR_TIMEZONE_SET</setEventAttribute>
+      </when>
+      <when test="$_id = '200029'">
+        <setEventAttribute attr="_eventType">SYSMGR_TIMEZONE_SET_FAIL</setEventAttribute>
+      </when>
+      <when test="$_id = '200030'">
+        <setEventAttribute attr="_eventType">SYSMGR_CONFD_CDB_INIT_OPEN_FAIL</setEventAttribute>
+      </when>
+      <when test="$_id = '200031'">
+        <setEventAttribute attr="_eventType">SYSMGR_CONFD_CDB_NOT_INITED</setEventAttribute>
+      </when>
+      <when test="$_id = '200032'">
+        <setEventAttribute attr="_eventType">SYSMGR_CONFD_CDB_DEL_FAIL</setEventAttribute>
+      </when>
+      <when test="$_id = '200033'">
+        <setEventAttribute attr="_eventType">SYSMGR_DAEMON_INACTIVE</setEventAttribute>
+      </when>
+      <when test="$_id = '200034'">
+        <setEventAttribute attr="_eventType">SYSMGR_DISK_ALERT_RED</setEventAttribute>
+      </when>
+      <when test="$_id = '200035'">
+        <setEventAttribute attr="_eventType">SYSMGR_DISK_ALERT_YELLOW</setEventAttribute>
+      </when>
+      <when test="$_id = '200036'">
+        <setEventAttribute attr="_eventType">SYSMGR_DISK_ALERT_OFF</setEventAttribute>
+      </when>
+      <when test="$_id = '200038'">
+        <setEventAttribute attr="_eventType">SYSMGR_REBOOT</setEventAttribute>
+      </when>
+      <when test="$_id = '200039'">
+        <setEventAttribute attr="_eventType">SYSMGR_REBOOT_HALTED</setEventAttribute>
+      </when>
+      <when test="$_id = '200040'">
+        <setEventAttribute attr="_eventType">SYSMGR_SHUTDOWN</setEventAttribute>
+      </when>
+      <when test="$_id = '200041'">
+        <setEventAttribute attr="_eventType">SYSMGR_CONFD_PHASE1_INFO</setEventAttribute>
+      </when>
+      <when test="$_id = '200042'">
+        <setEventAttribute attr="_eventType">SYSMGR_SHM_FAIL</setEventAttribute>
+      </when>
+      <when test="$_id = '200043'">
+        <setEventAttribute attr="_eventType">SYSMGR_DAEMON_RESTARTED</setEventAttribute>
+      </when>
+      <when test="$_id = '200044'">
+        <setEventAttribute attr="_eventType">SYSMGR_CORE_FILE_DELETED</setEventAttribute>
+      </when>
+      <when test="$_id = '200045'">
+        <setEventAttribute attr="_eventType">SYSMGR_CORE_FILE_COMPRESSED</setEventAttribute>
+      </when>
+      <when test="$_id = '200046'">
+        <setEventAttribute attr="_eventType">SYSMGR_BAUD_RATE_SET</setEventAttribute>
+      </when>
+      <when test="$_id = '200047'">
+        <setEventAttribute attr="_eventType">SYSMGR_BAUD_RATE_SET_FAIL</setEventAttribute>
+      </when>
+      <when test="$_id = '200049'">
+        <setEventAttribute attr="_eventType">SYSMGR_UPGRADE_NOT_CONFIRMED</setEventAttribute>
+      </when>
+      <when test="$_id = '200050'">
+        <setEventAttribute attr="_eventType">SYSMGR_SYSTEM_GREEN</setEventAttribute>
+      </when>
+      <when test="$_id = '200051'">
+        <setEventAttribute attr="_eventType">SYSMGR_SYSTEM_RED</setEventAttribute>
+      </when>
+      <when test="$_id = '200052'">
+        <setEventAttribute attr="_eventType">SYSMGR_UPGRADE_FAILED</setEventAttribute>
+      </when>
+      <when test="$_id = '200053'">
+        <setEventAttribute attr="_eventType">SYSMGR_SWITCHBACK_FAILED</setEventAttribute>
+      </when>
+      <when test="$_id = '200054'">
+        <setEventAttribute attr="_eventType">SYSMGR_DISK_ALERT_ORANGE</setEventAttribute>
+      </when>
+      <when test="$_id = '200055'">
+        <setEventAttribute attr="_eventType">SYSMGR_MEMORY_ALERT_RED</setEventAttribute>
+      </when>
+      <when test="$_id = '200056'">
+        <setEventAttribute attr="_eventType">SYSMGR_MEMORY_ALERT_ORANGE</setEventAttribute>
+      </when>
+      <when test="$_id = '200057'">
+        <setEventAttribute attr="_eventType">SYSMGR_MEMORY_ALERT_YELLOW</setEventAttribute>
+      </when>
+      <when test="$_id = '200058'">
+        <setEventAttribute attr="_eventType">SYSMGR_MEMORY_ALERT_OFF</setEventAttribute>
+      </when>
+      <when test="$_id = '200059'">
+        <setEventAttribute attr="_eventType">SYSMGR_UPGRADE_PENDING_CONFIRMATION</setEventAttribute>
+      </when>
+      <when test="$_id = '200060'">
+        <setEventAttribute attr="_eventType">SYSMGR_DAEMON_RESTART_ABORTED</setEventAttribute>
+      </when>
+      <when test="$_id = '200061'">
+        <setEventAttribute attr="_eventType">SYSMGR_DAEMON_SETAFFINITY_FAILURE</setEventAttribute>
+      </when>
+      <when test="$_id = '200062'">
+        <setEventAttribute attr="_eventType">SYSMGR_WATCHDOG_EXPIRED</setEventAttribute>
+      </when>
+      <when test="$_id = '200063'">
+        <setEventAttribute attr="_eventType">SYSMGR_UPGRADE_AUTO_CONFIRMED</setEventAttribute>
+      </when>
+      <when test="$_id = '200064'">
+        <setEventAttribute attr="_eventType">SYSMGR_FILE_DELETED</setEventAttribute>
+      </when>
+      <when test="$_id = '200065'">
+        <setEventAttribute attr="_eventType">SYSMGR_MISC</setEventAttribute>
+      </when>
+      <when test="$_id = '200066'">
+        <setEventAttribute attr="_eventType">SYSMGR_VDEBUG_LOG_CLEANUP_NEEDED</setEventAttribute>
+      </when>
+      <when test="$_id = '2099999'">
+        <setEventAttribute attr="_eventType">RESOLV_SYSLOG_START</setEventAttribute>
+      </when>
+      <when test="$_id = '2100001'">
+        <setEventAttribute attr="_eventType">SNMP_SYSLOG_END</setEventAttribute>
+      </when>
+      <when test="$_id = '2199999'">
+        <setEventAttribute attr="_eventType">SNMP_SYSLOG_START</setEventAttribute>
+      </when>
+      <when test="$_id = '2200001'">
+        <setEventAttribute attr="_eventType">CFLOWD_SYSLOG_START</setEventAttribute>
+      </when>
+      <when test="$_id = '2200002'">
+        <setEventAttribute attr="_eventType">CFLOWD_SYSLOG_MSG</setEventAttribute>
+      </when>
+      <when test="$_id = '2299999'">
+        <setEventAttribute attr="_eventType">CFLOWD_SYSLOG_END</setEventAttribute>
+      </when>
+      <when test="$_id = '2300001'">
+        <setEventAttribute attr="_eventType">WLAN_SYSLOG_END</setEventAttribute>
+      </when>
+      <when test="$_id = '2399999'">
+        <setEventAttribute attr="_eventType">WLAN_SYSLOG_START</setEventAttribute>
+      </when>
+      <when test="$_id = '2400001'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_END</setEventAttribute>
+      </when>
+      <when test="$_id = '2400002'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_CONNECT</setEventAttribute>
+      </when>
+      <when test="$_id = '2400003'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_DISCONNECT</setEventAttribute>
+      </when>
+      <when test="$_id = '2400004'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_SDK_UP</setEventAttribute>
+      </when>
+      <when test="$_id = '2400005'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_SDK_DOWN</setEventAttribute>
+      </when>
+      <when test="$_id = '2400006'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_CONNECT_DATA</setEventAttribute>
+      </when>
+      <when test="$_id = '2400007'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_FIRMWARE</setEventAttribute>
+      </when>
+      <when test="$_id = '2400008'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_ADMIN_UP</setEventAttribute>
+      </when>
+      <when test="$_id = '2400009'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_ADMIN_DOWN</setEventAttribute>
+      </when>
+      <when test="$_id = '2400010'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_ADMIN_DWL</setEventAttribute>
+      </when>
+      <when test="$_id = '2400011'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_LR_UP</setEventAttribute>
+      </when>
+      <when test="$_id = '2400012'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_LR_DOWN</setEventAttribute>
+      </when>
+      <when test="$_id = '2400013'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_OPER_UP</setEventAttribute>
+      </when>
+      <when test="$_id = '2400014'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_OPER_DOWN</setEventAttribute>
+      </when>
+      <when test="$_id = '2400015'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_TRACK_GW_UP</setEventAttribute>
+      </when>
+      <when test="$_id = '2400016'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_TRACK_GW_DOWN</setEventAttribute>
+      </when>
+      <when test="$_id = '2400017'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_MODEM_PMODE</setEventAttribute>
+      </when>
+      <when test="$_id = '2400018'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_DATA_SESSION_START</setEventAttribute>
+      </when>
+      <when test="$_id = '2400019'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_DATA_SESSION</setEventAttribute>
+      </when>
+      <when test="$_id = '2400020'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_DATA_SESSION_STATE</setEventAttribute>
+      </when>
+      <when test="$_id = '2400022'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_DATA_SESSION_STOP</setEventAttribute>
+      </when>
+      <when test="$_id = '2400023'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_DATA_SESSION_DISCONNECT</setEventAttribute>
+      </when>
+      <when test="$_id = '2400024'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_DATA_SESSION_DISC_REASON</setEventAttribute>
+      </when>
+      <when test="$_id = '2400025'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_DATA_SESSION_DISC_VERB</setEventAttribute>
+      </when>
+      <when test="$_id = '2400026'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_DATA_SESSION_DOMAIN</setEventAttribute>
+      </when>
+      <when test="$_id = '2400027'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_DATA_SESSION_NETWORK</setEventAttribute>
+      </when>
+      <when test="$_id = '2400028'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_DATA_SESSION_BEARER</setEventAttribute>
+      </when>
+      <when test="$_id = '2400029'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_DATA_SESSION_DORMANCY</setEventAttribute>
+      </when>
+      <when test="$_id = '2400030'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_PROFILE_CHECK</setEventAttribute>
+      </when>
+      <when test="$_id = '2400031'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_AUTO_PROFILE_MISS</setEventAttribute>
+      </when>
+      <when test="$_id = '2400032'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_DATA_MONITOR</setEventAttribute>
+      </when>
+      <when test="$_id = '2400033'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_SIM_STATUS</setEventAttribute>
+      </when>
+      <when test="$_id = '2400034'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_MODEM_STATE</setEventAttribute>
+      </when>
+      <when test="$_id = '2400035'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_MODEM_UP</setEventAttribute>
+      </when>
+      <when test="$_id = '2400036'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_MODEM_DOWN</setEventAttribute>
+      </when>
+      <when test="$_id = '2400037'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_MODEM_TEMP</setEventAttribute>
+      </when>
+      <when test="$_id = '2400038'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_MODEM_RESET</setEventAttribute>
+      </when>
+      <when test="$_id = '2400039'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_MODEM_ACTIVATION</setEventAttribute>
+      </when>
+      <when test="$_id = '2400040'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_REBOOT</setEventAttribute>
+      </when>
+      <when test="$_id = '2400041'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_OMA_DM_DONE</setEventAttribute>
+      </when>
+      <when test="$_id = '2499999'">
+        <setEventAttribute attr="_eventType">WWAN_SYSLOG_START</setEventAttribute>
+      </when>
+      <when test="$_id = '2500001'">
+        <setEventAttribute attr="_eventType">GPS_SYSLOG_START</setEventAttribute>
+      </when>
+      <when test="$_id = '2500002'">
+        <setEventAttribute attr="_eventType">GPS_SYSLOG_GGA_FIX</setEventAttribute>
+      </when>
+      <when test="$_id = '2500003'">
+        <setEventAttribute attr="_eventType">GPS_SYSLOG_RMC_FIX</setEventAttribute>
+      </when>
+      <when test="$_id = '2500004'">
+        <setEventAttribute attr="_eventType">GPS_SYSLOG_GSA_FIX</setEventAttribute>
+      </when>
+      <when test="$_id = '2500005'">
+        <setEventAttribute attr="_eventType">GPS_SYSLOG_PSTOP</setEventAttribute>
+      </when>
+      <when test="$_id = '2599999'">
+        <setEventAttribute attr="_eventType">GPS_SYSLOG_END</setEventAttribute>
+      </when>
+      <when test="$_id = '2600001'">
+        <setEventAttribute attr="_eventType">CONTAINER_SYSLOG_START</setEventAttribute>
+      </when>
+      <when test="$_id = '2699999'">
+        <setEventAttribute attr="_eventType">CONTAINER_SYSLOG_END</setEventAttribute>
+      </when>
+      <when test="$_id = '2700001'">
+        <setEventAttribute attr="_eventType">CXP_SYSLOG_START</setEventAttribute>
+      </when>
+      <when test="$_id = '2799999'">
+        <setEventAttribute attr="_eventType">CXP_SYSLOG_END</setEventAttribute>
+      </when>
+      <when test="$_id = '2800001'">
+        <setEventAttribute attr="_eventType">TCPD_SYSLOG_END</setEventAttribute>
+      </when>
+      <when test="$_id = '2800002'">
+        <setEventAttribute attr="_eventType">TCPD_MSGQ_SERVER</setEventAttribute>
+      </when>
+      <when test="$_id = '2800003'">
+        <setEventAttribute attr="_eventType">TCPD_SYSMGR_APP</setEventAttribute>
+      </when>
+      <when test="$_id = '2800004'">
+        <setEventAttribute attr="_eventType">TCPD_PROXY</setEventAttribute>
+      </when>
+      <when test="$_id = '2899999'">
+        <setEventAttribute attr="_eventType">TCPD_SYSLOG_START</setEventAttribute>
+      </when>
+      <when test="$_id = '2900001'">
+        <setEventAttribute attr="_eventType">DBGD_SYSLOG_END</setEventAttribute>
+      </when>
+      <when test="$_id = '2999999'">
+        <setEventAttribute attr="_eventType">DBGD_SYSLOG_START</setEventAttribute>
+      </when>
+      <when test="$_id = '300001'">
+        <setEventAttribute attr="_eventType">CFGMGR_SYSLOG_START</setEventAttribute>
+      </when>
+      <when test="$_id = '300002'">
+        <setEventAttribute attr="_eventType">CFGMGR_SYSLOG_SPURIOUS_TIMER</setEventAttribute>
+      </when>
+      <when test="$_id = '300003'">
+        <setEventAttribute attr="_eventType">CFGMGR_SYSLOG_SPEED_DUPLEX_NOT_SUPPORTED</setEventAttribute>
+      </when>
+      <when test="$_id = '300004'">
+        <setEventAttribute attr="_eventType">CFGMGR_SYSLOG_IF_STATE</setEventAttribute>
+      </when>
+      <when test="$_id = '399999'">
+        <setEventAttribute attr="_eventType">CFGMGR_SYSLOG_END</setEventAttribute>
+      </when>
+      <when test="$_id = '400001'">
+        <setEventAttribute attr="_eventType">OMP_SYSLOG_START</setEventAttribute>
+      </when>
+      <!--<187>154: *Aug 23 19:57:51.681: %Cisco-SDWAN-RP_0-OMPD-3-ERRO-400002: R0/0: OMPD: vSmart peer 1.1.1.5 state changed to Init
+             -->
+      <when test="$_id = '400002'">
+        <setEventAttribute attr="_eventType">OMP_PEER_STATE_CHANGE</setEventAttribute>
+        <collectAndSetAttrByKeyValuePair sep=" " src="$_rawmsg">
+          <attrKeyMap attr="connState" key="changed to "/>
+          <attrKeyMap attr="destIpAddr" key="vSmart peer "/>
+        </collectAndSetAttrByKeyValuePair>
+      </when>
+      <when test="$_id = '400003'">
+        <setEventAttribute attr="_eventType">OMP_STATE_CHANGE</setEventAttribute>
+      </when>
+      <when test="$_id = '400004'">
+        <setEventAttribute attr="_eventType">OMP_TLOC_STATE_CHANGE</setEventAttribute>
+      </when>
+      <!--<190>430: *Dec  9 05:41:47.025: %Cisco-SDWAN-Router-OMPD-6-INFO-400005: R0/0: OMPD: Number of vSmarts connected : 2
+             -->
+      <when test="$_id = '400005'">
+        <setEventAttribute attr="_eventType">OMP_NUMBER_OF_VSMARTS</setEventAttribute>
+        <collectAndSetAttrByKeyValuePair sep=" " src="$_rawmsg">
+          <attrKeyMap attr="vSmartConnected" key="vSmarts connected : "/>
+        </collectAndSetAttrByKeyValuePair>
+      </when>
+      <when test="$_id = '400006'">
+        <setEventAttribute attr="_eventType">OMP_SYSLOG_END</setEventAttribute>
+      </when>
+      <when test="$_id = '400007'">
+        <setEventAttribute attr="_eventType">OMP_POLICY_CHANGE</setEventAttribute>
+      </when>
+      <when test="$_id = '500001'">
+        <setEventAttribute attr="_eventType">VDAEMON_SYSLOG_START</setEventAttribute>
+      </when>
+      <when test="$_id = '500002'">
+        <setEventAttribute attr="_eventType">VDAEMON_BOARD_ID_CHALLENGE_FAILED</setEventAttribute>
+      </when>
+      <when test="$_id = '500003'">
+        <setEventAttribute attr="_eventType">VDAEMON_SYSLOG_PEER_STATE</setEventAttribute>
+      </when>
+      <when test="$_id = '500004'">
+        <setEventAttribute attr="_eventType">VDAEMON_SYSLOG_PEER_AUTH_FAIL</setEventAttribute>
+      </when>
+      <when test="$_id = '500005'">
+        <setEventAttribute attr="_eventType">VDAEMON_SYSLOG_SITE_ID_CHANGE</setEventAttribute>
+      </when>
+      <when test="$_id = '500006'">
+        <setEventAttribute attr="_eventType">VDAEMON_SYSLOG_DOMAIN_ID_CHANGE</setEventAttribute>
+      </when>
+      <when test="$_id = '500007'">
+        <setEventAttribute attr="_eventType">VDAEMON_SYSLOG_SYSTEM_IP_CHANGE</setEventAttribute>
+      </when>
+      <when test="$_id = '500008'">
+        <setEventAttribute attr="_eventType">VDAEMON_SYSLOG_ORG_NAME_CHANGE</setEventAttribute>
+      </when>
+      <when test="$_id = '500009'">
+        <setEventAttribute attr="_eventType">VDAEMON_SYSLOG_CERT_STORE_FAIL</setEventAttribute>
+      </when>
+      <when test="$_id = '599999'">
+        <setEventAttribute attr="_eventType">VDAEMON_SYSLOG_END</setEventAttribute>
+      </when>
+      <when test="$_id = '600001'">
+        <setEventAttribute attr="_eventType">VRRPD_SYSLOG_START</setEventAttribute>
+      </when>
+      <when test="$_id = '600002'">
+        <setEventAttribute attr="_eventType">VRRPD_STATE_CHANGE</setEventAttribute>
+      </when>
+      <when test="$_id = '699999'">
+        <setEventAttribute attr="_eventType">VRRPD_SYSLOG_END</setEventAttribute>
+      </when>
+      <when test="$_id = '700001'">
+        <setEventAttribute attr="_eventType">POLICY_SYSLOG_START</setEventAttribute>
+      </when>
+      <when test="$_id = '799999'">
+        <setEventAttribute attr="_eventType">POLICY_SYSLOG_END</setEventAttribute>
+      </when>
+      <when test="$_id = '800001'">
+        <setEventAttribute attr="_eventType">MSGQ_SYSLOG_START</setEventAttribute>
+      </when>
+      <when test="$_id = '899999'">
+        <setEventAttribute attr="_eventType">MSGQ_SYSLOG_END</setEventAttribute>
+      </when>
+      <when test="$_id = '900001'">
+        <setEventAttribute attr="_eventType">CVMX_SYSLOG_START</setEventAttribute>
+      </when>
+      <when test="$_id = '999999'">
+        <setEventAttribute attr="_eventType">CVMX_SYSLOG_END</setEventAttribute>
+      </when>
+    </choose>
+
+    <setEventAttribute attr="_eventType">combineMsgId("VIPTELA_", $_eventType)</setEventAttribute>
+    <setEventAttribute attr="_eventType">replaceStringByRegex($_eventType, "[\s_-]+", "-")</setEventAttribute>
+    <setEventAttribute attr="eventType">trimAttribute($_eventType, "-")</setEventAttribute>
+  </parsingInstructions>
+</eventParser>

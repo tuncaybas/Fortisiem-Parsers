@@ -1,0 +1,111 @@
+<eventParser name="CloudPassageParser">
+  <deviceType>
+    <Vendor>CloudPassage</Vendor>
+    <Model>Halo</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[[FSM-CloudPassage] [1][a.com][10.10.10.10]:{"id": "cb3d0112c57211e68572091dd19d92a2", "type": "csm_rule_failed", "name": "Configuration rule matched", "message": "Server configuration rule zxc / test matched on Windows server 2012 (1.2.3.4, i039b9cfc7671567bb).(source: Scan)", "server_id": "1f8fb232c13111e6a10113d2fb59ad2b", "created_at": "2016-12-18T22:39:10.830Z", "critical": true, "server_platform": "Windows", "server_hostname": "host1", "server_group_name": "WIN_test", "server_ip_address": "1.2.3.4", "server_reported_fqdn": "WIN-8P86VNPOH0V", "server_label": "2012", "server_primary_ip_address": "2001:0:D58:1EF1:34E4:174F:F5FE:D75F", "tag": null, "server_group_path": null, "ec2_instance_id": "i-039b9cfc7671567bb", "ec2_account_id": "856192027328", "scan_id": "cb1183acc57211e68572091dd19d92a2", "finding_id": { "n": 270014413046021232053630591725217878690, "s": "11111111-1111-1111-1111-111111111111" }, "rule_name": "zxc / test", "rule_reference_identifiers": [] }]]></testEvent>
+    <testEvent><![CDATA[2019-06-12 16:21:22 [FSM-CloudPassage] [1][a.com][10.10.10.10]:{"CVE":"CVE-2018-3639","CVE_details":{"CVE":"CVE-2018-3639","CVSS Metrics":{"access_complexity":"LOW","access_vector":"LOCAL","authentication":"NONE","availability_impact":"NONE","confidentiality_impact":"COMPLETE","generated_on":"2019-03-19T13:15:43.000Z","integrity_impact":"NONE","score":4.9000000000000004,"source":"http://nvd.nist.gov"},"created_at":null,"cwe_id":"CWE-200","last_modified":"2019-05-23T15:29:02.000Z","published":"2018-05-22T12:29:00.000Z","summary":"Systems with microprocessors utilizing speculative execution and speculative execution of memory reads before the addresses of all prior memory writes are known may allow unauthorized disclosure of information to an attacker with local user access via a side-channel analysis, aka Speculative Store Bypass (SSB), Variant 4.","updated_at":null},"CVSS":4.9000000953674316,"cpe":"not_found","created_at":"2019-06-12T06:00:54.153Z","critical":true,"finding_id":"65c9ed708cd711e9aeaf75036aff4850","highest_score":null,"id":"704cb4088cd711e9aeaf75036aff4850","message":"Vulnerable software package libvirt-daemon-driver-storage-rbd.x86_64 version 3.2.0-14.el7 was found on Linux server rdhl7 (1.2.3.4). The CVEs are CVE-2017-5715 (CVSS: 4.7),CVE-2018-1064 (CVSS: 5),CVE-2018-12126 (CVSS: 4.7),CVE-2018-12127 (CVSS: 4.7),CVE-2018-12130 (CVSS: 4.7),CVE-2018-3639 (CVSS: 4.9),CVE-2018-5748 (CVSS: 5),CVE-2019-10132 (CVSS: 6.5),CVE-2019-11091 (CVSS: 4.7). (source: Scan)","name":"Vulnerable software package found","package_name":"libvirt-daemon-driver-storage-rbd.x86_64","package_version":"3.2.0-14.el7","policy_name":"Global Events Policy","scan_id":"5f41c8a68cd711e9aeaf75036aff4850","server_group_name":"Fortinet-PoC-Server","server_group_path":"INT4 - RMS FAWS Test – Rackspace 1074822/Fortinet-PoC-Server","server_hostname":"host1","server_id":"17387164fe1a11e8acc773fd9b18da82","server_ip_address":"1.2.3.4","server_label":null,"server_platform":"Linux","server_primary_ip_address":"10.1.1.1","server_reported_fqdn":"rdhl7.4","tag":null,"type":"vulnerable_software_package_found"}]]></testEvent>
+    <testEvent><![CDATA[2019-07-16 15:15:55 [FSM-CloudPassage] [1][a.com][10.10.10.10]:{"CVE":"CVE-2019-10063","CVE_details":{"CVE":"CVE-2019-10063","CVSS Metrics":{"access_complexity":"MEDIUM","access_vector":"NETWORK","authentication":"NONE","availability_impact":"PARTIAL","confidentiality_impact":"PARTIAL","generated_on":"2019-04-25T13:33:28.000Z","integrity_impact":"PARTIAL","score":6.7999999999999998,"source":"http://nvd.nist.gov"},"created_at":null,"cwe_id":"CWE-20","last_modified":"2019-05-13T10:29:02.000Z","published":"2019-03-26T14:29:00.000Z","summary":"Flatpak before 1.0.8, 1.1.x and 1.2.x before 1.2.4, and 1.3.x before 1.3.1 allows a sandbox bypass. Flatpak versions since 0.8.1 address CVE-2017-5226 by using a seccomp filter to prevent sandboxed apps from using the TIOCSTI ioctl, which could otherwise be used to inject commands into the controlling terminal so that they would be executed outside the sandbox after the sandboxed app exits. This fix was incomplete: on 64-bit platforms, the seccomp filter could be bypassed by an ioctl request number that has TIOCSTI in its 32 least significant bits and an arbitrary nonzero value in its 32 most significant bits, which the Linux kernel would treat as equivalent to TIOCSTI.","updated_at":"2019-05-13T16:00:38.511Z"},"CVSS":6.8000001907348633,"cpe":"not_found","created_at":"2019-07-16T05:31:49.201Z","critical":true,"finding_id":"f643ecdea78a11e9b3aa698530b10c52","highest_score":null,"id":"0244e222a78b11e9b3aa698530b10c52","message":"Vulnerable software package flatpak-libs.x86_64 version 0.8.7-1.el7 was found on Linux server rdhl7 (1.1.1.1). The CVEs are CVE-2017-5226 (CVSS: 7.5),CVE-2018-6560 (CVSS: 4.6),CVE-2019-10063 (CVSS: 6.8),CVE-2019-8308 (CVSS: 4.4). (source: Scan)","name":"Vulnerable software package found","package_name":"flatpak-libs.x86_64","package_version":"0.8.7-1.el7","policy_name":"Global Events Policy","scan_id":"f5aeb7b8a78a11e9b3aa698530b10c52","server_group_name":"groupname","server_group_path":"INT4 - RMS FAWS Test – test 1074822/groupname","server_hostname":"hostname","server_id":"17387164fe1a11e8acc773fd9b18da82","server_ip_address":"1.1.1.1","server_label":null,"server_platform":"Linux","server_primary_ip_address":"1.1.1.1","server_reported_fqdn":"hostname","tag":null,"type":"vulnerable_software_package_found"}]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\[FSM-CloudPassage\]]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\[FSM-CloudPassage\]\s+\[<phCustId:gPatInt>\](?:\[<reptDevName:gPatStrRightSB>\]\[<reptDevIpAddr:gPatStrRightSB>\])?:<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="extEventRecvProto">HALO_REST_API</setEventAttribute>
+
+    <collectAndSetAttrByJSON src="$_body">
+      <attrKeyMap attr="uuid" key="id"/>
+      <attrKeyMap attr="type" key="type"/>
+      <attrKeyMap attr="eventName" key="name"/>
+      <attrKeyMap attr="description" key="message"/>
+      <attrKeyMap attr="_critical" key="critical"/>
+      <attrKeyMap attr="_created" key="created_at"/>
+      <attrKeyMap attr="policyName" key="policy_name"/>
+      <attrKeyMap attr="hostName" key="server_hostname"/>
+      <attrKeyMap attr="serverIpAddr" key="server_ip_address"/>
+      <attrKeyMap attr="fqdnName" key="server_report_fqdn"/>
+      <attrKeyMap attr="hostIpAddr" key="server_primary_ip_address"/>
+      <attrKeyMap attr="hostModel" key="server_platform"/>
+      <attrKeyMap attr="groupName" key="server_group_name"/>
+      <attrKeyMap attr="tagName" key="tag"/>
+      <attrKeyMap attr="ec2InstanceId" key="ec2_instance_id"/>
+      <attrKeyMap attr="accountId" key="ec2_account_id"/>
+      <attrKeyMap attr="newHostIpAddr" key="server_new_ip_address"/>
+      <attrKeyMap attr="userId" key="actor_key_id"/>
+      <attrKeyMap attr="user" key="actor_username"/>
+      <attrKeyMap attr="srcIpAddr" key="actor_ip_address"/>
+      <attrKeyMap attr="srcGeoCountry" key="actor_country"/>
+      <attrKeyMap attr="targetUser" key="target_username"/>
+      <attrKeyMap attr="version" key="daemon_version"/>
+      <attrKeyMap attr="ruleName" key="rule_name"/>
+      <attrKeyMap attr="ruleId" key="rule_reference_identifiers"/>
+      <attrKeyMap attr="user" key="server_account_username"/>
+      <attrKeyMap attr="userId" key="server_account_id"/>
+      <attrKeyMap attr="filePath" key="object_name"/>
+      <attrKeyMap attr="userId" key="api_key_id"/>
+      <attrKeyMap attr="fileName" key="package_name"/>
+      <attrKeyMap attr="fileVersion" key="package_version"/>
+      <attrKeyMap attr="vulnCVEId" key="CVE"/>
+      <attrKeyMap attr="vulnScore" key="CVSS"/>
+      <attrKeyMap attr="appGroupName" key="cpe"/>
+      <attrKeyMap attr="highestScoreFlag" key="highest_score"/>
+      <attrKeyMap attr="_cveDetails" key="CVE_details"/>
+    </collectAndSetAttrByJSON>
+
+    <when test="exist _created">
+      <collectFieldsByRegex src="$_created">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d{3}<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <setEventAttribute attr="eventType">combineMsgId("CloudPassage-Halo-", $type)</setEventAttribute>
+
+    <when test="exist _critical">
+      <choose>
+        <when test="$_critical = 'true'">
+          <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        </when>
+
+        <when test="$_critical = 'false'">
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist _cveDetails">
+      <collectAndSetAttrByJSON src="$_cveDetails">
+        <attrKeyMap attr="vulnCVESummary" key="summary"/>
+        <attrKeyMap attr="cweId" key="cwe_id"/>
+        <attrKeyMap attr="_cvssMetrics" key="CVSS Metrics"/>
+      </collectAndSetAttrByJSON>
+    </when>
+
+    <when test="exist _cvssMetrics">
+      <collectAndSetAttrByJSON src="$_cvssMetrics">
+        <attrKeyMap attr="cvssAccessComplexity" key="access_complexity"/>
+        <attrKeyMap attr="cvssAccessVector" key="access_vector"/>
+        <attrKeyMap attr="cvssAuthentication" key="authentication"/>
+        <attrKeyMap attr="cvssAvailabilityImpact" key="availability_impact"/>
+        <attrKeyMap attr="cvssConfidentialityImpact" key="confidentiality_impact"/>
+        <attrKeyMap attr="cvssIntegrityImpact" key="integrity_impact"/>
+        <attrKeyMap attr="_cvssGenerationOn" key="generated_on"/>
+        <attrKeyMap attr="cvssSource" key="source"/>
+      </collectAndSetAttrByJSON>
+    </when>
+
+    <when test="exist _cvssGenerationOn">
+      <collectFieldsByRegex src="$_cvssGenerationOn">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d{3}<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="cvssGenerationTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

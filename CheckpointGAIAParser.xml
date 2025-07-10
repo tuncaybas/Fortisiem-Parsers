@@ -1,0 +1,191 @@
+<eventParser name="CheckpointGAIAParser">
+  <deviceType>
+    <Vendor>Checkpoint</Vendor>
+    <Model>FireWall-1 GAIA</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patGAIAMod"><![CDATA[clish|xpand|routed]]></pattern>
+    <pattern name="patGAIAModWithoutId"><![CDATA[kernel]]></pattern>
+    <pattern name="patTP"><![CDATA[[tp]]]></pattern>
+    <pattern name="patPlusMinus"><![CDATA[[+-]]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[^\s*<:gPatSyslogPRI><:patGAIAMod>\[\d+\]:\s|^\s*<:gPatSyslogPRI><:patGAIAModWithoutId>:\s*|^\s*<:gPatSyslogPRI>\d+\s+<:gPatYear>-<:gPatMonNum>-<:gPatDay>T<:gPatTime>--\d+:\d+\s+<:gPatIpAddr>\s+<:gPatHostName>\s*-\s*Log\s*\[]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<13>clish[24110]: cmd by lastf: Processing : delete syslog log-remote-address 10.3.2.1 (cmd md5: 05e3271e406b795cb232af0e914397d4)]]></testEvent>
+    <testEvent><![CDATA[<31>routed[3450]: rt_instance_monitor_job: fired]]></testEvent>
+    <testEvent><![CDATA[<31>routed[3450]: rt_instance_monitor_job: scheduled next instance monitor in 5 seconds]]></testEvent>
+    <testEvent><![CDATA[<1>kernel: [fw4_1];FW-1: [cul_load_freeze_on_remote][CUL - Cluster] CUL state is ON for 1 seconds, remote Member 1 reporting high kernel CPU usage (90%), threshold=80%, local kernel CPU usage is 0%]]></testEvent>
+    <testEvent><![CDATA[<1>kernel: [fw4_1];FW-1: [cul_load_freeze_on_remote][CUL - Cluster] Changing CUL state to ON due to high CPU usage (97%) on remote Member 1, threshold = 80%, local kernel CPU usage is 0%]]></testEvent>
+    <testEvent><![CDATA[<85>1 2017-04-13T07:53:46--4:00 192.168.1.1 CP-GW - Log [Fields@1.3.6.1.4.1.2620 Action=" " UUid="{0x0,0x0,0x0,0x0}" log_id="4006" subs_exp="1513641600" cloud_hourly_quota="3750" cloud_monthly_quota="75000" cloud_hourly_remaining_quota="3749" cloud_remaining_quota="67463" max_vms_num="0" subscription_status="0" subscription_description="Quota subscription is valid" cloud_quota_status="0" cloud_quota_description="Quota subscription is valid" cloud_quota_identifier="72YG756" cloud_monthly_quota_period_start="1491004800" cloud_monthly_quota_period_end="1493596800" cloud_monthly_quota_usage_for_this_gw="7537" cloud_hourly_quota_usage_for_this_gw="1" cloud_monthly_quota_usage_for_quota_id="7537" cloud_hourly_quota_usage_for_quota_id="1" cloud_monthly_quota_exceeded="0" cloud_hourly_quota_exceeded="0" cloud_last_quota_update_gmt_time="1492082580" product="Threat Emulation" product_family="Network"]]]></testEvent>
+    <testEvent><![CDATA[<85>1 2017-04-13T07:53:47--4:00 192.168.1.1 CP-GW - Log [Fields@1.3.6.1.4.1.2620 UUid="{0x0,0x0,0x0,0x0}" contract_name="Anti Virus Premium Feed 3. See sk104601 for more information" subs_exp=" " Severity="0" log_id="4" subscription_stat="expired" subscription_stat_desc="Local contract entitlement returned contract expired." product="New Anti Virus" product_family="Network"]]]></testEvent>
+    <testEvent><![CDATA[<85>1 2017-04-13T07:53:46--4:00 192.168.1.1 CP-GW - Log [Fields@1.3.6.1.4.1.2620 Action=" " UUid="{0x0,0x0,0x0,0x0}" log_id="4005" file_type="zip" scanned="10" scanned_last_day="0" scanned_last_week="0" scanned_last_month="25724" malware_detected="0" malware_detected_last_day="0" malware_detected_last_week="0" malware_detected_last_month="1" threatcloud_scanned="10" threatcloud_scanned_last_day="0" threatcloud_scanned_last_week="0" threatcloud_scanned_last_month="25724" threatcloud_malware="0" threatcloud_malware_detected_last_day="0" threatcloud_malware_detected_last_week="0" threatcloud_malware_detected_last_month="1" filter_by_static_analysis="0" filter_by_static_analysis_last_day="0" filter_by_static_analysis_last_week="0" filter_by_static_analysis_last_month="0" cache_hit_rate="0" cache_hit_rate_last_day="0" cache_hit_rate_last_week="0" cache_hit_rate_last_month="363" error_count="0" error_count_last_day="0" error_count_last_week="0" error_count_last_month="198" no_resource_count="0" no_resource_count_last_day="0" no_resource_count_last_week="0" no_resource_count_last_month="0" product="Threat Emulation" product_family="Network"]]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^\s*<:gPatSyslogPRI>(?:<procName:patGAIAMod>\[\d+\]|<procName:patGAIAModWithoutId>):\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^\s*<:gPatSyslogPRI>\d+\s+<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>--\d+:\d+\s+<srcIpAddr:gPatIpAddr>\s+<hostName:gPatHostName>\s*-\s*Log\s*\[<_body:gPatStrRightSB>\]]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+    </switch>
+    <switch>
+      <!--
+      <31>routed[3450]: rt_instance_monitor_job: fired
+      -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<jobName:gPatStrEndColon>:\s+fired]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Checkpoint-GAIA-Job-Fired</setEventAttribute>
+      </case>
+      <!--
+      <31>routed[3450]: rt_instance_monitor_job: scheduled next instance monitor in 5 seconds
+      -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<jobName:gPatStrEndColon>:\s+scheduled\s+next\s+instance\s+monitor\s+in\s+\d+\s+seconds]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Checkpoint-GAIA-Job-Scheduled-Next-Monitor</setEventAttribute>
+      </case>
+
+      <case>
+        <!--
+      <1>kernel: [fw4_1];FW-1: [cul_load_freeze_on_remote][CUL - Cluster] CUL state is ON for 1 seconds, remote Member 1 reporting high kernel CPU usage (90%), threshold=80%, local kernel CPU usage is 0%
+      -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[\[<:gPatStrRightSB>\];<:gPatStrEndColon>:\s*\[<jobName:gPatStrRightSB>\]\[<:gPatStrRightSB>\]\s+CUL\s+state\s+is\s+<clusterStatus:gPatStr>\s+for\s+\d+\s+seconds,\s*remote\s*Member\s+<memberID:gPatInt>\s+reporting\s+high\s+kernel\s+CPU\s+usage\s*\(<:gPatInt>%\),\s*threshold\s*=\s*<:gPatInt>%,\s*local\s+kernel\s+CPU\s+usage\s+is\s+<kernCpuUtil:gPatInt>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Checkpoint-GAIA-CUL-State</setEventAttribute>
+      </case>
+
+      <case>
+        <!--
+       <1>kernel: [fw4_1];FW-1: [cul_load_freeze_on_remote][CUL - Cluster] Changing CUL state to ON due to high CPU usage (97%) on remote Member 1, threshold = 80%, local kernel CPU usage is 0%
+      -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[\[<:gPatStrRightSB>\];<:gPatStrEndColon>:\s*\[<jobName:gPatStrRightSB>\]\[<:gPatStrRightSB>\]\s+Changing\s+CUL\s+state\s+to\s+<clusterStatus:gPatStr>\s+due\s+to\s+high\s+CPU\s+usage\s+\(<:gPatInt>%\)\s+on\s+remote\s+Member\s+<memberID:gPatInt>,\s*threshold\s*=\s*<:gPatInt>%,\s*local\s+kernel\s+CPU\s+usage\s+is\s+<kernCpuUtil:gPatInt>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Checkpoint-GAIA-CUL-State-Changed</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[Fields@1.3.6.1.4.1.2620\s+<_subBody:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_subBody">
+          <attrKeyMap attr="_action" key="Action"/>
+          <attrKeyMap attr="uuid" key="UUid"/>
+          <attrKeyMap attr="logID" key="log_id"/>
+          <attrKeyMap attr="product" key="product"/>
+          <attrKeyMap attr="eventSeverity" key="Severity"/>
+          <attrKeyMap attr="quotaName" key="cloud_quota_identifier"/>
+
+          <attrKeyMap attr="hourlyQuota" key="cloud_hourly_quota"/>
+          <attrKeyMap attr="monthlyQuota" key="cloud_monthly_quota"/>
+          <attrKeyMap attr="hourlyRemainingQuota" key="cloud_hourly_remaining_quota"/>
+          <attrKeyMap attr="remainingQuota" key="cloud_remaining_quota"/>
+          <attrKeyMap attr="subscriptionStatus" key="subscription_status"/>
+          <attrKeyMap attr="subscriptionDesc" key="subscription_description"/>
+          <attrKeyMap attr="subscriptionStatus" key="subscription_stat"/>
+          <attrKeyMap attr="subscriptionDesc" key="subscription_stat_desc"/>
+          <attrKeyMap attr="quotaStatus" key="cloud_quota_status"/>
+          <attrKeyMap attr="quotaDesc" key="cloud_quota_description"/>
+          <attrKeyMap attr="monthlyQuotaUsage" key="cloud_monthly_quota_usage_for_this_gw"/>
+          <attrKeyMap attr="hourlyQuotaUsage" key="cloud_hourly_quota_usage_for_this_gw"/>
+          <attrKeyMap attr="monthlyQuotaUsage" key="cloud_monthly_quota_usage_for_quota_id"/>
+          <attrKeyMap attr="hourlyQuotaUsage" key="cloud_hourly_quota_usage_for_quota_id"/>
+          <attrKeyMap attr="monthlyQuotaExceeded" key="cloud_monthly_quota_exceeded"/>
+          <attrKeyMap attr="hourlyQuotaExceeded" key="cloud_hourly_quota_exceeded"/>
+          <attrKeyMap attr="lastQuotaUpdateTime" key="cloud_last_quota_update_gmt_time"/>
+          <attrKeyMap attr="productFamily" key="product_family"/>
+          <attrKeyMap attr="contractName" key="contract_name"/>
+        </collectFieldsByKeyValuePair>
+        <setEventAttribute attr="eventType">combineMsgId("Checkpoint-GAIA-", $product)</setEventAttribute>
+        <when test="exist _action">
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $_action)</setEventAttribute>
+        </when>
+        <setEventAttribute attr="eventType">replaceStrInStr($eventType, " ", "-")</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^User <user:gPatStr> logged out ]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Checkpoint-GAIA-Logout</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^\(<user:gPatStr>\) CMD \(<command:gPatMesgBody>\)]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Checkpoint-GAIA-CommandExec</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^cmd by <user:gPatStr>:<:gPatStrEndColon>:\s+<command:gPatMesgBody>\(cmd ]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Checkpoint-GAIA-CommandExec</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^Configuration changed from <:gPatHostName> by user <user:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Checkpoint-GAIA-ConfigChange</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^<user:gPatStr>\s+<:gPatHostName>\s+<_tp:patTP>\s+<_pm:patPlusMinus><_item:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+
+        <choose>
+          <when test="$_tp = 'p'">
+            <setEventAttribute attr="_tp">Permanent</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="_tp">Transient</setEventAttribute>
+          </otherwise>
+        </choose>
+
+        <choose>
+          <when test="$_pm = '+'">
+            <setEventAttribute attr="_pm">Added</setEventAttribute>
+            <setEventAttribute attr="addedItem">$_item</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="_pm">Deleted</setEventAttribute>
+            <setEventAttribute attr="deletedItem">$_item</setEventAttribute>
+          </otherwise>
+        </choose>
+
+        <choose>
+          <when test="matches($_item, '^installer:')">
+            <setEventAttribute attr="_action">InstallSoftware</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="_action">ConfigChange</setEventAttribute>
+          </otherwise>
+        </choose>
+
+        <setEventAttribute attr="eventType">combineMsgId("Checkpoint-GAIA-", $_action, "-", $_tp, "-", $_pm)</setEventAttribute>
+      </case>
+
+      <default>
+        <setEventAttribute attr="eventType">Checkpoint-GAIA-Generic</setEventAttribute>
+      </default>
+    </switch>
+  </parsingInstructions>
+</eventParser>

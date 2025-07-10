@@ -1,0 +1,132 @@
+<eventParser name="CimTrakParser">
+  <deviceType>
+    <Vendor>Cimcor</Vendor>
+    <Model>CimTrak Integrity Suite</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[2018-09-07 16:26:02	Local0.Info	192.168.4.230	CEF:0|Cimcor|CimTrak|3.2.0.0|S_LOGMSG_0000000005|Lock Started|4| start=2018-09-07 21:25:46 deviceExternalId=Demo CimTrak Repository->Windows->Server 2016->Demo - Deny Access Mode cimtrakUser=admin src=]]></testEvent>
+    <testEvent><![CDATA[2018-09-07 16:29:29	Local0.Notice	192.168.4.230	CEF:0|Cimcor|CimTrak|3.2.0.0|S_LOGMSG_0000000120|Baseline is being deployed to a monitored object group.|5| start=2018-09-07 21:29:12 deviceExternalId=Demo CimTrak Repository->Windows->Server 2016->Demo - Deny Access Mode objectDetailID=453653 cimtrakUser=Server 2016(Server 2016) src= suser=DEMO-SRV16\chandler_justin filePath=C:\Demo\Demo Deny\nmchat.dll deviceProcessName=explorer.exe cn1Label=Thread cn1=616 cn2Label=Process ID cn2=1708 cs1Label=Forensic Data cs1=Forensic Data for intrusion:\r\n	Connected Sessions for user:\r\n		The user has no sessions.\r\nOpen Connections For Process "explorer.exe"\r\nLocal Address	Local Port	Remote Address	Remote Port	State\r\n10.240.0.3	54264	->	52.165.175.144		47873		Established\r\n]]></testEvent>
+    <testEvent><![CDATA[2018-09-07 16:29:29	Local0.Notice	192.168.4.230	CEF:0|Cimcor|CimTrak|3.2.0.0|S_LOGMSG_0000000120|Baseline is being deployed to a monitored object group.|5| eventTime=2018-09-07 21:29:12 objectPath=Demo CimTrak Repository->Windows->Server 2016->Demo - Deny Access Mode objectDetailID=453653 cimtrakUser=Server 2016(Server 2016) src= sfileUser=DEMO-SRV16\chandler_justin filePath=C:\Demo\Demo Deny\nmchat.dll processName=explorer.exe threadID=616 processID=1708 forensicData=Forensic Data for intrusion:\r\n	Connected Sessions for user:\r\n		The user has no sessions.\r\nOpen Connections For Process "explorer.exe"\r\nLocal Address	Local Port	Remote Address	Remote Port	State\r\n10.240.0.3	54264	->	52.165.175.144		47873		Established\r\n |]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\bCEF:\d+\|Cimcor\|CimTrak\|]]></eventFormatRecognizer>
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\tLocal0.<_eventSeverity:gPatStr>\t<:gPatIpV4Dot>\tCEF:\d+\|Cimcor\|CimTrak\|3.2.0.0\|S_LOGMSG_0*<_eventId:gPatInt>\|<eventName:gPatMesgBodyMin>\|\d+\|<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+    </switch>
+
+    <setEventAttribute attr="eventType">combineMsgId("Cimcor-CimTrak-",$_eventId)</setEventAttribute>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="_eventTime" key="eventTime"/>
+      <attrKeyMap attr="_startTime" key="start"/>
+      <attrKeyMap attr="_srcIpAddr" key="src"/>
+      <attrKeyMap attr="procName" key="processName"/>
+      <attrKeyMap attr="filePath" key="filePath"/>
+      <attrKeyMap attr="_srcUser" key="suser"/>
+      <attrKeyMap attr="oid" key="objectDetailID"/>
+      <attrKeyMap attr="opName" key="deviceProcessName"/>
+      <attrKeyMap attr="deviceIdentification" key="deviceExternalId"/>
+      <attrKeyMap attr="_cs1" key="cs1"/>
+      <attrKeyMap attr="_errorString" key="forensicData"/>
+      <attrKeyMap attr="threadId" key="threadID"/>
+      <attrKeyMap attr="_cn1" key="cn1"/>
+      <attrKeyMap attr="_cn1Label" key="cn1Label"/>
+      <attrKeyMap attr="_cs1Label" key="cs1Label"/>
+      <attrKeyMap attr="objectPath" key="objectPath"/>
+      <attrKeyMap attr="user" key="cimtrakUser"/>
+      <attrKeyMap attr="_fileOwner" key="sfileUser"/>
+      <attrKeyMap attr="_cn2" key="cn2"/>
+      <attrKeyMap attr="procId" key="processID"/>
+      <attrKeyMap attr="_cn2Label" key="cn2Label"/>
+    </collectFieldsByKeyValuePair>
+
+    <choose>
+      <when test="$_eventSeverity IN 'Alter, Critical'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+      <when test="$_eventSeverity = 'Error'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_eventSeverity = 'Warning'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_eventSeverity = 'Notice'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$_eventSeverity = 'Info'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _eventTime">
+      <collectFieldsByRegex src="$_eventTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>\s<_time:gPatTime>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+
+    <when test="exist _startTime">
+      <collectFieldsByRegex src="$_startTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>\s<_time:gPatTime>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="startTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+
+    <when test="exist _srcIpAddr">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_srcIpAddr">
+            <regex><![CDATA[^<srcIpAddr:gPatIpAddr>$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="srcName">$_srcIpAddr</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+    <when test="exist _srcUser">
+      <collectFieldsByRegex src="$_srcUser">
+        <regex><![CDATA[<domain:gPatMesgBodyMin>[\\]<srcUser:gPatMesgBodyMin>]]></regex>
+      </collectFieldsByRegex>
+    </when>
+
+    <when test="exist _cn1Label">
+      <when test="$_cn1Label  = 'Thread'">
+        <setEventAttribute attr="threadId">$_cn1</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _cn2Label">
+      <when test="$_cn2Label  = 'Process ID'">
+        <setEventAttribute attr="procId">$_cn2</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _cs1Label">
+      <when test="$_cs1Label  = 'Forensic Data'">
+        <setEventAttribute attr="_errorString">$_cn2</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _fileOwner">
+      <collectFieldsByRegex src="$_fileOwner">
+        <regex><![CDATA[<domain:gPatMesgBodyMin>[\\]<fileOwner:gPatMesgBodyMin>]]></regex>
+      </collectFieldsByRegex>
+    </when>
+
+    <when test="exist _errorString">
+      <when test="$_errorString != ' |'">
+        <setEventAttribute attr="errorString">replaceStringByRegex($_errorString, "\\r\\n", " ")</setEventAttribute>
+      </when>
+    </when>
+  </parsingInstructions>
+</eventParser>

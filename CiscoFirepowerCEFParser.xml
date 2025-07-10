@@ -1,0 +1,179 @@
+<eventParser name="CiscoFirepowerCEFParser">
+  <deviceType>
+    <Vendor>Cisco</Vendor>
+    <Model>FirePOWER</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<13>Dec 06 14:21:17 centos7-79-yu CEF:0|Cisco|Firepower|6.0|RNA:1003:1|CONNECTION STATISTICS|3|act=Allow app=Unknown bytesOut=120 cs1=Cisco dCloud - ACP - SOC NGIPS cs1Label=fwPolicy cs2=Intra-Network Protection cs2Label=fwRule cs3=External cs3Label=ingressZone cs4=Internal cs4Label=egressZone cs5Label=secIntelCategory deviceExternalId=1 deviceInboundInterface=eth1 deviceOutboundInterface=eth2 dpt=30334 dst=10.110.1.233 dvchost=vNGIPS.dcloud.cisco.com dvcpid=5 end=1544133363000 externalId=19570 proto=17 reason=N/A requestClientApplication=Unknown rt=1544133363000 spt=33278 src=10.110.10.25 start=1544133363000 suser=bputn]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patVbar"><![CDATA[[^|]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\s*CEF:\d+\|Cisco\|Firepower\|]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>?<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatHostName>\s+CEF:\d+\|Cisco\|Firepower\|<appVersion:patVbar>\|<:patVbar>\|<_et:patVbar>\|<_sev:patVbar>\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+    <setEventAttribute attr="_et">replaceStringByRegex($_et, "\s+", "-")</setEventAttribute>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_body">
+      <attrKeyMap attr="_action" key="act"/>
+      <attrKeyMap attr="appTransportProto" key="app"/>
+      <attrKeyMap attr="sentBytes64" key="bytesOut"/>
+      <attrKeyMap attr="appCategory" key="cat"/>
+      <attrKeyMap attr="destIpPort" key="dpt"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="_destUser" key="duser"/>
+      <attrKeyMap attr="_host" key="dvchost"/>
+      <attrKeyMap attr="hashCode" key="fileHash"/>
+      <attrKeyMap attr="fileType" key="fileType"/>
+      <attrKeyMap attr="fileName" key="fname"/>
+      <attrKeyMap attr="fileSize" key="fsize"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="_proto" key="proto"/>
+      <attrKeyMap attr="infoURL" key="request"/>
+      <attrKeyMap attr="_rt" key="rt"/>
+      <attrKeyMap attr="srcIpPort" key="spt"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="_startTime" key="start"/>
+      <attrKeyMap attr="_srcUser" key="suser"/>
+      <attrKeyMap attr="_cs1" key="cs1"/>
+      <attrKeyMap attr="_cs1Label" key="cs1Label"/>
+      <attrKeyMap attr="_cs2" key="cs2"/>
+      <attrKeyMap attr="_cs2Label" key="cs2Label"/>
+      <attrKeyMap attr="_cs3" key="cs3"/>
+      <attrKeyMap attr="_cs3Label" key="cs3Label"/>
+      <attrKeyMap attr="_cs5" key="cs5"/>
+      <attrKeyMap attr="_cs5Label" key="cs5Label"/>
+      <attrKeyMap attr="_cs6" key="cs6"/>
+      <attrKeyMap attr="_cs6Label" key="cs6Label"/>
+    </collectFieldsByKeyValuePair>
+
+    <choose>
+      <when test="exist _action">
+        <setEventAttribute attr="eventType">combineMsgId("Firepower-CEF-", $_et, "-", $_action)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">combineMsgId("Firepower-CEF-", $_et)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist _srcUser">
+      <when test="$_srcUser != 'Unknown'">
+        <setEventAttribute attr="srcUser">$_srcUser</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _destUser">
+      <when test="$_destUser != 'Unknown'">
+        <setEventAttribute attr="destUser">$_destUser</setEventAttribute>
+      </when>
+    </when>
+
+    <choose>
+      <when test="exist srcUser">
+        <setEventAttribute attr="user">$srcUser</setEventAttribute>
+      </when>
+      <when test="exist destUser">
+        <setEventAttribute attr="user">$destUser</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _host">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_host">
+            <regex><![CDATA[^<hostName:gPatHostName>$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _proto">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_proto">
+            <regex><![CDATA[^<ipProto:gPatInt>$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+    <choose>
+      <when test="not_exist _cs1Label"/>
+      <when test="not_exist _cs1"/>
+      <when test="$_cs1Label IN 'policy, fwPolicy'">
+        <setEventAttribute attr="policyName">$_cs1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs2Label"/>
+      <when test="not_exist _cs2"/>
+      <when test="$_cs2Label IN 'fwRule, policyRule'">
+        <setEventAttribute attr="fwRule">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label = 'virusName'">
+        <setEventAttribute attr="virusName">$_cs2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs5Label"/>
+      <when test="not_exist _cs5"/>
+      <when test="$_cs5Label = 'eventDescription'">
+        <setEventAttribute attr="eventDesc">$_cs5</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs6Label"/>
+      <when test="not_exist _cs6"/>
+      <when test="$_cs6Label = 'ruleId'">
+        <setEventAttribute attr="ruleId">$_cs6</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _rt">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_rt">
+            <regex><![CDATA[<deviceTime:gPatInt>\d{3}]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _startTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_startTime">
+            <regex><![CDATA[<eventTime:gPatInt>\d{3}]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <choose>
+      <when test="$_sev = '0'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventSeverity">$_sev</setEventAttribute>
+      </otherwise>
+    </choose>
+  </parsingInstructions>
+</eventParser>

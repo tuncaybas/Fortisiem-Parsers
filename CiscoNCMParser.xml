@@ -1,0 +1,99 @@
+<eventParser name="CiscoNCMParser">
+  <deviceType>
+    <Vendor>Cisco</Vendor>
+    <Model>CiscoWorks NCM</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patEventName"><![CDATA[[A-Za-z ]+?]]></pattern>
+    <pattern name="patQuote"><![CDATA[[^']+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\d+\s+<:gPatWeekday>\s+<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatWord>\s+<:gPatYear>\s+<:gPatStr>\s+<:patEventName>\s+<:gPatHostName>\s+<:gPatIpAddr>\s+]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[491085271 Mon Oct 03 09:40:47 EST 2015 UserName User Login servername 10.1.2.3 User username logged in from Web. Host: foo.com]]></testEvent>
+    <testEvent><![CDATA[486649531 Tue Oct 04 01:00:05 EST 2015 user_name User Login servername 10.1.2.3 User user_admin logged in from API. Host: servername]]></testEvent>
+    <testEvent><![CDATA[455182801 Fri Nov 06 06:47:28 EST 2015 LastF Task Started servername 10.1.2.3 The following task was started:    230699941: Task Name: Take Snapshot Device: UK44157296001 (10.3.2.1) Added by: LastF (First Last) Start Date: 2015-11-06 06:47:27.0 Repeat type: Non-recurring Status: Running Comments: System Task to regularly poll for device configuration changes.  126851 10.1.2.3 $OrignatorEmail$ LastF NCM - Take Snapshot - Europe (NCMSat1GW1EU) 2011-12-21 01:30:00.0 UK44157296001 (10.3.2.1) Running System Task to regularly poll for device configuration changes.]]></testEvent>
+    <testEvent><![CDATA[455183021 Fri Nov 06 06:48:29 EST 2015 LastF Task Completed servername 10.1.2.3 The following task completed:    230699781: Task Name: Send Email Digest Added by: LastF (First Last) Start Date: 2015-11-06 06:45:00.0 Repeat type: Non-recurring Status: Succeeded Comments: System task to send email digest of system events.  $DeviceID$ $IPAddress$ $OrignatorEmail$ LastF Send Email Digest 2013-10-17 13:00:00.0 None Succeeded System task to send email digest of system events.]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\d+\s+<:gPatWeekday>\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatStr>\s+<_year:gPatYear>\s+<user:gPatStr>\s+<_eventType:patEventName>\s+<reptDevName:gPatHostName>\s+<reptDevIpAddr:gPatIpAddr>\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="_eventType">replaceStringByRegex($_eventType, "\s+", "-")</setEventAttribute>
+    <setEventAttribute attr="eventType">combineMsgId("Cisco-NCM-", $_eventType)</setEventAttribute>
+
+    <choose>
+      <when test="$_eventType = 'Device-Access-Failure'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[\bCan't open \w+ connection to <destIpAddr:gPatIpAddr> \(port <destIpPort:gPatInt>\)]]></regex>
+        </collectFieldsByRegex>
+      </when>
+
+      <when test="$_eventType = 'Device-Configuration-Change'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[\s\d+\s+<destIpAddr:gPatIpAddr>]]></regex>
+        </collectFieldsByRegex>
+      </when>
+
+      <when test="$_eventType = 'Device-Command-Script-Completed-Successfully'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^Script '<command:patQuote>' completed\.\s+Connect - Succeeded Connected via \w+ to <destIpAddr:gPatIpAddr>]]></regex>
+        </collectFieldsByRegex>
+      </when>
+
+      <when test="$_eventType = 'Module-Added'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[\sSerialNumber:\s+<serialNumber:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+      </when>
+
+      <when test="$_eventType IN 'Module-Changed, Last-Used-Device-Password-Changed'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[\s\d+\s+<destIpAddr:gPatIpAddr>\s*$]]></regex>
+        </collectFieldsByRegex>
+      </when>
+
+      <when test="$_eventType = 'Module-Removed'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^DeviceID:\s+\d+\s+Slot:\s+<hwComponentName:gPatMesgBodyMin>\s+SlotNumber:\s+.+\s+\d+\s+<destIpAddr:gPatIpAddr>\s*$]]></regex>
+        </collectFieldsByRegex>
+      </when>
+
+      <when test="$_eventType = 'Software-Update-Succeeded'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^\d+\s+<destIpAddr:gPatIpAddr>]]></regex>
+        </collectFieldsByRegex>
+      </when>
+
+      <when test="$_eventType = 'Task-Completed'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^The following task <:gPatStrEndColon>:\s+\d+:\s+Task Name:\s+<_body1:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body1">
+              <regex><![CDATA[^<task:gPatMesgBodyMin>\s+Device:\s+<destName:gPatStr>\s+\(<destIpAddr:gPatIpAddr>\)]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body1">
+              <regex><![CDATA[^<task:gPatMesgBodyMin>Added by:]]></regex>
+            </collectFieldsByRegex>
+          </case>
+        </switch>
+      </when>
+
+      <when test="$_eventType = 'User-Login'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^User <:gPatStr> logged in from <appTransportProto:gPatStr>\. Host:\s+(?:<srcIpAddr:gPatIpAddr>|<srcName:gPatHostName>)]]></regex>
+        </collectFieldsByRegex>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

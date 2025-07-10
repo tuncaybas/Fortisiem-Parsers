@@ -1,0 +1,94 @@
+<eventParser name="CyberXParser">
+  <deviceType>
+    <Vendor>Microsoft</Vendor>
+    <Model>CyberX</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<9>Feb 22 13:04:33 CyberX_Console CEF:0|CyberX|CyberX Security Platform|2.8.1|CyberX platform Alert|Unauthorized Internet Connectivity Detected|10|msg=An asset defined in your internal network is communicating with addresses on the Internet. These addresses have not been learned by Cyberx as valid addresses. Asset 172.16.33.50 communicated with addresses shown in External Addresses. Verify that this asset is properly configured. For similar incidents and additional information, please refer to CyberX platform. app=GENERIC cs1Label=Severity Description cs1=Critical cs2Label=Alert Type cs2=Policy Violation start=Feb 22 2020 08:04:33 reason=Alert Detected dvchost=CyberX Console src=172.16.33.33 smac=00:0c:29:8a:84:00 dst=1.1.1.53]]></testEvent>
+    <testEvent><![CDATA[Jul 15 10:50:16 Sensor_Agent CEF:0|CyberX|Sensor Agent|2.3.4|CyberX platform Alert|Suspicion of Malicious Activity (Conficker)|8|msg=Suspicious network activity was detected. Such behavior might be attributed to the Conficker malware. protocol=GENERIC severity=Major type=Malware start=Jul 15 2018 13:50:16 src_ip=10.2.1.22 src_mac=00:0f:33:67:46:fe dst_ip=10.2.1.4]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>?<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+CEF:0\|CyberX\|]]></eventFormatRecognizer>
+  <parsingInstructions>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>?<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+CEF:0\|CyberX\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+
+    <setEventAttribute attr="eventType">CyberX-Generic</setEventAttribute>
+
+    <collectAndSetAttrByPos sep="|" src="$_body">
+      <attrPosMap attr="appName" pos="1"/>
+      <attrPosMap attr="appVersion" pos="2"/>
+      <attrPosMap attr="type" pos="3"/>
+      <attrPosMap attr="alertName" pos="4"/>
+      <attrPosMap attr="_severity" pos="5"/>
+      <attrPosMap attr="_extension" pos="6"/>
+    </collectAndSetAttrByPos>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_extension">
+      <attrKeyMap attr="appName" key="app"/>
+      <attrKeyMap attr="_cs2" key="cs2"/>
+      <attrKeyMap attr="_cs2Label" key="cs2Label"/>
+      <attrKeyMap attr="destMACAddr" key="dmac"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="destIpAddr" key="dst_ip"/>
+      <attrKeyMap attr="destMACAddr" key="dst_mac"/>
+      <attrKeyMap attr="_endTime" key="end"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="appTransportProto" key="protocol"/>
+      <attrKeyMap attr="errReason" key="reason"/>
+      <attrKeyMap attr="_sev" key="severity"/>
+      <attrKeyMap attr="vendorSeverity" key="severity"/>
+      <attrKeyMap attr="srcMACAddr" key="smac"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="srcIpAddr" key="src_ip"/>
+      <attrKeyMap attr="srcMACAddr" key="src_mac"/>
+      <attrKeyMap attr="_startTime" key="start"/>
+      <attrKeyMap attr="subtype" key="type"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist _cs2Label">
+      <!-- map alert type of it came in cs2 instead of type= -->
+      <when test="$_cs2Label = 'Alert Type'">
+        <setEventAttribute attr="subtype">$_cs2</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist type">
+      <setEventAttribute attr="type">replaceStringByRegex($type, " ", "-")</setEventAttribute>
+    </when>
+    <when test="exist subtype">
+      <!-- Values: Policy-Violation, Protocol-Violation, Malware, Anomaly, Operational -->
+      <setEventAttribute attr="subtype">replaceStringByRegex($subtype, " ", "-")</setEventAttribute>
+      <setEventAttribute attr="eventType">combineMsgId("CyberX-", $subtype)</setEventAttribute>
+    </when>
+
+    <when test="exist _endTime">
+      <collectFieldsByRegex src="$_endTime">
+        <regex><![CDATA[<_mon1:gPatMon>\s+<_day1:gPatDay>\s+<_year1:gPatYear>\s+<_time1:gPatTime>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="endTime">toDateTime($_mon1, $_day1, $_year1, $_time1)</setEventAttribute>
+    </when>
+
+    <when test="exist _startTime">
+      <collectFieldsByRegex src="$_startTime">
+        <regex><![CDATA[<_mon2:gPatMon>\s+<_day2:gPatDay>\s+<_year2:gPatYear>\s+<_time2:gPatTime>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="startTime">toDateTime($_mon2, $_day2, $_year2, $_time2)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="$_severity = '0'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventSeverity">$_severity</setEventAttribute>
+      </otherwise>
+    </choose>
+
+  </parsingInstructions>
+</eventParser>

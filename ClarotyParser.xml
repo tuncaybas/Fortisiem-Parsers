@@ -1,0 +1,386 @@
+<eventParser name="ClarotyParser">
+
+  <deviceType>
+    <Vendor>Claroty</Vendor>
+    <Model>CTD</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<12>Jul 01 01:00:39 localhost.localdomain CEF:0|Claroty|CTD|4.1.1|Event|Protocol|5|cs1Label=Site cs1=Default cs2Label=Network cs2=Default cs3Label=ResolvedAs cs3=Unresolved cs4Label=SiteId cs4=1 cs5Label=SrcZone cs5=Engineering Station: Other cs6Label=DstZone cs6=PLC: Other cs7Label=Category cs7=Security cs8Label=AlertUrl cs8=192.168.138.111/alert/93-1 cs9Label=Score cs9=100 cs10Label=PrimaryAssetIP cs10=192.168.1.88 cs11Label=PrimaryAssetType cs11=Engineering Station cs12Label=PrimaryAssetHostname cs12=N/A cs13Label=PrimaryAssetMAC cs13=00:0c:29:28:dd:c5 cs14Label=PrimaryAssetOS cs14=N/A cs15Label=PrimaryAssetVendor cs15=VMware cs16Label=NonPrimaryAssetIP cs16=192.168.1.2 cs17Label=NonPrimaryAssetType cs17=PLC cs18Label=NonPrimaryAssetHostname cs18=N/A cs19Label=NonPrimaryAssetMAC cs19=40:00:00:00:00:02 cs20Label=NonPrimaryAssetOS cs20=N/A cs21Label=NonPrimaryAssetVendor cs21=Triconex cs22Label=StoryId cs22=1 src=192.168.1.88 smac=00:0c:29:28:dd:c5 shost=N/A dst=192.168.1.2 dmac=40:00:00:00:00:02 dhost=N/A externalId=93 cat=Update rt=Jul 01 2020 00:59:58 msg=Suspected TRITON communication discovered (Suspected CP_Status value: 000001E1)]]></testEvent>
+    <testEvent><![CDATA[<12>Sep 13 13:37:47 localhost.localdomain CEF:0|Claroty|CTD|2.7.2|Baseline|None|Approved|cs1Label=Site cs1=Fortinet Lab cs2Label=Network cs2=Default cs3Label=Transmission cs3=UDP / 47808 cs4Label=SiteId cs4=1 cs5Label=SrcZone cs5=RTU: DNP3,Profibus,Rockwell cs6Label=DstZone cs6=RTU: DNP3,Modbus,Profibus,Rockwell cs7Label=Category cs7=Other cs8Label=CategoryAccess cs8=None cs9Label=Frequency cs9=NotTimed cs10Label=FirstSeen cs10=Sep 13 2018 13:17:13 src=10.10.0.10 smac=28:63:36:26:00:09 shost=N/A dst=10.20.0.8 dmac=28:63:36:27:00:07 dhost=N/A externalId=1514 cat=Update rt=Sep 13 2018 13:17:13 msg=UDP from port 47808 to port 47808]]></testEvent>
+    <testEvent><![CDATA[<12>Sep 13 08:46:41 localhost.localdomain CEF:0|Claroty|CTD|2.7.2|Event|Baseline Deviation|Critical|cs1Label=Site cs1=Site cs2Label=Network cs2=Default cs3Label=ResolvedAs cs3=Unresolved cs4Label=SiteId cs4=1 cs5Label=SrcZone cs5=Engineering Station: Rockwell cs6Label=DstZone cs6=PLC: Rockwell cs7Label=Category cs7=Integrity cs8Label=AlertUrl cs8=https://10.210.16.2:5000/alert/494-1 src=10.1.30.40 smac=00:50:56:b9:e2:ad shost=N/A dst=10.1.30.1 dmac=00:1d:9c:c0:04:9d dhost=N/A externalId=494 cat=Update rt=Sep 13 2018 08:46:23 msg=CIP : Set Attribute 'UDI Stack Size' of object Program]]></testEvent>
+    <testEvent><![CDATA[<12>Mar 14 11:08:06 b'centos7' CEF:0|Claroty|CTD|2.3.1|Alert|NewAsset|Critical|cs1Label=Site cs1=Site cs2Label=Network cs2=Default cs3Label=ResolvedAs cs3=Unresolved cs4Label=SiteId cs4=1 cs5Label=SrcZone cs5=Default Zone cs6Label=DstZone cs6=Default Zone cs7Label=Category cs7=Integrity cs8Label=AlertUrl cs8=https://192.168.138.102:5000/alert/36-1 src=10.1.0.80 smac=00:09:91:05:03:9b shost=GE1 dst=10.1.0.171 dmac=00:50:56:b9:19:b1 dhost=WIN-67VSTM77Q31 externalId=36 cat=Create rt=Mar 14 2019 03:08:02 msg=A new asset has been detected: GE1.]]></testEvent>
+    <testEvent><![CDATA[<14>Jun 17 2021 12:39:24 23663d5b48db CEF:0|Claroty|CTD||Alert/Known Threat Alert|Known Threat: Threat ET TROJAN Conficker.b Shellcode was detected|10|src=192.168.0.121 dst=192.168.0.104 externalId=1 cat=Security/Known Threat Alert start=Jun 17 2021 12:39:15 msg=Known Threat: Threat ET TROJAN Conficker.b Shellcode was detected from 192.168.0.121 to 192.168.0.104 deviceExternalId=Default cs1Label=SourceAssetType cs1=Endpoint cs3Label=SourceZone cs3=Endpoint: Other cs4Label=DestZone cs4=Endpoint: Other cs6Label=CTDlink cs6=https://localhost:5000/detection/alert/1-1 cn1Label=IndicatorScore cn1=100]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[CEF:\d+\|Claroty\|CTD\|]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>?\s*<_mon:gPatMon>\s+<_day:gPatDay>\s+(?:<_year:gPatYear>\s+)?<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatStr>)\s+CEF\s*:<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <choose>
+      <when test="exist _year">
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day,$_year,$_time)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day,$_time)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <!-- Certain events in CTD 4.4.x dont have an appVersion, must populate this with something -->
+    <setEventAttribute attr="_body">replaceStrInStr($_body, "CTD||", "CTD|Unknown|")</setEventAttribute>
+    <when test="matches($_body, '\\\|')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "\|", "::TEMP::")</setEventAttribute>
+    </when>
+    <setEventAttribute attr="_body">replaceStrInStr($_body, "|", "::SEP::")</setEventAttribute>
+
+    <when test="matches($_body, '::TEMP::')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "::TEMP::", "|")</setEventAttribute>
+    </when>
+
+
+    <switch>
+      <case>
+        <collectAndSetAttrByPos sep="::SEP::" src="$_body">
+          <attrPosMap attr="_version" pos="1"/>
+          <attrPosMap attr="_vendor" pos="2"/>
+          <attrPosMap attr="appName" pos="3"/>
+          <attrPosMap attr="appVersion" pos="4"/>
+          <attrPosMap attr="_signature" pos="5"/>
+          <attrPosMap attr="ruleName" pos="6"/>
+          <attrPosMap attr="_severity" pos="7"/>
+          <attrPosMap attr="_extension" pos="8"/>
+        </collectAndSetAttrByPos>
+      </case>
+      <case>
+        <collectAndSetAttrByPos sep="::SEP::" src="$_body">
+          <attrPosMap attr="_version" pos="1"/>
+          <attrPosMap attr="_vendor" pos="2"/>
+          <attrPosMap attr="appName" pos="3"/>
+          <attrPosMap attr="appVersion" pos="4"/>
+          <attrPosMap attr="_signature" pos="5"/>
+          <attrPosMap attr="ruleName" pos="6"/>
+          <attrPosMap attr="_extension" pos="7"/>
+        </collectAndSetAttrByPos>
+      </case>
+      <default/>
+    </switch>
+
+    <choose>
+      <when test="matches($_signature, '\/')">
+        <!-- new format has type/subtype in signature -->
+        <!-- ruleName can be really long, not suitable for ET -->
+        <setEventAttribute attr="eventType">combineMsgId("ClarotyCTD-", $_signature)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">combineMsgId("ClarotyCTD-", $_signature,"-",$ruleName)</setEventAttribute>
+      </otherwise>
+    </choose>
+    <!-- strip some special chars seen in event type -->
+    <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "[()\s/-]+", "-")</setEventAttribute>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_extension">
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="type" key="cat"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="destMACAddr" key="dmac"/>
+      <attrKeyMap attr="destName" key="dhost"/>
+      <attrKeyMap attr="srcMACAddr" key="smac"/>
+      <attrKeyMap attr="srcName" key="shost"/>
+      <attrKeyMap attr="_rt" key="rt"/>
+      <attrKeyMap attr="extEventId" key="externalId"/>
+      <attrKeyMap attr="_cs1Label" key="cs1Label"/>
+      <attrKeyMap attr="_cs2Label" key="cs2Label"/>
+      <attrKeyMap attr="_cs3Label" key="cs3Label"/>
+      <attrKeyMap attr="_cs4Label" key="cs4Label"/>
+      <attrKeyMap attr="_cs5Label" key="cs5Label"/>
+      <attrKeyMap attr="_cs6Label" key="cs6Label"/>
+      <attrKeyMap attr="_cs7Label" key="cs7Label"/>
+      <attrKeyMap attr="_cs8Label" key="cs8Label"/>
+      <attrKeyMap attr="_cs9Label" key="cs9Label"/>
+      <attrKeyMap attr="_cs10Label" key="cs10Label"/>
+      <attrKeyMap attr="_cs1" key="cs1"/>
+      <attrKeyMap attr="_cs2" key="cs2"/>
+      <attrKeyMap attr="_cs3" key="cs3"/>
+      <attrKeyMap attr="_cs4" key="cs4"/>
+      <attrKeyMap attr="_cs5" key="cs5"/>
+      <attrKeyMap attr="_cs6" key="cs6"/>
+      <attrKeyMap attr="_cs7" key="cs7"/>
+      <attrKeyMap attr="_cs8" key="cs8"/>
+      <attrKeyMap attr="_cs9" key="cs9"/>
+      <attrKeyMap attr="_cs10" key="cs10"/>
+      <!-- cn labels -->
+      <attrKeyMap attr="_cn1Label" key="cn1Label"/>
+      <attrKeyMap attr="_cn2Label" key="cn2Label"/>
+      <attrKeyMap attr="_cn3Label" key="cn3Label"/>
+      <attrKeyMap attr="_cn4Label" key="cn4Label"/>
+      <attrKeyMap attr="_cn5Label" key="cn5Label"/>
+      <attrKeyMap attr="_cn6Label" key="cn6Label"/>
+      <attrKeyMap attr="_cn1" key="cn1"/>
+      <attrKeyMap attr="_cn2" key="cn2"/>
+      <attrKeyMap attr="_cn3" key="cn3"/>
+      <attrKeyMap attr="_cn4" key="cn4"/>
+      <attrKeyMap attr="_cn5" key="cn5"/>
+      <attrKeyMap attr="_cn6" key="cn6"/>
+      <!-- cfp labels -->
+      <attrKeyMap attr="_cfp1Label" key="cfp1Label"/>
+      <attrKeyMap attr="_cfp1" key="cfp1"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist _rt">
+      <collectFieldsByRegex src="$_rt">
+        <regex><![CDATA[<_mon2:gPatMon>\s+<_day2:gPatDay>\s+<_year2:gPatYear>\s+<_time2:gPatTime>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="eventTime">toDateTime($_mon2, $_day2, $_year2, $_time2)</setEventAttribute>
+    </when>
+
+    <when test="exist _cfp1Label">
+      <choose>
+        <when test="not_exist _cfp1"/>
+        <when test="$_cfp1Label = 'CVEScore'">
+          <setEventAttribute attr="vulnCvssScore">$_cfp1</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist _cs1Label">
+      <choose>
+        <when test="not_exist _cs1"/>
+        <when test="$_cs1Label = 'SiteName'">
+          <setEventAttribute attr="site">$_cs1</setEventAttribute>
+        </when>
+        <when test="$_cs1Label = 'SourceAssetType'">
+          <setEventAttribute attr="type">$_cs1</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+    <when test="exist _cs2Label">
+      <choose>
+        <when test="not_exist _cs2"/>
+        <when test="$_cs2Label = 'SiteId'">
+          <setEventAttribute attr="siteId">$_cs2</setEventAttribute>
+        </when>
+        <when test="$_cs2Label = 'Network'">
+          <setEventAttribute attr="srcNetwork">$_cs2</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+    <when test="exist _cs3Label">
+      <choose>
+        <when test="not_exist _cs3"/>
+        <when test="$_cs3Label = 'InterfaceName'">
+          <setEventAttribute attr="intfName">$_cs3</setEventAttribute>
+        </when>
+        <when test="$_cs3Label = 'Transmission'">
+          <setEventAttribute attr="appTransportProto">$_cs3</setEventAttribute>
+        </when>
+        <when test="$_cs3Label = 'ResolvedAs'">
+          <setEventAttribute attr="resoStatus">$_cs3</setEventAttribute>
+        </when>
+        <when test="$_cs3Label = 'SourceZone'">
+          <setEventAttribute attr="srcFwZone">$_cs3</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist _cs4Label">
+      <choose>
+        <when test="not_exist _cs4"/>
+        <when test="$_cs4Label = 'Network'">
+          <setEventAttribute attr="srcNetwork">$_cs4</setEventAttribute>
+        </when>
+        <when test="$_cs4Label = 'SiteId'">
+          <setEventAttribute attr="siteId">$_cs4</setEventAttribute>
+        </when>
+        <when test="$_cs4Label = 'DestZone'">
+          <setEventAttribute attr="destFwZone">$_cs4</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist _cs5Label">
+      <choose>
+        <when test="not_exist _cs5"/>
+        <when test="$_cs5Label = 'IPaddress'">
+          <setEventAttribute attr="hostIpAddr">$_cs5</setEventAttribute>
+        </when>
+        <when test="$_cs5Label = 'SrcZone'">
+          <setEventAttribute attr="srcFwZone">$_cs5</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist _cs6Label">
+      <choose>
+        <when test="not_exist _cs6"/>
+        <when test="$_cs6Label = 'SnifferStatus'">
+          <setEventAttribute attr="status">$_cs6</setEventAttribute>
+        </when>
+        <when test="$_cs6Label = 'DstZone'">
+          <setEventAttribute attr="destFwZone">$_cs6</setEventAttribute>
+        </when>
+        <when test="$_cs6Label = 'CTDlink'">
+          <setEventAttribute attr="infoURL">$_cs6</setEventAttribute>
+        </when>
+        <when test="$_cs6Label = 'CVE'">
+          <setEventAttribute attr="vulnCVEId">$_cs6</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist _cs7Label">
+      <choose>
+        <when test="not_exist _cs7"/>
+        <when test="$_cs7Label = 'Category'">
+          <setEventAttribute attr="alertCategory">$_cs7</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist _cs8Label">
+      <choose>
+        <when test="not_exist _cs8"/>
+        <when test="$_cs8Label = 'AlertUrl'">
+          <setEventAttribute attr="infoURL">$_cs8</setEventAttribute>
+        </when>
+        <when test="$_cs8Label = 'CategoryAccess'">
+          <setEventAttribute attr="categoryType">$_cs8</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist _cs9Label">
+      <choose>
+        <when test="not_exist _cs9"/>
+        <when test="$_cs9Label = 'Score'">
+          <setEventAttribute attr="threatScore">$_cs9</setEventAttribute>
+        </when>
+        <when test="$_cs9Label = 'Frequency'">
+          <setEventAttribute attr="frequency">$_cs9</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist _cs10Label">
+      <choose>
+        <when test="not_exist _cs10"/>
+        <when test="$_cs10Label = 'FirstSeen'">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_cs10">
+                <regex><![CDATA[<_mon3:gPatMon>\s+<_day3:gPatDay>\s+<_year3:gPatYear>\s+<_time3:gPatTime>]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="firstSeenTime">toDateTime($_mon3, $_day3, $_year3, $_time3)</setEventAttribute>
+            </case>
+            <default/>
+          </switch>
+        </when>
+        <when test="$_cs10Label = 'Frequency'">
+          <setEventAttribute attr="frequency">$_cs10</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist _cn1Label">
+      <choose>
+        <when test="not_exist _cn1"/>
+        <when test="$_cn1Label = 'IndicatorScore'">
+          <setEventAttribute attr="riskScore">$_cn1</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+    <when test="exist _cn2Label">
+      <choose>
+        <when test="not_exist _cn2"/>
+        <when test="$_cn2Label = 'AlertID'">
+          <setEventAttribute attr="alertIdStr">$_cn2</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <choose>
+      <when test="$eventType = 'ClarotyCTD-Alert-Login'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[There has been a failed login attempt to controller <destIpAddr:gPatIpV4Dot> from <srcIpAddr:gPatIpV4Dot>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ClarotyCTD-Alert-Login-Failure</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[Failed login attempts to controller <destIpAddr:gPatIpV4Dot> from <srcIpAddr:gPatIpV4Dot>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">ClarotyCTD-Alert-Login-Failure</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$eventType = 'ClarotyCTD-Alert-Configuration-Download'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[A configuration has been downloaded to controller <controllerName:gPatStr> by <srcIpAddr:gPatIpV4Dot>,\s*by user <_user:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="user">trimAttribute($_user, '"')</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+    </choose>
+
+    <choose>
+      <!-- 2 - low,5 = medium,7 high,10 crit -->
+      <when test="not_exist _severity"/>
+      <when test="$_severity = '0'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_severity = '1'">
+        <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+      </when>
+
+      <when test="$_severity = '2'">
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+
+      <when test="$_severity = '3'">
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+
+      <when test="$_severity = '5'">
+        <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+      </when>
+      <when test="$_severity = '7'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_severity = '10'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+
+      <when test="$_severity = 'Minor'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_severity = 'Moderate'">
+        <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+      </when>
+
+      <when test="$_severity = 'Critical'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+
+      <when test="$_severity = 'Approved'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="$_severity = 'Unapproved'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>
+

@@ -1,0 +1,204 @@
+<eventParser name="CiscoUmbrellaJSONParser">
+  <deviceType>
+    <Vendor>Cisco</Vendor>
+    <Model>Umbrella</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[May 21 14:29:18 2015 host 1.2.3.4 Cisco Umbrella Activity: {"returncode": 0, "externalip": "1.1.1.1", "allapplications": [], "date": "2022-05-27", "internalip": "192.168.1.25", "time": "22:32:45", "querytype": "A", "policycategories": [{"id": 71, "type": "customer", "label": "Block List", "integration": false, "deprecated": false}], "type": "dns", "categories": [{"id": 23, "type": "content", "label": "Search Engines", "integration": false, "deprecated": true}, {"id": 25, "type": "content", "label": "Software/Technology", "integration": false, "deprecated": true}, {"id": 32, "type": "content", "label": "Business Services", "integration": false, "deprecated": true}, {"id": 71, "type": "customer", "label": "Block List", "integration": false, "deprecated": false}, {"id": 190, "type": "content", "label": "Search Engines and Portals", "integration": false, "deprecated": false}], "verdict": "blocked", "domain": "ieonline.microsoft.com", "timestamp": 1653690765000, "blockedapplications": [], "allowedapplications": [], "identities": [{"id": 585294317, "type": {"id": 9, "type": "roaming", "label": "Roaming Computers"}, "label": "WIN2019", "deleted": false}], "threats": []}]]></testEvent>
+    <testEvent><![CDATA[May 21 14:29:18 2015 host 1.2.3.4 Cisco Umbrella Users: {"firstname": "QA", "lastname": "test", "email": "labuser1@fortinet.com", "role": "Full Admin", "roleId": 1, "status": "Active", "twoFactorEnable": false, "id": 11989407, "timezone": "UTC", "lastLoginTime": "2022-05-24T15:17:59.000Z"}]]></testEvent>
+  </testEvents>
+
+  <!-- Your HTTPS Advanced Credential must use Log Header: Cisco Umbrella Activity: or Cisco Umbrella Users: -->
+  <eventFormatRecognizer><![CDATA[<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatYear>\s+<:gPatHostName>\s+<:gPatIpAddr>\s+Cisco Umbrella\s+(?:Activity|Users):]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatYear>\s+<reptDevName:gPatHostName>\s+<reptDevIpAddr:gPatIpAddr>\s+Cisco Umbrella\s+<_ET:gPatWord>:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId("CiscoUmbrella-",$_ET)</setEventAttribute>
+      </case>
+      <default>
+        <setEventAttribute attr="eventType">CiscoUmbrella-Generic</setEventAttribute>
+      </default>
+    </switch>
+
+    <setEventAttribute attr="extEventRecvProto">HTTPS_ADVANCED</setEventAttribute>
+    <when test="exist _ET">
+      <!-- https://reports.api.umbrella.com/v2/organizations/{organizationId}/activity returns records for each endpoint below -->
+      <!-- dns,proxy,firewall,intrusion,ip,AMP -->
+      <when test="$_ET = 'Activity'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="postNATSrcIpAddr" key="externalip"/>
+          <attrKeyMap attr="srcIpAddr" key="internalip"/>
+          <!-- array of applications if applicable -->
+          <attrKeyMap attr="_allapps" key="allapplications"/>
+          <attrKeyMap attr="deviceTime" key="timestamp"/>
+          <!-- DNS query type -->
+          <attrKeyMap attr="dnsQueryType" key="querytype"/>
+          <!-- Array of applicable policies -->
+          <attrKeyMap attr="_policyCats" key="policycategories"/>
+          <attrKeyMap attr="policyName" key="policycategories[0].label"/>
+          <!-- record type dns,proxy,firewall,intrusion,ip,AMP -->
+          <attrKeyMap attr="type" key="type"/>
+          <attrKeyMap attr="fwAction" key="verdict"/>
+          <attrKeyMap attr="destDomain" key="domain"/>
+          <!-- Identity that made the request -->
+          <attrKeyMap attr="identity" key="identities[0].label"/>
+          <!-- e.g. Roaming Computers -->
+          <attrKeyMap attr="identityType" key="identities[0].type.label"/>
+          <attrKeyMap attr="virusName" key="threats[0].label"/>
+          <attrKeyMap attr="virusType" key="threats[0].type"/>
+          <!-- proxy common fields -->
+          <attrKeyMap attr="_allowedApps" key="allowedapplications"/>
+          <attrKeyMap attr="recvBytes64" key="responsesize"/>
+          <attrKeyMap attr="_allowedApps" key="datalossprevention.state"/>
+          <attrKeyMap attr="virusName" key="antivirusthreats.viruses"/>
+          <attrKeyMap attr="httpReferrer" key="referer"/>
+          <attrKeyMap attr="httpContentType" key="contenttype"/>
+          <attrKeyMap attr="httpUserAgent" key="useragent"/>
+          <attrKeyMap attr="fireAmpDisposition" key="amp.disposition"/>
+          <attrKeyMap attr="threatScore" key="amp.score"/>
+          <attrKeyMap attr="virusName" key="amp.malware"/>
+          <attrKeyMap attr="sentBytes64" key="requestsize"/>
+          <attrKeyMap attr="destIpPort" key="port"/>
+          <attrKeyMap attr="ruleId" key="policy.ruleid"/>
+          <attrKeyMap attr="_fwdMethod" key="forwardingmethod"/>
+          <attrKeyMap attr="status" key="isolated.state"/>
+          <attrKeyMap attr="fireAmpFileAction" key="isolated.fileaction"/>
+          <attrKeyMap attr="httpStatusCode" key="statuscode"/>
+          <attrKeyMap attr="_egressIp" key="egress.ip"/>
+          <attrKeyMap attr="_egressType" key="egress.type"/>
+          <attrKeyMap attr="fileType" key="blockedfiletype"/>
+          <attrKeyMap attr="downloadURL" key="url"/>
+          <attrKeyMap attr="hashSHA256" key="sha256"/>
+          <attrKeyMap attr="datacenter" key="datacenter.label"/>
+          <!-- firewall items -->
+          <attrKeyMap attr="destIpAddr" key="destinationip"/>
+          <attrKeyMap attr="srcIpAddr" key="sourceip"/>
+          <attrKeyMap attr="_srcPort" key="sourceport"/>
+          <attrKeyMap attr="_destPort" key="destinationport"/>
+          <attrKeyMap attr="ipProto" key="protocol.id"/>
+          <attrKeyMap attr="ruleId" key="rule.id"/>
+          <attrKeyMap attr="ruleName" key="rule.label"/>
+          <attrKeyMap attr="webCategory" key="allapplications.label"/>
+          <attrKeyMap attr="webCategory" key="categories"/>
+          <attrKeyMap attr="recvBytes64" key="packetsize"/>
+          <attrKeyMap attr="direction" key="direction"/>
+          <!-- intrusion fields -->
+          <attrKeyMap attr="eventSeverityCat" key="severity"/>
+          <attrKeyMap attr="ipsSignatureId" key="signature.id"/>
+          <attrKeyMap attr="signatureName" key="signature.label"/>
+          <attrKeyMap attr="vulnCVEId" key="signature.cves[0]"/>
+          <!-- amp retrospective -->
+          <attrKeyMap attr="firstSeenTime" key="firstseenat"/>
+          <attrKeyMap attr="fwAction" key="disposition"/>
+          <attrKeyMap attr="threatScore" key="score"/>
+          <attrKeyMap attr="destName" key="hostname"/>
+          <attrKeyMap attr="virusName" key="malwarename"/>
+        </collectAndSetAttrByJSON>
+
+        <!-- webCategory is a json array -->
+        <when test="exist webCategory">
+          <collectAndSetAttrByJsonArray src="$webCategory" sep=",">
+            <attrKeyMap attr="webCategory" key="label"/>
+          </collectAndSetAttrByJsonArray>
+        </when>
+
+
+        <!-- Inconsistent casing, normalizing -->
+        <when test="exist fwAction">
+          <setEventAttribute attr="fwAction">toLower($fwAction)</setEventAttribute>
+        </when>
+
+        <when test="exist type">
+          <choose>
+            <when test="not_exist fwAction"/>
+            <when test="$type = 'dns'">
+              <setEventAttribute attr="eventType">combineMsgId("CiscoUmbrella-DNS-", $dnsQueryType, "-Query-",$fwAction)</setEventAttribute>
+            </when>
+            <when test="$type = 'proxy'">
+              <setEventAttribute attr="eventType">combineMsgId("CiscoUmbrella-PROXY-",$fwAction)</setEventAttribute>
+            </when>
+            <when test="$type = 'firewall'">
+              <setEventAttribute attr="eventType">combineMsgId("CiscoUmbrella-firewall-",$fwAction)</setEventAttribute>
+            </when>
+            <when test="$type = 'intrusion'">
+              <setEventAttribute attr="eventType">combineMsgId("CiscoUmbrella-intrusion-",$fwAction)</setEventAttribute>
+            </when>
+            <when test="$type = 'IP'">
+              <setEventAttribute attr="eventType">combineMsgId("CiscoUmbrella-IP-",$fwAction)</setEventAttribute>
+            </when>
+            <when test="$type = 'AMP'">
+              <setEventAttribute attr="eventType">combineMsgId("CiscoUmbrella-AMP-",$fwAction)</setEventAttribute>
+            </when>
+          </choose>
+        </when>
+
+        <!-- handle if ports are 0 -->
+        <when test="exist _srcPort">
+          <when test="$_srcPort != '0'">
+            <setEventAttribute attr="srcIpPort">$_srcPort</setEventAttribute>
+          </when>
+        </when>
+        <when test="exist _destPort">
+          <when test="$_destPort != '0'">
+            <setEventAttribute attr="destIpPort">$_destPort</setEventAttribute>
+          </when>
+        </when>
+
+        <when test="exist eventSeverityCat">
+          <choose>
+            <when test="$eventSeverityCat = 'VERY LOW'">
+              <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+            </when>
+            <when test="$eventSeverityCat = 'LOW'">
+              <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+            </when>
+            <when test="$eventSeverityCat = 'MEDIUM'">
+              <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+            </when>
+            <when test="$eventSeverityCat = 'HIGH'">
+              <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+            </when>
+            <otherwise>
+              <!-- Err on side of caution -->
+              <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+            </otherwise>
+          </choose>
+        </when>
+      </when>
+
+      <when test="$_ET = 'Users'">
+        <!-- GET /organizations/{organizationId}/users -->
+        <collectAndSetAttrByJSON src="$_body">
+          <!-- Response fields for list users API call -->
+          <attrKeyMap attr="incidentExtTicketId" key="id"/>
+          <attrKeyMap attr="_firstName" key="firstname"/>
+          <attrKeyMap attr="_lastName" key="lastname"/>
+          <attrKeyMap attr="emailId" key="email"/>
+          <attrKeyMap attr="role" key="role"/>
+          <attrKeyMap attr="roleId" key="roleId"/>
+          <attrKeyMap attr="srcTimeZone" key="timezone"/>
+          <attrKeyMap attr="status" key="status"/>
+          <attrKeyMap attr="lastLogon" key="lastLoginTime"/>
+          <attrKeyMap attr="mfaAuthenticated" key="twoFactorEnable"/>
+        </collectAndSetAttrByJSON>
+
+        <setEventAttribute attr="eventType">combineMsgId("CiscoUmbrella-User-",$status)</setEventAttribute>
+
+        <!-- Combine first and last names -->
+        <when test="exist _firstName">
+          <setEventAttribute attr="user">$_firstName</setEventAttribute>
+        </when>
+        <when test="exist _lastName">
+          <setEventAttribute attr="user">combineMsgId($user," ",$_lastName)</setEventAttribute>
+        </when>
+      </when>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

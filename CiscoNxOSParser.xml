@@ -1,0 +1,342 @@
+<eventParser name="CiscoNxOSParser">
+  <deviceType>
+    <Vendor>Cisco</Vendor>
+    <Model>NX-OS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<189>: 2011 Oct 19 17:59:50 UTC: %ETHPORT-5-SPEED: Interface Ethernet108/1/25, operational speed changed to 1 Gbps]]></testEvent>
+    <testEvent><![CDATA[<189>: 2011 Oct 19 17:59:50 UTC: %ETHPORT-5-IF_TX_FLOW_CONTROL: Interface Ethernet108/1/25, operational Transmit Flow Control state changed to on]]></testEvent>
+    <testEvent><![CDATA[<189>: 2011 Oct 19 17:59:50 UTC: %ETHPORT-5-IF_UP: Interface Ethernet108/1/25 is up in mode access]]></testEvent>
+    <testEvent><![CDATA[<189>: 2011 Oct 19 17:59:52 UTC: %ETHPORT-5-IF_DOWN_LINK_FAILURE: Interface Ethernet108/1/21 is down (Link failure)]]></testEvent>
+    <testEvent><![CDATA[<189>: 2011 Oct 19 17:26:51 UTC: %VSHD-5-VSHD_SYSLOG_CONFIG_I: Configured from vty by admin on 192.168.20.179@pts/0]]></testEvent>
+    <testEvent><![CDATA[<187>: 2011 Oct 19 18:29:19 UTC: %AUTHPRIV-3-SYSTEM_MSG: pam_aaa:Authentication failed for user ciscoworks from 10.24.23.60 - sshd[6585]]]></testEvent>
+    <testEvent><![CDATA[<187>: 2011 Oct 19 17:29:30 UTC: %DAEMON-3-SYSTEM_MSG: error: PAM: Authentication failure for illegal user ywang from 192.168.20.179 - sshd[3333]]]></testEvent>
+    <testEvent><![CDATA[<189>: 2013 Sep 27 21:19:16 EDT: %LACP-FEX110-5-LACP_SUSPEND_INDIVIDUAL: LACP port Ethernet110/1/25(0x1f6d0600) of port-channel port-channel13(0x1600000c) not receiving any LACP BPDUs suspending (individual) port]]]></testEvent>
+    <testEvent><![CDATA[<189>: 2013 Sep 30 16:55:42 EDT: %ETHPORT-5-IF_DOWN_PORT_CHANNEL_MEMBERS_DOWN: Interface port-channel100 is down (No operational members)]]]></testEvent>
+    <testEvent><![CDATA[<187>labSwitch001: 2025 Jan 22 15:11:18 EST: %DAEMON-3-SYSTEM_MSG: error: PAM: Authentication failure for root from 192.168.1.25 - dcos_sshd[22636]]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patCiscoNXOSMod" list="begin"><![CDATA[AAA|AAM|ACLLOG|ACLMGR|ACLQOS|ACLTCAM|ACL|AMM|ASCII-CFG|ASSOC|AUTHPRIV|]]></pattern>
+    <pattern name="patCiscoNXOSMod" list="continue"><![CDATA[DAEMON|DCEFIB-SLOT#|DEBUGPROXY|DEVICE-ALIAS|DEVICE_TEST|DEV_LOG|DFTM-SLOT#|DHCP_SNOOP|DIAGCLIENT|DIAGMGR|DIAG_PORT_LB|DMM-SLOT#|DOT1X|DPP_DEBUG|DPVM|DSTATS|]]></pattern>
+    <pattern name="patCiscoNXOSMod" list="continue"><![CDATA[ELTMC-SLOT#|ELTM|EOU|EPLD_UPGRADE|EPP|ETHPORT|ETH_PORT_CHANNEL|EUREKA_USD|EVMC|EVMS|EXCEPTIONLOG|PFMA|]]></pattern>
+    <pattern name="patCiscoNXOSMod" list="continue"><![CDATA[BFD|BFDC|BIOS_DAEMON|BOOTUP_TEST|BOOTVAR|CALLHOME|CDP|CERT_ENROLL|CFS|CIMSRVPROV|CLIS|CLOUD|CLUSTER|CMOND|CMPROXY|]]></pattern>
+    <pattern name="patCiscoNXOSMod" list="continue"><![CDATA[COPP|CREDITMON|CTS|FABRICPATH|FC_TUNNEL|FC_TUNNEL|FCC_LC|FCC|FCDDH|FCDD|FCDOMAIN|FCD|FCFWD|FCNS|FCOE_MGR|FCSP_MGR|]]></pattern>
+    <pattern name="patCiscoNXOSMod" list="continue"><![CDATA[FCS|FDMI|FEATURE-MGR|FEX|FICON|FLOGI|FS-DAEMON|FSCM|FSPF|GLBP|HSRP_ENGINE|IKE|ILC-SPAN|ILC_HELPER|IMAGE_DNLD|IMAGE_UPGRADE|]]></pattern>
+    <pattern name="patCiscoNXOSMod" list="continue"><![CDATA[IM|INTERFACE_VLAN|IOA_LC|IPACL|IPFC|IPQOSMGR|IPSEC|IPS_SB_MGR|IPS|IPV6|IP|ISAPI|ISNS|IVR|L2FM|L2FMC|L2MCAST|L3VM|]]></pattern>
+    <pattern name="patCiscoNXOSMod" list="continue"><![CDATA[LACP|LC-FCFWD|LC-SPAN|LC_CFG|LC_PORT_CHANNEL|LC_PORT_MGR|LC_RDL|LDAP|LDP|LIBBASE_SVC|LIBGD|LICMGR|LLDP|MAC|MCAST|MCECTEST|MCM|]]></pattern>
+    <pattern name="patCiscoNXOSMod" list="continue"><![CDATA[MFDM|MODULE|MONITOR|NFM|NFP|NPC|NPV|NTP|NVP|OC_USD|ORI_FWD|ORI_MAC|OTM|PHY_USD|PIXM|PLATFORM|PLOG_SUP|PLOG|PONG|PORT-CHANNEL|]]></pattern>
+    <pattern name="patCiscoNXOSMod" list="continue"><![CDATA[PORT_PROFILE|PORT-RESOURCES|PORT-SECURITY|PORT|PRIVATE_VLAN|PROC_MGR|PSS|PTPLC|PTP|QOS|RADIUSRDL|RES_MGR|RIB|RLIR|RM|RSCAN|SAL|SAN_EXT_TUNER|]]></pattern>
+    <pattern name="patCiscoNXOSMod" list="continue"><![CDATA[SCHEDULER|SCM|SCSI-TARGET|SDV|SECURITYD|SENSOR_USD|SENSOR_MGR|SFC|SKSD|SKT_USD|SME_CPP|SNMPD|SPAN|SPI|STP|SVC_BATTERY|SVC|SYSMGR|]]></pattern>
+    <pattern name="patCiscoNXOSMod" list="continue"><![CDATA[SYSTEMHEALTH|TACACS|TBIRD_CMN_USD|TBIRD_FWD_USD|TBIRD_MAC_USD|TBIRD_QUE_USD|TBIRD_XBAR_USD|TCAP|TPC|TTYD|TUNNEL|U2RIB|UDLD|UFDM|VDC_MGR|VEC|]]></pattern>
+    <pattern name="patCiscoNXOSMod" list="continue"><![CDATA[VEDB_MGR|VES|VFC|VLAN_MGR|VNI|VPC|VPM|VRRP-CFG|VRRP-ENG|VSAN|VSD|VSHD|WWN|XBAR_CLIENT|XBAR|XMLMA|XMLSA|ZBM|ZONE|]]></pattern>
+    <pattern name="patCiscoNXOSMod" list="continue"><![CDATA[VSHD|MSP|CFGMGR|IOS_LICENSE_IMAGE_APPLICATION|LICENSE|LINEPROTO-SP|LINK-SP|PLATFORM_ENV|PLATFORM_STACKPOWER|]]></pattern>
+    <pattern name="patCiscoNXOSMod" list="end"><![CDATA[PORT_SECURITY|SW_VLAN|USB_CONSOLE|SATCTRL|NOHMS|LIBIFMGR]]></pattern>
+    <pattern name="patStrEndColon"><![CDATA[[^:]*]]></pattern>
+    <pattern name="patStrEndLeftParen"><![CDATA[[^\(]*]]></pattern>
+    <pattern name="patCode"><![CDATA[\d+:\s+]]></pattern>
+    <pattern name="patUpDown"><![CDATA[up|down]]></pattern>
+    <pattern name="patExceptBracket"><![CDATA[[^\[\]]+]]></pattern>
+  </patternDefinitions>
+
+  <!-- Supports either of two formats for Nexus, one with syslog timestamp + host/ip, and one with just message timestamp and msg -->
+  <eventFormatRecognizer><![CDATA[^<:gPatSyslogPRI>(?:\s*(?:<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+)?(?:<:gPatIpAddr>|<:patStrEndColon>))?:\s+<:gPatYear>\s+<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>(?:\.\d+)?\s*<:gPatStr>:\s+%<:patCiscoNXOSMod>(?:-<:gPatWord>\s*)?-<:gPatInt>-<:patStrEndColon>:
+]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <!-- <12>month dd hh:mm:ss IP-addr-switch : year month day hh:mm:ss Timezone: facility-severity-MNEMONIC description -->
+      <!-- <187>labswitch001: 2025 Jan 22 15:11:18 EST: %DAEMON-3-SYSTEM_MSG: -->
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>\s*(?:<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+)?(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:patStrEndColon>):\s+<_year:gPatYear>\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>(?:\.\d+)?\s+<_tz:patStrEndColon>:\s+%<_evIdPrefix:patCiscoNXOSMod>(?:-<:gPatWord>\s*)?-<_severity:gPatInt>-<_evIdSuffix:patStrEndColon>: <_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <!-- <187>: 2011 Oct 19 17:29:30 UTC: %DAEMON-3-SYSTEM_MSG: -->
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>:\s+<_year:gPatYear>\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>(?:\.\d+)?\s+<_tz:patStrEndColon>:\s+%<_evIdPrefix:patCiscoNXOSMod>(?:-<:gPatWord>\s*)?-<_severity:gPatInt>-<_evIdSuffix:patStrEndColon>: <_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+    <!-- Only set timezone if set to UTC, abbreviated timezones like EST not supported -->
+    <choose>
+      <when test="not_exist _year"/>
+      <when test="not_exist _mon"/>
+      <when test="not_exist _day"/>
+      <when test="not_exist _time"/>
+      <when test="exist _tz">
+        <choose>
+          <when test="$_tz = 'UTC'">
+            <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+
+    <setEventAttribute attr="eventType">combineMsgId("Cisco-NxOS-", $_evIdPrefix, "-", $_evIdSuffix)</setEventAttribute>
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+    <setEventAttribute attr="totFlows">1</setEventAttribute>
+    <setEventAttribute attr="eventAction">0</setEventAttribute>
+    <setEventAttribute attr="hostIpAddr">$reptDevIpAddr</setEventAttribute>
+
+    <choose>
+      <when test="not_exist _severity"/>
+      <when test="$_severity IN '6, 7'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_severity = '1'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+      <when test="$_severity = '2'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$_severity IN '3, 4'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_severity = '5'">
+        <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="$eventType = 'Cisco-NxOS-ETHPORT-SPEED'">
+        <!-- <189>: 2011 Oct 19 17:59:50 UTC: %ETHPORT-5-SPEED: Interface Ethernet108/1/25, operational speed changed to 1 Gbps -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Interface\s+<intfName:gPatStrComma>,\s+<:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+      </when>
+      <when test="$eventType = 'Cisco-NxOS-ETHPORT-IF_DUPLEX'">
+        <!-- <189>: 2011 Oct 19 17:59:50 UTC: %ETHPORT-5-IF_DUPLEX: Interface Ethernet108/1/25, operational duplex mode changed to Full -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Interface\s+<intfName:gPatStrComma>,\s+operational\s+<:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+      </when>
+
+      <when test="$eventType = 'Cisco-NxOS-ETHPORT-IF_RX_FLOW_CONTROL'">
+        <!-- <189>: 2011 Oct 19 17:59:50 UTC: %ETHPORT-5-IF_RX_FLOW_CONTROL: Interface Ethernet108/1/25, operational Receive Flow Control state changed to off -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Interface\s+<intfName:gPatStrComma>,\s+operational\s+<:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+      </when>
+      <when test="$eventType = 'Cisco-NxOS-ETHPORT-IF_TX_FLOW_CONTROL'">
+        <!-- <189>: 2011 Oct 19 17:59:50 UTC: %ETHPORT-5-IF_TX_FLOW_CONTROL: Interface Ethernet108/1/25, operational Transmit Flow Control state changed to on -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Interface\s+<intfName:gPatStrComma>,\s+operational\s+<:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+      </when>
+      <when test="$eventType = 'Cisco-NxOS-ETHPORT-IF_UP'">
+        <!-- <189>: 2011 Oct 19 17:59:50 UTC: %ETHPORT-5-IF_UP: Interface Ethernet108/1/25 is up in mode access -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Interface\s+<intfName:gPatStr>\s+is\s+<:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+      </when>
+      <when test="$eventType = 'Cisco-NxOS-ETHPORT-IF_DOWN_LINK_FAILURE'">
+        <!-- <189>: 2011 Oct 19 17:59:52 UTC: %ETHPORT-5-IF_DOWN_LINK_FAILURE: Interface Ethernet108/1/21 is down (Link failure) -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Interface\s+<intfName:gPatStr>\s+is\s+<:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+      </when>
+      <when test="$eventType = 'Cisco-NxOS-VSHD-VSHD_SYSLOG_CONFIG_I'">
+        <!-- <189>: 2011 Oct 19 17:26:51 UTC: %VSHD-5-VSHD_SYSLOG_CONFIG_I: Configured from vty by admin on 192.168.20.179@pts/0 -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Configured\s+from\s+<:gPatStr>\s+by\s+<user:gPatWord>\s+on\s+<srcIpAddr:gPatIpAddr>@<:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+      </when>
+      <when test="$eventType = 'Cisco-NxOS-AUTHPRIV-SYSTEM_MSG'">
+        <!--
+<187>: 2011 Oct 19 18:29:19 UTC: %AUTHPRIV-3-SYSTEM_MSG: pam_aaa:Authentication failed for user ciscoworks from 10.24.23.60 - sshd[6585]
+<190>: 2014 Oct 31 18:15:06 UTC: %AUTHPRIV-6-SYSTEM_MSG: START: rsync pid=21013 from=::ffff:127.12.0.1 - xinetd[5866]
+        -->
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[pam_aaa:Authentication\s+failed\s+for\s+user\s+<user:gPatStr>\s+from\s+<srcIpAddr:gPatIpAddr>\s]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Cisco-NxOS-AUTHPRIV-AuthFailed</setEventAttribute>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[pam_aaa:Authentication\s+failed\s+from\s+<srcIpAddr:gPatIpAddr>(?:\s-\s<procName:patExceptBracket>\[<procId:gPatInt>\])?]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Cisco-NxOS-AUTHPRIV-AuthFailed</setEventAttribute>
+          </case>
+          <case>
+            <!-- <189>: 2021 Jun 2 10:45:51 UTC: %AUTHPRIV-5-SYSTEM_MSG: Deleted user LOGTEST - securityd -->
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[Deleted user <user:gPatStr>]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Cisco-NxOS-AUTHPRIV-DeletedUser</setEventAttribute>
+          </case>
+          <case>
+            <!-- <189>: 2021 Jun 2 10:45:32 UTC: %AUTHPRIV-5-SYSTEM_MSG: New user added with username LOGTEST - securityd -->
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[New user added with username <user:gPatStr>]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Cisco-NxOS-AUTHPRIV-AddedUser</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$eventType IN 'Cisco-NxOS-LINK-SP-UPDOWN, Cisco-NxOS-LINEPROTO-SP-UPDOWN'">
+        <!--
+	   %LINK-5-CHANGED: Interface [chars], changed state to [chars]
+         -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[(?:Line protocol on)?\s*Interface\s+<intfName:gPatStr>,\s*changed\s+state\s+to\s+<:gPatMesgBody><_ifState:patUpDown>.*]]></regex>
+        </collectAndSetAttrByRegex>
+
+        <choose>
+          <when test="$_ifState = 'down'">
+            <setEventAttribute attr="eventType">combineMsgId("Cisco-NxOS-", $_evIdPrefix, "-", $_evIdSuffix, "-", "TO-DOWN")</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+          </when>
+
+          <when test="$_ifState = 'up'">
+            <setEventAttribute attr="eventType">combineMsgId("Cisco-NxOS-", $_evIdPrefix, "-", $_evIdSuffix, "-", "TO-UP")</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+          </when>
+        </choose>
+
+      </when>
+
+      <when test="$eventType = 'Cisco-NxOS-PORT_SECURITY-PSECURE_VIOLATION'">
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Security\s+violation\s+occurred,\s+caused\s+by\s+MAC\s+address\s+<_mac:gPatStr>\s+on\s+port\s+<intfName:gPatStr>\.]]></regex>
+        </collectAndSetAttrByRegex>
+      </when>
+      <when test="$eventType = 'Cisco-NxOS-DAEMON-SYSTEM_MSG'">
+        <switch>
+          <case>
+            <!-- <187>: 2021 Jul 4 14:36:50 UTC: %DAEMON-3-SYSTEM_MSG: error: PAM: Authentication failure for illegal user failtest from 192.168.1.42 - dcos_sshd[29963] -->
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[Authentication\sfailure\sfor\sillegal\suser\s<user:gPatStr>\sfrom\s<srcIpAddr:gPatIpAddr>]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Cisco-NxOS-DAEMON-AuthFailed</setEventAttribute>
+          </case>
+          <case>
+            <!-- <187>: 2021 Jul 4 12:35:46 UTC: %DAEMON-3-SYSTEM_MSG: error: maximum authentication attempts exceeded for invalid user testlogin from 192.168.1.42 port 56784 ssh2 [preauth] - dcos_sshd[30739] -->
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[maximum\sauthentication\sattempts\sexceeded\sfor\sinvalid\suser\s<user:gPatStr>\sfrom\s<srcIpAddr:gPatIpAddr>\sport\s<srcIpPort:gPatInt>]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Cisco-NxOS-DAEMON-MaxAuthAttemptExceed</setEventAttribute>
+          </case>
+          <case>
+            <!-- %DAEMON-3-SYSTEM_MSG: error: PAM: Authentication failure for root from 192.168.1.25 - dcos_sshd[22636] -->
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[Authentication failure for <user:gPatStr> from <srcIpAddr:gPatIpAddr>(?:\s-\s<procName:patExceptBracket>\[<procId:gPatInt>\])?]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Cisco-NxOS-DAEMON-AuthFailed</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$eventType = 'Cisco-NxOS-AAA-AAA_ACCOUNTING_MESSAGE'">
+        <switch>
+          <case>
+            <!-- <190>: 2021 Jul 4 14:36:50 UTC: %AAA-6-AAA_ACCOUNTING_MESSAGE: update:::PAM: Authentication failed for user failtest from 192.168.223.42 -->
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[update:::PAM:\sAuthentication\sfailed\sfor\suser\s<user:gPatStr>\sfrom\s<srcIpAddr:gPatIpAddr>]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Cisco-NxOS-AAA-AuthFailed</setEventAttribute>
+          </case>
+          <case>
+            <!-- <190>: 2021 Jul 5 10:21:28 UTC: %AAA-6-AAA_ACCOUNTING_MESSAGE: update:console0:User1:configure terminal ; username test role vdc-admin password ******** (FAILURE) -->
+            <!-- %AAA-6-AAA_ACCOUNTING_MESSAGE: update:192.168.1.25@pts/9:test:configure terminal ; router bgp 63315 (REDIRECT) -->
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[update:<_terminalMethod:patStrEndColon>:<user:patStrEndColon>:<changeSet:patStrEndLeftParen>\(<_result:gPatWord>\)]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Cisco-NxOS-AAA-ConfigChange</setEventAttribute>
+          </case>
+          <case>
+            <!-- <190>: 2021 Jul 4 14:49:38 UTC: %AAA-6-AAA_ACCOUNTING_MESSAGE: update:192.168.223.42@pts/0:user1:added user testcreate -->
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[update:<_terminalMethod:patStrEndColon>:<user:patStrEndColon>:added\suser\s<targetUser:gPatStr>]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Cisco-NxOS-AAA-ConfigChange-AddedUser</setEventAttribute>
+          </case>
+          <case>
+            <!-- <190>: 2021 Jul 4 14:49:38 UTC: %AAA-6-AAA_ACCOUNTING_MESSAGE: update:192.168.223.42@pts/0:user1:modified attributes for user testcreate -->
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[update:<_terminalMethod:patStrEndColon>:<user:patStrEndColon>:modified\sattributes\sfor\suser\s<targetUser:gPatStr>]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">Cisco-NxOS-AAA-ConfigChange-ModUserAttrib</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+        <when test="exist _result">
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$_result)</setEventAttribute>
+        </when>
+        <when test="exist _terminalMethod">
+          <!-- examples include console0 or 192.168.2.22@pts/0 -->
+          <!-- extract source IP if using ssh tty lines -->
+          <switch>
+            <case>
+              <collectAndSetAttrByRegex src="$_terminalMethod">
+                <regex><![CDATA[<srcIpAddr:gPatIpAddr>]]></regex>
+              </collectAndSetAttrByRegex>
+            </case>
+            <default/>
+          </switch>
+        </when>
+      </when>
+
+      <!-- <189>: 2012 Jul 10 10:52:05 EST: %INTERFACE_VLAN-5-UPDOWN: Line Protocol on Interface vlan 242, changed state to up -->
+      <when test="$eventType = 'Cisco-NxOS-INTERFACE_VLAN-UPDOWN">
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Interface\s+vlan\s+<_vLanStr:gPatStrComma>,\s+changed\s+state\s+to\s+<_ifState:patUpDown>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="intfName">combineMsgId("Vlan",$_vLanStr)</setEventAttribute>
+
+        <choose>
+          <when test="$_ifState = 'down'">
+            <setEventAttribute attr="eventType">combineMsgId("Cisco-NxOS-", $_evIdPrefix, "-", $_evIdSuffix, "-", "TO-DOWN")</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+          </when>
+
+          <when test="$_ifState = 'up'">
+            <setEventAttribute attr="eventType">combineMsgId("Cisco-NxOS-", $_evIdPrefix, "-", $_evIdSuffix, "-", "TO-UP")</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <!-- <189>: 2012 Aug 7 12:56:33 EDT: %INTERFACE_VLAN-5-IF_DOWN_ADMIN_DOWN: Interface vlan 720 is down(Administratively Down) -->
+      <when test="$eventType = 'Cisco-NxOS-INTERFACE_VLAN-IF_DOWN_ADMIN_DOWN">
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Interface\s+vlan\s+<_vLanStr:gPatStr>\s+is\s+<_ifState:patUpDown><:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="intfName">combineMsgId("Vlan",$_vLanStr)</setEventAttribute>
+      </when>
+
+      <!-- <189>: 2013 Sep 27 21:19:16 EDT: %LACP-FEX110-5-LACP_SUSPEND_INDIVIDUAL: LACP port Ethernet110/1/25(0x1f6d0600) of port-channel port-channel13(0x1600000c) not receiving any LACP BPDUs suspending (individual) port -->
+      <when test="$eventType = 'Cisco-NxOS-LACP-LACP_SUSPEND_INDIVIDUAL">
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[LACP port <intfName:gPatStr>\([^)]+\) of port-channel <intfAlias:gPatStr>\(]]></regex>
+        </collectAndSetAttrByRegex>
+      </when>
+
+      <!-- <189>: 2013 Sep 30 16:55:42 EDT: %ETHPORT-5-IF_DOWN_PORT_CHANNEL_MEMBERS_DOWN: Interface port-channel100 is down (No operational members) -->
+      <when test="$eventType = 'Cisco-NxOS-ETHPORT-IF_DOWN_PORT_CHANNEL_MEMBERS_DOWN'">
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Interface <intfName:gPatStr> is down]]></regex>
+        </collectAndSetAttrByRegex>
+      </when>
+    </choose>
+
+    <when test="exist _mac">
+      <setEventAttribute attr="hostMACAddr">normalizeMAC($_mac)</setEventAttribute>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

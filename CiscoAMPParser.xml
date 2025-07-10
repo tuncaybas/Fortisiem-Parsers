@@ -1,0 +1,88 @@
+<eventParser name="CiscoAMPParser">
+  <deviceType>
+    <Vendor>Cisco</Vendor>
+    <Model>AMP</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[[FSM-CiscoAMPStream] [1] {"id":6724209538876047392,"timestamp":1565602035,"timestamp_nanoseconds":747000000,"date":"2019-08-12T09:27:15+00:00","event_type":"Policy Update","event_type_id":553648130,"connector_guid":"11111111-1111-1111-1111-111111111111","group_guids":["11111111-1111-1111-1111-111111111111"],"computer":{"connector_guid":"11111111-1111-1111-1111-111111111111","hostname":"host1","external_ip":"1.2.3.4","active":true,"network_addresses":[{"ip":"1.2.3.5","mac":"00:21:97:1e:1c:05"}],"links":{"computer":"https://api.amp.cisco.com/v1/computers/11111111-1111-1111-1111-111111111111","trajectory":"https://api.amp.cisco.com/v1/computers/11111111-1111-1111-1111-111111111111/trajectory","group":"https://api.amp.cisco.com/v1/groups/11111111-1111-1111-1111-111111111111"}}}]]></testEvent>
+    <testEvent><![CDATA[[FSM-CiscoAMPStream] [1] {"id":6533241145273614000,"timestamp":1593079552,"timestamp_nanoseconds":619000000,"date":"2020-06-25T10:05:52+00:00","event_type":"Threat Quarantined","event_type_id":553648143,"detection_id":"6533241145273614338","connector_guid":"11111111-1111-1111-1111-111111111111","group_guids":["11111111-1111-1111-1111-111111111111"],"severity":"Medium","computer":{"connector_guid":"11111111-1111-1111-1111-111111111111","hostname":"Demo_AMP_Threat_Quarantined","external_ip":"1.2.3.4","active":true,"network_addresses":[{"ip":"1.2.3.5","mac":"87:9c:f8:c6:c9:cf"}],"links":{"computer":"https://api.amp.cisco.com/v1/computers/11111111-1111-1111-1111-111111111111","trajectory":"https://api.amp.cisco.com/v1/computers/11111111-1111-1111-1111-111111111111/trajectory","group":"https://api.amp.cisco.com/v1/groups/11111111-1111-1111-1111-111111111111"}},"file":{"disposition":"Malicious","identity":{"sha256":"a78c29d1fa05c2b23d1dc9b75da8c053399143682fe3779bc466f10e1a997850"}}}]]></testEvent>
+    <testEvent><![CDATA[[FSM-CiscoAMPStream] [1] {"start_timestamp": 1647082911, "event_type": "Vulnerable Application Detected", "timestamp": 1647082912, "severity": "Low", "group_guids": ["11111111-1111-1111-1111-111111111111"], "computer": {"connector_guid": "11111111-1111-1111-1111-111111111111", "links": {"trajectory": "https://api.amp.cisco.com/v1/computers/11111111-1111-1111-1111-111111111111/trajectory", "computer": "https://api.amp.cisco.com/v1/computers/11111111-1111-1111-1111-111111111111", "group": "https://api.amp.cisco.com/v1/groups/11111111-1111-1111-1111-111111111111"}, "external_ip": "1.2.3.4", "hostname": "WS99-094.stephengould.com", "network_addresses": [{"ip": "1.2.3.5", "mac": "44:39:c4:34:1a:57"}], "active": true}, "event_type_id": 1107296279, "start_date": "2022-03-12T11:01:51+00:00", "file": {"parent": {"identity": {"sha256": "E4AB7EABE188A54D4A229E4A7BF4149BA4AB5CBD72358F8667FA5840DA47046B"}, "disposition": "Clean"}, "file_name": "AcroRd32.exe", "identity": {"sha256": "E4AB7EABE188A54D4A229E4A7BF4149BA4AB5CBD72358F8667FA5840DA47046B"}, "disposition": "Clean"}, "vulnerabilities": [{"url": "https://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2017-16384", "cve": "CVE-2017-16384", "score": "9.3"}], "date": "2022-03-12T11:01:52+00:00", "timestamp_nanoseconds": 0, "id": 4154408505544005543, "connector_guid": "11111111-1111-1111-1111-111111111111"}]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\[FSM-CiscoAMPStream\]]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\[FSM-CiscoAMPStream\]\s+\[<phCustId:gPatInt>\] <_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="extEventRecvProto">CISCO_AMP_STREAM_API</setEventAttribute>
+
+    <collectAndSetAttrByJSON src="$_body">
+      <attrKeyMap attr="deviceTime" key="timestamp"/>
+      <attrKeyMap attr="_date" key="date"/>
+      <attrKeyMap attr="_evtType" key="event_type"/>
+      <attrKeyMap attr="connectorGUID" key="connector_guid"/>
+      <attrKeyMap attr="_computer" key="computer"/>
+      <attrKeyMap attr="_error" key="error"/>
+      <attrKeyMap attr="_scan" key="scan"/>
+      <attrKeyMap attr="vulnCVEId" key="vulnerabilities[0].cve"/>
+      <attrKeyMap attr="vulnScore" key="vulnerabilities[0].score"/>
+      <attrKeyMap attr="vulnDesc" key="vulnerabilities[0].url"/>
+      <attrKeyMap attr="_severity" key="severity"/>
+      <attrKeyMap attr="fileName" key="file.file_name"/>
+    </collectAndSetAttrByJSON>
+
+    <when test="not_exist deviceTime">
+      <when test="exist _date">
+        <collectFieldsByRegex src="$_date">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime><_tz:gPatTimeZone>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+      </when>
+    </when>
+
+    <setEventAttribute attr="eventType">combineMsgId("CiscoAMP-", $_evtType)</setEventAttribute>
+    <setEventAttribute attr="eventType">replaceStrInStr($eventType, " ", "-")</setEventAttribute>
+    <setEventAttribute attr="eventType">replaceStrInStr($eventType, ",", "")</setEventAttribute>
+    <setEventAttribute attr="eventType">replaceStrInStr($eventType, ":", "")</setEventAttribute>
+
+    <when test="exist _severity">
+      <when test="$_severity = 'Low'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_severity = 'Medium'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _computer">
+      <collectAndSetAttrByJSON src="$_computer">
+        <attrKeyMap attr="hostName" key="hostname"/>
+        <attrKeyMap attr="serverIpAddr" key="external_ip"/>
+        <attrKeyMap attr="hostIpAddr" key="network_addresses[0].ip"/>
+        <attrKeyMap attr="hostMACAddr" key="network_addresses[0].mac"/>
+      </collectAndSetAttrByJSON>
+    </when>
+
+    <when test="exist _error">
+      <collectAndSetAttrByJSON src="$_error">
+        <attrKeyMap attr="errorNoInt" key="error_code"/>
+        <attrKeyMap attr="description" key="description"/>
+      </collectAndSetAttrByJSON>
+    </when>
+
+    <when test="exist _scan">
+      <collectAndSetAttrByJSON src="$_scan">
+        <attrKeyMap attr="description" key="description"/>
+        <attrKeyMap attr="scanClean" key="clean"/>
+        <attrKeyMap attr="scannedFiles" key="scanned_files"/>
+        <attrKeyMap attr="scannedProcesses" key="scanned_processes"/>
+        <attrKeyMap attr="scannedPaths" key="scanned_paths"/>
+        <attrKeyMap attr="scannedDetections" key="malicious_detections"/>
+      </collectAndSetAttrByJSON>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

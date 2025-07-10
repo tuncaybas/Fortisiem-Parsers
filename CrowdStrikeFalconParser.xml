@@ -1,0 +1,141 @@
+<eventParser name="CrowdStrikeFalconParser">
+  <deviceType>
+    <Vendor>CrowdStrike</Vendor>
+    <Model>Falcon</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[CEF:0|CrowdStrike|FalconHost|1.0|DetectionSummaryEvent|Detection Summary Event|3| filePath=\\Device\\HarddiskVolume2\\Windows\\SysWOW64\\WindowsPowerShell\\v1.0 fname=powershell.exe msg=A suspicious process related to a likely malicious file was launched. sntdom=domain1 cn3=2 suser=user1 fileHash=eb32c070e658937aa9fa9f3ae629b2b8 rt=1517513304000 cs1Label=CommandLine cn3Label=Offset cn1Label=ParentProcessId cn2Label=ProcessId externalId=e8850db32b9041df6874393c03eaebbe cs6Label=FalconHostLink cs6=https://falcon.crowdstrike.com/activity/detections/detail/e8850db32b9041df6874393c03eaebbe/47245644545?_cid\=7054117ce10943c59914b5f81126bdcb cn2=48063987132 shost=host1 cn1=48063270153]]></testEvent>
+    <testEvent><![CDATA[CEF:0|CrowdStrike|FalconHost|1.0|ScanResults|AV Scan Results In A Detection Summary Event|3| cn3=1 cn2=48063987132 cs3=Trojan.Generic externalID=e8850db32b9041df6874393c03eaebbe shost=host1 sntdom=domain1 cs1Label=CommandLine cn3Label=Offset cs2=company1 fileHash=eb32c070e658937aa9fa9f3ae629b2b8 cs4=1.1.1.1 filePath=\\Device\\HarddiskVolume2\\Windows\\SysWOW64\\WindowsPowerShell\\v1.0 cs6=https://falcon.crowdstrike.com/activity/detections/detail/e8850db32b9041df6874393c03eaebbe/47245644545?_cid\=7054117ce10943c59914b5f81126bdcb cs2Label=ScanResultEngine cs3Label=ScanResultName cs6Label=FalconHostLink fname=powershell.exe cn4Label=ScanResultVersion cn2Label=ProcessId suser=user1]]></testEvent>
+    <testEvent><![CDATA[CEF:0|CrowdStrike|FalconHost|1.0|NetworkAccesses|Network Access In A Detection Summary Event|3| rt=1517513303 cn3=1 dpt=3389 cs6=https://falcon.crowdstrike.com/activity/detections/detail/e8850db32b9041df6874393c03eaebbe/47245644545?_cid\=7054117ce10943c59914b5f81126bdcb src=10.1.1.1 fname=powershell.exe cs1Label=CommandLine sntdom=domain1 externalId=e8850db32b9041df6874393c03eaebbe dst=10.1.1.2 cn2Label=ProcessId cn3Label=Offset cn2=48063987132 suser=user1 shost=host1 filePath=\\Device\\HarddiskVolume2\\Windows\\SysWOW64\\WindowsPowerShell\\v1.0 cs6Label=FalconHostLink spt=56605]]></testEvent>
+    <testEvent><![CDATA[CEF:0|CrowdStrike|FalconHost|1.0|NetworkAccesses|Network Access In A Detection Summary Event|3| fname=powershell.exe cn3Label=Offset cn3=2 shost=host1 spt=56605 suser=user1 filePath=\\Device\\HarddiskVolume2\\Windows\\SysWOW64\\WindowsPowerShell\\v1.0 cs1Label=CommandLine dst=10.1.1.2 rt=1517513303 cn2=48063987132 src=10.1.1.1 cs6=https://falcon.crowdstrike.com/activity/detections/detail/e8850db32b9041df6874393c03eaebbe/47245644545?_cid\=7054117ce10943c59914b5f81126bdcb cs6Label=FalconHostLink cn2Label=ProcessId externalId=e8850db32b9041df6874393c03eaebbe dpt=3389 sntdom=domain1]]></testEvent>
+    <testEvent><![CDATA[CEF:0|CrowdStrike|FalconHost|1.0|validateEntitlementsHmac|validateEntitlementsHmac|1| cat=AuthActivityAuditEvent destinationTranslatedAddress=10.20.13.222 duser=Customer deviceProcessName=CrowdStrike Authentication cn3Label=Offset cn3=155837614 outcome=true deviceCustomDate1Label=Timestamp deviceCustomDate1=May 03 2019 15:24:36 rt=1556897076534]]></testEvent>
+    <testEvent><![CDATA[CEF:0|CrowdStrike|FalconHost|1.0|validateEntitlementsHmac|validateEntitlementsHmac|1| cat=AuthActivityAuditEvent destinationTranslatedAddress=10.20.14.222 duser=Customer deviceProcessName=CrowdStrike Authentication cn3Label=Offset cn3=155849776 outcome=true deviceCustomDate1Label=Timestamp deviceCustomDate1=May 31 2019 14:22:06 rt=1559312526966]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patVBar"><![CDATA[[^|]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[CEF:\d+\|CrowdStrike\|FalconHost\|[\d.]+\|\w]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[CEF:\d+\|CrowdStrike\|FalconHost\|[\d.]+\|<_eventType:patVBar>\|<:patVBar>\|<eventSeverity:gPatInt>\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">combineMsgId("Crowdstrike-Falcon-", $_eventType)</setEventAttribute>
+
+    <collectFieldsByKeyValuePair src="$_body" sep=" " kvsep="=">
+      <attrKeyMap attr="_cn1" key="cn1"/>
+      <attrKeyMap attr="_cn1Label" key="cn1Label"/>
+      <attrKeyMap attr="_cn2" key="cn2"/>
+      <attrKeyMap attr="_cn2Label" key="cn2Label"/>
+      <attrKeyMap attr="_cs2" key="cs2"/>
+      <attrKeyMap attr="_cs2Label" key="cs2Label"/>
+      <attrKeyMap attr="_cs3" key="cs3"/>
+      <attrKeyMap attr="_cs3Label" key="cs3Label"/>
+      <attrKeyMap attr="_cs5" key="cs5"/>
+      <attrKeyMap attr="_cs5Label" key="cs5Label"/>
+      <attrKeyMap attr="_cs6" key="cs6"/>
+      <attrKeyMap attr="_cs6Label" key="cs6Label"/>
+      <attrKeyMap attr="procName" key="deviceProcessName"/>
+      <attrKeyMap attr="destName" key="dhost"/>
+      <attrKeyMap attr="destUser" key="duser"/>
+      <attrKeyMap attr="destIpAddr" key="dvc"/>
+      <attrKeyMap attr="destIpPort" key="dpt"/>
+      <attrKeyMap attr="destDomain" key="dntdom"/>
+      <attrKeyMap attr="hashCode" key="fileHash"/>
+      <attrKeyMap attr="fileName" key="fname"/>
+      <attrKeyMap attr="filePath" key="filePath"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="srcName" key="shost"/>
+      <attrKeyMap attr="srcUser" key="suser"/>
+      <attrKeyMap attr="user" key="suser"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="srcIpPort" key="spt"/>
+      <attrKeyMap attr="srcDomain" key="sntdom"/>
+      <attrKeyMap attr="runTime" key="rt"/>
+      <attrKeyMap attr="_deviceTime" key="deviceCustomDate1"/>
+      <attrKeyMap attr="hostIpAddr" key="destinationTranslatedAddress"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist runTime">
+      <setEventAttribute attr="accessTime">divide($runTime, 1000)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="exist _deviceTime">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_deviceTime">
+              <regex><![CDATA[<_mon:gPatMon>\s<_day:gPatDay>\s<_year:gPatYear>\s<_time:gPatTime>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_deviceTime">
+              <regex><![CDATA[<deviceTime:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="not_exist _deviceTime">
+        <when test="exist runTime">
+          <setEventAttribute attr="deviceTime">divide($runTime, 1000)</setEventAttribute>
+        </when>
+      </when>
+    </choose>
+
+
+    <when test="exist _cn1Label">
+      <when test="$_cn1Label = 'ParentProcessId'">
+        <setEventAttribute attr="parentProcId">$_cn1</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _cn2Label">
+      <when test="$_cn2Label = 'ProcessId'">
+        <setEventAttribute attr="procId">$_cn2</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _cs2Label">
+      <when test="$_cs2Label = 'WrittenExeFileName'">
+        <setEventAttribute attr="destFileName">$_cs2</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _cs3Label">
+      <when test="$_cs3Label = 'WrittenExeFilePath'">
+        <setEventAttribute attr="destFilePath">$_cs3</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _cs5Label">
+      <when test="$_cs5Label = 'CommandLine'">
+        <setEventAttribute attr="command">$_cs5</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _cs6Label">
+      <when test="$_cs6Label = 'FalconHostLink'">
+        <setEventAttribute attr="httpHost">$_cs6</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="$eventType = 'Crowdstrike-Falcon-DetectionSummaryEvent'">
+      <when test="exist _cs5">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[cs5=<command:gPatMesgBody>\s+fileHash]]></regex>
+        </collectFieldsByRegex>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[fileHash=<hashCode:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+      </when>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

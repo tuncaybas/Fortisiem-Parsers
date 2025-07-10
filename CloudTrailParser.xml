@@ -1,0 +1,243 @@
+<eventParser name="CloudTrailParser">
+  <deviceType>
+    <Vendor>Amazon</Vendor>
+    <Model>AWS CloudTrail</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[AccelOps-CloudTrail]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[Sun May  4 10:29:06 2014 AccelOps-CloudTrail [eventTime]=2014-05-04T02:16:10Z [eventVersion]=1.01 [eventSource]=EC2 [eventName]=DescribeInstances [awsRegion]=us-east-1 [sourceIPAddress]=1.1.1.1 [userAgent]=aws-sdk-php2/2.4.7 Guzzle/3.7.1 curl/7.19.7 PHP/5.3.3 [userName]=accelops [userType]=Root [userPrincipalId]=623885071509 [userArn]=arn:aws:iam::623885071509:root [accountId]=623885071509 [accessKeyId]=AXXXXXXXXXXXXXXXXXXX]]></testEvent>
+    <testEvent><![CDATA[Wed Sep 5 16:18:19 2018 AccelOps-CloudTrail [phCustId]=2001 [awsRegion]=us-east-1 [eventID]=11111111-1111-1111-1111-111111111111 [eventName]=DescribeInstances [eventSource]=EC2 [eventTime]=2018-09-05T08:07:13Z [eventType]=AwsApiCall [eventVersion]=1.05 [recipientAccountId]=623885071509 [requestID]=11111111-1111-1111-1111-111111111111 [requestParameters/filterSet/items/0/name]=private-ip-address [requestParameters/filterSet/items/0/valueSet/items/0/value]=10.0.0.115 [sourceIPAddress]=5e:0:0:0:0:0:5668:eeee [userAgent]=aws-sdk-php/3.36.35 GuzzleHttp/6.2.1 curl/7.19.7 PHP/5.6.37 [userIdentity/accessKeyId]=AXXXXXXXXXXXXXXXXXXX [userIdentity/accountId]=623885071509 [userIdentity/arn]=arn:aws:iam::623885071509:user/usr1 [userIdentity/principalId]=AIDAIYWGFW2DJBOWQVMIE [userIdentity/type]=IAMUser [userIdentity/userName]=user1]]></testEvent>
+    <testEvent><![CDATA[Mon Apr  7 15:33:17 2025 AccelOps-CloudTrail [phCustId]=1 [additionalEventData/LoginTo]=https://console.aws.amazon.com/console/home [additionalEventData/MFAIdentifier]=arn:aws:iam::111111111:mfa/Pixel-6a-Authenticator-App [additionalEventData/MFAUsed]=Yes [additionalEventData/MobileVersion]=No [awsRegion]=us-east-1 [eventCategory]=Management [eventID]=11111111-1111-1111-1111-111111111111 [eventName]=ConsoleLogin [eventSource]=SIGNIN [eventTime]=2025-04-07T15:27:40Z [eventType]=AwsConsoleSignIn [eventVersion]=1.09 [recipientAccountId]=1111111111 [responseElements/ConsoleLogin]=Success [sourceIPAddress]=1.1.1.1 [tlsDetails/cipherSuite]=TLS_AES_128_GCM_SHA256 [tlsDetails/clientProvidedHostHeader]=signin.aws.amazon.com [tlsDetails/tlsVersion]=TLSv1.3 [userAgent]=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 [userIdentity/accessKeyId]= [userIdentity/accountId]=111111111 [userIdentity/arn]=arn:aws:iam::111111111:root [userIdentity/principalId]=111111111 [userIdentity/type]=Root]]></testEvent>
+  </testEvents>
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">AWS_CloudTrail_Generic</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">AWS_CLOUDTRAIL</setEventAttribute>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatStr>\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>\s+AccelOps\-CloudTrail\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+    </switch>
+
+    <collectAndSetAttrByKeyValuePair sep=" [" src="$_body">
+      <attrKeyMap attr="phCustId" key="[phCustId]="/>
+      <attrKeyMap attr="reptDevIpAddr" key="[reptDevIpAddr]="/>
+      <attrKeyMap attr="reptDevName" key="[reptDevName]="/>
+      <attrKeyMap attr="_eventTime" key="[eventTime]="/>
+      <attrKeyMap attr="version" key="[eventVersion]="/>
+      <attrKeyMap attr="serviceName" key="[eventSource]="/>
+      <attrKeyMap attr="opName" key="[eventName]="/>
+      <attrKeyMap attr="awsRegion" key="[awsRegion]="/>
+      <attrKeyMap attr="awsEventId" key="[eventID]="/>
+      <attrKeyMap attr="_srcIpAddr" key="[sourceIPAddress]="/>
+      <attrKeyMap attr="httpUserAgent" key="[userAgent]="/>
+      <!-- Some AWS services provide the errorCode and errorMessage as top-level fields and others as part of responseElements -->
+      <attrKeyMap attr="errorString" key="[errorCode]="/>
+      <attrKeyMap attr="errorString" key="[responseElements/errorCode]="/>
+      <attrKeyMap attr="errReason" key="[errorMessage]="/>
+      <attrKeyMap attr="errReason" key="[responseElements/errorMessage]="/>
+      <attrKeyMap attr="user" key="[userName]="/>
+      <attrKeyMap attr="userType" key="[userType]="/>
+      <attrKeyMap attr="principal" key="[userPrincipalId]="/>
+      <attrKeyMap attr="userArn" key="[userArn]="/>
+      <attrKeyMap attr="accountId" key="[accountId]="/>
+      <attrKeyMap attr="accessKeyId" key="[accessKeyId]="/>
+      <attrKeyMap attr="accountId" key="[resources/0/accountId]="/>
+      <!-- This only identifies the account receiving the log, not the target resource account id -->
+      <attrKeyMap attr="targetAccountId" key="[recipientAccountId]="/>
+      <attrKeyMap attr="type" key="[eventType]="/>
+      <attrKeyMap attr="user" key="[userIdentity/invokedBy]="/>
+      <attrKeyMap attr="user" key="[userIdentity/userName]="/>
+      <attrKeyMap attr="userType" key="[userIdentity/type]="/>
+      <attrKeyMap attr="principal" key="[userIdentity/principalId]="/>
+      <attrKeyMap attr="userArn" key="[userIdentity/arn]="/>
+      <attrKeyMap attr="accountId" key="[userIdentity/accountId]="/>
+      <attrKeyMap attr="accessKeyId" key="[userIdentity/accessKeyId]="/>
+      <attrKeyMap attr="caller" key="[userIdentity/invokedBy]="/>
+      <attrKeyMap attr="_date" key="[userIdentity/sessionContext/attributes/creationDate]="/>
+      <attrKeyMap attr="mfaAuthenticated" key="[userIdentity/sessionContext/attributes/mfaAuthenticated]="/>
+      <attrKeyMap attr="awsActionResult" key="[responseElements/_return]="/>
+      <attrKeyMap attr="accessKeyId" key="[responseElements/credentials/accessKeyId]="/>
+      <attrKeyMap attr="description" key="[requestParameters/description]="/>
+      <attrKeyMap attr="targetUser" key="[requestParameters/userName]="/>
+      <attrKeyMap attr="userGrp" key="[requestParameters/groupName]="/>
+      <attrKeyMap attr="policyName" key="[requestParameters/policyName]="/>
+      <attrKeyMap attr="groupID" key="[requestParameters/groupId]="/>
+      <attrKeyMap attr="vpcId" key="[requestParameters/vpcId]="/>
+      <attrKeyMap attr="profileName" key="[requestParameters/instanceProfileName]="/>
+      <attrKeyMap attr="role" key="[requestParameters/roleName]="/>
+      <attrKeyMap attr="role" key="[responseElements/assumedRoleUser/arn]="/>
+      <attrKeyMap attr="roleId" key="[responseElements/assumedRoleUser/assumedRoleId]="/>
+      <attrKeyMap attr="volumeId" key="[requestParameters/volumeId]="/>
+      <attrKeyMap attr="ec2InstanceId" key="[requestParameters/instanceId]="/>
+      <attrKeyMap attr="ec2InstanceId" key="[requestParameters/instancesSet/item/0/instanceId]="/>
+      <attrKeyMap attr="ec2InstanceId" key="[requestParameters/instancesSet/items/0/instanceId]="/>
+      <attrKeyMap attr="ec2InstanceId" key="[requestParameters/instances/0/instanceId]="/>
+      <attrKeyMap attr="ec2InstanceId" key="[responseElements/instances/0/instanceId]="/>
+      <attrKeyMap attr="ec2InstanceId" key="[responseElements/instances/instanceId]="/>
+      <attrKeyMap attr="ec2CurrentState" key="[responseElements/instances/currentState/name]="/>
+      <attrKeyMap attr="ec2PreviousState" key="[responseElements/instances/previousState/name]="/>
+      <attrKeyMap attr="_status" key="[responseElements/ConsoleLogin]="/>
+      <attrKeyMap attr="resourceType" key="[resourceType]="/>
+      <attrKeyMap attr="ipProto" key="[requestParameters/ipPermissions/items/0/ipProtocol]="/>
+      <attrKeyMap attr="srcIpPort" key="[requestParameters/ipPermissions/items/0/fromPort]="/>
+      <attrKeyMap attr="destIpPort" key="[requestParameters/ipPermissions/items/0/toPort]="/>
+      <attrKeyMap attr="instanceArchitecture" key="[requestParameters/architecture]="/>
+      <attrKeyMap attr="diskName" key="[requestParameters/blockDeviceMapping/items/0/deviceName]="/>
+      <attrKeyMap attr="snapshotId" key="[requestParameters/snapshotId]="/>
+      <attrKeyMap attr="snapshotId" key="[requestParameters/blockDeviceMapping/items/0/ebs/snapshotId]="/>
+      <attrKeyMap attr="kernelId" key="[requestParameters/kernelId]="/>
+      <attrKeyMap attr="elasticLoadBalancerPageSize" key="[requestParameters/pageSize]="/>
+      <attrKeyMap attr="launchConfigName" key="[requestParameters/launchConfigurationName]="/>
+      <attrKeyMap attr="imageName" key="[requestParameters/imageId]="/>
+      <attrKeyMap attr="loadBalancerName" key="[requestParameters/loadBalancerName]="/>
+      <!-- AWS SecretManager -->
+      <attrKeyMap attr="osObjName" key="[requestParameters/secretId]="/>
+      <!--When action start with Describe, if the response is item, it will be parsed to DescribeDetail-->
+      <attrKeyMap attr="details" key="[DescribeDetail]="/>
+      <!-- sharedEventID is consistent GUID for same event generated for source and target accounts cloudtrail records -->
+      <attrKeyMap attr="correlationId" key="[sharedEventID]="/>
+      <!-- tlsDetails in DescribeDBInstances -->
+      <attrKeyMap attr="tlsCipher" key="[tlsDetails/cipherSuite]="/>
+      <attrKeyMap attr="tlsVersion" key="[tlsDetails/tlsVersion]="/>
+      <!-- Requested or affected resource information -->
+      <attrKeyMap attr="resourceType" key="[resources/0/type]="/>
+      <!-- Additional Event Data -->
+      <attrKeyMap attr="authenMethod" key="[additionalEventData/AuthenticationMethod]="/>
+      <!-- whether console login user used mfa or not, Yes or No -->
+      <attrKeyMap attr="mfaAuthenticated" key="[additionalEventData/MFAUsed]="/>
+      <attrKeyMap attr="destName" key="[requestParameters/Host]="/>
+      <!-- client-provided host name used in the service API call, which is typically the FQDN of the service endpoint -->
+      <attrKeyMap attr="destName" key="[tlsDetails/clientProvidedHostHeader]="/>
+      <attrKeyMap attr="resourceName" key="[requestParameters/encryptionContext/SecretARN]="/>
+      <attrKeyMap attr="resourceName" key="[resources/0/ARN]="/>
+      <!-- S3 bucket list related requestParams -->
+      <attrKeyMap attr="objectPath" key="[requestParameters/prefix]="/>
+      <attrKeyMap attr="bucketName" key="[requestParameters/bucketName]="/>
+      <attrKeyMap attr="_requestKey" key="[requestParameters/key]="/>
+      <!-- ListSecrets filter -->
+      <attrKeyMap attr="filter" key="[requestParameters/filters/0/key]="/>
+      <attrKeyMap attr="queryFilter" key="[requestParameters/filters/0/values/0]="/>
+      <!-- Service Event Details -->
+      <attrKeyMap attr="_vaultName" key="[serviceEventDetails/backupVaultName]="/>
+      <attrKeyMap attr="_roleArn" key="[serviceEventDetails/iamRoleArn]="/>
+      <attrKeyMap attr="resourceName" key="[serviceEventDetails/resourceArn]="/>
+      <attrKeyMap attr="resourceType" key="[serviceEventDetails/resourceType]="/>
+      <attrKeyMap attr="status" key="[serviceEventDetails/state]="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <when test="exist _eventTime">
+      <collectFieldsByRegex src="$_eventTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime><_zone:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time, $_zone)</setEventAttribute>
+    </when>
+
+    <when test="exist _srcIpAddr">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_srcIpAddr">
+            <regex><![CDATA[^<srcIpAddr:gPatIpAddr>$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="srcName">$_srcIpAddr</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+    <when test="exist _date">
+      <collectFieldsByRegex src="$_date">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>Z]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="tempCredCreationDate">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+
+    <setEventAttribute attr="eventType">combineMsgId("AWS-CloudTrail-", $serviceName, "-", $opName)</setEventAttribute>
+    <when test="exist _status">
+      <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $_status)</setEventAttribute>
+    </when>
+
+    <!-- determine if action was successful or not -->
+    <choose>
+      <when test="exist errReason">
+        <setEventAttribute attr="status">failed</setEventAttribute>
+      </when>
+      <when test="exist errorString">
+        <setEventAttribute attr="status">failed</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="status">success</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <choose>
+      <when test="$eventType = 'AWS-CloudTrail-EC2-DescribeInstances'">
+        <collectAndSetAttrByKeyValuePair sep=" [" src="$_body">
+          <attrKeyMap attr="_hostIpAddr" key="[requestParameters/filterSet/items/0/valueSet/items/0/value]="/>
+        </collectAndSetAttrByKeyValuePair>
+        <collectAndSetAttrByKeyValuePair sep=" [" src="$_body">
+          <attrKeyMap attr="_ec2Name" key="[requestParameters/filterSet/items/0/name]="/>
+        </collectAndSetAttrByKeyValuePair>
+        <choose>
+          <when test="not_exist _hostIpAddr"/>
+          <when test="$_ec2Name = 'instance-state-name'">
+            <setEventAttribute attr="ec2CurrentState">$_hostIpAddr</setEventAttribute>
+          </when>
+          <when test="$_ec2Name = 'private-ip-address'">
+            <switch>
+              <case>
+                <collectFieldsByRegex src="$_hostIpAddr">
+                  <regex><![CDATA[^<hostIpAddr:gPatIpAddr>$]]></regex>
+                </collectFieldsByRegex>
+              </case>
+              <default>
+                <setEventAttribute attr="hostName">$_hostIpAddr</setEventAttribute>
+              </default>
+            </switch>
+          </when>
+        </choose>
+      </when>
+      <when test="$eventType = 'AWS-CloudTrail-EC2-RegisterImage'">
+        <collectAndSetAttrByKeyValuePair sep=" [" src="$_body">
+          <attrKeyMap attr="imageName" key="[requestParameters/name]="/>
+        </collectAndSetAttrByKeyValuePair>
+      </when>
+      <when test="$eventType = 'AWS-CloudTrail-EC2-CreateImage'">
+        <collectAndSetAttrByKeyValuePair sep=" [" src="$_body">
+          <attrKeyMap attr="imageName" key="[requestParameters/name]="/>
+        </collectAndSetAttrByKeyValuePair>
+      </when>
+      <when test="matches($eventType, 'AWS-CloudTrail-SIGNIN-ConsoleLogin')">
+        <choose>
+          <when test="exist user"/>
+          <when test="exist userArn">
+            <switch>
+              <!-- arn:aws:iam::623811111111:root -->
+              <!-- arn:aws:iam::222222222509:user/Example.User -->
+              <case>
+                <collectFieldsByRegex src="$userArn">
+                  <regex><![CDATA[^arn.*[/:]<user:gPatStr>$]]></regex>
+                </collectFieldsByRegex>
+              </case>
+              <default/>
+            </switch>
+          </when>
+        </choose>
+      </when>
+    </choose>
+
+    <!-- Key may have a different meaning in other logs, but with S3 buckets it means bucket key -->
+    <when test="exist bucketName">
+      <when test="exist _requestKey">
+        <setEventAttribute attr="filePath">$_requestKey</setEventAttribute>
+      </when>
+    </when>
+  </parsingInstructions>
+
+</eventParser>

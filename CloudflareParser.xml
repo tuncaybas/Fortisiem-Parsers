@@ -1,0 +1,77 @@
+<eventParser name="CloudflareParser">
+  <deviceType>
+    <Vendor>Cloudflare</Vendor>
+    <Model>Logpush</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[[PH_DEV_MON_CUSTOM_JSON]:[reptVendor]=Cloudflare,[reptModel]=Logpush,[reptDevName]=Cloudflare.com,[reptDevIpAddr]=1.1.1.1,[json]={"ClientIP":"1.2.3.4","ClientRequestHost":"www.abcd.com","ClientRequestMethod":"GET","ClientRequestURI":"/cgi-bin/","EdgeEndTimestamp":"2025-03-09T23:58:20Z","EdgeResponseBytes":2524,"EdgeResponseStatus":403,"EdgeStartTimestamp":"2025-03-09T23:58:20Z","RayID":"91de8511ce7d8ee1","SecurityAction":"block","SecurityRuleDescription":"Vulnerability scanner activity","SecurityRuleID":"0242110ae62e44028a13bf4834780914","ClientASN":215929,"ClientCountry":"de","ClientSSLProtocol":"none","ClientSrcPort":60789,"ClientRequestUserAgent":"Mozlila/5.0 (Linux; Android 7.0; SM-G892A Bulid/NRD90M; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/60.0.3112.107 Moblie Safari/537.36"}]]></testEvent>
+    <testEvent><![CDATA[[PH_DEV_MON_CUSTOM_JSON]:[reptVendor]=Cloudflare,[reptModel]=Logpush,[reptDevName]=Cloudflare.com,[reptDevIpAddr]=2.2.2.2,[json]={"ClientIP":"1.2.3.4","ClientRequestHost":"www.abcd.com","ClientRequestMethod":"GET","ClientRequestURI":"/favicon.ico","EdgeEndTimestamp":"2025-03-09T23:58:27Z","EdgeResponseBytes":7685,"EdgeResponseStatus":404,"EdgeStartTimestamp":"2025-03-09T23:58:27Z","RayID":"91de853d2b072516","SecurityAction":"log","SecurityRuleDescription":"RWT WAF ML [Less Than 40]","SecurityRuleID":"f598112aef814a6b94545271aaeaf4df","ClientASN":7018,"ClientCountry":"us","ClientSSLProtocol":"TLSv1.3","ClientSrcPort":1258,"ClientRequestUserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\[PH_DEV_MON_CUSTOM_JSON\]:\[reptVendor\]=Cloudflare,\[reptModel\]=Logpush,]]></eventFormatRecognizer>
+  <parsingInstructions>
+    <setEventAttribute attr="extEventRecvProto">WEBHOOK</setEventAttribute>
+    <setEventAttribute attr="eventType">Cloudflare-Traffic</setEventAttribute>
+    <collectFieldsByKeyValuePair kvsep="]=" sep=",[" src="$_rawmsg">
+      <attrKeyMap attr="reptDevName" key="reptDevName"/>
+      <attrKeyMap attr="reptDevIpAddr" key="reptDevIpAddr"/>
+      <attrKeyMap attr="_json" key="json"/>
+    </collectFieldsByKeyValuePair>
+    <when test="exist _json">
+      <collectAndSetAttrByJSON src="$_json">
+        <attrKeyMap attr="srcIpAddr" key="ClientIP"/>
+        <attrKeyMap attr="destName" key="ClientRequestHost"/>
+        <attrKeyMap attr="httpMethod" key="ClientRequestMethod"/>
+        <attrKeyMap attr="uriStem" key="ClientRequestURI"/>
+        <attrKeyMap attr="_endTime" key="EdgeEndTimestamp"/>
+        <attrKeyMap attr="recvBytes" key="EdgeResponseBytes"/>
+        <attrKeyMap attr="httpStatusCode" key="EdgeResponseStatus"/>
+        <attrKeyMap attr="_startTime" key="EdgeStartTimestamp"/>
+        <attrKeyMap attr="sessionId" key="RayID"/>
+        <attrKeyMap attr="fwAction" key="SecurityAction"/>
+        <attrKeyMap attr="fwRule" key="SecurityRuleDescription"/>
+        <attrKeyMap attr="ruleIdStr" key="SecurityRuleID"/>
+        <attrKeyMap attr="srcASNum32" key="ClientASN"/>
+        <attrKeyMap attr="tlsVersion" key="ClientSSLProtocol"/>
+        <attrKeyMap attr="srcIpPort" key="ClientSrcPort"/>
+        <attrKeyMap attr="httpUserAgent" key="ClientRequestUserAgent"/>
+      </collectAndSetAttrByJSON>
+    </when>
+    <when test="exist _startTime">
+      <switch>
+        <case>
+          <!--EdgeStartTimestamp format is 2025-03-09T23:58:43Z"-->
+          <collectAndSetAttrByRegex src="$_startTime">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime><_tz:gPatTimeZone>]]></regex>
+          </collectAndSetAttrByRegex>
+          <setEventAttribute attr="startTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <when test="exist _endTime">
+      <switch>
+        <case>
+          <!--EdgeEndTimestamp format is 2025-03-09T23:58:43Z"-->
+          <collectAndSetAttrByRegex src="$_endTime">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime><_tz:gPatTimeZone>]]></regex>
+          </collectAndSetAttrByRegex>
+          <setEventAttribute attr="endTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <choose>
+      <when test="exist fwAction">
+        <!--Possible values that come from SecurityAction are ALLOW,LOG,BLOCK,DROP,UNKNOWN-->
+        <setEventAttribute attr="fwAction">toLower($fwAction)</setEventAttribute>
+        <setEventAttribute attr="eventType">combineMsgId($eventType,"-", $fwAction)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">combineMsgId($eventType,"-generic")</setEventAttribute>
+      </otherwise>
+    </choose>
+  </parsingInstructions>
+</eventParser>

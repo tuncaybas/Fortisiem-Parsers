@@ -1,0 +1,68 @@
+<eventParser name="CodeGreenDLPParser">
+  <deviceType>
+    <Vendor>Digital Guardian</Vendor>
+    <Model>Code Green DLP</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[^\s*<:gPatSyslogPRI>\d+\s+<:gPatYear>-<:gPatMonNum>-<:gPatDay>T<:gPatTime>\.\d+<:gPatTimeZone>\s+<:gPatHostName>\s+DLP\s*-\s*]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<10>1 2017-05-11T12:08:06.380Z ABC-Manager DLP - INCADD incident_id="1.12815.1" managed_device_id="1" number_of_incidents="1" incident_status="New,Audit Only" matched_policies_by_severity="High:C_PHI_MRN / C_MRN_>25;" action_taken="NET_NS_H" matches="55" protocol="SMTP" http_url="" inspected_document="Milla_9.16-4.17__UPDATED.XLSX" source="abc@cda.org" source_ip="1.1.1.1" source_port="21752" destination="abc@bcd.edu" destination_ip="2.2.2.2" destination_port="25" email_subject="RE: Open Encounters" email_sender="abc@cde.org" email_recipients="abc@bcd.edu;" timestamp="2017-05-11 12:06:09 PDT" incidents_url="https://aaa.lpch.net/LoadIncidentManagement.do?m=1&id=1,27372"]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[^\s*<:gPatSyslogPRI>\d+\s+<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>\s+<hostName:gPatHostName>\s+DLP\s*-\s*<:gPatStr>\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    <setEventAttribute attr="eventAction">0</setEventAttribute>
+    <setEventAttribute attr="eventType">CodeGreen-DLP-ViolationFound</setEventAttribute>
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="deviceIdentification" key="managed_device_id"/>
+      <attrKeyMap attr="_severityStr" key="matched_policies_by_severity"/>
+      <attrKeyMap attr="actionName" key="action_taken"/>
+      <attrKeyMap attr="count" key="matches"/>
+      <attrKeyMap attr="appTransportProto" key="protocol"/>
+      <attrKeyMap attr="httpFullRequest" key="http_url"/>
+      <attrKeyMap attr="fileName" key="inspected_document"/>
+      <attrKeyMap attr="srcGeoOrg" key="source"/>
+      <attrKeyMap attr="srcIpAddr" key="source_ip"/>
+      <attrKeyMap attr="srcIpPort" key="source_port"/>
+      <attrKeyMap attr="destGeoOrg" key="destination"/>
+      <attrKeyMap attr="destIpAddr" key="destination_ip"/>
+      <attrKeyMap attr="destIpPort" key="destination_port"/>
+      <attrKeyMap attr="mailSubject" key="email_subject"/>
+      <attrKeyMap attr="senderMailAddr" key="email_sender"/>
+      <attrKeyMap attr="receiverMailAddr" key="email_recipients"/>
+      <attrKeyMap attr="_actionTime" key="timestamp"/>
+      <attrKeyMap attr="infoURL" key="incidents_url"/>
+    </collectFieldsByKeyValuePair>
+    <when test="exist _severityStr">
+      <collectAndSetAttrByRegex src="$_severityStr">
+        <regex><![CDATA[<_severity:gPatStrEndColon>]]></regex>
+      </collectAndSetAttrByRegex>
+      <choose>
+        <when test="$_severity = 'High'">
+          <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+        </when>
+        <when test="$_severity = 'Medium'">
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </when>
+        <when test="$_severity = 'Low'">
+          <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+    <when test="exist _actionTime">
+      <collectAndSetAttrByRegex src="$_actionTime">
+        <regex><![CDATA[<_year1:gPatYear>-<_mon1:gPatMonNum>-<_day1:gPatDay>\s+<_time1:gPatTime>]]></regex>
+      </collectAndSetAttrByRegex>
+      <setEventAttribute attr="actionTime">toDateTime($_mon1, $_day1, $_year1, $_time1)</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>

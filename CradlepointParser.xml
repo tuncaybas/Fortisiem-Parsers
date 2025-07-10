@@ -1,0 +1,195 @@
+<eventParser name="CradlepointParser">
+  <deviceType>
+    <Vendor>Cradlepoint</Vendor>
+    <Model>Router</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patMod"><![CDATA[[\w.-]+]]></pattern>
+    <pattern name="patAction"><![CDATA[deleted|established|expired]]></pattern>
+  </patternDefinitions>
+
+  <!-- .{3} can match a UTF BOM <U+FEFF>. Is there a better way to match a Unicode character? None of \xfeff, \ufeff, [\xfeff], [\ufeff], [\x{feff}], [\xfe][\xff] works. -->
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>(?:.{3})?\(<:gPatHostName>\)\s+<:patMod>:]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<14>﻿(Gallatin) dhcp: Updated DHCP client: KHANNURLAP7 10.4.42.222 58:94:6b:8d:2b:94]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_pri:gPatSyslogPRI>(?:.{3})?\(<reptDevName:gPatHostName>\)\s+<procName:patMod>:\s*<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">combineMsgId("Cradlepoint-", $procName, "-Generic")</setEventAttribute>
+    <setEventAttribute attr="eventSeverity">getEventSeverityFromSyslogPriority($_pri)</setEventAttribute>
+
+    <choose>
+      <when test="$procName = 'dhcp'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^Updated DHCP client: <hostName:gPatHostName>\s+<hostIpAddr:gPatIpAddr>\s+<_mac:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Cradlepoint-", $procName, "-updated")</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$procName = 'racoon'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^(?:<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>:\s+)?(?:\[<:gPatIpAddr>\]\s+)?<:gPatWord>:\s+<_body1:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body1">
+              <regex><![CDATA[^purg(?:ed|ing) <_proto:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Cradlepoint-VPN-purge-", $_proto)</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body1">
+              <regex><![CDATA[^<_proto:gPatStr> <_action:patAction>(?:: .+)? <srcIpAddr:gPatIpAddr>\[<srcIpPort:gPatInt>\]-\>?<destIpAddr:gPatIpAddr>\[<destIpPort:gPatInt>\]]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Cradlepoint-VPN-", $_action, "-", $_proto)</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body1">
+              <regex><![CDATA[^initiate new phase\s*<_phase:gPatInt> negotiation: <srcIpAddr:gPatIpAddr>\[<srcIpPort:gPatInt>\]\<=\><destIpAddr:gPatIpAddr>\[<destIpPort:gPatInt>\]]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Cradlepoint-VPN-initiate-phase", $_phase)</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body1">
+              <regex><![CDATA[^renegotiating phase\s*<_phase:gPatInt> to <destIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Cradlepoint-VPN-renegotiate-phase", $_phase)</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body1">
+              <regex><![CDATA[^respond new phase\s*<_phase:gPatInt> negotiation: <srcIpAddr:gPatIpAddr>\[<srcIpPort:gPatInt>\]\<=\><destIpAddr:gPatIpAddr>\[<destIpPort:gPatInt>\]]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Cradlepoint-VPN-respond-phase", $_phase)</setEventAttribute>
+          </case>
+
+          <default>
+            <setEventAttribute attr="eventType">Cradlepoint-VPN-Generic</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+
+      <when test="$procName = 'wlan'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^Client <_mac:gPatStr>\s+<_body1:gPatMesgBodyMin>\s*$]]></regex>
+        </collectFieldsByRegex>
+
+        <choose>
+          <when test="$_body1 IN 'associated, deauthenticated'">
+            <setEventAttribute attr="eventType">combineMsgId("Cradlepoint-", $procName, "-", $_body1)</setEventAttribute>
+          </when>
+
+          <when test="matches($_body1, '^\S+ key negotiation completed')">
+            <setEventAttribute attr="eventType">combineMsgId("Cradlepoint-", $procName, "-key-negotiation")</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <when test="$procName IN 'ntp, clock'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^System time set to: ]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Cradlepoint-", $procName, "-set")</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$procName = 'ecm'">
+        <choose>
+          <when test="$_body = 'Binding to Stream Server'">
+            <setEventAttribute attr="eventType">combineMsgId("Cradlepoint-", $procName, "-bind-stream-server")</setEventAttribute>
+          </when>
+
+          <when test="$_body = 'Checking Authentication'">
+            <setEventAttribute attr="eventType">combineMsgId("Cradlepoint-", $procName, "-check-authentication")</setEventAttribute>
+          </when>
+
+          <when test="$_body IN 'Connecting to ECM, Successfully connected to ECM'">
+            <setEventAttribute attr="eventType">combineMsgId("Cradlepoint-", $procName, "-connect-ECM")</setEventAttribute>
+          </when>
+
+          <when test="$_body = 'ECM Session Stopped'">
+            <setEventAttribute attr="eventType">combineMsgId("Cradlepoint-", $procName, "-session-stopped")</setEventAttribute>
+          </when>
+
+          <when test="$_body = 'Updated status.ecm.info.Account'">
+            <setEventAttribute attr="eventType">combineMsgId("Cradlepoint-", $procName, "-account-updated")</setEventAttribute>
+          </when>
+
+          <when test="matches($_body, '^Server Requested Reconnect:')">
+            <setEventAttribute attr="eventType">combineMsgId("Cradlepoint-", $procName, "-reconnect")</setEventAttribute>
+          </when>
+
+          <when test="matches($_body, '^Abandoning post for inactive stream:')">
+            <setEventAttribute attr="eventType">combineMsgId("Cradlepoint-", $procName, "-abandon-post")</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <when test="$procName = 'mac_monitoring'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^Unrecognized MAC connected, MAC: <_mac:gPatStr> on Interface: ssid:<wlanSsid:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Cradlepoint-", $procName, "-unrecognized-mac")</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$procName = 'httpserver'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^Accepted web login from remote address <srcIpAddr:gPatIpAddr>, user: <user:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Cradlepoint-", $procName, "-accept")</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$procName = 'tornado.general'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^SSL Error on \d+ \('<srcIpAddr:gPatIpAddr>', <srcIpPort:gPatInt>\): \[SSL: \w+\]]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Cradlepoint-tornado-SSL-Error</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$procName = 'svcmgr'">
+        <when test="matches($_body, '\bUpgrade Available\b')">
+          <setEventAttribute attr="eventType">Cradlepoint-svcmgr-upgrade-available</setEventAttribute>
+        </when>
+      </when>
+    </choose>
+
+    <when test="exist _mac">
+      <setEventAttribute attr="hostMACAddr">normalizeMAC($_mac)</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>

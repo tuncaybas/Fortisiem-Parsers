@@ -1,0 +1,117 @@
+<eventParser name="CiscoTVCSParser">
+  <deviceType>
+    <Vendor>Cisco</Vendor>
+    <Model>Telepresence Video Comm Server</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>\d+\s+<:gPatYear>-<:gPatMon>-<:gPatDay>T<:gPatTime>-\d+:\d+\s+<:gPatStr>\s+<:gPatStr>\s+<:gPatStr>\s+<:gPatStr>\s+\[meta sequenceId="\d+"\]]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<182>1 2015-10-01T13:56:21-05:00 BHMCUCMVCSE tvcs - - [meta sequenceId="5944"] 2015-10-01T13:56:21-05:00 BHMCUCMVCSE tvcs: UTCTime="2015-10-01 18:56:21,673" Module="network.sip" Level="INFO":  Action="Received" Local-ip="192.168.254.250"  Local-port="5061"  Src-ip="1.1.1.1"  Src-port="42248"   Detail="Receive Request Method=REGISTER, CSeq=198, To=sip:48330@10.1.10.200, Call-ID=acd1b8bf-863e0006-0000686a-0000377f@192.168.200.28, From-Tag=acd1b8bf863e004b00002272-00005aa4, To-Tag=, Msg-Hash=5368229874447754155"]]></testEvent>
+    <testEvent><![CDATA[<134>1 2015-10-01T13:56:21-05:00 BHMCUCMVCSE tvcs - - [meta sequenceId="5943"] 2015-10-01T13:56:21-05:00 BHMCUCMVCSE tvcs: Event="Message Received" Service="SIP" Src-ip="10.0.0.1" Src-port="42248" Dst-ip="192.168.254.250" Dst-port="5061" Protocol="TLS" Num-bytes="1368" Level="4" UTCTime="2015-10-01 18:56:21,672"]]></testEvent>
+    <testEvent><![CDATA[<38>1 2015-10-01T13:56:44-05:00 BHMCUCMVCSE sshdpfwd 18858 - [meta sequenceId="6036"] 2015-10-01T13:56:44-05:00 BHMCUCMVCSE sshdpfwd[18858]: Received disconnect from 10.1.10.204: 11: disconnected by user]]></testEvent>
+  </testEvents>
+
+  <!-- pattern definitions -->
+  <patternDefinitions>
+    </patternDefinitions>
+
+  <parsingInstructions>
+
+    <!-- parsing common fields -->
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>\d+\s+<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>-\d+:\d+\s+<:gPatStr>\s+<:gPatStr>\s+<:gPatStr>\s+<:gPatStr>\s+\[meta sequenceId="\d+"\]\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+
+    <collectAndSetAttrByKeyValuePair src="$_body" sep=" ">
+      <attrKeyMap attr="_event" key="Event="/>
+      <attrKeyMap attr="user" key="User="/>
+      <attrKeyMap attr="srcIpAddr" key="ipaddr="/>
+      <attrKeyMap attr="appTransportProto" key="Protocol="/>
+      <attrKeyMap attr="errReason" key="Reason="/>
+      <attrKeyMap attr="serviceName" key="Service="/>
+      <attrKeyMap attr="_responseCode" key="Response-code="/>
+      <attrKeyMap attr="srcIpAddr" key="Src-ip="/>
+      <attrKeyMap attr="destIpAddr" key="Dst-ip="/>
+      <attrKeyMap attr="srcIpPort" key="Src-port="/>
+      <attrKeyMap attr="destIpPort" key="Dst-port="/>
+      <attrKeyMap attr="srcName" key="Src-alias="/>
+      <attrKeyMap attr="destName" key="Dst-alias="/>
+      <attrKeyMap attr="details" key="Detail="/>
+      <attrKeyMap attr="authResult" key="Auth="/>
+      <attrKeyMap attr="sipMethod" key="Method="/>
+      <attrKeyMap attr="sipCallId" key="Call-id="/>
+      <attrKeyMap attr="sipCallSerialNum" key="Call-serial-number="/>
+      <attrKeyMap attr="finalCalledPartyNumber" key="To="/>
+      <attrKeyMap attr="uriStem" key="Request-URI="/>
+      <attrKeyMap attr="totBytes64" key="Num-bytes="/>
+      <attrKeyMap attr="_level" key="Level="/>
+      <attrKeyMap attr="_utctime" key="UTCTime="/>
+      <attrKeyMap attr="msg" key="Msg="/>
+      <attrKeyMap attr="details" key="Details="/>
+      <attrKeyMap attr="_localIp" key="Local-ip="/>
+      <attrKeyMap attr="_action" key="Action="/>
+      <attrKeyMap attr="sipCallSerialNum" key="call_serial_number="/>
+      <attrKeyMap attr="_localPort" key="Local-port="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <choose>
+      <when test="exist _event">
+        <setEventAttribute attr="_event">replaceStringByRegex($_event, "\s+", "-")</setEventAttribute>
+        <setEventAttribute attr="eventType">combineMsgId("Cisco-TVCS-", $_event)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">Cisco-TVCS-Generic</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist _utctime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_utctime">
+            <regex><![CDATA[<_evtyear:gPatYear>-<_evtmon:gPatMon>-<_evtday:gPatDay>\s+<_evttime:gPatTime>,\d{3}]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventTime">toDateTime($_evtmon, $_evtday, $_evtyear, $_evttime)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <choose>
+      <when test="not_exist _localIp"/>
+      <when test="not_exist _action"/>
+      <when test="$_action = 'Sent'">
+        <setEventAttribute attr="srcIpAddr">$_localIp</setEventAttribute>
+        <setEventAttribute attr="srcIpPort">$_localPort</setEventAttribute>
+      </when>
+      <when test="$_action = 'Received'">
+        <setEventAttribute attr="destIpAddr">$_localIp</setEventAttribute>
+        <setEventAttribute attr="destIpPort">$_localPort</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _level"/>
+      <when test="$_level = 1">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$_level = 2">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_level = 3">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$_level = 4">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_level = INFO">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+    </choose>
+
+  </parsingInstructions>
+
+</eventParser>

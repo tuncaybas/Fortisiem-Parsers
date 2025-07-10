@@ -1,0 +1,70 @@
+<eventParser name="CryptoAuditorParser">
+  <deviceType>
+    <Vendor>SSH Comm Security</Vendor>
+    <Model>CryptoAuditor</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patStrVBar"><![CDATA[[^ |]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\|CryptoAuditor\|]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<189>Jun 24 15:43:01 auditor ssh-auditor[4067]: CEF:0|SSH|CryptoAuditor|1.6.0|4201|Connection_received|1|rt=Jun 26 2015 07:48:24 SshAuditorSrc=10.1.78.8 spt=34453 SshAuditorDst=10.1.78.8 dpt=10022 SshAuditorSessionId=21 SshAuditorUsername=testuser SshAuditorRemoteusername=testuser SshAuditorProtocolsessionId=C089C55D9ADE0A4F901917D69B46B01223A02B70 SshAuditorVirtualLAN=0 cs1=source connection cs1Label=Text]]></testEvent>
+    <testEvent><![CDATA[<189>Jun 24 15:43:01 auditor ssh-auditor[4067]: CEF:0|SSH|CryptoAuditor|1.6.0|4201|Connection_received|rt=Jun 26 2015 07:48:24 SshAuditorSrc=10.1.78.8 spt=34453 SshAuditorDst=10.1.78.8 dpt=10022 SshAuditorSessionId=21 SshAuditorUsername=testuser SshAuditorRemoteusername=testuser SshAuditorProtocolsessionId=C089C55D9ADE0A4F901917D69B46B01223A02B70 SshAuditorVirtualLAN=0 cs1=source connection cs1Label=Text]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatHostName>\s+ssh-auditor\[\d+\]:\s+CEF:\d+(?:\|[^|]*){4}\|<_et:patStrVBar>(?:\|<eventSeverity:gPatInt>)?\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+    <when test="$eventSeverity = '0'">
+      <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+    </when>
+
+    <setEventAttribute attr="eventType">combineMsgId("CryptoAuditor-", $_et)</setEventAttribute>
+
+    <collectAndSetAttrByKeyValuePair sep=" " src="$_body">
+      <attrKeyMap attr="appTransportProto" key="app="/>
+      <attrKeyMap attr="recvBytes64" key="in="/>
+      <attrKeyMap attr="sentBytes64" key="out="/>
+      <attrKeyMap attr="destIpAddr" key="dst="/>
+      <attrKeyMap attr="destIpAddr" key="dst ="/>
+      <attrKeyMap attr="destName" key="dhost="/>
+      <attrKeyMap attr="destMACAddr" key="dmac="/>
+      <attrKeyMap attr="destDomain" key="dntdom="/>
+      <attrKeyMap attr="destIpPort" key="dpt="/>
+      <attrKeyMap attr="_destProc" key="dproc="/>
+      <attrKeyMap attr="_destUID" key="duid="/>
+      <attrKeyMap attr="_destPriv" key="dpriv="/>
+      <attrKeyMap attr="destUser" key="duser="/>
+      <attrKeyMap attr="endTime" key="end="/>
+      <attrKeyMap attr="fileName" key="fname="/>
+      <attrKeyMap attr="fileSize" key="fsize="/>
+      <attrKeyMap attr="_receiptTime" key="rt="/>
+      <attrKeyMap attr="_request" key="request="/>
+      <attrKeyMap attr="srcIpAddr" key="src="/>
+      <attrKeyMap attr="srcIpAddr" key="src ="/>
+      <attrKeyMap attr="srcName" key="shost="/>
+      <attrKeyMap attr="srcMACAddr" key="smac="/>
+      <attrKeyMap attr="srcDomain" key="sntdom="/>
+      <attrKeyMap attr="srcIpPort" key="spt="/>
+      <attrKeyMap attr="_srcUID" key="suid="/>
+      <attrKeyMap attr="_srcPriv" key="spriv="/>
+      <attrKeyMap attr="srcUser" key="suser="/>
+      <attrKeyMap attr="user" key="suser="/>
+      <attrKeyMap attr="startTime" key="start="/>
+      <attrKeyMap attr="ipProto" key="proto="/>
+      <attrKeyMap attr="destIpAddr" key="SshAuditorDst="/>
+      <attrKeyMap attr="srcUser" key="SshAuditorUsername="/>
+      <attrKeyMap attr="user" key="SshAuditorUsername="/>
+      <attrKeyMap attr="destUser" key="SshAuditorRemoteusername="/>
+      <attrKeyMap attr="sessionId" key="SshAuditorProtocolsessionId="/>
+      <attrKeyMap attr="hostVLAN" key="SshAuditorVirtualLAN="/>
+      <attrKeyMap attr="msg" key="s1="/>
+    </collectAndSetAttrByKeyValuePair>
+  </parsingInstructions>
+</eventParser>

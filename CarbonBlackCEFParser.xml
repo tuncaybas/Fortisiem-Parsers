@@ -1,0 +1,592 @@
+<eventParser name="CarbonBlackCEFParser">
+  <deviceType>
+    <Vendor>Carbon Black</Vendor>
+    <Model>Security Platform</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[cbdefense1|CEF:0|CarbonBlack|CbDefense_Syslog_Connector|2.0|Active_Threat|The application cmd.exe invoked another application (ciscowebexstart.exe) on behalf of chrome.exe.|3|rt="Mar 16 2018 18:04:07" sntdom=sntdom1 dvchost=dvchost1 duser=dust1 dvc=10.100.40.111 cs3Label="Link" cs3="https://example.com/cs3" cs4Label="Threat_ID" cs4="cs4" act=Alert]]></testEvent>
+    <testEvent><![CDATA[<14>May 06 13:28:09 host1 CEF:0|Carbon Black|Protection|8.0.0.2562|809|Report write (custom rule)|4|externalId=649219 cat=Policy Enforcement start=May 06 13:27:41 UTC rt=May 06 13:28:02 UTC filePath=c:\\windows\\system32\\perfdisk.dll fname=perfdisk.dll fileHash=60b8a55c0f3228b18d918a3fd6684c401442f6440d2cec5dad9860a8c1d6462c fileId=39126 deviceProcessName="C:\\ProgramData\\Microsoft\\Windows Defender\\platform\\4.14.17639.18041-0\\MsMpEng.exe" dst=172.31.31.13 dhost=NAVYSEC\\DC01 duser=NT AUTHORITY\\SYSTEM dvchost=cbprotection msg='c:\\windows\\system32\\perfdisk.dll' was created by 'NT AUTHORITY\\SYSTEM'. sproc=11111111-1111-1111-1111-111111111111 cs1Label=rootHash cs1=e1c32fca51d86aad28c2dd13ec427eccd03f9d6900f8f1fe90b99f85550a8a98 cs2Label=installerFilename cs2=msi669d.tmp cs3Label=Policy cs3=Domain Controllers cs5Label=ruleName cs5=[File Integrity Monitoring] Changes to system files cfp1Label=fileTrust cfp1=10 flexString1Label=fileThreat flexString1=0 - Clean cfp2Label=processTrust cfp2=10 flexString2Label=processThreat flexString2=0 - Clean]]></testEvent>
+    <testEvent><![CDATA[<14>May 06 15:38:50 host1 CEF:0|Carbon Black|Protection|8.0.0.2562|809|Report write (custom rule)|4|externalId=651433 cat=Policy Enforcement start=May 06 15:38:11 UTC rt=May 06 15:38:46 UTC filePath=c:\\windows\\system32\\dhcp\\j50008ff.log fname=j50008ff.log deviceProcessName=C:\\Windows\\system32\\svchost.exe -k DHCPServer dst=172.31.31.13 dhost=NAVYSEC\\DC01 duser=NT AUTHORITY\\NETWORK SERVICE dvchost=cbprotection msg='c:\\windows\\system32\\dhcp\\j50008ff.log' was deleted by 'NT AUTHORITY\\NETWORK SERVICE'. sproc=11111111-1111-1111-1111-111111111111 cs3Label=Policy cs3=Domain Controllers cs5Label=ruleName cs5=[File Integrity Monitoring] Changes to system files cfp2Label=processTrust cfp2=10 flexString2Label=processThreat flexString2=0 - Clean]]></testEvent>
+    <testEvent><![CDATA[2021-01-20 19:00:27 [6922] <warning>  CEF:0|Carbon Black|Carbon Black|7.3.0.201016.1331|reason=process_feed_11|bit9suspiciousindicators|10|dproc=sysmon.exe|fname=c:\\windows\\temp\\sysmon.exe|start=2021-01-21T01:00:35.525Z|dhost=vdi-crp-nschwar|ioc_type=query|ioc_value={"index_type":"events","search_query":"cb.urlver\=1&q\=%28file_desc%3ASysinternals%20OR%20company_name%3ASysinternals%20AND%20os_type%3Awindows%29"}|group=default group|process_md5=e5441f119f742b088d4b2ef43b7d4d2f|last_update=2021-01-21T01:00:35.687Z|process_id=11111111-1111-1111-1111-111111111111|segment_id=1611190827380|||| alliance_updated_bit9suspiciousindicators=2020-07-14T17:15:10.000Z|||||| alliance_link_bit9suspiciousindicators=https://attack.mitre.org/techniques/T1072/|||||||||| alliance_data_bit9suspiciousindicators=11111111-1111-1111-1111-111111111111|||||| alliance_score_bit9suspiciousindicators=30|||||||||||||||||||comms_ip=10.5.20.153|interface_ip=10.5.20.153|sensor_id=1410|report_title=(Unknown)]]></testEvent>
+    <testEvent><![CDATA[<14>Oct 13 08:45:08 SACNT2200 CEF:0|VMware Carbon Black|App Control|8.9.4.55|809|Report write (Custom Rule)|4|externalId=140894525 cat=Policy Enforcement start=Oct 13 15:22:14 UTC rt=Oct 13 15:22:12 UTC filePath=c:\\sample\\data\\host1[@$@]2023-10-13-10-19-34\\top111153702x23562_5892802800_0_0.jpg fname=top111153702x212903562_5892800x5892800_0_0.jpg deviceProcessName=c:\\windows\\system32\\ntoskrnl.exe dst=10.1.2.3 dhost=WORKGROUP\\V810-SN duser=NT AUTHORITY\\SYSTEM dvchost=HOST123.america.ad.example.com msg='c:\\defects\\data\\host1[@$@]2023-10-13-10-19-34\\top111153702x212903562_5892800x5892800_0_0.jpg' was deleted by 'NT AUTHORITY\\SYSTEM'. sproc=11111111-1111-1111-1111-111111111111 cs3Label=Policy cs3=AMERICAS Low cs5Label=ruleName cs5=Ransomware Protection: Report image file modifications cs7Label=rapidConfigName cs7=Ransomware Protection cfp2Label=processTrust cfp2=10 flexString2Label=processThreat flexString2=0 - Clean]]></testEvent>
+    <testEvent><![CDATA[<14>2024-04-04T00:24:39.545827Z TEST_CBC_AUDIT_LOG_FORWARDER CEF:1|CarbonBlack|CBCSyslog|2.0.3|Audit Logs|Connector testUser logged in successfully|1|rt=1712190277626 dvchost=example.com duser=testUser dvc=192.168.1.25 cs4Label=Event_ID cs4=abcd1234efab1234abab6654 ]]></testEvent>
+    <testEvent><![CDATA[<14>2024-04-03T11:17:53.707560Z TEST_CBC_ALERT_LOG_FORWARDER CEF:1|CarbonBlack|CBCSyslog|2.0.3|11111111-1111-1111-1111-111111111111:11111111-1111-1111-1111-111111111111|Process powershell.exe was detected by the report "Detect - All PowerShell script running (except whitelisted)" in watchlist "Watchlist for PowerShells"|3|cat=WATCHLIST	frameworkName=MITRE_ATT&CK	threatAttackID=:	act=ALLOW	externalId=11111111-1111-1111-1111-111111111111	rt=Apr 03 2024 11:04:04	start=Apr 03 2024 11:04:47	outcome=RAN	deviceProcessId=44056	deviceProcessName=c:\windows\system32\windowspowershell\v1.0\powershell.exe	fileHash=6a785adc0263238dab3eb37f4c185c8fba7feb5d425d034ca9864f1be1c1b473	deviceExternalId=130906307	dvc=192.168.2.3	duser=test\user	cs1=E201717FA9987F5694BB84BB94B75761	cs1Label=Threat_ID	cs2=sample.net/alerts?s[c][query_string]=id:11111111-1111-1111-1111-111111111111&orgKey=NJZFDY5X	cs2Label=Link	cs3=TEST\DEVICE	cs3Label=Device_Name	cs4=TRUSTED_WHITE_LIST	cs4Label=Process_Effective_Reputation	cs5=c:\windows\explorer.exe	cs5Label=Parent_Name	cs6=3cffe318da2b6ba10535b15188ed4f075a6a9af28121e7642340ea1a53412632	cs6Label=Parent_Hash	c6a1=192.168.1.2	c6a1Label=External_Device_Address ]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patOr"><![CDATA[[^\|]*]]></pattern>
+    <pattern name="patExceptPipe"><![CDATA[[^\|]*]]></pattern>
+    <pattern name="patModel"><![CDATA[(?:CbDefense_Syslog_Connector|Protection|Carbon\s?Black|App Control|CBCSyslog)]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\bCEF:\d+\|(?:VMware\s*)?Carbon\s?Black\|<:patModel>\|]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>?\s*<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatStr>)\s+CEF\s*:<_version:gPatInt>\|<_vendor:patExceptPipe>\|CBCSyslog\|<appVersion:patExceptPipe>\|<_type:patExceptPipe>\|<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="appName">CBCSyslog</setEventAttribute>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        <!-- CBCSyslog messages are either Audit or Alert logs -->
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>?\s*<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+CEF\s*:<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+        <setEventAttribute attr="_protection">"Protection"</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>?<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>\s+<_time:gPatTime>\s+\[\d+\]\s+\<<_sev:gPatWord>\>\s+CEF\s*:<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[\bCEF\s*:<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <setEventAttribute attr="eventType">CarbonBlack-Generic</setEventAttribute>
+
+    <when test="matches($_body, '\\\|')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "\|", "::TEMP::")</setEventAttribute>
+    </when>
+    <setEventAttribute attr="_body">replaceStrInStr($_body, "|", "::SEP::")</setEventAttribute>
+    <when test="matches($_body, '::TEMP::')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "::TEMP::", "|")</setEventAttribute>
+    </when>
+
+    <choose>
+      <!-- CBC Cloud logs use this CEF structure -->
+      <when test="exist appName">
+        <collectAndSetAttrByPos sep="::SEP::" src="$_body">
+          <attrPosMap attr="msg" pos="1"/>
+          <attrPosMap attr="_severity" pos="2"/>
+          <attrPosMap attr="_extension" pos="3"/>
+        </collectAndSetAttrByPos>
+        <setEventAttribute attr="_extension">replaceStringByRegex($_extension, "\t", " ")</setEventAttribute>
+      </when>
+      <otherwise>
+        <collectAndSetAttrByPos sep="::SEP::" src="$_body">
+          <attrPosMap attr="_version" pos="1"/>
+          <attrPosMap attr="_vendor" pos="2"/>
+          <attrPosMap attr="appName" pos="3"/>
+          <attrPosMap attr="appVersion" pos="4"/>
+          <attrPosMap attr="threatCategory" pos="5"/>
+          <attrPosMap attr="_subCategoryType" pos="6"/>
+          <attrPosMap attr="_severity" pos="7"/>
+          <attrPosMap attr="_extension" pos="8"/>
+        </collectAndSetAttrByPos>
+      </otherwise>
+    </choose>
+
+    <when test="exist _sev">
+      <setEventAttribute attr="_extension">replaceStrInStr($_body, "::SEP::", " ")</setEventAttribute>
+    </when>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_extension">
+      <attrKeyMap attr="_eventTime" key="rt"/>
+      <attrKeyMap attr="domain" key="sntdom"/>
+      <attrKeyMap attr="hostName" key="dvchost"/>
+      <attrKeyMap attr="user" key="duser"/>
+      <attrKeyMap attr="hostIpAddr" key="dvc"/>
+      <attrKeyMap attr="_cs3" key="cs3"/>
+      <attrKeyMap attr="_cs3Label" key="cs3Label"/>
+      <attrKeyMap attr="_cs4" key="cs4"/>
+      <attrKeyMap attr="_cs4Label" key="cs4Label"/>
+      <attrKeyMap attr="_cs7" key="cs7"/>
+      <attrKeyMap attr="_cs7Label" key="cs7Label"/>
+      <attrKeyMap attr="_action" key="act"/>
+
+      <attrKeyMap attr="remedyAction" key="act"/>
+      <attrKeyMap attr="appTransportProto" key="app"/>
+      <attrKeyMap attr="destDomain" key="destinationDnsDomain"/>
+      <attrKeyMap attr="destServiceName" key="destinationServiceName"/>
+      <attrKeyMap attr="postNATDestIpAddr" key="destinationTranslatedAddress"/>
+      <attrKeyMap attr="postNATDestIpPort" key="destinationTranslatedPort"/>
+      <attrKeyMap attr="direction" key="deviceDirection"/>
+      <attrKeyMap attr="domain" key="deviceDnsDomain"/>
+      <attrKeyMap attr="deviceIdentification" key="deviceExternalId"/>
+      <attrKeyMap attr="srcIntfName" key="deviceInboundInterface"/>
+      <attrKeyMap attr="domain" key="deviceNtDomain"/>
+      <attrKeyMap attr="destIntfName" key="deviceOutboundInterface"/>
+      <attrKeyMap attr="procName" key="deviceProcessName"/>
+      <attrKeyMap attr="postNATHostIpAddr" key="deviceTranslatedAddress"/>
+      <attrKeyMap attr="destName" key="dhost"/>
+      <attrKeyMap attr="destMACAddr" key="dmac"/>
+      <attrKeyMap attr="destDomain" key="dntdom"/>
+      <attrKeyMap attr="targetProcId" key="dpid"/>
+      <attrKeyMap attr="destUserPriv" key="dpriv"/>
+      <attrKeyMap attr="targetProcName" key="dproc"/>
+      <attrKeyMap attr="destIpPort" key="dport"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="destUserId" key="duid"/>
+      <attrKeyMap attr="hostName" key="dvchost"/>
+      <attrKeyMap attr="hostMACAddr" key="dvcmac"/>
+      <attrKeyMap attr="procId" key="dvcpid"/>
+      <attrKeyMap attr="_endTime" key="end"/>
+      <attrKeyMap attr="extEventId" key="externalId"/>
+      <attrKeyMap attr="_fileCreateTime" key="fileCreateTime"/>
+      <attrKeyMap attr="hashCode" key="fileHash"/>
+      <attrKeyMap attr="fileId" key="fileId"/>
+      <attrKeyMap attr="fileModificationTime" key="fileModificationTime"/>
+      <attrKeyMap attr="filePath" key="filePath"/>
+      <attrKeyMap attr="fileAccess" key="filePermission"/>
+      <attrKeyMap attr="fileType" key="fileType"/>
+      <attrKeyMap attr="fileName" key="fname"/>
+      <attrKeyMap attr="frameworkName" key="frameworkName"/>
+      <attrKeyMap attr="fileSize" key="fsize"/>
+      <attrKeyMap attr="recvBytes64" key="in"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="msg" key="Message"/>
+      <attrKeyMap attr="sentBytes64" key="out"/>
+      <attrKeyMap attr="_ipProto" key="proto"/>
+      <attrKeyMap attr="errReason" key="reason"/>
+      <attrKeyMap attr="infoURL" key="requestUrl"/>
+      <attrKeyMap attr="httpUserAgent" key="requestClientApplication"/>
+      <attrKeyMap attr="httpReferrer" key="requestContext"/>
+      <attrKeyMap attr="httpCookie" key="requestCookies"/>
+      <attrKeyMap attr="httpMethod" key="requestMethod"/>
+      <attrKeyMap attr="threatAttackID" key="threatAttackID"/>
+
+      <!--cb -->
+      <attrKeyMap attr="categoryType" key="cat"/>
+      <attrKeyMap attr="destIpAddr" key="DestinationAddress"/>
+      <attrKeyMap attr="destName" key="DestinationHostName"/>
+      <attrKeyMap attr="destUser" key="DestinationUserName"/>
+      <attrKeyMap attr="relayDevName" key="deviceHostName"/>
+      <attrKeyMap attr="policyDetails" key="deviceCustomString3Label"/>
+      <attrKeyMap attr="statusDetailedReason" key="deviceCustomString4Label"/>
+      <attrKeyMap attr="ruleName" key="deviceCustomString5Label"/>
+      <attrKeyMap attr="fileTrustLevel" key="deviceCustomFloatingPoint1Label"/>
+      <attrKeyMap attr="fileThreatLevel" key="deviceCustomFlexString1Label"/>
+      <attrKeyMap attr="procTrustLevel" key="deviceCustomFloatingPoint2Label"/>
+      <attrKeyMap attr="procThreatLevel" key="deviceCustomFlexString2Label"/>
+
+      <attrKeyMap attr="procThreatLevel" key="cfs2"/>
+      <attrKeyMap attr="_cs1" key="cs1"/>
+      <attrKeyMap attr="_cs2" key="cs2"/>
+      <attrKeyMap attr="_cs5" key="cs5"/>
+      <attrKeyMap attr="_cs6" key="cs6"/>
+      <attrKeyMap attr="_c6a1" key="c6a1"/>
+      <attrKeyMap attr="_cfp1" key="cfp1"/>
+      <attrKeyMap attr="_cfp2" key="cfp2"/>
+      <attrKeyMap attr="_flexString1" key="flexString1"/>
+      <attrKeyMap attr="_flexString2" key="flexString2"/>
+      <attrKeyMap attr="_cfp1Label" key="cfp1Label"/>
+      <attrKeyMap attr="_cfp2Label" key="cfp2Label"/>
+      <attrKeyMap attr="_cs1Label" key="cs1Label"/>
+      <attrKeyMap attr="_cs2Label" key="cs2Label"/>
+      <attrKeyMap attr="_cs5Label" key="cs5Label"/>
+      <attrKeyMap attr="_cs6Label" key="cs6Label"/>
+      <attrKeyMap attr="_c6a1Label" key="c6a1Label"/>
+      <attrKeyMap attr="_flexString1Label" key="flexString1Label"/>
+      <attrKeyMap attr="_flexString2Label" key="flexString2Label"/>
+
+      <!--bit9 -->
+      <attrKeyMap attr="hashCode" key="file_hash="/>
+      <attrKeyMap attr="fileName" key="file_name="/>
+      <attrKeyMap attr="filePath" key="file_path="/>
+      <attrKeyMap attr="fileThreatLevel" key="file_threat="/>
+      <attrKeyMap attr="fileTrustLevel" key="file_trust="/>
+      <attrKeyMap attr="hostName" key="hostname="/>
+      <attrKeyMap attr="hostIpAddr" key="ip_address="/>
+      <attrKeyMap attr="policyName" key="policy="/>
+      <attrKeyMap attr="procName" key="process="/>
+      <attrKeyMap attr="procThreatLevel" key="process_threat="/>
+      <attrKeyMap attr="procTrustLevel" key="process_trust="/>
+      <attrKeyMap attr="ruleName" key="rule_name="/>
+      <attrKeyMap attr="appVersion" key="server_version="/>
+      <attrKeyMap attr="subtype" key="subtype="/>
+      <attrKeyMap attr="msg" key="text="/>
+      <attrKeyMap attr="type" key="type="/>
+      <attrKeyMap attr="user" key="username="/>
+
+      <attrKeyMap attr="srcName" key="shost"/>
+      <attrKeyMap attr="srcMACAddr" key="smac"/>
+      <attrKeyMap attr="domain" key="sntDomain"/>
+      <attrKeyMap attr="srcDomain" key="sourceDnsDomain"/>
+      <attrKeyMap attr="serviceName" key="sourceServiceName"/>
+      <attrKeyMap attr="postNATSrcIpAddr" key="sourceTranslatedAddress"/>
+      <attrKeyMap attr="postNATSrcIpPort" key="sourceTranslatedPort"/>
+      <attrKeyMap attr="procId" key="spid"/>
+      <attrKeyMap attr="srcUserPriv" key="spriv"/>
+      <attrKeyMap attr="procName" key="sproc"/>
+      <attrKeyMap attr="srcIpPort" key="spt"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="_startTime" key="start"/>
+      <attrKeyMap attr="userId" key="suid"/>
+      <attrKeyMap attr="srcUser" key="suser"/>
+      <attrKeyMap attr="devEventTypeGrp" key="cat"/>
+
+      <attrKeyMap attr="hostIpAddr" key="Interface_ip"/>
+      <attrKeyMap attr="hostIpAddr" key="interface_ip"/>
+      <attrKeyMap attr="hostIpAddr" key="comms_ip"/>
+      <attrKeyMap attr="company" key="company_name"/>
+      <attrKeyMap attr="direction" key="direction"/>
+      <attrKeyMap attr="dnsZone" key="dns_name"/>
+      <attrKeyMap attr="targetProcName" key="dproc"/>
+      <attrKeyMap attr="_eventTime" key="event_timestamp"/>
+      <attrKeyMap attr="fileDesc" key="file_desc"/>
+      <attrKeyMap attr="fileVersion" key="file_version"/>
+      <attrKeyMap attr="groupName" key="group"/>
+      <attrKeyMap attr="hostName" key="hostname"/>
+      <attrKeyMap attr="procId" key="id"/>
+      <attrKeyMap attr="iocType" key="ioc_type"/>
+      <attrKeyMap attr="iocValue" key="ioc_value"/>
+      <attrKeyMap attr="_update" key="last_update"/>
+      <attrKeyMap attr="srcIpAddr" key="local_ip"/>
+      <attrKeyMap attr="srcIpPort" key="local_port"/>
+      <attrKeyMap attr="hashMD5" key="md5"/>
+      <attrKeyMap attr="procPath" key="path"/>
+      <attrKeyMap attr="ipPort" key="port"/>
+      <attrKeyMap attr="appTransportProto" key="protocol"/>
+      <attrKeyMap attr="procId" key="process_id"/>
+      <attrKeyMap attr="procName" key="process_name"/>
+      <attrKeyMap attr="procPath" key="process_path"/>
+      <attrKeyMap attr="product" key="product_name"/>
+      <attrKeyMap attr="destIpAddr" key="remote_ip"/>
+      <attrKeyMap attr="destIpPort" key="remote_port"/>
+      <attrKeyMap attr="reportName" key="report_title"/>
+      <attrKeyMap attr="serverName" key="server_name"/>
+      <attrKeyMap attr="iocName" key="ioc_attr"/>
+      <attrKeyMap attr="osType" key="os_type"/>
+      <attrKeyMap attr="procPath" key="observed_filename"/>
+      <attrKeyMap attr="wlanName" key="internal_name"/>
+      <attrKeyMap attr="comment" key="comments"/>
+      <attrKeyMap attr="command" key="cmdline"/>
+      <attrKeyMap attr="procId" key="process_pid"/>
+      <attrKeyMap attr="user" key="username"/>
+      <attrKeyMap attr="uuid" key="unique_id"/>
+      <attrKeyMap attr="_msg" key="msg"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist _msg">
+      <collectFieldsByKeyValuePair kvsep=":" sep=" " src="$_msg">
+        <attrKeyMap attr="hostIpAddr" key="Interface_ip"/>
+        <attrKeyMap attr="hostIpAddr" key="interface_ip"/>
+        <attrKeyMap attr="hostIpAddr" key="comms_ip"/>
+        <attrKeyMap attr="company" key="company_name"/>
+        <attrKeyMap attr="direction" key="direction"/>
+        <attrKeyMap attr="dnsZone" key="dns_name"/>
+        <attrKeyMap attr="targetProcName" key="dproc"/>
+        <attrKeyMap attr="_eventTime" key="event_timestamp"/>
+        <attrKeyMap attr="fileDesc" key="file_desc"/>
+        <attrKeyMap attr="fileVersion" key="file_version"/>
+        <attrKeyMap attr="groupName" key="group"/>
+        <attrKeyMap attr="hostName" key="hostname"/>
+        <attrKeyMap attr="procId" key="id"/>
+        <attrKeyMap attr="iocType" key="ioc_type"/>
+        <attrKeyMap attr="iocValue" key="ioc_value"/>
+        <attrKeyMap attr="_update" key="last_update"/>
+        <attrKeyMap attr="srcIpAddr" key="local_ip"/>
+        <attrKeyMap attr="srcIpPort" key="local_port"/>
+        <attrKeyMap attr="hashMD5" key="md5"/>
+        <attrKeyMap attr="procPath" key="path"/>
+        <attrKeyMap attr="ipPort" key="port"/>
+        <attrKeyMap attr="appTransportProto" key="protocol"/>
+        <attrKeyMap attr="procId" key="process_id"/>
+        <attrKeyMap attr="procName" key="process_name"/>
+        <attrKeyMap attr="procPath" key="process_path"/>
+        <attrKeyMap attr="product" key="product_name"/>
+        <attrKeyMap attr="destIpAddr" key="remote_ip"/>
+        <attrKeyMap attr="destIpPort" key="remote_port"/>
+        <attrKeyMap attr="reportName" key="report_title"/>
+        <attrKeyMap attr="serverName" key="server_name"/>
+        <attrKeyMap attr="iocName" key="ioc_attr"/>
+        <attrKeyMap attr="osType" key="os_type"/>
+        <attrKeyMap attr="procPath" key="observed_filename"/>
+        <attrKeyMap attr="wlanName" key="internal_name"/>
+        <attrKeyMap attr="comment" key="comments"/>
+        <attrKeyMap attr="command" key="cmdline"/>
+        <attrKeyMap attr="procId" key="process_pid"/>
+        <attrKeyMap attr="user" key="username"/>
+        <attrKeyMap attr="uuid" key="unique_id"/>
+      </collectFieldsByKeyValuePair>
+    </when>
+
+    <choose>
+      <when test="$appName = 'Carbon Black'">
+        <setEventAttribute attr="_eventType">replaceStrInStr($threatCategory, "reason=", "")</setEventAttribute>
+        <setEventAttribute attr="_eventType">replaceStringByRegex($_eventType, "_-?\d+$", "")</setEventAttribute>
+        <setEventAttribute attr="_eventType">replaceStringByRegex($_eventType, "[=_]", "-")</setEventAttribute>
+        <setEventAttribute attr="eventType">combineMsgId("CarbonBlack-", $_eventType)</setEventAttribute>
+      </when>
+
+      <when test="$appName = 'CBCSyslog'">
+        <!-- CBCSyslog messages are either Audit or Alert logs -->
+        <choose>
+          <when test="$_type = 'Audit Logs'">
+            <setEventAttribute attr="type">audit</setEventAttribute>
+            <setEventAttribute attr="eventType">CarbonBlack-Audit-Logs</setEventAttribute>
+            <switch>
+              <case>
+                <collectFieldsByRegex src="$msg">
+                  <regex><![CDATA[Connector <:gPatStr> logged in successfully]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">combineMsgId($eventType, "-LogonSuccess")</setEventAttribute>
+              </case>
+              <default/>
+            </switch>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="type">alert</setEventAttribute>
+            <setEventAttribute attr="eventType">CarbonBlack-Alert</setEventAttribute>
+            <setEventAttribute attr="eventCode">$_type</setEventAttribute>
+            <when test="exist categoryType">
+              <setEventAttribute attr="categoryType">toLower($categoryType)</setEventAttribute>
+              <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $categoryType)</setEventAttribute>
+            </when>
+            <when test="exist _action">
+              <setEventAttribute attr="_action">toLower($_action)</setEventAttribute>
+              <setEventAttribute attr="eventType">combineMsgId("$eventType", "-", $_action)</setEventAttribute>
+            </when>
+          </otherwise>
+        </choose>
+      </when>
+
+      <when test="$appName IN 'Protection,App Control'">
+        <!-- Some events have lower case within paren, other have upper, making consistent -->
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_subCategoryType">
+              <regex><![CDATA[<_sec1:gPatMesgBody>\(<_sec2:gPatMesgBody>\)]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="_sec2">toLower($_sec2)</setEventAttribute>
+            <setEventAttribute attr="_subCategoryType">combineMsgId($_sec1, " (", $_sec2, ")")</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+
+        <choose>
+          <when test="exist categoryType">
+            <setEventAttribute attr="_eventType">combineMsgId("CarbonBlack-", $categoryType, "-", $_subCategoryType)</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="_eventType">combineMsgId("CarbonBlack-", $_subCategoryType)</setEventAttribute>
+          </otherwise>
+        </choose>
+        <when test="exist _eventType">
+          <setEventAttribute attr="_eventType">replaceStringByRegex($_eventType, "[ ()]+|-{2,}", "-")</setEventAttribute>
+          <setEventAttribute attr="eventType">replaceStringByRegex($_eventType, "-+$", "")</setEventAttribute>
+        </when>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs1Label"/>
+      <when test="not_exist _cs1"/>
+      <when test="$_cs1Label = 'rootHash'">
+        <setEventAttribute attr="targetHashCode">$_cs1</setEventAttribute>
+      </when>
+      <when test="$_cs1Label = 'Threat_ID'">
+        <setEventAttribute attr="virusId">$_cs1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs2Label"/>
+      <when test="not_exist _cs2"/>
+      <when test="$_cs2Label = 'installerFilename'">
+        <setEventAttribute attr="serviceFileName">$_cs2</setEventAttribute>
+      </when>
+      <when test="$_cs2Label = 'Link'">
+        <setEventAttribute attr="infoURL">$_cs2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs3Label"/>
+      <when test="not_exist _cs3"/>
+      <when test="$_cs3Label = 'Policy'">
+        <setEventAttribute attr="policyDetails">$_cs3</setEventAttribute>
+      </when>
+      <when test="$_cs3Label = 'Device_Name'">
+        <setEventAttribute attr="srcName">$_cs3</setEventAttribute>
+      </when>
+      <when test="$_cs3Label = 'Link'">
+        <setEventAttribute attr="infoURL">$_cs3</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs4Label"/>
+      <when test="not_exist _cs4"/>
+      <when test="$_cs4Label = 'Process_Effective_Reputation'">
+        <setEventAttribute attr="reputation">$_cs4</setEventAttribute>
+      </when>
+      <when test="$_cs4Label = 'Threat_ID'">
+        <setEventAttribute attr="alertIdStr">$_cs4</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs5Label"/>
+      <when test="not_exist _cs5"/>
+      <when test="$_cs5Label = 'ruleName'">
+        <setEventAttribute attr="ruleName">$_cs5</setEventAttribute>
+      </when>
+      <when test="$_cs5Label = 'Parent_Name'">
+        <setEventAttribute attr="parentFileName">$_cs5</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs6Label"/>
+      <when test="not_exist _cs6"/>
+      <when test="$_cs6Label = 'Parent_Hash'">
+        <setEventAttribute attr="parentFileHashCode">$_cs6</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _c6a1Label"/>
+      <when test="not_exist _c6a1"/>
+      <when test="$_c6a1Label = 'External_Device_Address'">
+        <setEventAttribute attr="destIpAddr">$_c6a1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs7Label"/>
+      <when test="not_exist _cs7"/>
+      <when test="$_cs7Label = 'rapidConfigName'">
+        <setEventAttribute attr="configName">$_cs7</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _flexString1Label"/>
+      <when test="not_exist _flexString1"/>
+      <when test="$_flexString1Label = 'fileThreat'">
+        <setEventAttribute attr="actionResult">$_flexString1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _flexString2Label"/>
+      <when test="not_exist _flexString2"/>
+      <when test="$_flexString2Label = 'processThreat'">
+        <setEventAttribute attr="virusAction">$_flexString2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cfp1Label"/>
+      <when test="not_exist _cfp1"/>
+      <when test="$_cfp1Label = 'fileTrust'">
+        <setEventAttribute attr="fileTrustLevel">$_cfp1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cfp2Label"/>
+      <when test="not_exist _cfp2"/>
+      <when test="$_cfp2Label = 'processTrust'">
+        <setEventAttribute attr="procThreatLevel">$_cfp2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _eventAction"/>
+      <when test="$_eventAction = success">
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist _eventTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_eventTime">
+            <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_eventTime">
+            <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+        </case>
+        <default>
+          <setEventAttribute attr="eventTime">_eventTime</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+    <when test="exist _endTime">
+      <collectFieldsByRegex src="$_endTime">
+        <regex><![CDATA[<_mon1:gPatMon>\s+<_day1:gPatDay>\s+<_time1:gPatTime>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="endTime">toDateTime($_mon1, $_day1, $_time1)</setEventAttribute>
+    </when>
+
+    <when test="exist _startTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_startTime">
+            <regex><![CDATA[<_mon1:gPatMon>\s+<_day1:gPatDay>\s+<_time1:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="startTime">toDateTime($_mon1, $_day1, $_time1)</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_startTime">
+            <regex><![CDATA[<_year1:gPatYear>-<_mon1:gPatMon>-<_day1:gPatDay>T<_time1:gPatTime>(?:\.\d+)<_tz1:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="startTime">toDateTime($_mon1, $_day1, $_year1, $_time1, $_tz1)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _update">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_update">
+            <regex><![CDATA[<_mon1:gPatMon>\s+<_day1:gPatDay>\s+<_time1:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="updateTime">toDateTime($_mon1, $_day1, $_time1)</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_update">
+            <regex><![CDATA[<_year1:gPatYear>-<_mon1:gPatMon>-<_day1:gPatDay>T<_time1:gPatTime>(?:\.\d+)<_tz1:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="updateTime">toDateTime($_mon1, $_day1, $_year1, $_time1, $_tz1)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _fileCreateTime">
+      <collectFieldsByRegex src="$_fileCreateTime">
+        <regex><![CDATA[<_mon1:gPatMon>\s+<_day1:gPatDay>\s+<_time1:gPatTime>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="fileCreateTime">toDateTime($_mon1, $_day1, $_time1)</setEventAttribute>
+    </when>
+
+    <when test="exist _ipProto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_ipProto)</setEventAttribute>
+    </when>
+    <when test="not_exist msg">
+      <when test="exist _subCategoryType">
+        <setEventAttribute attr="msg">$_subCategoryType</setEventAttribute>
+      </when>
+    </when>
+    <when test="exist _severity">
+      <!-- 1-2 = Por scans, malware drops, changes to system -->
+      <!-- 3-5 malware running, generic virus behavior, pw theft -->
+      <!-- 6-10 reverse command shells, destructive malware, etc -->
+      <setEventAttribute attr="eventSeverity">$_severity</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>

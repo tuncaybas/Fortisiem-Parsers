@@ -1,0 +1,166 @@
+<eventParser name="CiscoCMParser">
+  <deviceType>
+    <Vendor>Cisco</Vendor>
+    <Model>Call Manager</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>\d+:(?:[^:]*:[^:]*:\s*\d+:\s+<:gPatStr>:)?\s+<:gPatMon>\s+<:gPatDay>\s+<:gPatYear>\s+<:gPatTime>(?:\s+[AP]M)?\.\d+\s+UTC\s*:\s+%\w+-\d+-\w+:\s+%\[\s?[\w\s\/]+\s?=]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<186>445332: : : 82456: NC-SVR-104: Sep 03 2014 12:34:36.287 UTC :  %UC_RTMT-2-RTMT_ALERT: %[AlertName=AuthenticationFailed][AlertDetail= Number of AuthenticationFailed events exceeds configured threshold during configured interval of time 1 within 3 minutes  on cluster StandAloneCluster.  There are 9 AuthenticationFailed events (up to 30) received during the monitoring interval From Wed Sep 03 07:34:06 CDT 2014 to Wed Sep 03 07:37:06 CDT 2014:   TimeStamp : 09/03/2014 at 07:34:19 LoginFrom : 10.32.0.40 Interface : Cisco SOAP Server UserID : ccmadministrator AppID : Cisco Tomcat ClusterID :  NodeID : NC-SVR-104  TimeStamp : Wed Sep 03 07:34:19 CDT 2014  TimeStamp : 09/03/2014 at 07:34:19 LoginFrom : 10.32.0.40 Interface : Cisco SOAP Server UserID : ccmadministrator AppID : Cisco Tomcat ClusterID :  NodeID : NC-SVR-104  TimeStamp : Wed Sep 03 07:34:19 CDT 2014  TimeStamp : 09/03/2014 at 07:34:14 LoginFr][AppID=Cisco AMC Service][ClusterID=][NodeID=NC-SVR-104]: RTMT Alert]]></testEvent>
+    <testEvent><![CDATA[<188>444434: : LpmTool[7628]: 10583: NC-SVR-104: Sep 03 2014 09:59:46.536 UTC :  %UC_LPMTCT-4-LogPartitionLowWaterMarkExceeded: %[UsedDiskSpace=91][MessageString=Common Disk utilization hits LWM!][AppID=Cisco Log Partition Monitoring Tool][ClusterID=][NodeID=NC-SVR-104]: The percentage of used disk space in the log partition has exceeded the configured low water mark.]]></testEvent>
+    <testEvent><![CDATA[<187>710: : : 69712: example.com: Feb 03 2015 07:23:56 PM.633 UTC : %UC_CDRREP-3-CDRFileDeliveryFailureContinues: %[BillingServerAddress=192.168.1.69][AppID=Cisco CDR Repository Manager][ClusterID=][NodeID=fife-ccmpub]: (s)FTP delivery of CDR files failed on retries.]]></testEvent>
+    <testEvent><![CDATA[<187>12189: Jul 02 2016 05:03:28 PM.27 UTC :  %UC_CDRREP-3-CDRFileDeliveryFailureContinues: %[BillingServerAddress=10.10.1.25][App ID=Cisco CDR Repository Manager][Cluster ID=][Node ID=sc-ccmpub]: (s)FTP delivery of CDR files failed on retries.]]></testEvent>
+    <testEvent><![CDATA[<190>246: Nov 17 2020 16:58:15.651 UTC : %UC_AUDITLOG-6-AdministrativeEvent: %[ UserID =test-admin][ ClientAddress =10.1.1.2][ Severity =6]]]></testEvent>
+    <testEvent><![CDATA[<188>16871: Nov 17 2020 16:58:05.600 UTC : %UC_LOGIN-4-AuthenticationFailed: %[Login Date/Time=11/17/2020 at 11:58:05][Login IP Address/Hostname=10.1.1.2][Login Interface=cucm- uds][Login UserID=testadmin][App ID=Cisco Tomcat][Cluster ID=][Node ID=lab-CUCM-01]: Login Authentication failed.]]></testEvent>
+
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\d+:(?:\s+<_host:gPatStr>:)?\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>(?:\s+[AP]M)?\.\d+\s+UTC\s*:\s+%<_evIdPrefix:gPatWord>-<_severity:gPatInt>-<_evIdSuffix:gPatWord>:\s+%<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <when test="exist _host">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_host">
+            <regex><![CDATA[<hostIpAddr:gPatIpAddr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="hostName">$_host</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+    <choose>
+      <when test="$_severity IN '0, 1, 2'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+
+      <when test="$_severity = '3'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_severity = '4'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="$_severity = '5'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+
+      <when test="$_severity = '6'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+    </choose>
+
+    <!-- Some attribute pairs contain spaces on key name, strip the whitespace -->
+    <setEventAttribute attr="_body">replaceStrInStr($_body, "[ ", "[")</setEventAttribute>
+    <setEventAttribute attr="_body">replaceStrInStr($_body, " =", "=")</setEventAttribute>
+    <collectAndSetAttrByKeyValuePair sep="]" src="$_body">
+      <attrKeyMap attr="details" key="[AlertDetail="/>
+      <attrKeyMap attr="alertName" key="[AlertName="/>
+      <attrKeyMap attr="appName" key="[App ID="/>
+      <attrKeyMap attr="appName" key="[AppID="/>
+      <attrKeyMap attr="appName" key="[AppName="/>
+      <attrKeyMap attr="categoryType" key="[AuditCategory="/>
+      <attrKeyMap attr="_auditDetails" key="[AuditDetails="/>
+      <attrKeyMap attr="srcIpAddr" key="[ClientAddress="/>
+      <attrKeyMap attr="clusterId" key="[Cluster ID="/>
+      <attrKeyMap attr="clusterId" key="[ClusterID="/>
+      <attrKeyMap attr="srcIpPort" key="[ConnectingPort="/>
+      <attrKeyMap attr="domain" key="[Domain="/>
+      <attrKeyMap attr="errReason" key="[Error="/>
+      <attrKeyMap attr="errReason" key="[ErrorInfo="/>
+      <attrKeyMap attr="_eventStatus" key="[EventStatus="/>
+      <attrKeyMap attr="fileName" key="[FileName="/>
+      <attrKeyMap attr="hostIpAddr" key="[ip="/>
+      <attrKeyMap attr="hostIpAddr" key="[IPAddress="/>
+      <attrKeyMap attr="ipPort" key="[IPAddress_Port="/>
+      <attrKeyMap attr="_loginIpHostname" key="[Login IP Address/Hostname="/>
+      <attrKeyMap attr="user" key="[Login UserID="/>
+      <attrKeyMap attr="srcMACAddr" key="[MACAddress="/>
+      <attrKeyMap attr="msg" key="[Message="/>
+      <attrKeyMap attr="msg" key="[MessageString="/>
+      <attrKeyMap attr="hostName" key="[Node ID="/>
+      <attrKeyMap attr="hostName" key="[NodeID="/>
+      <attrKeyMap attr="resourceName" key="[ResourceAccessed="/>
+      <attrKeyMap attr="seqNum" key="[SeqNumber="/>
+      <attrKeyMap attr="serverName" key="[ServerName="/>
+      <attrKeyMap attr="serviceName" key="[ServiceName="/>
+      <attrKeyMap attr="user" key="[user="/>
+      <attrKeyMap attr="user" key="[UserID="/>
+      <attrKeyMap attr="user" key="[UserName="/>
+    </collectAndSetAttrByKeyValuePair>
+
+
+    <choose>
+      <when test="not_exist alertName">
+        <setEventAttribute attr="eventType">combineMsgId("Cisco_", $_evIdPrefix, "-", $_evIdSuffix)</setEventAttribute>
+      </when>
+
+      <when test="$alertName = 'CUIC_DB_REPLICATION_FAILED'">
+        <setEventAttribute attr="eventType">combineMsgId("Cisco_", $_evIdPrefix, "-IntelligenceCenterCUIC_DB_REPLICATION_FAILED")</setEventAttribute>
+      </when>
+
+      <otherwise>
+        <setEventAttribute attr="eventType">combineMsgId("Cisco_", $_evIdPrefix, "_", $alertName)</setEventAttribute>
+      </otherwise>
+    </choose>
+    <!-- event specific parsing -->
+    <when test="$eventType IN 'Cisco_UC_AUDITLOG-AdministrativeEvent,Cisco_UC_LOGIN-AuthenticationFailed'">
+      <when test="exist _auditDetails">
+        <when test="$_auditDetails = 'Login Authentication Successful'">
+          <setEventAttribute attr="eventType">Cisco_UC_LOGIN-AuthenticationSucceeded</setEventAttribute>
+        </when>
+      </when>
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_body">
+            <regex><![CDATA[\]:\s<msg:gPatMesgBody>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <!-- this var can be source ip or source hostname -->
+    <when test="exist _loginIpHostname">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_loginIpHostname">
+            <regex><![CDATA[<srcIpAddr:gPatIpAddr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_loginIpHostname">
+            <regex><![CDATA[<srcName:gPatHostName>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+      </switch>
+    </when>
+    <when test="exist details">
+      <switch>
+        <case>
+          <!--
+[AlertDetail= Number of AuthenticationFailed events exceeds configured threshold during configured interval of time 1 within 3 minutes  on cluster StandAloneCluster.  There are 9 AuthenticationFailed events (up to 30) received during the monitoring interval From Wed Sep 03 07:34:06 CDT 2014 to Wed Sep 03 07:37:06 CDT 2014:   TimeStamp : 09/03/2014 at 07:34:19 LoginFrom : 10.32.0.40 Interface : Cisco SOAP Server UserID : ccmadministrator AppID : Cisco Tomcat ClusterID :  NodeID : NC-SVR-104  TimeStamp : Wed Sep 03 07:34:19 CDT 2014  TimeStamp : 09/03/2014 at 07:34:19 LoginFrom : 10.32.0.40 Interface : Cisco SOAP Server UserID : ccmadministrator AppID : Cisco Tomcat ClusterID :  NodeID : NC-SVR-104  TimeStamp : Wed Sep 03 07:34:19 CDT 2014  TimeStamp : 09/03/2014 at 07:34:14 LoginFr]
+          -->
+          <collectFieldsByRegex src="$details">
+            <regex><![CDATA[UserID\s*:\s+<user:gPatStr>\s+AppID\s*:\s+<appName:gPatMesgBodyMin>\s+ClusterID\s*:\s+<clusterId:gPatStr>\s+NodeID\s*:\s+<hostName:gPatStr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <case>
+          <!--
+[AlertDetail= Number of quality reports exceeds configured threshold during configured interval 0 within 60 minutes#012 on cluster StandAloneCluster.#012#012There are 1 QRTRequest events (up to 30) received during the monitoring interval From Wed Jun 17 14:36:25 CDT 2015 to Wed Jun 17 15:36:25 CDT 2015: #012#012Category : Phone recently rebooted#012ReasonCode : #012TimeStamp : 06/17/15 15:23:21#012DeviceName : SEPE0899D951453#012IPAddress : 10.78.1.84#012DN : 230591#012AppID : Cisco Extended Functions#012ClusterID : StandAloneCluster#012NodeID : STLDC-CM-2#012 TimeStamp : Wed Jun 17 15:23:22 CDT 2015#012#012]
+          -->
+          <collectFieldsByRegex src="$details">
+            <regex><![CDATA[Category\s*:\s+<alertCategory:gPatMesgBodyMin>#012ReasonCode\s*:\s+<errReason:gPatMesgBodyMin>#012.*DeviceName\s*:\s+<hostName:gPatHostName>#012IPAddress\s*:\s+<hostIpAddr:gPatIpAddr>#012DN\s*:\s+<userDN:gPatInt>#012.*ClusterID\s*:\s+<clusterId:gPatStr>#012]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+  </parsingInstructions>
+</eventParser>

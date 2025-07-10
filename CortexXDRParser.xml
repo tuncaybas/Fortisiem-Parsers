@@ -1,0 +1,190 @@
+<eventParser name="CortexXDRParser">
+  <deviceType>
+    <Vendor>Palo Alto</Vendor>
+    <Model>Cortex XDR</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<9>1 2020-08-03T06:02:11.100550Z cortexxdr - - - - CEF:0|Palo Alto Networks|Cortex XDR|Cortex XDR 2.4|Alert|PsExec execution EulaAccepted flag added to the Registry|8|end=1596434222456 shost=host1 suser=example.com\\user1 deviceFacility=None cat=Execution msg=Registry action type \= all AND registry key name \= *\\Software\\Sysinternals\\PsExec* AND registry value name \= *EulaAccepted* Process initiated by !\= ltsvc.exe AND cgo name !\= ltsvc.exe Host host os \= windows externalId=173883 request=https://example.xdr.us.paloaltonetworks.com/alerts/173883 cs1=PsExec.exe cs1Label=Initiated by cs2=C:\\test\\psexec -s -i \\\\host1 -u example.com\\user1 -p Test1 "C:\\Program Files (x86)\\es\\estest\\estest.exe" /Mr John Connor /F\\\\host2\\test\\Data\\22222 cs2Label=Initiator CMD cs3=Microsoft CorporationSIGNATURE_SIGNED- cs3Label=Signature cs4=cmd.exe cs4Label=CGO name cs5=C:\\Windows\\system32\\cmd.exe /c C:\\host1\\INI_FILES\\test_INI\\script.BAT cs5Label=CGO CMD cs6=Microsoft CorporationSIGNATURE_SIGNED- cs6Label=CGO Signature fileHash=3337e3875b05e0bfba69ab926532e3f179e8cfbf162ebb60ce58a0281438a2ef filePath=C:\\host1\\PsExec.exe registrydata=1 registryfullkey=HKEY_USERS\\S-1-5-21-1111760324-425329682-1111341646-11111\\SOFTWARE\\Sysinternals\\PsExec\\EulaAccepted targetprocesssignature=N/ASIGNATURE_UNAVAILABLE- tenantname=Example Tenant of XDR tenantCDLid=221131111 CSPaccountname=Example Account initiatorSha256=3337e3875b05e0bfba69ab926532e3f179e8cfbf162ebb60ce58a02814378888 initiatorPath=C:\\host1\\PsExec.exe cgoSha256=935c1861df1f4018d698e8b65abfa02d7e9037d8f68ca3c2065b6ca165d48888 mitreTactic=TA0008,TA0002 mitreTechnique=T1035,T1077 osParentName=PsExec.exe osParentCmd=C:\\host1\\psexec -s -i \\\\host2 -u example.com\\user1 -p test "C:\\Program Files (x86)\\test\\es\\es.exe" /test /F\\\\host3\\test\\Data\\222222 osParentSha256=3337e3875b05e0bfba69ab926532e3f179e8cfbf162ebb60ce58a02814378888 osParentSignature=SIGNATURE_UNAVAILABLE osParentSigner=N/A act=Detected]]></testEvent>
+    <testEvent><![CDATA[<14>1 2020-08-10T06:38:59.837883Z cortexxdr - - - - CEF:0|Palo Alto Networks|Cortex XDR Agent|Cortex XDR Agent 7.1.2.56067|Agent Audit Logs|Policy|5|dvchost=example.com shost=host1 cat=Audit end=1597037643000 rt=1597041539828 cs1Label=agentversion cs1=7.1.2.56067 cs2Label=subtype cs2=Policy Update cs3Label=result cs3=Success cs4Label=reason cs4=None msg=XDR Agent policy updated on host1 tenantname=Example Tenant tenantCDLid=11111111 CSPaccountname=12345]]></testEvent>
+  </testEvents>
+
+
+  <patternDefinitions>
+    <pattern name="patCortexXdr"><![CDATA[Cortex\s+XDR\s+Agent|Cortex\s+XDR]]></pattern>
+    <pattern name="patExceptPipe"><![CDATA[[^\|]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>\d+\s+<:gPatYear>\-<:gPatMon>\-<:gPatDay>T<:gPatTime>\.\d+<:gPatTimeZone>\s+<:gPatStr>\s+-\s+-\s+-\s+-\s+CEF:0\|Palo\s+Alto\s+Networks\|<:patCortexXdr>\|<:patExceptPipe>\|<:patExceptPipe>\|<:patExceptPipe>\|\d+\|]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>\d+\s+<_year:gPatYear>\-<_mon:gPatMon>\-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>\s+<reptDevName:gPatStr>\s+-\s+-\s+-\s+-\s+CEF:0\|Palo\s+Alto\s+Networks\|<:patCortexXdr>\|<version:patExceptPipe>\|<_type:patExceptPipe>\|<_subtype:patExceptPipe>\|<_severity:gPatInt>\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">CortexXDR-Generic</setEventAttribute>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_body">
+      <attrKeyMap attr="fwAction" key="act"/>
+      <attrKeyMap attr="_proto" key="app"/>
+      <attrKeyMap attr="categoryType" key="cat"/>
+      <attrKeyMap attr="_cgoSha256" key="cgoSha256"/>
+      <attrKeyMap attr="_cs1" key="cs1"/>
+      <attrKeyMap attr="_cs1Label" key="cs1Label"/>
+      <attrKeyMap attr="_cs2" key="cs2"/>
+      <attrKeyMap attr="_cs2Label" key="cs2Label"/>
+      <attrKeyMap attr="_cs3" key="cs3"/>
+      <attrKeyMap attr="_cs3Label" key="cs3Label"/>
+      <attrKeyMap attr="_cs4" key="cs4"/>
+      <attrKeyMap attr="_cs4Label" key="cs4Label"/>
+      <attrKeyMap attr="_cs5" key="cs5"/>
+      <attrKeyMap attr="_cs5Label" key="cs5Label"/>
+      <attrKeyMap attr="_cs6" key="cs6"/>
+      <attrKeyMap attr="_cs6Label" key="cs6Label"/>
+      <attrKeyMap attr="domain" key="dvchost"/>
+      <attrKeyMap attr="extEventId" key="externalId"/>
+      <attrKeyMap attr="hashSHA256" key="fileHash"/>
+      <attrKeyMap attr="filePath" key="filePath"/>
+      <attrKeyMap attr="srcFilePath" key="initiatorPath"/>
+      <attrKeyMap attr="_initiatorSha256" key="initiatorSha256"/>
+      <attrKeyMap attr="attackTactic" key="mitreTactic"/>
+      <attrKeyMap attr="attackTechnique" key="mitreTechnique"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="parentCommand" key="osParentCmd"/>
+      <attrKeyMap attr="parentProcName" key="osParentName"/>
+      <attrKeyMap attr="parentFileHashCode" key="osParentSha256"/>
+      <attrKeyMap attr="_osParentSignature" key="osParentSignature"/>
+      <attrKeyMap attr="_osParentSigner" key="osParentSigner"/>
+      <attrKeyMap attr="newRegValue" key="registrydata"/>
+      <attrKeyMap attr="regKeyPath" key="registryfullkey"/>
+      <attrKeyMap attr="infoURL" key="request"/>
+      <attrKeyMap attr="srcName" key="shost"/>
+      <attrKeyMap attr="hostName" key="shost"/>
+      <attrKeyMap attr="user" key="suser"/>
+      <attrKeyMap attr="command" key="targetprocesscmd"/>
+      <attrKeyMap attr="procName" key="targetprocessname"/>
+      <attrKeyMap attr="_targetProcessSha256" key="targetprocesssha256"/>
+      <attrKeyMap attr="accountId" key="tenantCDLid"/>
+      <attrKeyMap attr="tenantName" key="tenantname"/>
+    </collectFieldsByKeyValuePair>
+
+    <setEventAttribute attr="eventSeverity">$_severity</setEventAttribute>
+
+    <when test="exist _type">
+      <!-- replace whitespace -->
+      <setEventAttribute attr="_type">replaceStrInStr($_type, " ", "_")</setEventAttribute>
+    </when>
+
+
+    <choose>
+      <!-- _type should always exist -->
+      <when test="not_exist _type"/>
+
+      <!-- Alert Logs -->
+      <when test="$_type = 'Alert'">
+        <setEventAttribute attr="eventType">CortexXDR-Alert</setEventAttribute>
+        <when test="exist categoryType">
+          <setEventAttribute attr="eventType">combineMsgId("CortexXDR-Alert-", $categoryType)</setEventAttribute>
+        </when>
+      </when>
+
+      <!-- Agent Audit Logs -->
+      <when test="$_type = 'Agent_Audit_Logs'">
+        <setEventAttribute attr="eventType">CortexXDR-AgentAudit</setEventAttribute>
+        <when test="exist categoryType">
+          <setEventAttribute attr="eventType">combineMsgId("CortexXDR-AgentAudit-", $categoryType)</setEventAttribute>
+        </when>
+      </when>
+
+      <!-- Management audit logs -->
+      <when test="$_type = 'Management_Audit_Logs'">
+        <setEventAttribute attr="eventType">CortexXDR-MgmtAuditLogs</setEventAttribute>
+        <when test="exist categoryType">
+          <setEventAttribute attr="eventType">combineMsgId("CortexXDR-MgmtAuditLogs-", $categoryType)</setEventAttribute>
+        </when>
+      </when>
+      <otherwise/>
+    </choose>
+
+    <!-- Parsing of CS values depends on label name -->
+    <when test="exist _cs1Label">
+      <when test="exist _cs1">
+        <choose>
+          <when test="$_cs1Label = 'agentversion'">
+            <setEventAttribute attr="version">$_cs1</setEventAttribute>
+          </when>
+          <when test="$_cs1Label = 'Initiated by'">
+            <setEventAttribute attr="procName">$_cs1</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+    </when>
+    <when test="exist _cs2Label">
+      <when test="exist _cs2">
+        <choose>
+          <when test="$_cs2Label = 'subtype'">
+            <!-- strip whitespace from subtype -->
+            <setEventAttribute attr="subtype">replaceStrInStr($_cs2, " ", "_")</setEventAttribute>
+          </when>
+          <when test="$_cs2Label = 'Initiator CMD'">
+            <setEventAttribute attr="command">$_cs2</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+    </when>
+    <when test="exist _cs3Label">
+      <when test="exist _cs3">
+        <choose>
+          <when test="$_cs3Label = 'result'">
+            <setEventAttribute attr="action">$_cs3</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+    </when>
+    <when test="exist _cs4Label">
+      <when test="exist _cs4">
+        <choose>
+          <when test="$_cs4Label = 'reason'">
+            <setEventAttribute attr="errReason">$_cs4</setEventAttribute>
+          </when>
+          <when test="$_cs4Label = 'CGO name'">
+            <setEventAttribute attr="programName">$_cs4</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+    </when>
+    <when test="exist _cs5Label">
+      <when test="exist _cs5">
+        <choose>
+          <when test="$_cs4Label = 'CGO name'">
+            <setEventAttribute attr="parentCommand">$_cs5</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+    </when>
+
+    <when test="exist fwAction">
+      <!-- append action -->
+      <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$fwAction)</setEventAttribute>
+    </when>
+
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+
+    <when test="exist user">
+      <!-- Try to see if domain prepended e.g. example.com\\user1 -->
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$user">
+            <regex><![CDATA[^<domain:gPatMesgBodyMin>[\\]+<user:gPatMesgBody>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+  </parsingInstructions>
+</eventParser>

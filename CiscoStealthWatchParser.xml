@@ -1,0 +1,674 @@
+<eventParser name="CiscoStealthWatchParser">
+  <deviceType>
+    <Vendor>Cisco</Vendor>
+    <Model>StealthWatch</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<129>Jun 18 14:56:00 ED2ALENTSVRSMC-1 StealthWatch[2699]: Lancope|StealthWatch|PRIORITY A|time=2018-06-18T14:55:30Z|target_hostname=|alarm_severity_id=5|alarm_type_id=60|alarm_type_description=Host may be infected with an SMB worm.|port=445|target_ip=0.0.0.0|target_mac_address=|target_label=0.0.0.0|alarm_type_name=High SMB Peers|source_hostname=|source_ip=10.0.240.10|source_mac_address=|source_username=|device_ip=10.100.8.51|device_name=ED2ALENTSVRFC4K-1|details=|protocol=6|alarm_id=4P-1DWJ-H2J8-U3FM-J|alarm_category_name=High SMB Peers|start_active_time=2018-06-18T14:55:30Z|end_active_time=]]></testEvent>
+    <testEvent><![CDATA[<129>Jun 18 14:56:00 ED2ALENTSVRSMC-1 StealthWatch[2699]: Lancope|StealthWatch|PRIORITY B|time=2018-06-18T14:55:30Z|target_hostname=|alarm_severity_id=4|alarm_type_id=58|alarm_type_description=Detected traffic consistent with Brute Force password cracking.|port=21|target_ip=10.0.241.16|target_mac_address=|target_label=10.0.241.16|alarm_type_name=Brute Force Login|source_hostname=|source_ip=10.21.43.25|source_mac_address=|source_username=|device_ip=10.100.8.51|device_name=ED2ALENTSVRFC4K-1|details=|protocol=6|alarm_id=4P-1DWJ-H2J8-U3FM-I|alarm_category_name=Brute Force Login|start_active_time=2018-06-18T14:55:30Z|end_active_time=]]></testEvent>
+    <testEvent><![CDATA[<86>Dec 06 03:24:00 smc.lcs.com Stealthwatch[11661]: Cisco|Stealthwatch|Notification:34|Trapped Host|3| alarm_desc="The host has exceeded the number of days in a month that it can receive a Trapped_Host alert." details="Source Host is using smb (445/tcp) as client to 1.2.3.4" dst=1.2.3.5 src=1.2.3.6 start=2021-12-06T03:23:00Z end= category=Trapped Host Alarm_ID=33-1HH3-5D6B-ZU04-E Source_HG=ABCD Target_HG=Vlan_71-STATION NETWORK FOR 3F TO 6F Source_HostSnapshot=https://1.2.3.7/lc-landing-page/smc.html#/host/1.2.3.8 Target_HostSnapshot=https://1.2.3.9/lc-landing-page/smc.html#/host/1.2.3.10 dpt=445 proto=6 FC_Name=fc FC_IP=1.2.3.11 Domain=Trapped Host signature=Trapped Host vendor_severity=Minor severity_id=3 alarm_type=34]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patStrEndSep"><![CDATA[[^|]*]]></pattern>
+    <pattern name="patStealthwatch"><![CDATA[Stealth[Ww]atch]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:patStealthwatch>\[<:gPatInt>\]:\s+<:gPatStr>\|<:patStealthwatch>]]></eventFormatRecognizer>
+
+  <!-- The log format is not fixed, need to handle case by case -->
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>?\s*<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatStr>\s+<:patStealthwatch>\[<:gPatInt>\]:\s+<:patStrEndSep>\|<:patStealthwatch>\|PRIORITY\s+<:patStrEndSep>\|<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <collectFieldsByKeyValuePair kvsep="=" sep="|" src="$_body">
+          <attrKeyMap attr="_deviceTime" key="time"/>
+          <attrKeyMap attr="targetHostName" key="target_hostname"/>
+          <attrKeyMap attr="_eventSeverity" key="alarm_severity_id"/>
+          <attrKeyMap attr="_eventTypeId" key="alarm_type_id"/>
+          <attrKeyMap attr="eventDesc" key="alarm_type_description"/>
+          <attrKeyMap attr="ipPort" key="port"/>
+          <attrKeyMap attr="destIpAddr" key="target_ip"/>
+          <attrKeyMap attr="destMACAddr" key="target_mac_address"/>
+          <attrKeyMap attr="hostName" key="source_hostname"/>
+          <attrKeyMap attr="srcIpAddr" key="source_ip"/>
+          <attrKeyMap attr="srcMACAddr" key="source_mac_address"/>
+          <attrKeyMap attr="srcUser" key="source_username"/>
+          <attrKeyMap attr="reptDevIpAddr" key="device_ip"/>
+          <attrKeyMap attr="reptDevName" key="device_name"/>
+          <attrKeyMap attr="details" key="details"/>
+          <attrKeyMap attr="_startTime" key="start_active_time"/>
+          <attrKeyMap attr="_endTime" key="end_active_time"/>
+        </collectFieldsByKeyValuePair>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>?\s*<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatStr>\s+<:patStealthwatch>\[<:gPatInt>\]:\s+<:patStrEndSep>\|<:patStealthwatch>\|<:patStrEndSep>\|<:patStrEndSep>\|\d+\|<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <collectAndSetAttrByKeyValuePair sep=" " src="$_body">
+          <attrKeyMap attr="_eventSeverity" key="severity_id="/>
+          <attrKeyMap attr="_eventTypeId" key="alarm_type="/>
+          <attrKeyMap attr="_startTime" key="start="/>
+          <attrKeyMap attr="_endTime" key="end="/>
+          <attrKeyMap attr="destIpAddr" key="dst="/>
+          <attrKeyMap attr="destIpPort" key="dpt="/>
+          <attrKeyMap attr="srcIpAddr" key="src="/>
+          <attrKeyMap attr="description" key="alarm_desc="/>
+          <attrKeyMap attr="details" key="details="/>
+          <attrKeyMap attr="alertCategory" key="category="/>
+          <attrKeyMap attr="alarm" key="Alarm_ID="/>
+          <attrKeyMap attr="ipProto" key="proto="/>
+          <attrKeyMap attr="domain" key="Domain="/>
+          <attrKeyMap attr="signatureName" key="signature="/>
+          <attrKeyMap attr="vendorSeverity" key="vendor_severity="/>
+        </collectAndSetAttrByKeyValuePair>
+      </case>
+    </switch>
+
+    <setEventAttribute attr="eventType">Cisco-StealthWatch-Generic</setEventAttribute>
+
+    <when test="exist _deviceTime">
+      <collectFieldsByRegex src="$_deviceTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>.<_time:gPatTime>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+
+    <when test="exist _startTime">
+      <collectFieldsByRegex src="$_startTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>.<_time:gPatTime>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="startTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+
+    <when test="exist _endTime">
+      <collectFieldsByRegex src="$_endTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>.<_time:gPatTime>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="endTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="$_eventSeverity = 1">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+      <when test="$_eventSeverity = 2">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_eventSeverity = 3">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$_eventSeverity = 4">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_eventSeverity = 5">
+        <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+      </when>
+      <when test="$_eventSeverity = 6">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_eventSeverity = 7">
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+      <when test="$_eventSeverity = 8">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$_eventSeverity = 9">
+        <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+      </when>
+      <when test="$_eventSeverity = 10">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="$_eventTypeId = '1'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-HostLockViolation</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '5'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-SYNFlood</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '6'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-UDPFlood</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '7'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ICMPFlood</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '8'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-PacketFlood</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '9'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-HighVolumeEmail</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '10'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-MailRelay</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '11'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-SpamSource</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '12'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-MailRejects</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '13'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-WatchPortActive</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '14'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-NewHostActive</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '15'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-HighTargetIndex</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '16'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-HighTotalTraffic</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '17'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-MaxFlowsInitiated</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '18'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-NewFlowsInitiated</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '19'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-SYNsReceived</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '20'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-HighFileSharingIndex</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '24'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-SuspectUDPActivity</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '25'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-MACAddressViolation</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '26'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-HalfOpenAttack</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '28'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-Touched</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '29'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-LowTraffic</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '30'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-HighTraffic</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '31'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-WatchHostActive</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '32'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-HighConcernIndex</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '33'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-SuspectLongFlow</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '34'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-TrappedHost</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '35'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-WormActivity</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '36'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-WormPropagation</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '37'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-MaxFlowsServed</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '38'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-NewFlowsServed</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '39'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-BeaconingHost</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '40'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-DataLoss</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '41'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-BotInfectedHostAttemptedCCActivity</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '42'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-BotInfectedHostSuccessfulCCActivity</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '43'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-BotCommandControlServer</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '44'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-SlowConnectionFlood</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '45'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-DataExfiltration</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '46'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-CommandandControl</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '47'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-PolicyViolation</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '48'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-SuspectQuietLongFlow</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '49'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-UDPReceived</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '50'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ICMPReceived</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '51'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-Recon</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '52'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-DataHoarding</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '53'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-HighDDoSTargetIndex</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '54'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-HighDDoSSourceIndex</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '55'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-PortScan</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '56'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-Exploitation</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '57'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-Anomaly</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '58'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-BruteForceLogin</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '59'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-TalkstoPhantoms</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-HighSMBPeers</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '61'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-SSHReverseShell</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '62'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FakeApplicationDetected</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '63'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ScannerTalking</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '257'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-Ping</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '258'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ICMPTimeOut</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '259'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-TimeOutUDP</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '260'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-TimeOutTCP</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '261'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ResetUDP</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '262'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ResetTCP</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '263'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-BadFlagAll</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '264'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-BadFlagSYNFYN</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '265'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-BadFlagReserved</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '266'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-BadFlagRST</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '267'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-BadFlagACK</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '268'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-BadFlagURG</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '269'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-BadFlagNoFlag</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '271'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-StealthScanUDP</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '272'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-StealthScanTCP</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '273'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-SRC=DES</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '276'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-AddrScanTCP</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '277'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-PingScan</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '278'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-PingOversizedPacket</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '281'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FragPktTooShort</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '282'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FragPktTooLong</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '283'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FragDifferentSizes</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '286'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-AddrScanUDP</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '289'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ICMPNetUnreachable</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '290'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ICMPHostUnreachable</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '291'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ICMPProtocolUnreachable</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '292'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ICMPPortUnreachable</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '293'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ICMPFragNeeded</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '294'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ICMPSRCRouteFailed</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '295'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ICMPDestNetworkUnknown</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '296'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ICMPDestHostUnknown</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '297'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ICMPSrcHostisolated</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '298'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ICMPDestNetAdmin</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '299'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ICMPDstHostAdmin</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '300'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ICMPNetUnreachableTOS</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '301'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ICMPHostUnreachableTOS</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '302'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ICMPCommAdmin</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '303'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ICMPHostPrecedence</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '304'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ICMPPrecedenceCutoff</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '310'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FlowDenied</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '315'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-SuspectDataHoarding</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '316'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-TargetDataHoarding</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '317'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ConnectionFromTORAttempted</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '318'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ConnectionFromTORSuccessful</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '319'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-InsideTORExitDetected</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '513'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ConnectionToTORAttempted</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '514'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ConnectionToTORSuccessful</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '515'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-InsideTOREntryDetected</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '516'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ConnectionToBogonAddressSuccessful</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '517'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ConnectionFromBogonAddressSuccessful</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '518'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ConnectionToBogonAddressAttempted</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '519'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-ConnectionFromBogonAddressAttempted</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '4010'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FlowCollectorFlowDataLost</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '4020'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-InterfaceUtilizationExceededInbound</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '4030'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-InterfaceUtilizationExceededOutbound</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '4040'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FlowCollectorLongestExportExceeded</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '5010'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FlowSensorVEConfigurationError</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '5011'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FlowSensorTrafficLost</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '5012'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FlowSensorRAIDFailure</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '5013'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FlowSensorRAIDRebuilding</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '5998'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FlowSensorTimeMismatch</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '5999'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FlowSensorManagementChannelDown</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '6010'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-NewVM</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '6020'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-VMotion</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '7001'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-RelationshipHighTotalTraffic</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '7002'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-RelationshipHighTraffic</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '7003'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-RelationshipLowTraffic</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '7004'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-RelationshipMaxFlows</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '7005'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-RelationshipNewFlows</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '7006'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-RelationshipRoundTripTime</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '7007'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-RelationshipServerResponseTime</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '7008'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-RelationshipTCPRetransmissionRatio</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '7009'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-RelationshipSYNFlood</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '7010'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-RelationshipUDPFlood</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '7011'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-RelationshipICMPFlood</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '9021'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FlowCollectorDataDeleted</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '9022'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FlowCollectorDatabaseUnavailable</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '9023'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FlowCollectorDatabaseChannelDown</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '9040'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FlowCollectorLogRetentionReduced</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '9050'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FlowCollectorExporterCountExceeded</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '9051'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FlowCollectorFlowSensorVECountExceeded</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '9052'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FlowCollectorFlowRateExceeded</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '9053'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FlowCollectorInterfacesCountExceeded</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '9100'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FlowCollectorRAIDFailure</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '9102'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FlowCollectorRAIDRebuilding</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '9998'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FlowCollectorPerformanceDegraded</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '9999'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FlowCollectorStopped</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60000'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FlowCollectorTimeMismatch</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60001'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-CiscoISEManagementChannelDown</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60002'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-FlowCollectorManagementChannelDown</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60003'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-SMCRAIDFailure</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60005'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-SMCRAIDRebuilding</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60007'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-SMCDiskSpaceLow</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60008'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-SMCDuplicatePrimary</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60012'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-StealthwatchFlowLicenseExceeded</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60013'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-LicenseCorrupted</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60014'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-UnlicensedFeature</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60015'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-SLICChannelDown</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60016'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-UDPDCommunicationDown</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60023'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-UDPDHADown</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60024'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-UnlicensedFPS</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60025'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-StealthwatchFlowRateLicenseUnavailable</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60030'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-SMCQueryConnectionWithDataStorelost</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60040'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-SMCDatabaseIngestAndMaintenanceConnectionWithDataStorelost</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60041'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-DataNodeDown</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60042'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-DataNodeRecovering</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60043'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-DataStoreExcessiveTimestampSkew</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60044'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-DataStoreShutDownEueToTooManyDataNodesdown</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60045'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-DataStoreRecoveryFailure</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60046'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-DataNodeRecoveryError</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60047'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-DataNodeRecoveryLockError</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60048'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-DataNodeRefreshFailure</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60049'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-DataNodeDown_RemainingDataNodeCountCritical</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '60050'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-DataStoreReachingLimitForROSContainerOperationalFiles</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '70026'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-UDPDRAIDFailure</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '70027'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-UDPDRAIDRebuilding</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '70028'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-UDPDStopped</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '70029'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-UDPDDegraded</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '600016'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-IdentityChannelDown</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '600017'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-SMCFailoverChannelDown</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '600018'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-LicenseTermLessThan90Days</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '600019'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-LicenseTermLessThan60Days</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '600020'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-LicenseTermLessThan30Days</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '600021'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-LicenseTermLessThan14Days</setEventAttribute>
+      </when>
+      <when test="$_eventTypeId = '600022'">
+        <setEventAttribute attr="eventType">Cisco-StealthWatch-LicenseTermLessThan3Days</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

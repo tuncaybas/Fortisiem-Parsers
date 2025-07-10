@@ -1,0 +1,87 @@
+<eventParser name="CyxteraParser">
+  <deviceType>
+    <Vendor>Cyxtera</Vendor>
+    <Model>AppGate SDP</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[{"id":"11111111-1111-1111-1111-111111111111","timestamp":"2018-10-09T10:23:43.992Z","event_type":"ip_access","version":8,"distinguished_name":"CN=0f1a40d612f741228d7cb73a4308bea8,CN=johndoe,OU=ACME","entitlement_token_id":"11111111-1111-1111-1111-111111111111","action":"allow","direction":"down","client_ip":"1.1.1.1","client_port":1392,"packet_size":40,"protocol":"TCP","source_ip":"10.1.1.1","destination_ip":"10.1.1.1","source_port":56100,"destination_port":59721,"connection_type":"established","rule_name":"rule1"}]]></testEvent>
+    <testEvent><![CDATA[<13>Mar 21 17:15:19 example.com {"id":"11111111-1111-1111-1111-111111111111","timestamp":"2018-10-09T10:23:43.992Z","event_type":"ip_access","version":8,"distinguished_name":"CN=0f1a40d612f741228d7cb73a4308bea8,CN=johndoe,OU=ACME","entitlement_token_id":"11111111-1111-1111-1111-111111111111","action":"allow","direction":"down","client_ip":"1.1.1.1","client_port":1392,"packet_size":40,"protocol":"TCP","source_ip":"10.1.1.1","destination_ip":"10.1.1.1","source_port":56100,"destination_port":59721,"connection_type":"established","rule_name":"rule1"}]]></testEvent>
+    <testEvent><![CDATA[<13>Jun 13 15:20:24 example.com {"action":"allow","action_id":"11111111-1111-1111-1111-111111111111","client_ip":"1.1.1.1","client_port":65428,"collective_id":"11111111-1111-1111-1111-111111111111","connection_type":"established","destination_ip":"1.1.1.1","destination_port":443,"direction":"up","distinguished_name":"CN=abc12345e80a4e6ba3753a07f300550b,CN=example_user1,OU=Example-ADFS","distinguished_name_device_id":"abc12345e80a4e6ba3753a07f300550b","distinguished_name_ou":"Example-ADFS","distinguished_name_user":"example_user1","entitlement_token_id":"11111111-1111-1111-1111-111111111111","event_type":"ip_access","geoip":{"ip":"1.1.1.1","time_zone":"Asia/Kolkata","continent_code":"AS","city_name":"Delhi","country_name":"India","country_code2":"IN","country_code3":"IN","region_code":"DL","region_name":"National Capital Territory of Delhi","postal_code":"110007","location":{"lon":77.2167,"lat":28.6667},"latitude":28.6667,"longitude":77.2167,"cordinates":[77.2167,28.6667]},"id":"741245abcde-eaa0-472d-aafc-111111111111","packet_size":41,"protocol":"TCP","rule_name":"LON-Default-GW-5","source_ip":"1.1.1.1","source_port":64974,"timestamp":"2019-06-13T15:20:24.271Z","version":9}]]></testEvent>
+    <testEvent><![CDATA[<13>Jan 26 15:23:44 example.com proc-vpnd: [AUDIT] {"action":"allow","action_id":"PRINTSERVER-USERJOB IN#1234abcd-aaaa-1111-1a1a -123456abcdef","client_ip":"192.168.1.2","client_port":12345,"collective_id":"11111111-1111-1111-1111-111111111111","collective_name":"abcd1234","connection_type":"new ","destination_ip":"192.168.1.3","destination_port":123,"direction":"up","distinguished_name":"CN=1234abcd1234bcde1234cdef1234,CN=srv_appgate_wrk,OU=EXAMPLE","distinguished_name_device_id":" 1122334455abcdef11223344","distinguished_name_ou":"EXAMPLE","distinguished_name_user":"srv_appgate_wrk","entitlement_token_id":"11111111-1111-1111-1111-111111111111","event_type":"ip_access", "id":"11111111-1111-1111-1111-111111111111","packet_size":52,"protocol":"TCP","rule_name":"PRINTSERVER-CHANGEPASSWORD IN-0","source_ip":"192.168.100.1","source_port" :65432,"timestamp":"2024-01-26T15:23:44.459Z","version":16}]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patStrQuote"><![CDATA[[^"]*]]></pattern>
+    <pattern name="patTimeMSec"><![CDATA[\d{1,2}:\d{1,2}:\d{1,2}\.\d{1,9}]]></pattern>
+    <pattern name="patCyxType"><![CDATA[action|collective_id|hostname|id|status]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[^\s*(?:<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+)?(?:<procName:gPatStr>:\s*\[<:gPatStr>\]\s+)?\{(?:.*)?"<:patCyxType>":(?:"<:patStrQuote>"|<:gPatWord>).*,"timestamp":"<:gPatYear>-<:gPatMon>-<:gPatDay>T<:patTimeMSec>\w"]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[^\s*(?:<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+)?(?:<procName:gPatStr>:\s*\[<:gPatStr>\]\s+)?<_json:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <collectAndSetAttrByJSON src="$_json">
+      <attrKeyMap attr="_distinguishedName" key="distinguished_name"/>
+      <attrKeyMap attr="_eventType" key="event_type"/>
+      <attrKeyMap attr="fwAction" key="action"/>
+      <attrKeyMap attr="token" key="entitlement_token_id"/>
+      <attrKeyMap attr="destIpAddr" key="destination_ip"/>
+      <attrKeyMap attr="destIpPort" key="destination_port"/>
+      <attrKeyMap attr="postNATSrcIpAddr" key="source_ip"/>
+      <attrKeyMap attr="postNATSrcIpPort" key="source_port"/>
+      <attrKeyMap attr="srcId" key="collective_id"/>
+      <attrKeyMap attr="direction" key="direction"/>
+      <attrKeyMap attr="srcIpAddr" key="client_ip"/>
+      <attrKeyMap attr="srcIpPort" key="client_port"/>
+      <attrKeyMap attr="version" key="version"/>
+      <attrKeyMap attr="version" key="appliance_version"/>
+      <attrKeyMap attr="destProto" key="protocol"/>
+      <attrKeyMap attr="authenMethod" key="authentication_method"/>
+      <attrKeyMap attr="authResult" key="authentication_type"/>
+      <attrKeyMap attr="srcName" key="collective_name"/>
+      <attrKeyMap attr="srcName" key="client_hostname"/>
+      <attrKeyMap attr="sessionId" key="session_id"/>
+      <attrKeyMap attr="fwRule" key="rule_name"/>
+      <attrKeyMap attr="_timestamp" key="timestamp"/>
+      <attrKeyMap attr="tunnelProtocol" key="tunnel_protocol"/>
+      <attrKeyMap attr="infoURL" key="url"/>
+      <attrKeyMap attr="userId" key="user_id"/>
+      <attrKeyMap attr="user" key="username"/>
+    </collectAndSetAttrByJSON>
+
+    <when test="exist _time">
+      <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+    </when>
+
+    <when test="exist _timestamp">
+      <collectFieldsByRegex src="$_timestamp">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTimeMSec>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="actionTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="exist _eventType">
+        <setEventAttribute attr="eventType">combineMsgId("Cyxtera-AppGate-SDP-",$_eventType)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">Cyxtera-AppGate-SDP-Generic</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist _distinguishedName">
+      <collectFieldsByRegex src="$_distinguishedName">
+        <regex><![CDATA[CN=<uuid:gPatStr>,CN=<user:gPatStr>,OU=]]></regex>
+      </collectFieldsByRegex>
+    </when>
+
+    <when test="exist destProto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($destProto)</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>

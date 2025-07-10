@@ -1,0 +1,103 @@
+<eventParser name="CitrixNetScalerCEFParser">
+
+  <deviceType>
+    <Vendor>Citrix</Vendor>
+    <Model>NetScaler</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <!-- pattern definitions -->
+  <patternDefinitions>
+    <pattern name="patStrEndPipe"><![CDATA[[^\|]+]]></pattern>
+  </patternDefinitions>
+
+  <!-- This is the NetScalar Web App Firewall CEF Logs -->
+  <!-- https://docs.netscaler.com/en-us/citrix-adc/current-release/application-firewall/logs -->
+  <!-- https://developer-docs.netscaler.com/en-us/netscaler-syslog-message-reference/current-release.html -->
+  <eventFormatRecognizer><![CDATA[^.*\s+CEF:\d+\|Citrix\|NetScaler]]></eventFormatRecognizer>
+  <testEvents>
+    <testEvent><![CDATA[<134> CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_COOKIE|6|src=1.1.1.1 geolocation=North America.US.Pennsylvania.*.West Chester.* spt=29460 method=GET request=https://test.example.com/Handlers/PageManagerContent.ashx?asset\=6c097xx-2e74-ef11-a59c-005056a21c0c&category\=58e2123-effe-4d47-96dd-xxxad7a&version\=66xxx42-2-ef11-a9c-02&inProcess\=False&isLandscape\=False&updatedDate\=9%2f16%2f2024+1%3a19%3a16+PM msg=Cookie validation failed for _ga_2xxYZESLX cn1=364958920 cn2=75450806 cs1=Portals_Lab_Profile cs2=PPE0 cs3=AAA73ieqxxxxxxDsYeSyptf_bgCuSgFZj89js5Ow== cs4=ALERT cs5=2025 act=blocked]]></testEvent>
+    <testEvent><![CDATA[Jun 13 01:11:09 <local0.info> 10.217.31.98 CEF:0|Citrix|NetScaler|NS11.0|APPFW|APPFW_SIGNATURE_MATCH|6|src=10.217.253.62 spt=61141 method=GET request=http://aaron.stratum8.net/FFC/wwwboard/passwd.txt msg=Signature violation rule ID 807:web-cgi /wwwboard/passwd.txt access  cn1=140 cn2=841 cs1=pr_ffc cs2=PPE0 cs3=OyTgjbXBqcpBFeENKDlde3OkMQ00001 cs4=ALERT cs5=2015 cs6=web-cgi act=blocked]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectAndSetAttrByRegex src="$_rawmsg">
+          <regex><![CDATA[^<:gPatSyslogPRI>\sCEF:\d+\|Citrix\|NetScaler\|<version:patStrEndPipe>\|<type:patStrEndPipe>\|<subtype:patStrEndPipe>\|<_severity:patStrEndPipe>\|<_body:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">combineMsgId("NETSCALER-", $type, "-", $subtype)</setEventAttribute>
+      </case>
+      <!-- sample logs from NS, but not seen in wild -->
+      <case>
+        <collectAndSetAttrByRegex src="$_rawmsg">
+          <regex><![CDATA[^(?:<:gPatSyslogPRI>\s)?(?:<_mon:gPatMon>\s<_day:gPatDay>\s<_time:gPatTime>\s)?(?:\<<:gPatWord>\.<:gPatWord>\>\s)?(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatIpAddr>\s)?CEF:\d+\|Citrix\|NetScaler\|<version:patStrEndPipe>\|<type:patStrEndPipe>\|<subtype:patStrEndPipe>\|<_severity:patStrEndPipe>\|<_body:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">combineMsgId("NETSCALER-", $type, "-", $subtype)</setEventAttribute>
+      </case>
+      <default>
+        <setEventAttribute attr="eventType">NETSCALER-Generic</setEventAttribute>
+      </default>
+    </switch>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="fwAction" key="act"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="srcIpPort" key="spt"/>
+      <attrKeyMap attr="destIpPort" key="dpt"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="downloadURL" key="request"/>
+      <attrKeyMap attr="httpMethod" key="method"/>
+      <!-- cs labels -->
+      <!-- Netscaler does not have labels, direct mappings -->
+      <attrKeyMap attr="profileName" key="cs1"/>
+      <attrKeyMap attr="_ppeID" key="cs2"/>
+      <attrKeyMap attr="sessionId" key="cs3"/>
+      <attrKeyMap attr="logLevel" key="cs4"/>
+      <attrKeyMap attr="_year" key="cs5"/>
+      <attrKeyMap attr="threatCategory" key="cs6"/>
+      <!-- cn labels -->
+      <attrKeyMap attr="logID" key="cn1"/>
+      <attrKeyMap attr="transactionId" key="cn2"/>
+    </collectFieldsByKeyValuePair>
+
+    <!-- only if supplied log header has timestamp, and cs5 CEF value contains the year for some reason -->
+    <choose>
+      <when test="not_exist _mon"/>
+      <when test="not_exist _day"/>
+      <when test="not_exist _year"/>
+      <when test="not_exist _time"/>
+      <otherwise>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <choose>
+      <!-- We only support 1-10, otherwise set to 1 -->
+      <when test="not_exist _severity">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_severity = '1'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_severity IN '2,3,4'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$_severity IN '5,6,7'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_severity = '8'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$_severity IN '9,10'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </otherwise>
+    </choose>
+
+  </parsingInstructions>
+</eventParser>
+

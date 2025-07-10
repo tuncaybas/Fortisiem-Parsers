@@ -1,0 +1,130 @@
+<eventParser name="CylanceProtectParser">
+  <deviceType>
+    <Vendor>Cylance</Vendor>
+    <Model>Protect</Model>
+    <Version>ANY</Version>
+  </deviceType>
+  <eventFormatRecognizer><![CDATA[\bCylancePROTECT:?\s]]></eventFormatRecognizer>
+  <testEvents>
+    <testEvent><![CDATA[<118>1 2016-09-08T18:06:10.1788913Z sysloghost CylancePROTECT - - - Event Type: ThreatClassification, Event Name: ResearchSaved, Threat Class: PUP, Threat Subclass: Hacking Tool, SHA256: BC83EFA9AC3A6B375B0923A04E369DC827E13FBA04AC279E84A6EAE2B289C445, MD5: 4612ED550D945D6E0D0C48D6FC86192E]]></testEvent>
+    <testEvent><![CDATA[CylancePROTECT: Event Type: AppControl, Event Name: pechange, Device Name: WIN-7entSh64, IP Address: (192.168.119.128), Action: PEFileChange, Action Type: Deny, File Path: C:\Users\admin\AppData\Local\Temp\MyInstaller.exe, SHA256: 04D4DC02D96673ECA9050FE7201044FDB380E3CFE0D727E93DB35A709B45EDAA]]></testEvent>
+  </testEvents>
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[(?:<:gPatSyslogPRI>\d+\s+<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.<_tz:gPatInt>Z\s+sysloghost\s+)?CylancePROTECT(?:\s+-\s+-\s+(?:-|\[[^]]*\])|:)\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <when test="exist _time">
+      <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+    <collectFieldsByKeyValuePair sep=", " kvsep=": " src="$_body">
+      <attrKeyMap attr="_actionType" key="Action Type"/>
+      <attrKeyMap attr="fwAction" key="Action"/>
+      <attrKeyMap attr="hostName" key="Device Name"/>
+      <attrKeyMap attr="_eventName" key="Event Name"/>
+      <attrKeyMap attr="_eventType" key="Event Type"/>
+      <attrKeyMap attr="fileName" key="File Name"/>
+      <attrKeyMap attr="filePath" key="File Path"/>
+      <attrKeyMap attr="fileType" key="File Type"/>
+      <attrKeyMap attr="_ip" key="IP Address"/>
+      <attrKeyMap attr="_loggedUser" key="Logged On Users"/>
+      <attrKeyMap attr="_mac" key="MAC Address"/>
+      <attrKeyMap attr="msg" key="Message"/>
+      <attrKeyMap attr="osType" key="OS"/>
+      <attrKeyMap attr="procName" key="Process Name"/>
+      <attrKeyMap attr="hashCode" key="SHA256"/>
+      <attrKeyMap attr="srcIpAddr" key="Source IP"/>
+      <attrKeyMap attr="threatCategory" key="Threat Class"/>
+      <attrKeyMap attr="threatScore" key="Threat Score"/>
+      <attrKeyMap attr="user" key="User Name"/>
+      <attrKeyMap attr="_user" key="User"/>
+    </collectFieldsByKeyValuePair>
+
+    <choose>
+      <when test="exist _eventName">
+        <setEventAttribute attr="_eventName">replaceStringByRegex($_eventName, "\s+", "-")</setEventAttribute>
+        <choose>
+          <when test="exist _eventType">
+            <setEventAttribute attr="eventType">combineMsgId("CylanceProtect-", $_eventType, "-", $_eventName)</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">combineMsgId("CylanceProtect-", $_eventName)</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+      <when test="exist _eventType">
+        <setEventAttribute attr="eventType">combineMsgId("CylanceProtect-", $_eventType)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">CylanceProtect-Generic</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist _loggedUser">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_body">
+            <regex><![CDATA[\(<domain:gPatStr>[\\]<_user2:gPatStr>\)]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="not_exist user">
+      <choose>
+        <when test="exist _user">
+          <setEventAttribute attr="user">replaceStringByRegex($_user, "^.*\(|\)$", "")</setEventAttribute>
+        </when>
+        <when test="exist _user2">
+          <setEventAttribute attr="user">$_user2</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist _ip">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_ip">
+            <regex><![CDATA[^\(<hostIpAddr:gPatIpAddr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_ip">
+            <regex><![CDATA[<hostIpAddr:gPatIpAddr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _mac">
+      <setEventAttribute attr="hostMACAddr">normalizeMAC($_mac)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist _actionType"/>
+      <when test="$_actionType = 'Allow'">
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </when>
+      <when test="$_actionType = 'Deny'">
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist msg">
+      <switch>
+        <case>
+          <collectAndSetAttrByJSON src="$msg">
+            <attrKeyMap attr="destIpAddr" key="ServerAddress"/>
+            <attrKeyMap attr="destIpPort" key="ServerPort"/>
+            <attrKeyMap attr="_proto" key="Protocol"/>
+          </collectAndSetAttrByJSON>
+          <when test="exist _proto">
+            <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+          </when>
+        </case>
+        <default/>
+      </switch>
+    </when>
+  </parsingInstructions>
+</eventParser>

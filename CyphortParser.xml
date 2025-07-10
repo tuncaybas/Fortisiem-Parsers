@@ -1,0 +1,101 @@
+<eventParser name="CyphortParser">
+  <deviceType>
+    <Vendor>Cyphort</Vendor>
+    <Model>Cortex</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[2016-03-17 01:42:38.439745+00 cyphortcore-lkf-soc CEF:0|Cyphort|Cortex|3.3.1.46|3|appliance-connect-health|5|desc=Lost connection to core panasonic all (192.168.15.53) for 11 minutes json={"ip": "192.168.15.53", "age": 11.072577, "type": "core", "appliance": "panasonic all", "pretty_age": "11 minutes"}]]></testEvent>
+    <testEvent><![CDATA[<134>Feb 23 21:58:05 example.com cyphort: CEF:0|Cyphort|Cortex|3.2.1.16|http|TROJAN_GIPPERS.DC|8|externalId=374 eventId=13348 lastActivityTime=2015-02-24 05:58:05.151123+00 src=172.16.0.1 dst=10.1.1.26 fileHash=acf69d292d2928c5ddfe5e6af562cd482e6812dc fileName=79ea1163c0844a2d2b6884a31fc32cc4.bin fileType=PE32 executable (GUI) Intel 80386, for MS Windows startTime=2015-02-24 05:58:05.151123+00]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patVBar"><![CDATA[[^|]*]]></pattern>
+    <pattern name="patJson"><![CDATA[\{.*\}]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\s+CEF:\d+\|Cyphort\|Cortex\|[\d.]+\|]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\.\d+[+-]\d{2}\s+<:gPatHostName>\s+CEF:\d+\|Cyphort\|Cortex\|[\d.]+\|<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>\s*<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatHostName>\s+cyphort:\s+CEF:\d+\|Cyphort\|Cortex\|[\d.]+\|<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </case>
+    </switch>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^\d+\|<_eventType:patVBar>\|\d+\|(?:username=<user:gPatStr>\s+)?desc=<msg:gPatMesgBodyMin>\s+json=<_body:patJson>]]></regex>
+        </collectFieldsByRegex>
+
+        <setEventAttribute attr="eventType">combineMsgId("Cyphort-Cortex-", $_eventType)</setEventAttribute>
+
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="_host" key="host_name"/>
+          <attrKeyMap attr="hostName" key="hostname"/>
+          <attrKeyMap attr="intfName" key="interface"/>
+          <attrKeyMap attr="hostIpAddr" key="ip"/>
+          <attrKeyMap attr="user" key="user_name"/>
+        </collectAndSetAttrByJSON>
+
+        <when test="exist _host">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_host">
+                <regex><![CDATA[^<hostIpAddr:gPatIpAddr>$]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default>
+              <setEventAttribute attr="hostName">$_host</setEventAttribute>
+            </default>
+          </switch>
+        </when>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^<_eventType:patVBar>\|<virusName:patVBar>\|<eventSeverity:gPatInt>\|<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+
+        <choose>
+          <when test="$_eventType IN 'cnc, datatheft, email, exploit, http, submission'">
+            <setEventAttribute attr="eventType">combineMsgId("Cyphort-Cortex-", $_eventType, "-Malware")</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">combineMsgId("Cyphort-Cortex-", $_eventType)</setEventAttribute>
+          </otherwise>
+        </choose>
+        <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+          <attrKeyMap attr="serverIpAddr" key="cncServers"/>
+          <attrKeyMap attr="msg" key="desc"/>
+          <attrKeyMap attr="msg" key="description"/>
+          <attrKeyMap attr="destIpAddr" key="dst"/>
+          <attrKeyMap attr="hashCode" key="fileHash"/>
+          <attrKeyMap attr="fileName" key="fileName"/>
+          <attrKeyMap attr="fileType" key="fileType"/>
+          <attrKeyMap attr="alertCategory" key="malwareCategory"/>
+          <attrKeyMap attr="ipsSeverity" key="malwareSeverity"/>
+          <attrKeyMap attr="destIpPort" key="port"/>
+          <attrKeyMap attr="srcIpAddr" key="src"/>
+          <attrKeyMap attr="infoURL" key="url"/>
+        </collectFieldsByKeyValuePair>
+
+        <when test="exist infoURL">
+          <setEventAttribute attr="destName">extractHostFromURL($infoURL)</setEventAttribute>
+        </when>
+      </case>
+    </switch>
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,146 @@
+<eventParser name="ClavisterParser">
+  <deviceType>
+    <Vendor>Clavister</Vendor>
+    <Model>cOS Firewall</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[^<:gPatSyslogPRI>\[<:gPatYear>-<:gPatMon>-<:gPatDay>\s+<:gPatTime>\]\s+EFW:\s+]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<134>[2016-04-26 16:10:07] EFW: CONN: prio=1 id=00600005 rev=1 event=conn_close_natsat action=close rule=if3_net_nat_out conn=close connipproto=TCP connrecvif=If3 connsrcip=192.168.99.13 connsrcport=43347 conndestif=If1 conndestip=1.1.1.1 conndestport=443 connnewsrcip=1.1.1.2 connnewsrcport=65035 connnewdestip=1.1.1.1 connnewdestport=443 origsent=1395 termsent=5763 conntime=83]]></testEvent>
+    <testEvent><![CDATA[<134>[2016-04-26 16:10:11] EFW: ALG: prio=1 id=00200001 rev=1 event=alg_session_open algmod=ftp algsesid=95238 connipproto=TCP connrecvif=If1 connsrcip=1.1.1.3 connsrcport=59576 conndestif=core conndestip=1.1.1.4 conndestport=21 origsent=100 termsent=44]]></testEvent>
+    <testEvent><![CDATA[<134>[2016-04-26 16:10:05] EFW: IPSEC: prio=1 id=01800211 rev=2 event=reconfig_IPsec action=ipsec_reconfigured]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <!-- parsing common fields -->
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^<:gPatSyslogPRI>\[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>\s+<_time:gPatTime>\]\s+EFW:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">"Clavister-Generic"</setEventAttribute>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+      <default/>
+    </switch>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="eventSeverity" key="prio"/>
+      <attrKeyMap attr="logID" key="id"/>
+      <attrKeyMap attr="_eventType" key="event"/>
+      <attrKeyMap attr="sysUpTime" key="uptime"/>
+      <attrKeyMap attr="shutdownReason" key="previous_shutdown"/>
+      <attrKeyMap attr="fwAction" key="action"/>
+      <attrKeyMap attr="sessionId" key="algsesid"/>
+      <attrKeyMap attr="fwRule" key="rule"/>
+      <attrKeyMap attr="connMode" key="conn"/>
+      <attrKeyMap attr="_ipProto" key="connipproto"/>
+      <attrKeyMap attr="_ipProto" key="protocol"/>
+      <attrKeyMap attr="_ipProto" key="ipproto"/>
+      <attrKeyMap attr="ipTotalLength" key="ipdatalen"/>
+      <attrKeyMap attr="postNATSrcIpAddr" key="connnewsrcip"/>
+      <attrKeyMap attr="srcIpAddr" key="connsrcip"/>
+      <attrKeyMap attr="srcIpAddr" key="srcip"/>
+      <attrKeyMap attr="postNATSrcIpPort" key="connnewsrcport"/>
+      <attrKeyMap attr="srcIpPort" key="connsrcport"/>
+      <attrKeyMap attr="srcIpPort" key="srcport"/>
+      <attrKeyMap attr="destIntfName" key="conndestif"/>
+      <attrKeyMap attr="preNATDestIpAddr" key="connnewdestip"/>
+      <attrKeyMap attr="destIpAddr" key="conndestip"/>
+      <attrKeyMap attr="destIpAddr" key="destip"/>
+      <attrKeyMap attr="preNATDestIpPort" key="connnewdestport"/>
+      <attrKeyMap attr="destIpPort" key="conndestport"/>
+      <attrKeyMap attr="destIpPort" key="destport"/>
+      <attrKeyMap attr="udpLen" key="udptotlen"/>
+      <attrKeyMap attr="tcpLen" key="tcphdrlen"/>
+      <attrKeyMap attr="durationMSec" key="conntime"/>
+      <attrKeyMap attr="srcIntfName" key="connrecvif"/>
+      <!--
+      <attrKeyMap attr="algModuleName" key="algmod"/>
+      <attrKeyMap attr="receiverName" key="recvif"/>
+      <attrKeyMap attr="_rev" key="rev"/>
+      <attrKeyMap attr="_waited" key="waited"/>
+      <attrKeyMap attr="_delay" key="delay"/>
+      <attrKeyMap attr="_corever" key="corever"/>
+      <attrKeyMap attr="_build" key="build"/>
+      <attrKeyMap attr="_cfgfile" key="cfgfile"/>
+      <attrKeyMap attr="_localcfgver" key="localcfgver"/>
+      <attrKeyMap attr="_remotecfgver" key="remotecfgver"/>
+      <attrKeyMap attr="_ttl" key="ttl"/>
+      <attrKeyMap attr="_ttlmin" key="ttlmin"/>
+      <attrKeyMap attr="_badFlag" key="bad_flag"/>
+      <attrKeyMap attr="_origsent" key="origsent"/>
+      <attrKeyMap attr="_termsent" key="termsent"/>
+       -->
+    </collectFieldsByKeyValuePair>
+
+    <choose>
+      <!--set event type -->
+      <when test="exist _eventType">
+        <setEventAttribute attr="_eventType">replaceStringByRegex($_eventType, "_", "-")</setEventAttribute>
+        <setEventAttribute attr="eventType">combineMsgId("Clavister-", $_eventType)</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <!-- set IP protocol -->
+      <when test="exist _ipProto">
+        <setEventAttribute attr="ipProto">convertStrToIntIpProto($_ipProto)</setEventAttribute>
+      </when>
+    </choose>
+    <!-- Severity levels: 0-Emergency, 1-Alert, 2-Critical, 3-Error, 4-Warning, 5-Notice, 6-Informational 7-Debug -->
+    <!-- special handling case  Severity level: Debug 0, Informational 1, Notice 3, Warning 4, Error 5, Critical 7, Alert 8, Emergency 9-->
+    <choose>
+      <when test="matches($eventType, 'alg-session-')">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$eventType = 'Clavister-hybrid-data'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$eventType = 'Clavister-conn-$connMode'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$eventType = 'Clavister-no-new-conn-for-this-packet'">
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+      <when test="$eventType = 'Clavister-commit-succeeded'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$eventType = 'Clavister-reconfig-IPsec'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$eventType = 'Clavister-no-offer-received'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$eventType = 'Clavister-init-complete'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$eventType = 'Clavister-bidir-ok'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="matches($eventType, 'startup-')">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$eventType = 'Clavister-tcp-flag-set'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$eventType = 'Clavister-mismatching-tcp-window-scale'">
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+      <when test="$eventType = 'Clavister-ruleset-drop-packet'">
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+      <when test="$eventType = 'Clavister-ttl-low'">
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+    </choose>
+
+  </parsingInstructions>
+
+</eventParser>

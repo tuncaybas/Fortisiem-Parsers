@@ -1,0 +1,313 @@
+<eventParser name="CiscoMerakiParser">
+  <deviceType>
+    <Vendor>Cisco</Vendor>
+    <Model>Meraki Firewall</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patMerakiMod"><![CDATA[urls|flows|events|ids-alerts|ids_alerted|ip_flow_end|ip_flow_start|airmarshal_events]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[(?:<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatIpAddr>\s+|<:gPatSyslogPRI>)\d\s+\d+\.\d+\s+(?:<:gPatStr>\s+){0,2}<:patMerakiMod>\s]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[May 10 17:51:56 192.168.10.1 1 948077314.907556162 MX60 urls src=192.168.10.3:62526 dst=1.2.3.4 mac=00:1A:A0:12:34:56 request: GET http://example.com]]></testEvent>
+    <testEvent><![CDATA[May 11 10:17:59 192.168.10.1 1 948136486.721741837 MX60 flows src=192.168.10.254 dst=8.8.8.8 mac=00:18:0A:12:34:56 protocol=udp sport=9562 dport=53 pattern: allow all]]></testEvent>
+    <testEvent><![CDATA[May 10 18:46:04 192.168.10.1 1 948080570.911780502 MX60 events dhcp lease of ip 192.168.10.252 from server mac 00:18:0A:12.34.56 for client mac 58:67:1A:12.34.56 from router 192.168.10.1 on subnet 255.255.255.0 with dns 8.8.8.8, 8.8.4.4]]></testEvent>
+    <testEvent><![CDATA[May 13 16:13:03 192.168.10.1 1 948330583.190912163 MX60 ids-alerts signature=129:12:1 priority=2 timestamp=948330583.188562 dhost=00:1C:C0:12:34:56 direction=ingress protocol=tcp/ip src=192.168.1.2:22 dst=192.168.10.253:57965 message: Consecutive TCP small segments exceeding threshold]]></testEvent>
+    <testEvent><![CDATA[<134>1 1432771198.022105574 Boise_Appliance flows src=192.168.10.18 dst=1.2.3.4 mac=70:54:D2:96:13:A4 protocol=udp sport=7941 dport=40034 pattern: allow all]]></testEvent>
+    <testEvent><![CDATA[<134>1 1505319774.227195996 HKY_PRIMARY events Site-to-site VPN: phase1 negotiation failed due to time up. d7640afa81ee9cc9:a4ee228e566c2b30]]></testEvent>
+    <testEvent><![CDATA[<134>1 1505319778.386779666 Boone_C1 events type=disassociation radio='0' vap='0' client_mac='A4:77:33:E3:6E:6C' client_ip='192.168.91.77' channel='11' reason='3' instigator='2' duration='61.204000008' auth_neg_dur='1.012000001' last_auth_ago='60.176000007' is_wpa='1' full_conn='1.272000' ip_resp='1.412000001' ip_src='192.168.91.77' http_resp='1.272000' arp_resp='1.240000002' arp_src='192.168.91.77' dns_server='192.168.1.5' dns_req_rtt='0.023999998' dns_resp='1.264000' dhcp_lease_completed='1.160000' dhcp_ip='192.168.91.77' dhcp_server='192.168.91.1' dhcp_server_mac='E0:55:3D:90:A0:B0' dhcp_resp='1.160000' aid='150985953']]></testEvent>
+    <testEvent><![CDATA[<134>1 1505319822.691714382 AES events type=device_packet_flood packet='beacon' device='E0:46:9A:E6:E1:85' radio='0' bssid='E0:46:9A:E6:E1:85' dst='FF:FF:FF:FF:FF:FF' channel='11' state='start' alarm_id='37153' dos_count='1000' inter_arrival='10']]></testEvent>
+    <testEvent><![CDATA[<134>1 1505319823.475952372 IT_Dept events type=l3roaming_dstore_read_done vap='0' key_found='true' bad_entry='false' stored_vap='0']]></testEvent>
+    <testEvent><![CDATA[<134>1 1573824644.573588281 BGSOFMKAP12 airmarshal_events type=rogue_ssid_detected ssid='Invincibles' bssid='44:6E:E5:E1:20:15' src='44:6E:E5:E1:20:15' dst='DC:0B:34:82:EE:CF' wired_mac='44:6E:E5:E1:20:15' vlan_id='56325' channel='6' rssi='9' fc_type='0' fc_subtype='5']]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+\d+\s+\d+\.\d+\s+(?:<:gPatStr>\s+){0,2}<_type:patMerakiMod>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>\d\s+\d+\.\d+\s+(?:<reptDevIpAddr:gPatIpAddr>\s+|<reptDevName:gPatHostName>\s+)?(?:<:gPatStr>\s+)?<_type:patMerakiMod>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <setEventAttribute attr="eventType">Cisco-Meraki-Generic</setEventAttribute>
+
+    <collectAndSetAttrByKeyValuePair sep=" " src="$_body">
+      <attrKeyMap attr="_src" key="src="/>
+      <attrKeyMap attr="srcIpPort" key="sport="/>
+      <attrKeyMap attr="_dst" key="dst="/>
+      <attrKeyMap attr="destIpPort" key="dport="/>
+      <attrKeyMap attr="_mac" key="dhost="/>
+      <attrKeyMap attr="_mac" key="mac="/>
+      <attrKeyMap attr="_proto" key="protocol="/>
+      <attrKeyMap attr="_sig" key="signature="/>
+      <attrKeyMap attr="_severity" key="priority="/>
+      <attrKeyMap attr="_actionType" key="type="/>
+      <attrKeyMap attr="hostMACAddr" key="device="/>
+      <attrKeyMap attr="srcMACAddr" key="client_mac="/>
+      <attrKeyMap attr="_src" key="client_ip="/>
+      <attrKeyMap attr="wlanRadioId" key="radio="/>
+      <attrKeyMap attr="wlanChannelId" key="channel="/>
+      <attrKeyMap attr="durationMSec" key="duration="/>
+      <attrKeyMap attr="operationalState" key="state="/>
+      <attrKeyMap attr="msg" key="info="/>
+      <attrKeyMap attr="_isBadEntry" key="bad_entry="/>
+      <attrKeyMap attr="alarm" key="alarm_id="/>
+      <attrKeyMap attr="_src" key="ip_src="/>
+      <attrKeyMap attr="arpSrcIpAddr" key="arp_src="/>
+      <attrKeyMap attr="dnsServer" key="dns_server="/>
+      <attrKeyMap attr="_src" key="dhcp_ip="/>
+      <attrKeyMap attr="dhcpGateway" key="dhcp_server="/>
+      <attrKeyMap attr="dhcpServerMacAddr" key="dhcp_server_mac="/>
+      <attrKeyMap attr="wlanSsid" key="ssid="/>
+      <attrKeyMap attr="bssId" key="bssid="/>
+      <attrKeyMap attr="hostMACAddr" key="wired_mac="/>
+      <attrKeyMap attr="destVLAN" key="vlan_id="/>
+      <attrKeyMap attr="wlanRssi" key="rssi="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <when test="exist _actionType">
+      <setEventAttribute attr="eventType">combineMsgId("Cisco-Meraki-", $_actionType)</setEventAttribute>
+      <setEventAttribute attr="eventType">replaceStrInStr($eventType, "_", "-")</setEventAttribute>
+    </when>
+
+    <when test="exist _type">
+      <when test="$_type = 'airmarshal_events'">
+        <setEventAttribute attr="eventType">combineMsgId("Cisco-Meraki-airmarshal-", $_actionType)</setEventAttribute>
+        <setEventAttribute attr="eventType">replaceStrInStr($eventType, "_", "-")</setEventAttribute>
+      </when>
+    </when>
+
+    <choose>
+      <when test="$_type = 'urls'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[request: <httpMethod:gPatWord> <infoURL:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Cisco-Meraki-WebTraffic-Permit</setEventAttribute>
+            <when test="exist infoURL">
+              <setEventAttribute attr="destName">extractHostFromURL($infoURL)</setEventAttribute>
+            </when>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$_type = 'flows'">
+        <!-- _action is after 'pattern:' or is the 1st word -->
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\s+pattern:\s+<_action:gPatWord>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^<_action:gPatWord>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+
+        <setEventAttribute attr="eventType">Cisco-Meraki-Flow</setEventAttribute>
+        <choose>
+          <when test="not_exist _action"/>
+          <when test="$_action IN 'allow, 0'">
+            <setEventAttribute attr="eventType">Cisco-Meraki-Flow-Permit</setEventAttribute>
+          </when>
+          <when test="$_action IN 'deny, 1'">
+            <setEventAttribute attr="eventType">Cisco-Meraki-Flow-Deny</setEventAttribute>
+          </when>
+        </choose>
+        <setEventAttribute attr="phEventCategory">4</setEventAttribute>
+      </when>
+
+      <when test="$_type IN 'ids-alerts, ids_alerted'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_sig">
+              <regex><![CDATA[\d+:<_et:gPatInt>:\d+]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Snort-", $_et)</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[message:\s+<msg:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+
+        <choose>
+          <when test="$_severity = '1'">
+            <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+          </when>
+          <when test="$_severity = '2'">
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+          </when>
+          <when test="$_severity = '3'">
+            <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+          </when>
+          <when test="$_severity = '4'">
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+          </when>
+          <when test="$_severity = '5'">
+            <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+          </when>
+          <when test="$_severity = '6'">
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+          </when>
+          <when test="$_severity = '7'">
+            <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+          </when>
+          <when test="$_severity = '8'">
+            <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+          </when>
+          <when test="$_severity = '9'">
+            <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+
+      <when test="$_type = 'events'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[dhcp lease of ip <srcIpAddr:gPatIpAddr> from server mac <_destMAC:gPatStr> for client mac <_srcMAC:gPatStr> from router <destIpAddr:gPatIpAddr> on subnet <dhcpSubnetAddr:gPatIpAddr> with dns <dnsServer:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+
+            <setEventAttribute attr="eventType">Cisco-Meraki-Events-dhcp-lease-extended</setEventAttribute>
+            <setEventAttribute attr="srcMACAddr">normalizeMAC($_srcMAC)</setEventAttribute>
+            <setEventAttribute attr="destMACAddr">normalizeMAC($_destMAC)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Site-to-site\s+VPN:\s*<:gPatStr>\s+negotiation\s+failed\s+due\s+to\s+time\s+up]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Cisco-Meraki-Events-VPN-negotiation-time-up</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^content_filtering_block\s+<_fields:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Cisco-Meraki-Flow-Deny</setEventAttribute>
+            <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_fields">
+              <attrKeyMap attr="infoURL" key="url"/>
+              <attrKeyMap attr="threatCategory" key="category0"/>
+              <attrKeyMap attr="_server" key="server"/>
+            </collectFieldsByKeyValuePair>
+            <when test="exist _server">
+              <switch>
+                <case>
+                  <collectFieldsByRegex src="$_server">
+                    <regex><![CDATA[^<destIpAddr:gPatIpAddr>(?::<destIpPort:gPatInt>)?$]]></regex>
+                  </collectFieldsByRegex>
+                </case>
+                <default>
+                  <setEventAttribute attr="destName">$_server</setEventAttribute>
+                </default>
+              </switch>
+            </when>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$_type = 'ip_flow_start'">
+        <setEventAttribute attr="eventType">Cisco-Meraki-Flow-Start</setEventAttribute>
+      </when>
+      <when test="$_type = 'ip_flow_end'">
+        <setEventAttribute attr="eventType">Cisco-Meraki-Flow-End</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _mac">
+      <setEventAttribute attr="hostMACAddr">normalizeMAC($_mac)</setEventAttribute>
+    </when>
+
+    <when test="exist _proto">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_proto">
+            <regex><![CDATA[^<ipProto:gPatInt>$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+    <when test="exist _src">
+      <choose>
+        <when test="$_type = 'airmarshal_events'">
+          <setEventAttribute attr="srcMACAddr">normalizeMAC($_src)</setEventAttribute>
+        </when>
+        <otherwise>
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_src">
+                <regex><![CDATA[<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <case>
+              <collectFieldsByRegex src="$_src">
+                <regex><![CDATA[<srcIpAddr:gPatIpAddr>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+          </switch>
+        </otherwise>
+      </choose>
+    </when>
+
+    <when test="exist _dst">
+      <choose>
+        <when test="$_type = 'airmarshal_events'">
+          <setEventAttribute attr="destMACAddr">normalizeMAC($_dst)</setEventAttribute>
+        </when>
+        <otherwise>
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_dst">
+                <regex><![CDATA[<destIpAddr:gPatIpAddr>:<destIpPort:gPatInt>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <case>
+              <collectFieldsByRegex src="$_dst">
+                <regex><![CDATA[<destIpAddr:gPatIpAddr>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+          </switch>
+        </otherwise>
+      </choose>
+    </when>
+
+    <when test="exist _isBadEntry">
+      <choose>
+        <when test="exist operationalState"/>
+        <when test="$_isBadEntry = 'false'">
+          <setEventAttribute attr="operationalState">true</setEventAttribute>
+        </when>
+        <when test="$_isBadEntry = 'true'">
+          <setEventAttribute attr="operationalState">false</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,42 @@
+<eventParser name="CiscoUCSParser">
+  <deviceType>
+    <Vendor>Cisco</Vendor>
+    <Model>UCS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<187>: 2014 Oct 31 15:55:53 CDT: %UCSM-3-CMC_VIF_DOWN: [F0459][major][cmc-vif-down][sys/chassis-7/fabric-A/vc-7] IOM 7 / 2 (A) management VIF 7 down, reason Module removed]]></testEvent>
+    <testEvent><![CDATA[<187>: 2014 Dec 16 21:57:33 CST: %UCSM-3-LINK_DOWN: [F0283][cleared][link-down][sys/chassis-4/blade-1/fabric-A/path-1/vc-1602] fc VIF 4 / 1 A-1602 down, reason: Gracefully shutdown]]></testEvent>
+    <testEvent><![CDATA[<187>: 2014 Dec 16 21:57:00 CST: %UCSM-3-LINK_DOWN: [F0207][cleared][link-down][sys/chassis-4/blade-1/adaptor-1/host-eth-1] Adapter  host interface 4/1/1/1 link state: down]]></testEvent>
+    <testEvent><![CDATA[<190>: 2014 Dec 16 21:24:52 CST: %UCSM-6-CONNECTIVITY_PROBLEM: [F0206][cleared][connectivity-problem][sys/chassis-6/blade-3/adaptor-1] Adapter 6/3/1 is unreachable]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patSev"><![CDATA[cleared|condition|critical|info|major|minor|warning]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\s%\w+-\d+-\w+:\s+\[F\d+\]\[<:patSev>\]]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_pri:gPatSyslogPRI>:\s+<_year:gPatYear>\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+\w+:\s+%\w+-\d+-\w+:\s+\[F<errorNo:gPatInt>\]\[<_sev:patSev>\]<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">combineMsgId("Cisco-UCS-F", $errorNo)</setEventAttribute>
+
+    <choose>
+      <when test="$_sev IN 'cleared, condition, info, minor'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_sev IN 'major, warning'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="$_sev = 'critical'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

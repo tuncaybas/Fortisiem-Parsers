@@ -1,0 +1,88 @@
+<eventParser name="CommonStructuredEventParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[ CEF\s*:\d+\|CommonStructured\|]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[Mar 18 17:49:36 ABC CEF :0|CommonStructured|Interact|2.0|UNA0603|A File Server transaction was allowed for user joeUser.|2| src =10.0.1.60 dst =10.0.1.180 msg=TYPE:JRN CLS :AUD JJOB :QPWFSERVSO JUSER :joeUser JNBR :025355 PGM :PLKR108JEL OBJECT : LIBRARY : MEMBER: DETAIL: OB BRENDAN *FILESRV CRTSTRMFIL QPWFSERVSO LNS0811 000112 00023 /home/joeUser/subfolder]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patStrEndSep"><![CDATA[[^|]+]]></pattern>
+  </patternDefinitions>
+
+  <parsingInstructions>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>?\s*<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatStr>\s+CEF\s*:<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">CEF-Generic</setEventAttribute>
+
+    <when test="matches($_body, '\\\|')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "\|", "::TEMP::")</setEventAttribute>
+    </when>
+    <setEventAttribute attr="_body">replaceStrInStr($_body, "|", "::SEP::")</setEventAttribute>
+    <when test="matches($_body, '::TEMP::')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "::TEMP::", "|")</setEventAttribute>
+    </when>
+
+    <collectAndSetAttrByPos sep="::SEP::" src="$_body">
+      <attrPosMap attr="_version" pos="1"/>
+      <attrPosMap attr="_devVendor" pos="2"/>
+      <attrPosMap attr="_devProduct" pos="3"/>
+      <attrPosMap attr="_devVersion" pos="4"/>
+      <attrPosMap attr="_sigId" pos="5"/>
+      <attrPosMap attr="_name" pos="6"/>
+      <attrPosMap attr="_severity" pos="7"/>
+      <attrPosMap attr="_extension" pos="8"/>
+    </collectAndSetAttrByPos>
+
+    <collectAndSetAttrByKeyValuePair sep=" " src="$_extension">
+      <attrKeyMap attr="appTransportProto" key="app="/>
+      <attrKeyMap attr="_in" key="in="/>
+      <attrKeyMap attr="_out" key="out="/>
+      <attrKeyMap attr="destIpAddr" key="dst="/>
+      <attrKeyMap attr="destIpAddr" key="dst ="/>
+      <attrKeyMap attr="destName" key="dhost="/>
+      <attrKeyMap attr="destMACAddr" key="dmac="/>
+      <attrKeyMap attr="destDomain" key="dntdom="/>
+      <attrKeyMap attr="destIpPort" key="dpt="/>
+      <attrKeyMap attr="_destProc" key="dproc="/>
+      <attrKeyMap attr="_destUID" key="duid="/>
+      <attrKeyMap attr="_destPriv" key="dpriv="/>
+      <attrKeyMap attr="_destUser" key="duser="/>
+      <attrKeyMap attr="_endTime" key="end="/>
+      <attrKeyMap attr="fileName" key="fname="/>
+      <attrKeyMap attr="_fileSize" key="fsize="/>
+      <attrKeyMap attr="_receiptTime" key="rt="/>
+      <attrKeyMap attr="_request" key="request"/>
+      <attrKeyMap attr="srcIpAddr" key="src="/>
+      <attrKeyMap attr="srcIpAddr" key="src ="/>
+      <attrKeyMap attr="srcName" key="shost="/>
+      <attrKeyMap attr="srcMACAddr" key="smac="/>
+      <attrKeyMap attr="srcDomain" key="sntdom="/>
+      <attrKeyMap attr="srcIpPort" key="spt="/>
+      <attrKeyMap attr="_srcUID" key="suid="/>
+      <attrKeyMap attr="_srcPriv" key="spriv="/>
+      <attrKeyMap attr="srcUser" key="suser="/>
+      <attrKeyMap attr="user" key="suser="/>
+      <attrKeyMap attr="startTime" key="start="/>
+      <attrKeyMap attr="ipProto" key="proto"/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <choose>
+      <when test="$_severity = '0'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventSeverity">$_severity</setEventAttribute>
+      </otherwise>
+    </choose>
+
+  </parsingInstructions>
+</eventParser>

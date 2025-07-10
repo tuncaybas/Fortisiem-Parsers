@@ -1,0 +1,138 @@
+<eventParser name="CiscoUmbrellaParser">
+  <deviceType>
+    <Vendor>Cisco</Vendor>
+    <Model>Umbrella</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <!--https://docs.umbrella.com/deployment-umbrella/docs/log-formats-and-versioning-->
+    <testEvent><![CDATA[1 192.168.1.10 Umbrella.com Cisco_Umbrella_Log 5383029_b617173610f6e6a1a73540410126fdba5112345/dnslogs/2021-08-12/2021-08-12-17-40-fc87.csv.gz : "2021-08-12 16:43:30","lab1","lab1","192.168.1.2","192.168.1.11","Allowed","1 (A)","NOERROR","example.com.","Software/Technology,Business Services","Roaming Computers","Roaming Computers",""]]></testEvent>
+    <testEvent><![CDATA[1 192.168.1.10 Umbrella.com Cisco_Umbrella_Log 5383029_b617173610f6e6a1a73540410126fdba5112345/proxylogs/2021-08-26/2021-08-26-20-40-fc87.csv.gz : "2021-08-26 20:48:51","lab1-computer","10.0.0.218","99.99.99.45","","","BLOCKED","http://proxy.opendnstest.com/malicious.html","http://proxy.opendnstest.com/index.html","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36","303","606","561","","","Software/Technology,Malware","","","","","","Roaming Computers","Malware","lab1-computer","Roaming Computers","GET"]]></testEvent>
+    <testEvent><![CDATA[1 192.168.1.10 Umbrella.com Cisco_Umbrella_Log 5383029_b617173610f6e6a1a73540410126fdba5112345/iplogs/2021-08-12/2021-08-12-17-40-fc87.csv.gz : "2017-10-02 19:58:12","TheComputerName","198.198.198.1","55605","107.152.24.219","443","Unauthorized IP Tunnel Access"]]></testEvent>
+    <testEvent><![CDATA[1 192.168.1.10 umbrella.com Cisco_Umbrella_Log AWS_S3 5383029_b0fa69exxxxxxxxxxxx3ee8253/dnslogs/2025-01-31/2025-01-31-05-50-d6ca.csv.gz : "2025-01-31 05:59:52","WIN-SNLab01","WIN-SNLab01","10.1.1.80","1.1.1.1","Allowed","1 (A)","NOERROR","dl.duosecurity.com.","Software/Technology,Block List,Global Whitelist,Application,Application Block,Computers and Internet","Roaming Computers","Roaming Computers","","","","5383029"]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patStrEndSlash"><![CDATA[[^/]*]]></pattern>
+    <pattern name="patRightParenthesis"><![CDATA[[^)]+]]></pattern>
+  </patternDefinitions>
+  <eventFormatRecognizer><![CDATA[<:gPatInt>\s+<:gPatStr>\s+<:gPatStr>\s+Cisco_Umbrella_Log\s+]]></eventFormatRecognizer>
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<phCustId:gPatInt>\s+<reptDevIpAddr:gPatStr>\s+<reptDevName:gPatStr>\s+Cisco_Umbrella_Log\s+(?:AWS_S3\s+)?<objectPath:gPatStr>\s*:\s*"<_body:gPatMesgBody>"]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="_body">replaceStringByRegex($_body, "\",\"", "::SEP::")</setEventAttribute>
+        <setEventAttribute attr="extEventRecvProto">AWS_S3</setEventAttribute>
+      </case>
+      <default/>
+    </switch>
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+    <setEventAttribute attr="eventType">CiscoUmbrella-Generic</setEventAttribute>
+    <when test="exist objectPath">
+      <!-- Log types are: dnslogs|proxylogs|iplogs|auditlogs -->
+      <collectFieldsByRegex src="$objectPath">
+        <regex><![CDATA[<_logType:patStrEndSlash>/\d{4}-\d{2}-\d{2}/.*]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="_logType">replaceStringByRegex($_logType, "logs", "")</setEventAttribute>
+      <setEventAttribute attr="_logType">toUpper($_logType)</setEventAttribute>
+      <setEventAttribute attr="eventType">combineMsgId("CiscoUmbrella-", $_logType)</setEventAttribute>
+    </when>
+    <choose>
+      <when test="not_exist _logType"/>
+      <when test="$_logType = 'DNS'">
+        <collectAndSetAttrByPos sep="::SEP::" src="$_body">
+          <attrPosMap attr="_date" pos="1"/>
+          <attrPosMap attr="_managedIdentityList" pos="2"/>
+          <attrPosMap attr="managedEntity" pos="3"/>
+          <attrPosMap attr="srcIpAddr" pos="4"/>
+          <attrPosMap attr="postNATSrcIpAddr" pos="5"/>
+          <attrPosMap attr="fwAction" pos="6"/>
+          <attrPosMap attr="dnsQueryType" pos="7"/>
+          <attrPosMap attr="status" pos="8"/>
+          <attrPosMap attr="destDomain" pos="9"/>
+          <attrPosMap attr="webCategory" pos="10"/>
+          <attrPosMap attr="policyIdentityType" pos="11"/>
+          <attrPosMap attr="identityType" pos="12"/>
+        </collectAndSetAttrByPos>
+        <!-- 1 (A): CiscoUmbrella-DNS-A-Query-Success -->
+        <collectFieldsByRegex src="$dnsQueryType">
+          <regex><![CDATA[\d+\s*\(<_type:patRightParenthesis>\).*]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $_type, "-Query")</setEventAttribute>
+      </when>
+      <when test="$_logType = 'PROXY'">
+        <collectAndSetAttrByPos sep="::SEP::" src="$_body">
+          <attrPosMap attr="_date" pos="1"/>
+          <attrPosMap attr="managedEntity" pos="2"/>
+          <attrPosMap attr="srcIpAddr" pos="3"/>
+          <attrPosMap attr="postNATSrcIpAddr" pos="4"/>
+          <attrPosMap attr="destIpAddr" pos="5"/>
+          <attrPosMap attr="httpContentType" pos="6"/>
+          <attrPosMap attr="fwAction" pos="7"/>
+          <attrPosMap attr="httpFullRequest" pos="8"/>
+          <attrPosMap attr="httpReferrer" pos="9"/>
+          <attrPosMap attr="httpUserAgent" pos="10"/>
+          <attrPosMap attr="httpStatusCode" pos="11"/>
+          <attrPosMap attr="sentBytes" pos="12"/>
+          <attrPosMap attr="recvBytes" pos="13"/>
+          <attrPosMap attr="httpContentLen" pos="14"/>
+          <attrPosMap attr="hashSHA256" pos="15"/>
+          <attrPosMap attr="webCategory" pos="16"/>
+          <attrPosMap attr="detection" pos="17"/>
+          <attrPosMap attr="scanStatus" pos="18"/>
+          <attrPosMap attr="fireAmpDisposition" pos="19"/>
+          <attrPosMap attr="virusName" pos="20"/>
+          <attrPosMap attr="riskScore" pos="21"/>
+          <attrPosMap attr="policyIdentityType" pos="22"/>
+          <!-- cat that resulted in a block, if existing override above web cat -->
+          <attrPosMap attr="webCategory" pos="23"/>
+          <attrPosMap attr="managedEntity" pos="24"/>
+          <attrPosMap attr="identityType" pos="25"/>
+          <attrPosMap attr="httpMethod" pos="26"/>
+        </collectAndSetAttrByPos>
+      </when>
+      <when test="$_logType = 'IP'">
+        <collectAndSetAttrByPos sep="::SEP::" src="$_body">
+          <attrPosMap attr="_date" pos="1"/>
+          <attrPosMap attr="managedEntity" pos="2"/>
+          <attrPosMap attr="srcIpAddr" pos="3"/>
+          <attrPosMap attr="srcIpPort" pos="4"/>
+          <attrPosMap attr="destIpAddr" pos="5"/>
+          <attrPosMap attr="destIpPort" pos="6"/>
+          <attrPosMap attr="webCategory" pos="7"/>
+        </collectAndSetAttrByPos>
+      </when>
+      <when test="$_logType = 'AUDIT'">
+        <collectAndSetAttrByPos sep="::SEP::" src="$_body">
+          <attrPosMap attr="_date" pos="1"/>
+          <attrPosMap attr="user" pos="2"/>
+          <attrPosMap attr="role" pos="3"/>
+          <attrPosMap attr="changeSet" pos="4"/>
+          <attrPosMap attr="action" pos="5"/>
+          <attrPosMap attr="srcIpAddr" pos="6"/>
+          <attrPosMap attr="oldValue" pos="7"/>
+          <attrPosMap attr="newValue" pos="8"/>
+        </collectAndSetAttrByPos>
+      </when>
+      <otherwise/>
+    </choose>
+    <when test="exist destDomain">
+      <setEventAttribute attr="destDomain">trimAttribute($destDomain, ".")</setEventAttribute>
+    </when>
+    <when test="exist fwAction">
+      <!-- Inconsistent casing, normalizing -->
+      <setEventAttribute attr="fwAction">toLower($fwAction)</setEventAttribute>
+      <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $fwAction)</setEventAttribute>
+    </when>
+
+    <when test="exist _date">
+      <collectFieldsByRegex src="$_date">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>\s+<_time:gPatTime>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>

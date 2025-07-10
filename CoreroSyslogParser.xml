@@ -1,0 +1,145 @@
+<eventParser name="CoreroSyslogParser">
+  <deviceType>
+    <Vendor>Corero</Vendor>
+    <Model>SmartWall</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<165>2020-09-22T18:07:28.905+02:00 10.11.12.13 cat=network,type=sflow,v=1,cl=default,device=Defense_10_12_12_102,profile=default,sc=175,sfn=16,dir=inbound,time=1600790847976000,mp=xe-1/1,issr=1999,isr=1,px=32,lb=0,ipv=4,dip=1.2.3.4,dprt=61205,iplen=1143,prot=6,tos=0,sip=1.2.3.5,sprt=443,ttl=126,bp=0,ep=0,icn=5,scl=0,fp=0,flags=24,flags-decode=PSH:ACK,plen=1161,ptag=37,pdu=0896ad670b22204e71624fc68100002508004500047762f400007e06f701d83ad724b9b9757201bbef15d173297cf6bf83c7501810dec0ad00004b10a65f2b244bb73879b0f4346428273ce3582fe59501013ea113a6bbdc535832cbf1ea85d95ecd7ab906eae299b27f16ee3d74b7fe3d981e33971dad0e03d68f90c03fbfabbd4fb63d081701603f5893e42ef3311b0d4936e9abd39621f62608de62b4466947feeaf3ca9aca54ba8fb8121dd3b5dfa5a3adf0ca8c92bb3cf4398b15edb508901db78409a09e3c,]]></testEvent>
+    <testEvent><![CDATA[Mar 29 05:34:22 1.2.3.4 2017 Mar 29 05:34:22 1.2.3.5 cat=security,type=block-rate,v=1,c1=default,device=all,isr=4096,arb=4098481254400,arbr=0,arbb=6204808954372096,arbbr=0,mi=0,]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patCat"><![CDATA[security|network|system]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[(?:<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatIpAddr>\s+<:gPatYear>\s+<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatStr>|<:gPatYear>-<:gPatMonNum>-<:gPatDay>T<:gPatTimeMSec><:gPatTimeZone>\s+<:gPatIpAddr>)\s+cat=<:patCat>,type=<:gPatStr>,v=\d+]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[(?:<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<reptDevIpAddr:gPatIpAddr>\s+<_year:gPatYear>\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<hostName:gPatStr>|<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTimeMSec><:gPatTimeZone>\s+<reptDevIpAddr:gPatIpAddr>)\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">"Corero-SmartWall-Generic"</setEventAttribute>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep="," src="$_body">
+      <attrKeyMap attr="categoryType" key="cat"/>
+      <attrKeyMap attr="type" key="type"/>
+      <attrKeyMap attr="_ipProto" key="prot"/>
+      <attrKeyMap attr="srcIpAddr" key="sip"/>
+      <attrKeyMap attr="srcIpPort" key="sprt"/>
+      <attrKeyMap attr="destIpAddr" key="dip"/>
+      <attrKeyMap attr="destIpPort" key="dprt"/>
+      <attrKeyMap attr="_ruleId" key="atck"/>
+      <attrKeyMap attr="type" key="type"/>
+      <attrKeyMap attr="_syslogVersionFormat" key="v"/>
+      <attrKeyMap attr="cluster" key="cl"/>
+      <attrKeyMap attr="reptDevName" key="device"/>
+      <attrKeyMap attr="ipsSmartDefenseProfile" key="profile"/>
+      <attrKeyMap attr="count" key="sc"/>
+      <attrKeyMap attr="_sflownumber" key="sfn"/>
+      <attrKeyMap attr="direction" key="dir"/>
+      <attrKeyMap attr="srcIntfName" key="mp"/>
+      <attrKeyMap attr="_inboundsflowsamplingrate" key="issr"/>
+      <attrKeyMap attr="_ingresssamplerate" key="isr"/>
+      <attrKeyMap attr="_corenumberwherepacketwasprocessed" key="px"/>
+      <attrKeyMap attr="currentClusterBalance" key="lb"/>
+      <attrKeyMap attr="ipVersion" key="ipv"/>
+      <attrKeyMap attr="ipTotalLength" key="iplen"/>
+      <attrKeyMap attr="tos" key="tos"/>
+      <attrKeyMap attr="ipTtl" key="ttl"/>
+      <attrKeyMap attr="_act" key="bp"/>
+      <attrKeyMap attr="_egressedpacket" key="ep"/>
+      <attrKeyMap attr="_action" key="icn"/>
+      <attrKeyMap attr="_scalenumber" key="scl"/>
+      <attrKeyMap attr="_fragmentpackettype" key="fp"/>
+      <attrKeyMap attr="tcpFlags" key="flags"/>
+      <attrKeyMap attr="msg" key="flags-decode"/>
+      <attrKeyMap attr="_plen" key="plen"/>
+      <attrKeyMap attr="tagName" key="ptag"/>
+      <attrKeyMap attr="dataPayload" key="pdu"/>
+      <attrKeyMap attr="fwAction" key="act"/>
+      <attrKeyMap attr="connMode" key="dm"/>
+      <attrKeyMap attr="ruleName" key="rule"/>
+      <attrKeyMap attr="_inspectionoverride" key="icn"/>
+      <attrKeyMap attr="_scale" key="scl"/>
+      <attrKeyMap attr="reptDevIpAddr" key="aip"/>
+    </collectFieldsByKeyValuePair>
+
+    <setEventAttribute attr="eventType">combineMsgId("Corero-SmartWall-", $categoryType, "-", $type)</setEventAttribute>
+
+    <when test="exist categoryType">
+      <when test="$categoryType = 'network'">
+        <when test="exist _act">
+          <choose>
+            <when test="$_act = '0'">
+              <setEventAttribute attr="fwAction">allow</setEventAttribute>
+            </when>
+            <when test="$_act = '1'">
+              <setEventAttribute attr="fwAction">block</setEventAttribute>
+            </when>
+          </choose>
+        </when>
+      </when>
+    </when>
+
+    <when test="exist fwAction">
+      <when test="exist categoryType">
+        <setEventAttribute attr="eventType">combineMsgId("Corero-SmartWall-",$categoryType,"-", $type, "-", $fwAction)</setEventAttribute>
+      </when>
+    </when>
+
+    <choose>
+      <when test="not_exist _action"/>
+      <when test="$_action = '0'">
+        <setEventAttribute attr="secAction">"Destination Whitelisted"</setEventAttribute>
+      </when>
+      <when test="$_action = '1'">
+        <setEventAttribute attr="secAction">"Destination Blacklisted"</setEventAttribute>
+      </when>
+      <when test="$_action = '2'">
+        <setEventAttribute attr="secAction">"Destination monitor only, no source-based disposition"</setEventAttribute>
+      </when>
+      <when test="$_action = '3'">
+        <setEventAttribute attr="secAction">"Destination monitor only, source-based whitelisted"</setEventAttribute>
+      </when>
+      <when test="$_action = '4'">
+        <setEventAttribute attr="secAction">"Destination monitor only, source-based blacklisted"</setEventAttribute>
+      </when>
+      <when test="$_action = '5'">
+        <setEventAttribute attr="secAction">"Destination inspect, no source-based disposition"</setEventAttribute>
+      </when>
+      <when test="$_action = '6'">
+        <setEventAttribute attr="secAction">"Destination inspect, source-based whitelisted"</setEventAttribute>
+      </when>
+      <when test="$_action = '7'">
+        <setEventAttribute attr="secAction">"Destination inspect, source-based blacklisted"</setEventAttribute>
+      </when>
+      <when test="$_action = '8'">
+        <setEventAttribute attr="secAction">"Destination inspection disabled, no source-based disposition"</setEventAttribute>
+      </when>
+      <when test="$_action = '9'">
+        <setEventAttribute attr="secAction">"Destination inspection disabled, source-based whitelisted"</setEventAttribute>
+      </when>
+      <when test="$_action = '10'">
+        <setEventAttribute attr="secAction">"Destination inspection disabled, source-based blacklisted"</setEventAttribute>
+      </when>
+      <when test="$_action = '15'">
+        <setEventAttribute attr="secAction">"Destination inspection not applicable"</setEventAttribute>
+      </when>
+    </choose>
+
+    <!-- set IP protocol -->
+    <when test="exist _ipProto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_ipProto)</setEventAttribute>
+    </when>
+
+    <when test="exist _pri">
+      <setEventAttribute attr="eventSeverity">getEventSeverityFromSyslogPriority($_pri)</setEventAttribute>
+    </when>
+
+  </parsingInstructions>
+
+</eventParser>

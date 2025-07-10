@@ -1,0 +1,224 @@
+<eventParser name="CheckpointCEFParser">
+  <deviceType>
+    <Vendor>Checkpoint</Vendor>
+    <Model>FireWall-1</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[CEF:0|Check Point|VPN-1 & FireWall-1|Check Point|Log|http|Unknown|act=Accept deviceDirection=0 rt=1528095651000 spt=39108 dpt=80 cs2Label=Rule Name cs2=Implicit Cleanup layer_name=LRSK Security layer_name=LRSK Application layer_uuid=11111111-1111-1111-1111-111111111111 layer_uuid=11111111-1111-1111-1111-111111111111 match_id=42 match_id=33554431 parent_rule=0 parent_rule=0 rule_action=Accept rule_action=Accept rule_uid=11111111-1111-1111-1111-111111111111 ifname=eth6 logid=0 loguid={0x5b14e3a2,0xb,0xfbffff0a,0xc0000007} origin=1.1.1.1 originsicname=CN\=gate2,O\=pgkeeper.citadele.lrs.lt.wj6ide sequencenum=34 version=5 dst=1.1.1.1 inzone=External outzone=Internal product=VPN-1 & FireWall-1 proto=6 service_id=http src=1.1.1.1 ]]></testEvent>
+    <testEvent><![CDATA[CEF:0|Check Point|VPN-1 & FireWall-1|Check Point|Log|Log|Unknown|act=Accept deviceDirection=0 in=1595 out=4842 rt=1528095651000 conn_direction=Outgoing ifname=eth2 logid=288 loguid={0x5b14e353,0x6,0xfbffff0a,0x19d5} origin=1.1.1.1 originsicname=CN\=gate2,O\=pgkeeper.citadele.lrs.lt.wj6ide sequencenum=71 version=5 aggregated_log_count=2 bytes=6437 client_inbound_packets=14 client_outbound_packets=15 connection_count=1 duration=80 hll_key=13348285212721972531 last_hit_time=1528095651 packets=29 product=VPN-1 & FireWall-1 server_inbound_bytes=4842 server_inbound_packets=15 server_outbound_bytes=1595 server_outbound_packets=14 update_count=2]]></testEvent>
+    <testEvent><![CDATA[CEF:0|Check Point|VPN-1 & FireWall-1|Check Point|Log|domain-udp|Unknown|act=Accept deviceDirection=0 rt=1528095651000 spt=49005 dpt=53 cs2Label=Rule Name cs2=Implicit Cleanup layer_name=LRSK Security layer_name=LRSK Application layer_uuid=11111111-1111-1111-1111-111111111111 layer_uuid=11111111-1111-1111-1111-111111111111 match_id=34 match_id=33554431 parent_rule=0 parent_rule=0 rule_action=Accept rule_action=Accept rule_uid=11111111-1111-1111-1111-111111111111 ifname=eth2 logid=0 loguid={0x5b14e3a3,0x0,0xfbffff0a,0xc0000008} origin=1.1.1.1 originsicname=CN\=gate2,O\=pgkeeper.citadele.lrs.lt.wj6ide sequencenum=99 version=5 dst=1.1.1.1 inzone=Internal outzone=Internal product=VPN-1 & FireWall-1 proto=17 service_id=domain-udp src=1.1.1.1]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patExceptPipe"><![CDATA[[^\|]*]]></pattern>
+    <pattern name="patExceptStem"><![CDATA[[^\/:]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\bCEF:\d+\|Check Point\|]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <!-- CEF:Version | Device Vendor | Device Product | Device Version | Signature ID | Name | Severity | Extension -->
+    <!-- Values for Sig ID, Name can be variable data for certain product types, e.g. Log Filtering -->
+    <!-- Note: Naming of variables in fields dont exactly match up with their meaning -->
+    <collectFieldsByRegex src="$_rawmsg">
+      <!-- CEF:0|Check Point|URL Filtering|Check Point|Computers / Internet|ipstack.com|Unknown| -->
+      <regex><![CDATA[^.*?CEF:<:gPatInt>\|Check Point\|<type:patExceptPipe>\|<_version:patExceptPipe>\|<_sigId:patExceptPipe>\|<_name:patExceptPipe>\|<_severity:patExceptPipe>\|<_extension:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <!-- Replace escaped literal pipe with unescaped replacement -->
+    <when test="matches($_extension, '\\\|')">
+      <setEventAttribute attr="_extension">replaceStrInStr($_extension, "\|", "|")</setEventAttribute>
+    </when>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_extension">
+      <attrKeyMap attr="fwAction" key="act"/>
+      <attrKeyMap attr="_eventTime" key="rt"/>
+      <attrKeyMap attr="srcIpPort" key="spt"/>
+      <attrKeyMap attr="destIpPort" key="dpt"/>
+      <attrKeyMap attr="fileDirection" key="deviceDirection"/>
+      <attrKeyMap attr="logID" key="logid"/>
+      <attrKeyMap attr="intfName" key="ifname"/>
+      <attrKeyMap attr="ruleIdStr" key="rule_uid"/>
+      <!-- orig is name of reporting source, but not always reporting ip -->
+      <attrKeyMap attr="origLocation" key="origin"/>
+      <attrKeyMap attr="seqNum" key="sequencenum"/>
+      <attrKeyMap attr="version" key="version"/>
+      <attrKeyMap attr="srcFwZone" key="inzone"/>
+      <attrKeyMap attr="destFwZone" key="outzone"/>
+      <attrKeyMap attr="product" key="product"/>
+      <attrKeyMap attr="_ipProto" key="proto"/>
+      <attrKeyMap attr="serviceType" key="service_id"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="sentBytes64" key="in"/>
+      <attrKeyMap attr="recvBytes64" key="out"/>
+      <attrKeyMap attr="direction" key="conn_direction"/>
+      <attrKeyMap attr="hostName" key="shost"/>
+      <attrKeyMap attr="srcUser" key="suser"/>
+      <attrKeyMap attr="destUser" key="duser"/>
+      <attrKeyMap attr="count" key="aggregated_log_count"/>
+      <attrKeyMap attr="totBytes64" key="bytes"/>
+      <attrKeyMap attr="recvPkts64" key="client_inbound_packets"/>
+      <attrKeyMap attr="sentPkts64" key="client_outbound_packets"/>
+      <attrKeyMap attr="activeConns" key="connection_count"/>
+      <attrKeyMap attr="accessKeyId" key="hll_key"/>
+      <attrKeyMap attr="_updateTime" key="last_hit_time"/>
+      <attrKeyMap attr="_startTime" key="creation_time"/>
+      <attrKeyMap attr="updateCount" key="update_count"/>
+      <attrKeyMap attr="_cs2Label" key="cs2Label"/>
+      <attrKeyMap attr="_cs2" key="cs2"/>
+      <attrKeyMap attr="logText" key="loguid"/>
+      <attrKeyMap attr="origin_sic_name" key="originsicname"/>
+      <attrKeyMap attr="componentName" key="layer_name"/>
+      <attrKeyMap attr="uuid" key="layer_uuid"/>
+      <attrKeyMap attr="reportId" key="match_id"/>
+      <attrKeyMap attr="actionName" key="rule_action"/>
+      <attrKeyMap attr="_cs4" key="cs4"/>
+      <attrKeyMap attr="_cs4Label" key="cs4Label"/>
+      <attrKeyMap attr="_flexNumber1Label" key="flexNumber1Label"/>
+      <attrKeyMap attr="_flexNumber1" key="flexNumber1"/>
+      <attrKeyMap attr="_flexNumber2Label" key="flexNumber2Label"/>
+      <attrKeyMap attr="_flexNumber2" key="flexNumber2"/>
+      <attrKeyMap attr="_flexString2Label" key="flexString2Label"/>
+      <attrKeyMap attr="_flexString2" key="flexString2"/>
+      <attrKeyMap attr="httpFullRequest" key="request"/>
+      <attrKeyMap attr="infoURL" key="request"/>
+      <attrKeyMap attr="appName" key="requestClientApplication"/>
+      <attrKeyMap attr="vulnCVEId" key="Signature"/>
+      <attrKeyMap attr="ruleId" key="rule"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="postNATSrcIpAddr" key="proxy_src_ip"/>
+      <attrKeyMap attr="attackContext" key="signature_info"/>
+      <attrKeyMap attr="ipsProtectionName" key="smartdefense_profile"/>
+      <attrKeyMap attr="requestContext" key="requestContext"/>
+    </collectFieldsByKeyValuePair>
+
+    <choose>
+      <when test="not_exist type">
+        <setEventAttribute attr="eventType">combineMsgId("Checkpoint-", $_name)</setEventAttribute>
+      </when>
+      <otherwise>
+        <choose>
+          <when test="$type = 'URL Filtering'">
+            <setEventAttribute attr="eventType">Checkpoint-URL-Filtering</setEventAttribute>
+            <switch>
+              <case>
+                <collectFieldsByRegex src="$_name">
+                  <!-- should be domain, but strip off uriStem in case its there -->
+                  <regex><![CDATA[^<destDomain:patExceptStem>]]></regex>
+                </collectFieldsByRegex>
+              </case>
+              <default/>
+            </switch>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">combineMsgId("Checkpoint-", $_name)</setEventAttribute>
+          </otherwise>
+        </choose>
+      </otherwise>
+    </choose>
+
+    <when test="exist fwAction">
+      <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $fwAction)</setEventAttribute>
+    </when>
+
+    <when test="exist _eventTime">
+      <collectFieldsByRegex src="$_eventTime">
+        <regex><![CDATA[<eventTime:gPatInt>\d{3}$]]></regex>
+      </collectFieldsByRegex>
+    </when>
+
+    <when test="exist _updateTime">
+      <collectFieldsByRegex src="$_updateTime">
+        <regex><![CDATA[<updateTime:gPatInt>]]></regex>
+      </collectFieldsByRegex>
+    </when>
+
+    <when test="exist _startTime">
+      <collectFieldsByRegex src="$_startTime">
+        <regex><![CDATA[<startTime:gPatInt>]]></regex>
+      </collectFieldsByRegex>
+    </when>
+
+    <when test="exist requestContext">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$requestContext">
+            <regex><![CDATA[CN=<user:gPatStrComma>,]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _cs2Label">
+      <when test="exist _cs2">
+        <when test="$_cs2Label = 'Rule Name'">
+          <setEventAttribute attr="ruleName">$_cs2</setEventAttribute>
+        </when>
+      </when>
+    </when>
+
+    <when test="exist _cs4Label">
+      <when test="exist _cs4">
+        <when test="$_cs4Label = 'Protection Name'">
+          <setEventAttribute attr="attackName">$_cs4</setEventAttribute>
+        </when>
+      </when>
+    </when>
+
+    <when test="exist _flexNumber1Label">
+      <when test="exist _flexNumber1">
+        <when test="$_flexNumber1Label = 'Confidence'">
+          <setEventAttribute attr="ipsConfidence">$_flexNumber1</setEventAttribute>
+        </when>
+      </when>
+    </when>
+
+    <when test="exist _flexNumber2Label">
+      <when test="exist _flexNumber2">
+        <when test="$_flexNumber2Label = 'Performance Impact'">
+          <setEventAttribute attr="perfImpact">$_flexNumber2</setEventAttribute>
+        </when>
+      </when>
+    </when>
+
+    <when test="exist _flexString2Label">
+      <when test="exist _flexString2">
+        <when test="$_flexString2Label = 'Attack Information'">
+          <setEventAttribute attr="attackInfo">$_flexString2</setEventAttribute>
+        </when>
+      </when>
+    </when>
+
+    <when test="exist _ipProto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_ipProto)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="$_severity = 'Unknown'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_severity = 'Very-High'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventSeverity">$_severity</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist origin_sic_name">
+      <setEventAttribute attr="eventDesc">$origin_sic_name</setEventAttribute>
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$origin_sic_name">
+            <regex><![CDATA[CN[\\]=<reptDevName:gPatHostName>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+  </parsingInstructions>
+</eventParser>

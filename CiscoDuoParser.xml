@@ -1,0 +1,90 @@
+<eventParser name="CiscoDuoParser">
+  <deviceType>
+    <Vendor>Cisco</Vendor>
+    <Model>Duo Security</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[[FSM-CiscoDuo-authentication] [1][reportDeviceName][reportDeviceIp] {"access_device":{"browser":"Chrome","browser_version":"67.0.3396.99","flash_version":"uninstalled","hostname":"null","ip":"169.232.89.219","java_version":"uninstalled","location":{"city":"Ann Arbor","country":"United States","state":"Michigan"},"os":"Mac OS X","os_version":"10.14.1"},"application":{"key":"DIY231J8BR23QK4UKBY8","name":"Microsoft Azure Active Directory"},"auth_device":{"ip":"192.168.225.254","location":{"city":"Ann Arbor","country":"United States","state":"Michigan"},"name":"My iPhone X (734-555-2342)"},"event_type":"authentication","factor":"duo_push","reason":"user_approved","result":"success","timestamp":1532951962,"trusted_endpoint_status":"not trusted","txid":"11111111-1111-1111-1111-111111111111","user":{"key":"DXXXXXXXXXXXXXXXXXXX","name":"narroway@example.com"}}]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\[FSM-CiscoDuo-]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\[FSM-CiscoDuo-<_type:gPatWord>\]\s+\[<phCustId:gPatInt>\]\[<reptDevName:gPatStrRightSB>\]\[<reptDevIpAddr:gPatStrRightSB>\] <_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">combineMsgId("Cisco-Duo-", $_type)</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">CISCO_DUO_API</setEventAttribute>
+
+    <choose>
+      <when test="$_type = 'authentication'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="deviceTime" key="timestamp"/>
+          <attrKeyMap attr="_evtType" key="event_type"/>
+          <attrKeyMap attr="authResult" key="result"/>
+          <attrKeyMap attr="statusDetailedReason" key="reason"/>
+          <attrKeyMap attr="user" key="user.name"/>
+          <attrKeyMap attr="accessKeyId" key="user.key"/>
+          <attrKeyMap attr="authServerIpAddr" key="auth_device.ip"/>
+          <attrKeyMap attr="authServerName" key="auth_device.name"/>
+          <attrKeyMap attr="reptGeoCity" key="auth_device.location.city"/>
+          <attrKeyMap attr="reptGeoCountry" key="auth_device.location.country"/>
+          <attrKeyMap attr="reptGeoState" key="auth_device.location.state"/>
+          <attrKeyMap attr="srcApp" key="application.name"/>
+          <attrKeyMap attr="applicationIdStr" key="application.key"/>
+          <attrKeyMap attr="browserName" key="access_device.browser"/>
+          <attrKeyMap attr="hostName" key="access_device.hostname"/>
+          <attrKeyMap attr="srcIpAddr" key="access_device.ip"/>
+          <attrKeyMap attr="osName" key="access_device.os"/>
+          <attrKeyMap attr="osVersion" key="access_device.os_version"/>
+          <attrKeyMap attr="srcGeoCountry" key="access_device.location.country"/>
+          <attrKeyMap attr="srcGeoCountry" key="location.country"/>
+          <attrKeyMap attr="srcGeoState" key="access_device.location.state"/>
+          <attrKeyMap attr="srcGeoState" key="location.state"/>
+          <attrKeyMap attr="srcGeoCity" key="access_device.location.city"/>
+          <attrKeyMap attr="srcGeoCity" key="location.city"/>
+          <attrKeyMap attr="user" key="username"/>
+          <attrKeyMap attr="emailId" key="email"/>
+          <attrKeyMap attr="eventSource" key="integration"/>
+        </collectAndSetAttrByJSON>
+        <setEventAttribute attr="eventType">combineMsgId("Cisco-Duo-", $_type, "-", $authResult)</setEventAttribute>
+      </when>
+
+      <when test="$_type = 'administrator'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="deviceTime" key="timestamp"/>
+          <attrKeyMap attr="actionName" key="action"/>
+          <attrKeyMap attr="description" key="description"/>
+          <attrKeyMap attr="user" key="username"/>
+          <attrKeyMap attr="osObjName" key="object"/>
+        </collectAndSetAttrByJSON>
+        <when test="exist $actionName">
+          <setEventAttribute attr="eventType">combineMsgId("Cisco-Duo-", $_type, "-", $actionName)</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$_type = 'telephony'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="deviceTime" key="timestamp"/>
+          <attrKeyMap attr="type" key="type"/>
+        </collectAndSetAttrByJSON>
+      </when>
+
+      <when test="$_type = 'offline_enrollment'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="deviceTime" key="timestamp"/>
+          <attrKeyMap attr="actionName" key="action"/>
+          <attrKeyMap attr="description" key="description"/>
+          <attrKeyMap attr="user" key="username"/>
+          <attrKeyMap attr="osObjName" key="object"/>
+        </collectAndSetAttrByJSON>
+        <when test="exist $actionName">
+          <setEventAttribute attr="eventType">combineMsgId("Cisco-Duo-", $_type, "-", $actionName)</setEventAttribute>
+        </when>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

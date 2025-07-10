@@ -1,0 +1,179 @@
+<eventParser name="CiscoISEParser">
+  <deviceType>
+    <Vendor>Cisco</Vendor>
+    <Model>Identity Services Engine</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<182>Oct  4 15:31:53 host1 CISE_Profiler 0000014138 1 0 2016-10-04 15:31:53.167 +01:00 0009420432 80006 INFO  Profiler: Profiler is triggering Change Of Authorization Request, ConfigVersionId=268, EndpointCoA=Port Bounce, EndpointMacAddress=6C:3B:E5:0C:FC:D6, EndpointNADAddress=192.168.111.4, EndpointPolicy=MAB_Exemption, EndpointProperty=Service-Type=Framed\,NAS-Port-Type=Ethernet\,EndPointPolicyID=11111111-1111-1111-1111-111111111111\,NAS-Port-Id=FastEthernet0/10\,DestinationIPAddress=172.27.13.15\,AAA-Server=fcmb-hq-psn02,]]></testEvent>
+    <testEvent><![CDATA[<181>Sep 21 06:50:51 host01 CISE_Passed_Authentications 0000066354 3 0 2016-09-21 06:50:51.516 +01:00 2915312533 5200 NOTICE Passed-Authentication: Authentication succeeded, ConfigVersionId=287, Device IP Address=1.2.3.4, DestinationIPAddress=1.2.3.4, DestinationPort=1812, UserName=00-15-65-20-33-E5, Protocol=Radius, RequestLatency=33, NetworkDeviceName=ACME-SW01, User-Name=0015652033e5, NAS-IP-Address=3.4.5.6, NAS-Port=50009, Service-Type=Call Check, Framed-IP-Address=172.27.53.19, Framed-MTU=1500, Called-Station-ID=38-1C-1A-87-87-09, Calling-Station-ID=00-15-65-20-33-E5, NAS-Port-Type=Ethernet, NAS-Port-Id=FastEthernet0/9, EAP-Key-Name=, cisco-av-pair=service-type=Call Check, cisco-av-pair=audit-session-id=AC1B35F8000001240FC38F8A, OriginalUserName=0015652033e5, AcsSessionID=fcmb-hq-psn01/251903157/22970712, AuthenticationIdentityStore=Internal Endpoints, AuthenticationMethod=Lookup, SelectedAccessService=Default Network Access, SelectedAuthorizationProfiles=IP_Phones,]]></testEvent>
+    <testEvent><![CDATA[<181>Sep 21 06:51:01 host01 CISE_Failed_Attempts 0000066361 1 0 2016-09-21 06:51:01.841 +01:00 2915314430 5405 NOTICE Failed-Attempt: RADIUS Request dropped, ConfigVersionId=287, Device IP Address=172.28.89.246, Device Port=1645, DestinationIPAddress=172.27.13.14, DestinationPort=1812, Protocol=Radius, User-Name=e062900018b2, NAS-IP-Address=172.28.89.246, NAS-Port=50013, Service-Type=Call Check, Framed-IP-Address=172.28.89.225, Framed-MTU=1500, Called-Station-ID=C8-00-84-4F-2F-0D, Calling-Station-ID=E0-62-90-00-18-B2, NAS-Port-Type=Ethernet, NAS-Port-Id=FastEthernet0/13, EAP-Key-Name=, cisco-av-pair=service-type=Call Check, cisco-av-pair=audit-session-id=AC1C59F60000003A01D9E2F7, AcsSessionID=fcmb-hq-psn01/251903157/22970732, FailureReason=11007 Could not locate Network Device or AAA Client, Step=11001, Step=11017, Step=11007, Step=5405,]]></testEvent>
+    <testEvent><![CDATA[<178>Aug 18 08:00:00 host1 CISE_Alarm WARN: No Authentications in the last 15 minutes]]></testEvent>
+    <testEvent><![CDATA[<181>Nov 7 16:41:02 host1 CISE_TACACS_Accounting 0028561397 11 1 AVPair=reason2=125-443" \} [Status=Command OK]Nov 7 16:02:00 lb-866917 notice mcpd[6775]: 01070417:5: AUDIT - client tmsh\, tmsh-pid-5824\, user user1 - transaction 31808212-4 - object 0 - create_if \{ virtual_server_rule_virtual_serve, AVPair=reason3=r_name "/Common/VS-1.1.1.1-443" virtual_server_rule_rule_name "/Common/iRule-1.1.1.1-HTTPSv23" virtual_server_rule_priority 0 \} tmsh, AVPair=reason4=-pid-5824\, user user1 - transaction 31808212-5 - object 0 - create_if \{ virtual_server_rule_virtual_server_name "/Common/VS-1.1.1.1-443" virtual_server_rule_rule_name "/Common/iRule-hsts" virtual_server_rule_prior, AVPair=reason5=ity 1 \} [Status=Command OK]1.1.1-443-example.com-SLOTS \} \\"/admin/*\\" \{ pool POOL-1.1.1.1-443-example.com-ADMIN \} default \{ ,]]></testEvent>
+    <testEvent><![CDATA[<181>Mar 26 00:00:06 host1 CISE_Passed_Authentications 0000740487 3 2 Policy=Policy#Policy#Network Security, Network Device Profile=Cisco, Location=Location#All Locations#ORD, Device Type=Device Type#All Device Types#ASA, IPSEC=IPSEC#Is IPSEC Device, Class=Class#Class, EnableFlag=Enabled, Response={Authen-Reply-Status=Pass; },]]></testEvent>
+    <testEvent><![CDATA[<181>Apr 3 16:44:24 host1 CISE_Administrative_and_Operational_Audit 0000007842 1 0 2019-04-03 16:44:24.279 +00:00 0000225352 51001 NOTICE Administrator-Login: Administrator authentication succeeded, ConfigVersionId=5005, AdminInterface=ERS, AdminIPAddress=10.7.200.200, AdminName=aaa_api, OperationMessageText=Administrator authentication successful,]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+CISE_\w+\s+\w+[: ]]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<_reptDevName:gPatHostName>)\s+<eventType:gPatWord>\s+<sessionId:gPatInt>\s+<count:gPatInt>\s+<seqNum:gPatInt>\s+<_body:gPatMesgBodyMin>\s*$]]></regex>
+        </collectFieldsByRegex>
+
+        <setEventAttribute attr="_key">combineMsgId($sessionId, "_", $eventType)</setEventAttribute>
+
+        <choose>
+          <when test="$eventType = 'Cisco-ISE-Alarm'"/>
+          <when test="$eventType != 'CISE_Passed_Authentications'"/>
+          <when test="$count = '0'"/>
+          <when test="$count = '1'"/>
+          <when test="$seqNum = '0'">
+            <collectFieldsByRegex src="$_rawmsg">
+              <regex><![CDATA[<_pre:gPatMesgBody>\s+CISE_<:gPatWord>\s+<:gPatInt>\s+<:gPatInt>\s+<:gPatInt>\s+<_post:gPatMesgBodyMin>\s*$]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="___group_body">combineMsgId($_pre, " ", $eventType, " ", $sessionId, " 1 0 ", $_post)</setEventAttribute>
+            <setEventAttribute attr="_result">groupEventsByAttribute($_key, $seqNum, $count)</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="___group_body">$_body</setEventAttribute>
+            <setEventAttribute attr="_result">groupEventsByAttribute($_key, $seqNum, $count)</setEventAttribute>
+          </otherwise>
+        </choose>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<_reptDevName:gPatHostName>)\s+<eventType:gPatWord>\s+<_severity:gPatWord>:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <when test="exist _reptDevName">
+      <setEventAttribute attr="reptDevName">$_reptDevName</setEventAttribute>
+      <setEventAttribute attr="relayDevName">$_reptDevName</setEventAttribute>
+    </when>
+
+    <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "^CISE_", "Cisco-ISE_")</setEventAttribute>
+
+    <choose>
+      <when test="exist sessionId">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\.\d+\s+<_tz:gPatTimeZone>\s+<:gPatInt>\s+<:gPatInt>\s+<_severity:gPatWord>\s+<:gPatStrEndColon>:\s+<:gPatStrComma>,\s+<_body:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+          </default>
+        </switch>
+
+        <collectFieldsByKeyValuePair sep=", " kvsep="=" src="$_body">
+          <attrKeyMap attr="_destMACAddr" key="Called-Station-ID"/>
+          <attrKeyMap attr="_srcMACAddr" key="Calling-Station-ID"/>
+          <attrKeyMap attr="srcIpAddr" key="Remote-Address"/>
+          <attrKeyMap attr="srcIpAddr" key="AdminIPAddress"/>
+          <attrKeyMap attr="srcIpAddr" key="Device IP Address"/>
+          <attrKeyMap attr="targetName" key="Device IP Address"/>
+          <attrKeyMap attr="srcIpPort" key="Device Port"/>
+          <attrKeyMap attr="_hostMACAddr" key="EndpointMacAddress"/>
+          <attrKeyMap attr="hostIpAddr" key="EndpointNADAddress"/>
+          <attrKeyMap attr="policyName" key="EndpointPolicy"/>
+          <attrKeyMap attr="_property" key="EndpointProperty"/>
+          <attrKeyMap attr="targetHostName" key="NetworkDeviceName"/>
+          <attrKeyMap attr="user" key="User"/>
+          <attrKeyMap attr="user" key="User-Name"/>
+          <attrKeyMap attr="user" key="UserName"/>
+          <attrKeyMap attr="user" key="IdentityDn"/>
+          <attrKeyMap attr="srcAction" key="Action"/>
+          <attrKeyMap attr="type" key="Type"/>
+          <attrKeyMap attr="procTrustLevel" key="Privilege-Level"/>
+          <attrKeyMap attr="status" key="Service"/>
+          <!-- Dest IP Addr is auth IP on ISE device, mapping it twice -->
+          <attrKeyMap attr="authServerIpAddr" key="DestinationIPAddress"/>
+          <!-- target attribs are for device being modified -->
+          <attrKeyMap attr="targetName" key="Device IP Address"/>
+          <attrKeyMap attr="targetHostName" key="NetworkDeviceName"/>
+          <attrKeyMap attr="destIpPort" key="DestinationPort"/>
+          <attrKeyMap attr="authenMethod" key="Protocol"/>
+          <attrKeyMap attr="errReason" key="FailureReason"/>
+          <attrKeyMap attr="groupID" key="AuthenticationIdentityStore"/>
+          <attrKeyMap attr="profileName" key="SelectedShellProfile"/>
+          <attrKeyMap attr="administratorName" key="AdminName"/>
+          <attrKeyMap attr="msg" key="OperationMessageText"/>
+          <attrKeyMap attr="command" key="CmdSet"/>
+        </collectFieldsByKeyValuePair>
+
+        <when test="exist _srcMACAddr">
+          <setEventAttribute attr="srcMACAddr">normalizeMAC($_srcMACAddr)</setEventAttribute>
+        </when>
+        <when test="exist _destMACAddr">
+          <setEventAttribute attr="destMACAddr">normalizeMAC($_destMACAddr)</setEventAttribute>
+        </when>
+        <when test="exist _hostMACAddr">
+          <setEventAttribute attr="hostMACAddr">normalizeMAC($_hostMACAddr)</setEventAttribute>
+        </when>
+
+        <when test="exist _property">
+          <collectFieldsByRegex src="$_property">
+            <regex><![CDATA[^<_property:gPatMesgBodyMin>,*$]]></regex>
+            <!-- rstrip comma -->
+          </collectFieldsByRegex>
+          <collectFieldsByKeyValuePair sep="\," kvsep="=" src="$_property">
+            <attrKeyMap attr="authServerName" key="AAA-Server"/>
+            <attrKeyMap attr="destIpAddr" key="DestinationIPAddress"/>
+            <attrKeyMap attr="nasPortId" key="NAS-Port-Id"/>
+            <attrKeyMap attr="nasPortType" key="NAS-Port-Type"/>
+            <attrKeyMap attr="serviceType" key="Service-Type"/>
+          </collectFieldsByKeyValuePair>
+        </when>
+
+        <when test="exist targetHostName">
+          <choose>
+            <when test="$targetHostName = 'DefaultNetworkDevice'">
+              <when test="exist targetName">
+                <setEventAttribute attr="reptDevName">DeviceToCMDBAttr("cpSelectedIp", $targetName, "hostName")</setEventAttribute>
+              </when>
+            </when>
+            <when test="matches($targetHostName, '^\d+$')">
+              <setEventAttribute attr="reptDevName">DeviceToCMDBAttr("cpDeviceId", $targetHostName, "hostName")</setEventAttribute>
+            </when>
+          </choose>
+        </when>
+      </when>
+
+      <otherwise>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^Configuration Changed: <_body:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <collectFieldsByKeyValuePair sep="; " kvsep="=" src="$_body">
+              <attrKeyMap attr="objType" key="Object Type"/>
+              <attrKeyMap attr="osObjName" key="Object Name"/>
+            </collectFieldsByKeyValuePair>
+          </case>
+          <default/>
+        </switch>
+      </otherwise>
+    </choose>
+
+    <choose>
+      <when test="not_exist _severity"/>
+      <when test="$_severity = 'WARN'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_severity = 'ERROR'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_severity = 'CRITICAL'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

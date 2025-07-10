@@ -1,0 +1,133 @@
+<eventParser name="CoreroIPSParser">
+  <deviceType>
+    <Vendor>Corero</Vendor>
+    <Model>SmartWall</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatIpAddr>\s+IPS5500]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<38>Dec 10 05:36:40 192.168.51.65 IPS5500-75EC: id=060002 pt=TLN-KA prot=UDP cip=1.1.1.1 cprt=39967 sip=1.1.1.2 sprt=53 atck=tln-001021 disp=monitor ckt=2 src=intern msg="FWALL: Matched By Firewall"]]></testEvent>
+    <testEvent><![CDATA[<36>Dec 10 05:37:29 192.168.51.65 IPS5500-75EC: id=060001 pt=TLN-KA prot=TCP cip=1.1.1.1 cprt=54583 sip=1.1.1.3 sprt=80 atck=tln-102055 disp=monitor ckt=2 src=intern msg="PROTO: HTTP Header Section Too Long"]]></testEvent>
+    <testEvent><![CDATA[<36>Dec 10 05:37:30 192.168.51.65 IPS5500-75EC: id=060001 pt=TLN-KA prot=TCP cip=1.1.1.3 cprt=80 sip=1.1.1.1 sprt=54583 atck=tln-017108 disp=mitigate ckt=1 src=extern msg="PROTO: GZIP Bad BType"]]></testEvent>
+    <testEvent><![CDATA[<36>Dec 10 05:36:43 192.168.51.65 IPS5500-75EC: id=060001 pt=TLN-KA prot=TCP cip=1.1.1.1 cprt=6660 sip=1.1.1.4 sprt=80 atck=tln-102050 disp=monitor ckt=2 src=intern msg="PROTO: HTTP Message Contains Multiple Instances Of A Specified Header"]]></testEvent>
+    <testEvent><![CDATA[<36>Dec 10 05:36:45 192.168.51.65 IPS5500-75EC: id=060001 pt=TLN-KA prot=TCP cip=1.1.1.5 cprt=46787 sip=1.1.1.6 sprt=443 atck=tln-001019 disp=mitigate ckt=1 src=extern msg="DDOSA: SynFlood - Connection To Server That Fails Proxied Handshake"]]></testEvent>
+    <testEvent><![CDATA[<36>Dec 10 05:37:30 192.168.51.65 IPS5500-75EC: id=060001 pt=TLN-KA prot=TCP cip=1.1.1.7 cprt=80 sip=1.1.1.1 sprt=6736 atck=tln-017120 disp=mitigate ckt=1 src=extern msg="PROTO: GZIP Bad Table Lengths"]]></testEvent>
+    <testEvent><![CDATA[<36>Dec 10 05:37:32 192.168.51.65 IPS5500-75EC: id=060001 pt=TLN-KA prot=TCP cip=1.1.1.7 cprt=80 sip=1.1.1.1 sprt=1734 atck=tln-017109 disp=mitigate ckt=1 src=extern msg="PROTO: GZIP Bad NLEN Field"]]></testEvent>
+    <testEvent><![CDATA[<36>Dec 10 05:40:09 192.168.51.65 IPS5500-75EC: id=060001 pt=TLN-KA prot=TCP cip=1.1.1.5 cprt=43007 sip=1.1.1.6 sprt=443 atck=tln-001018 disp=mitigate ckt=1 src=extern msg="DDOSA: SynFlood - Connection From Client That Fails Proxy Handshake"]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <!-- parsing common fields -->
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<reptDevIpAddr:gPatIpAddr>\s+<reptDevName:gPatStr>:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">"Corero-SmartWall-Generic"</setEventAttribute>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+      <default/>
+    </switch>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="_ipProto" key="prot"/>
+      <attrKeyMap attr="srcIpAddr" key="cip"/>
+      <attrKeyMap attr="srcIpPort" key="cprt"/>
+      <attrKeyMap attr="destIpAddr" key="sip"/>
+      <attrKeyMap attr="destIpPort" key="sprt"/>
+      <attrKeyMap attr="_ruleId" key="atck"/>
+      <attrKeyMap attr="usrMsg" key="msg"/>
+    </collectFieldsByKeyValuePair>
+
+    <choose>
+      <!-- set IP protocol -->
+      <when test="exist _ipProto">
+        <setEventAttribute attr="ipProto">convertStrToIntIpProto($_ipProto)</setEventAttribute>
+      </when>
+    </choose>
+    <!-- Severity levels: Low:1, Moderate:4, Critical:7 -->
+    <choose>
+      <when test="$_ruleId = 'tln-001018'">
+        <setEventAttribute attr="eventType">Corero-SmartWall-Proxy_Handshake-client-failure</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+      <when test="$_ruleId = 'tln-001019'">
+        <setEventAttribute attr="eventType">Corero-SmartWall-Proxy_Handshake-target-failure</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+      <when test="$_ruleId = 'tln-102050'">
+        <setEventAttribute attr="eventType">Corero-SmartWall-HTTP_Header-instanceUnallowed</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+      <when test="exist usrMsg">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$usrMsg">
+              <regex><![CDATA[RRBH1:\s*HTTP\s+Header\s+or\s+String\s+Found\s+in\s+Request\s*-\s*\d+]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Corero-SmartWall-RRBH1:_HTTP_Header_or_String_Found_in_Request</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$usrMsg">
+              <regex><![CDATA[RRBH1:\s*HTTP\s+Header\s+or\s+String\s+Missing\s+in\s+Request\s*-\s*\d+]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Corero-SmartWall-RRBH1:_HTTP_Header_or_String_Missing_in_Request</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$usrMsg">
+              <regex><![CDATA[EXPLT:\s*Finger\s+File\s+Read\s+\d+]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Corero-SmartWall-EXPLT:_Finger_File_Read</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$usrMsg">
+              <regex><![CDATA[RRBD3:\s*DNS\s+RCODE\s+Matches\s+Specified\s+Filter\s*-.*]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Corero-SmartWall-RRBD3:_DNS_RCODE_Matches_Specified_Filter</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$usrMsg">
+              <regex><![CDATA[RRBH2:\s*HTTP\s+Response\s+Filter\s+Match\s*-\s*\d+]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Corero-SmartWall-RRBH2:_HTTP_Response_Filter_Match</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$usrMsg">
+              <regex><![CDATA[FWALL:\s*IP\s+Address\s+Shunned\s+with\s+Label\s+\d+]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Corero-SmartWall-FWALL:_IP_Address_Shunned_with_Label</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="_type">replaceStringByRegex($usrMsg, "[^\w!'()+./:?-]+", " ")</setEventAttribute>
+            <setEventAttribute attr="_type">replaceStringByRegex($_type, "\s+", "_")</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId("Corero-SmartWall-",$_type)</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+      <when test="$_ruleId = 'tln-001021'">
+        <setEventAttribute attr="eventType">Corero-SmartWall-FWALL:_Matched_By_Firewall</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_ruleId = 'tln-017108'">
+        <setEventAttribute attr="eventType">Corero-SmartWall-GZIP-bad-BType</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+      <when test="$_ruleId = 'tln-017109'">
+        <setEventAttribute attr="eventType">Corero-SmartWall-GZIP-bad-NLEN</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+      <when test="$_ruleId = 'tln-017120'">
+        <setEventAttribute attr="eventType">Corero-SmartWall-PROTO:_GZIP_Bad_Table_Lengths</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+      <when test="$_ruleId = 'tln-102055'">
+        <setEventAttribute attr="eventType">Corero-SmartWall-HTTP_Header-lengthExceeded</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+
+</eventParser>

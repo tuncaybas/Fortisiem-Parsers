@@ -1,0 +1,149 @@
+<eventParser name="CiscoACIParser">
+  <deviceType>
+    <Vendor>Cisco</Vendor>
+    <Model>Cisco ACI</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[\[Cisco_ACI]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[[Cisco_ACI_Tenant_Health]:[attributes]={"childAction":"","descr":"","dn":"uni/tn-CliQr","lcOwn":"local","modTs":"2016-09-02T06:58:34.511+00:00","monPolDn":"uni/tn-common/monepg-default","name":"CliQr","ownerKey":"","ownerTag":"","status":"","uid":"15374"},[health]={"childAction":"","chng":"0","cur":"100","maxSev":"cleared","prev":"100","rn":"health","status":"","twScore":"100","updTs":"2016-09-02T08:32:56.730+00:00"}]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\[<eventType:gPatWord>\]:<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="extEventRecvProto">Cisco_APIC_API</setEventAttribute>
+    <collectFieldsByKeyValuePair sep="," kvsep="=" src="$_body">
+      <attrKeyMap attr="_attributes" key="[attributes]"/>
+      <attrKeyMap attr="_health" key="[health]"/>
+      <attrKeyMap attr="reptDevIpAddr" key="[reptDevIpAddr]"/>
+    </collectFieldsByKeyValuePair>
+
+    <collectAndSetAttrByJSON src="$_attributes">
+      <attrKeyMap attr="oid" key="affected"/>
+      <attrKeyMap attr="_created" key="created"/>
+      <attrKeyMap attr="_severity" key="severity"/>
+      <attrKeyMap attr="description" key="descr"/>
+      <attrKeyMap attr="policyName" key="rule"/>
+      <attrKeyMap attr="changeSet" key="changeSet"/>
+      <attrKeyMap attr="status" key="lc"/>
+      <attrKeyMap attr="errReason" key="cause"/>
+      <attrKeyMap attr="type" key="type"/>
+      <attrKeyMap attr="user" key="user"/>
+      <attrKeyMap attr="_trigger" key="trig"/>
+      <attrKeyMap attr="hostIpAddr" key="addr"/>
+      <attrKeyMap attr="hostIpAddr" key="address"/>
+      <attrKeyMap attr="hostMACAddr" key="fabricMAC"/>
+      <attrKeyMap attr="_name" key="name"/>
+      <attrKeyMap attr="_nodeName" key="nodeName"/>
+      <attrKeyMap attr="sysUpTime" key="systemUpTime"/>
+      <attrKeyMap attr="healthState" key="state"/>
+      <attrKeyMap attr="role" key="role"/>
+      <attrKeyMap attr="adminState" key="adminSt"/>
+      <attrKeyMap attr="healthState" key="health"/>
+      <attrKeyMap attr="operationalState" key="operSt"/>
+      <attrKeyMap attr="sysDN" key="dn"/>
+      <attrKeyMap attr="healthScore" key="healthAvg"/>
+      <attrKeyMap attr="_startTime" key="repIntvStart"/>
+      <attrKeyMap attr="_endTime" key="repIntvEnd"/>
+    </collectAndSetAttrByJSON>
+
+    <when test="exist _created">
+      <collectFieldsByRegex src="$_created">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d{3}<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <when test="exist _startTime">
+      <collectFieldsByRegex src="$_startTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d{3}<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="startTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <when test="exist _endTime">
+      <collectFieldsByRegex src="$_endTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d{3}<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="endTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <when test="exist _trigger">
+      <choose>
+        <when test="$eventType = 'Cisco_ACI_Log_Record'">
+          <setEventAttribute attr="loginType">$_trigger</setEventAttribute>
+        </when>
+
+        <otherwise>
+          <setEventAttribute attr="trigger">$_trigger</setEventAttribute>
+        </otherwise>
+      </choose>
+    </when>
+
+    <when test="exist _name">
+      <choose>
+        <when test="$eventType = 'Cisco_ACI_Tenant_Health'">
+          <setEventAttribute attr="tenantName">$_name</setEventAttribute>
+        </when>
+
+        <when test="$eventType = 'Cisco_ACI_Application_Health'">
+          <setEventAttribute attr="appName">$_name</setEventAttribute>
+        </when>
+
+        <when test="$eventType = 'Cisco_ACI_EPG_Health'">
+          <setEventAttribute attr="epgName">$_name</setEventAttribute>
+        </when>
+
+        <when test="$eventType = 'Cisco_ACI_Node_Health'">
+          <setEventAttribute attr="hostName">$_name</setEventAttribute>
+        </when>
+
+      </choose>
+    </when>
+
+    <when test="exist _nodeName">
+      <choose>
+        <when test="$eventType = 'Cisco_ACI_Cluster_Health'">
+          <setEventAttribute attr="controllerName">$_nodeName</setEventAttribute>
+        </when>
+
+      </choose>
+    </when>
+
+    <when test="exist _severity">
+      <choose>
+        <when test="$_severity IN 'cleared, info'">
+          <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        </when>
+
+        <when test="$_severity = 'warning'">
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </when>
+
+        <when test="$_severity = 'minor'">
+          <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+        </when>
+
+        <when test="$_severity = 'major'">
+          <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        </when>
+
+        <when test="$_severity = 'critical'">
+          <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+
+    <when test="exist _health">
+      <collectAndSetAttrByJSON src="$_health">
+        <attrKeyMap attr="healthScore" key="cur"/>
+      </collectAndSetAttrByJSON>
+    </when>
+
+  </parsingInstructions>
+
+</eventParser>

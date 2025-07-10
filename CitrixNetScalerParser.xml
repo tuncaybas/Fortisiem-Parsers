@@ -1,0 +1,390 @@
+<eventParser name="CitrixNetScalerParser">
+
+  <deviceType>
+    <Vendor>Citrix</Vendor>
+    <Model>NetScaler</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <!-- pattern definitions -->
+  <patternDefinitions>
+    <pattern name="patYear"><![CDATA[\d{4}]]></pattern>
+    <pattern name="patNetScalerMod"><![CDATA[AAA|UI|SSLVPN|EVENT|SSLLOG|APPFW|TCP|ROUTING|SNMP|ACL|TRANSFORM|APPFW_RESP|AAATM|PITBOSS|CVPN]]></pattern>
+    <pattern name="patStrEndQuote"><![CDATA[[^"]*]]></pattern>
+    <pattern name="patStrEndMinus"><![CDATA[[^-]*]]></pattern>
+    <pattern name="patStrEndLT"><![CDATA[[^<]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[(?:<:gPatMonNum>/<:gPatDay>/<:gPatYear>|<:gPatYear>/<:gPatMonNum>/<:gPatDay>):<:gPatTime>\s+<:gPatStrEndColon>:\s+(?:default\s+)?<:gPatStr>\s+<:gPatStr>\s+<:gPatInt>\s+(?:<:gPatInt>\s+)?:]]></eventFormatRecognizer>
+  <testEvents>
+    <testEvent><![CDATA[<134> 11/14/2016:12:01:58 GMT servername 0-PPE-0 : default TCP CONN_TERMINATE 555619 0 : Source 10.1.2.3:80 - Destination 10.3.2.1:37750 - Start Time 11/14/2016:12:01:58 GMT - End Time 11/14/2016:12:01:58 GMT - Total_bytes_send 0 - Total_bytes_recv 1]]></testEvent>
+    <testEvent><![CDATA[<134> 11/14/2016:22:15:15 GMT servername 0-PPE-0 : default TCP OTHERCONN_DELINK 198463 0 : Source 10.1.1.2:61831 - Vserver 10.1.1.1:22 - NatIP 10.3.2.1:61831 - Destination 10.1.2.3 - Delink Time 11/14/2016:22:15:15 GMT Total_bytes_send 5421 - Total_bytes_recv 7765]]></testEvent>
+    <testEvent><![CDATA[<182> 07/25/2012:19:56:41   PPE-0 : UI CMD_EXECUTED 473128 :  User nsroot - Remote_ip 10.13.8.75 - Command "show ns hostName" - Status "Success"]]></testEvent>
+    <testEvent><![CDATA[<181> 07/25/2012:19:56:05  NS2-MAIL PPE-0 : EVENT DEVICEUP 33376 :  Device "server_vip_NSSVC_SSL_172.17.102.108:443(accellion:443)" - State UP]]></testEvent>
+    <testEvent><![CDATA[<181> 07/25/2012:19:55:35  NS2-MAIL PPE-0 : EVENT DEVICEDOWN 33374 :  Device "server_vip_NSSVC_SSL_172.17.102.108:443(accellion:443)" - State DOWN]]></testEvent>
+    <testEvent><![CDATA[<182> 07/24/2012:15:37:08   PPE-0 : EVENT MONITORDOWN 472795 :  Monitor Monitor_http_of_Domapps:80(10.50.15.14:80) - State DOWN]]></testEvent>
+    <testEvent><![CDATA[<134> 09/23/2013:08:05:49 GMT hgvdccns01 0-PPE-0 : APPFW APPFW_FIELDCONSISTENCY 4709317 0 :  1.1.1.1 3360168-PPE0 4MCNwMSoic6Q8mfQ4YoHumUj5iEA000 WRMSAppFW]]></testEvent>
+    <testEvent><![CDATA[<134> 2013/10/18:20:07:02  NYNSVPX01 0-PPE-0 : UI CMD_EXECUTED 13609 0 :  User nsroot - Remote_ip 10.55.38.82 - Command login nsroot ******** - Status Success]]></testEvent>
+    <testEvent><![CDATA[12/18/2014:16:54:50 GMT va3hud-lb01 0-PPE-0 : UI CMD_EXECUTED 6957493 0 : User nsroot - Remote_ip 10.28.1.21 - Command "logout" - Status "Success"]]></testEvent>
+    <testEvent><![CDATA[<134> 01/28/2020:01:02:01 GMT nsvpx1 0-PPE-0 : default SSLVPN HTTPREQUEST 795352 0 : Context user1@10.1.1.1 - SessionId: 16032- www.example.com User user2 : Group(s) Home Access : Vserver 10.1.1.2:443 - 01/28/2020:01:02:01 GMT : SSO is ON : POST /Citrix/WebAppsWeb/Resources/List - -]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectAndSetAttrByRegex src="$_rawmsg">
+          <regex><![CDATA[<_mon:gPatMonNum>/<_day:gPatDay>/<_year:patYear>:<_time:gPatTime>\s+<:gPatStrEndColon>:\s+(?:default\s+)?<_feature:gPatStr>\s+<_message:gPatStr>\s+<:gPatInt>\s+(?:<:gPatInt>\s+)?:\s+<_body:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+      </case>
+      <case>
+        <collectAndSetAttrByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:patYear>/<_mon:gPatMonNum>/<_day:gPatDay>:<_time:gPatTime>\s+<:gPatStrEndColon>:\s+(?:default\s+)?<_feature:gPatStr>\s+<_message:gPatStr>\s+<:gPatInt>\s+(?:<:gPatInt>\s+)?:\s+<_body:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+      </case>
+    </switch>
+
+    <setEventAttribute attr="eventType">combineMsgId("NETSCALER-", $_feature, "-", $_message)</setEventAttribute>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+    <setEventAttribute attr="eventAction">0</setEventAttribute>
+    <setEventAttribute attr="totFlows">1</setEventAttribute>
+
+    <collectAndSetAttrByKeyValuePair sep=" - " src="$_body">
+      <attrKeyMap attr="ipConnId" key="connectionId "/>
+      <attrKeyMap attr="_dest" key="Destination "/>
+      <attrKeyMap attr="_duration" key="Duration "/>
+      <attrKeyMap attr="_src" key="Source "/>
+      <attrKeyMap attr="recvBytes64" key="Total_bytes_recv "/>
+      <attrKeyMap attr="sentBytes64" key="Total_bytes_send "/>
+      <attrKeyMap attr="_user" key="username:domainname "/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <when test="exist _src">
+      <collectAndSetAttrByRegex src="$_src">
+        <regex><![CDATA[<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>]]></regex>
+      </collectAndSetAttrByRegex>
+    </when>
+
+    <when test="exist _dest">
+      <collectAndSetAttrByRegex src="$_dest">
+        <regex><![CDATA[<destIpAddr:gPatIpAddr>(?:\:<destIpPort:gPatInt>)?]]></regex>
+      </collectAndSetAttrByRegex>
+    </when>
+
+    <when test="exist _user">
+      <collectAndSetAttrByRegex src="$_user">
+        <regex><![CDATA[<user:gPatMesgBody>:<domain:gPatMesgBody>]]></regex>
+      </collectAndSetAttrByRegex>
+    </when>
+
+    <choose>
+      <!-- <182> 07/25/2012:19:56:41   PPE-0 : UI CMD_EXECUTED 473128 :  User nsroot - Remote_ip 10.13.8.75 - Command "show ns hostName" - Status "Success"  -->
+      <when test="$eventType = 'NETSCALER-UI-CMD_EXECUTED'">
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[User <user:gPatStr> - Remote_ip <hostIpAddr:gPatIpAddr> - Command "<command:patStrEndQuote>" - Status "<_stat:patStrEndQuote>"]]></regex>
+            </collectAndSetAttrByRegex>
+          </case>
+
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[User <user:gPatStr> - Remote_ip <hostIpAddr:gPatIpAddr> - Command <command:patStrEndMinus> - Status <_stat:patStrEndQuote>]]></regex>
+            </collectAndSetAttrByRegex>
+          </case>
+        </switch>
+        <choose>
+          <when test="$_stat = 'Success'">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-SUCCESS")</setEventAttribute>
+            <setEventAttribute attr="eventAction">0</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-FAILURE")</setEventAttribute>
+            <setEventAttribute attr="eventAction">1</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+
+      <!-- <181> 07/25/2012:19:56:05  NS2-MAIL PPE-0 : EVENT DEVICEUP 33376 :  Device "server_vip_NSSVC_SSL_172.17.102.108:443(accellion:443)" - State UP  -->
+      <when test="$eventType = 'NETSCALER-EVENT-DEVICEUP'">
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Device "<hostName:gPatStrEndColon>:<ipPort:gPatInt>\(.*\)" - State UP]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <!-- <181> 07/25/2012:19:55:35  NS2-MAIL PPE-0 : EVENT DEVICEDOWN 33374 :  Device "server_vip_NSSVC_SSL_172.17.102.108:443(accellion:443)" - State DOWN  -->
+      <when test="$eventType = 'NETSCALER-EVENT-DEVICEDOWN'">
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Device "<hostName:gPatStrEndColon>:<ipPort:gPatInt>\(.*\)" - State DOWN]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+
+      <!-- <182> 07/24/2012:15:37:08   PPE-0 : EVENT MONITORDOWN 472795 :  Monitor Monitor_http_of_Domapps:80(10.50.15.14:80) - State DOWN  -->
+      <!-- <134> 08/03/2015:00:21:13  WAFNS1 0-PPE-0 : default EVENT MONITORDOWN 87168593 0 :  Monitor MonServiceBinding_192.168.234.233:83_(D.txt)(DMZ2-APortal-02-MobileBanking) - State DOWN -->
+      <when test="$eventType = 'NETSCALER-EVENT-MONITORDOWN'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Monitor <hostName:gPatStrEndColon>:<ipPort:gPatInt>\(<hostIpAddr:gPatIpAddr>:<:gPatInt>\) - State DOWN]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Monitor <hostName:gPatHostName>_<hostIpAddr:gPatIpAddr>:<ipPort:gPatInt>_\(.*\) - State DOWN]]></regex>
+            </collectFieldsByRegex>
+          </case>
+        </switch>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+
+      <!-- <134> 08/03/2015:00:21:49  WAFNS1 0-PPE-0 : default EVENT MONITORUP 87169387 0 :  Monitor MonServiceBinding_192.168.234.233:83_(DAIS_Monitoring.txt)(DMZ2-APortal-02-MobileBanking-XG) - State UP -->
+      <when test="$eventType = 'NETSCALER-EVENT-MONITORUP'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Monitor <hostName:gPatStrEndColon>:<ipPort:gPatInt>\(<hostIpAddr:gPatIpAddr>:<:gPatInt>\) - State UP]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Monitor <hostName:gPatHostName>_<hostIpAddr:gPatIpAddr>:<ipPort:gPatInt>_\(.*\) - State UP]]></regex>
+            </collectFieldsByRegex>
+          </case>
+        </switch>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$eventType = 'NETSCALER-AAA-LOGIN_FAILED'">
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[User <user:gPatStr> - Client_ip <hostIpAddr:gPatIpAddr> - Failure_reason "<:patStrEndQuote>"]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="$eventType = 'NETSCALER-AAATM-LOGIN'">
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[User <user:gPatStr> - Client_ip <hostIpAddr:gPatIpAddr> - Nat_ip <postNATSrcIpAddr:gPatIpAddr> - Vserver <_vserver:gPatStrEndColon>:<destIpPort:gPatInt> - Browser_type "<:patStrEndQuote>" - Group\(s\) "<userGrp:patStrEndQuote>"]]></regex>
+            </collectAndSetAttrByRegex>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <!-- Message format: "User%s-Client_ip%s-""Nat_ip%sVserver%s:%dBrowser_type\"%s\"- Group(s)\"%s\"". -->
+              <regex><![CDATA[User <user:gPatStr> - Client_ip <hostIpAddr:gPatIpAddr> - Nat_ip [^-]* - Vserver <hostIpAddr:gPatIpAddr>:<ipPort:gPatInt> - Browser_type <:gPatStr> - Group\(s\)\s+<userGrp:gPatMesgBodyMin>(?:$| : )]]></regex>
+            </collectAndSetAttrByRegex>
+          </case>
+        </switch>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+
+      <when test="$eventType = 'NETSCALER-AAATM-LOGOUT'">
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[User <user:gPatStr> - Client_ip <hostIpAddr:gPatIpAddr> - Nat_ip <postNATSrcIpAddr:gPatIpAddr> - Vserver <_vserver:gPatStrEndColon>:<destIpPort:gPatInt> - Start_time "<:patStrEndQuote>" - End_time "<:patStrEndQuote>" - Duration <_duration:gPatStr> - Http_resources_accessed <httpTotalAccesses:gPatStr> - Total_TCP_connections <:gPatInt> - Total_policies_allowed <:gPatInt> - Total_policies_denied <:gPatInt> - Total_bytes_send <sentBytes64:gPatInt> - Total_bytes_recv <recvBytes64:gPatInt> - Total_compressedbytes_send <:gPatInt> - Total_compressedbytes_recv <:gPatInt> - Compression_ratio_send <:gPatStr> - Compression_ratio_recv <:gPatStr> - LogoutMethod "<:patStrEndQuote>" - Group\(s\) "<userGrp:patStrEndQuote>"]]></regex>
+            </collectAndSetAttrByRegex>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <!-- Message format: "User%s-""Client_ip%sNat_ip%s-""Vserver%s:%d-""Start_time\"%s\"-End_time\"%s\"-Duration%s-""Http_resources_accessed%s-""Total_TCP_connections%d-""Total_policies_allowed%dTotal_policies_denied%d-""Total_bytes_send%s-Total_bytes_recv%s-""Total_compressedbytes_send%s-Total_compressedbytes_recv%s-""Compression_ratio_send%d.%02u%%-""Compression_ratio_recv%d.%02u%%-""LogoutMethod\"%s\"-Group(s)\"%s\"" -->
+              <regex><![CDATA[User <user:gPatStr> - Client_ip <hostIpAddr:gPatIpAddr> - Nat_ip [^-]* - Vserver <hostIpAddr:gPatIpAddr>:<ipPort:gPatInt>.* - Total_bytes_send <sentBytes64:gPatInt> - Total_bytes_recv <recvBytes64:gPatInt>.* - Group\(s\)\s+<userGrp:gPatMesgBodyMin>(?:$| : )]]></regex>
+            </collectAndSetAttrByRegex>
+          </case>
+        </switch>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+
+      <when test="$eventType IN 'NETSCALER-AAATM-HTTPREQUEST, NETSCALER-SSLVPN-HTTPREQUEST'">
+        <collectAndSetAttrByRegex src="$_body">
+          <!-- Message Format: "%sUser%s:Group(s)%s:Vserver%s:%d-%s%s%s%s" -->
+          <regex><![CDATA[User <user:gPatStr> : Group\(s\)\s+<userGrp:gPatMesgBodyMin>(?:$| : )Vserver <_vserver:gPatStrEndColon>:<destIpPort:gPatInt> - <:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$eventType IN 'NETSCALER-AAATM-HTTP_RESOURCEACCESS_DENIED, NETSCALER-SSLVPN-HTTP_RESOURCEACCESS_DENIED'">
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[User <user:gPatStr> : Vserver <_vserver:gPatStrEndColon>:<destIpPort:gPatInt> - Total_bytes_send <sentBytes64:gPatInt> - Remote_host <hostName:gPatStr> - Denied_url <infoURL:gPatStr> - Denied_by_policy "<:patStrEndQuote>" - Group\(s\) "<userGrp:patStrEndQuote>"]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$eventType = 'NETSCALER-SSLVPN-LOGIN'">
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[User <user:gPatStr> - Client_ip <hostIpAddr:gPatIpAddr> - Nat_ip (?:<postNATSrcIpAddr:gPatIpAddr>|"<:patStrEndQuote>"|<:gPatStr>) - Vserver <_vserver:gPatStrEndColon>:<destIpPort:gPatInt> - Browser_type "<:patStrEndQuote>" - SSLVPN_client_type <:gPatStr> - Group\(s\) "<userGrp:patStrEndQuote>"]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+
+      <when test="$eventType = 'NETSCALER-SSLVPN-LOGOUT'">
+        <!-- Context userroot@2.2.2.2 - SessionId: 1000 - User userroot - Client_ip 2.2.2.2 - Nat_ip "Mapped Ip" - Vserver 1.1.1.1:443 - Start_time "07/22/2024:07:26:49 GMT" - End_time "07/22/2024:07:47:27 GMT" - Duration 00:20:38 - Http_resources_accessed 0 - NonHttp_services_accessed 0 - Total_TCP_connections 17 - Total_UDP_flows 0 - Total_policies_allowed 17 - Total_policies_denied 0 - Total_bytes_send 0 - Total_bytes_recv 9665 - Total_compressedbytes_send 0 - Total_compressedbytes_recv 0 - Compression_ratio_send 0.00% - Compression_ratio_recv 0.00% - LogoutMethod "Explicit" - Group(s) "N/A" -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[User <user:gPatStr> - Client_ip <hostIpAddr:gPatIpAddr> - Nat_ip (?:<postNATSrcIpAddr:gPatIpAddr>|"<:patStrEndQuote>"|<:gPatStr>) - Vserver <_vserver:gPatStrEndColon>:<destIpPort:gPatInt> - Start_time "<:patStrEndQuote>" - End_time "<:patStrEndQuote>" - Duration <_duration:gPatStr> - Http_resources_accessed <httpTotalAccesses:gPatInt> - NonHttp_services_accessed <:gPatInt> - Total_TCP_connections <_totTCPFlows:gPatInt> - Total_UDP_flows <_totUDPFlows:gPatInt> - Total_policies_allowed <:gPatInt> - Total_policies_denied <:gPatInt> - Total_bytes_send <sentBytes64:gPatInt> - Total_bytes_recv <recvBytes64:gPatInt> - Total_compressedbytes_send <:gPatInt> - Total_compressedbytes_recv <:gPatInt> - Compression_ratio_send <:gPatStr> - Compression_ratio_recv <:gPatStr> - LogoutMethod "<action:patStrEndQuote>" - Group\(s\) "<userGrp:patStrEndQuote>"]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+
+      <when test="$eventType = 'NETSCALER-SSLVPN-TCPCONNSTAT'">
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Context <:gPatStr> - SessionId: <sessionId:gPatInt>- User <user:gPatStr> - Client_ip <hostIpAddr:gPatIpAddr> - Nat_ip (?:<postNATSrcIpAddr:gPatIpAddr>|"<:patStrEndQuote>"|<:gPatStr>) - Vserver <_vserver:gPatStrEndColon>:<destIpPort:gPatInt> - Source <srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt> - Destination <destIpAddr:gPatIpAddr>:<destIpPort:gPatInt> - Start_time "<:patStrEndQuote>" - End_time "<:patStrEndQuote>" - Duration <_duration:gPatStr>\s+- Total_bytes_send <sentBytes64:gPatInt> - Total_bytes_recv <recvBytes64:gPatInt> - Total_compressedbytes_send <:gPatInt> - Total_compressedbytes_recv <:gPatInt> - Compression_ratio_send <:gPatStr> - Compression_ratio_recv <:gPatStr> - Access <:gPatStr> - Group\(s\) "<userGrp:patStrEndQuote>"]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+
+      <when test="$eventType = 'NETSCALER-SSLVPN-TCPCONN_TIMEDOUT'">
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[User <user:gPatStr> - Client_ip <hostIpAddr:gPatIpAddr> - Nat_ip (?:<postNATSrcIpAddr:gPatIpAddr>|"<:patStrEndQuote>"|<:gPatStr>) - Vserver <_vserver:gPatStrEndColon>:<destIpPort:gPatInt> - Last_contact "<:patStrEndQuote>" - Group\(s\) "<userGrp:patStrEndQuote>"]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+
+      <when test="$eventType = 'NETSCALER-SSLVPN-UDPFLOWSTAT'">
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[User <user:gPatStr> - Client_ip <hostIpAddr:gPatIpAddr> - Nat_ip (?:<postNATSrcIpAddr:gPatIpAddr>|"<:patStrEndQuote>"|<:gPatStr>) - Vserver <_vserver:gPatStrEndColon>:<destIpPort:gPatInt> - Source <srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt> - Destination <destIpAddr:gPatIpAddr>:<destIpPort:gPatInt> - Start_time "<:patStrEndQuote>" - End_time "<:patStrEndQuote>" - Duration <durationMSec:gPatStr> - Total_bytes_send <sentBytes64:gPatInt> - Total_bytes_recv <recvBytes64:gPatInt> - Access <:gPatStr> - Group\(s\) "<userGrp:patStrEndQuote>"]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+
+      <when test="$eventType = 'NETSCALER-SSLVPN-NONHTTP_RESOURCEACCESS_DENIED'">
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[User <user:gPatStr> - Client_ip <hostIpAddr:gPatIpAddr> - Nat_ip (?:<postNATSrcIpAddr:gPatIpAddr>|"<:patStrEndQuote>"|<:gPatStr>) - Vserver <_vserver:gPatStrEndColon>:<destIpPort:gPatInt> - Source <srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt> - Destination <destIpAddr:gPatIpAddr>:<destIpPort:gPatInt> -  Total_bytes_send <sentBytes64:gPatInt> - Total_bytes_recv <recvBytes64:gPatInt> - Denied_by_policy "<:patStrEndQuote>" - Group\(s\) "<userGrp:patStrEndQuote>"]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+
+      <when test="$eventType IN 'NETSCALER-SSLLOG-SSL_HANDSHAKE_SUCCESS, NETSCALER-SSLLOG-SSL_HANDSHAKE_FAILURE'">
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[ClientIP <srcIpAddr:gPatIpAddr> - ClientPort <srcIpPort:gPatInt> - VserverServiceIP <destIpAddr:gPatIpAddr> - VserverServicePort <destIpPort:gPatInt> - ClientVersion <:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+
+      <when test="$eventType = 'NETSCALER-APPFW-APPFW_STARTURL'">
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[<srcIpAddr:gPatIpAddr>\s.*Disallow Illegal URL: <infoURL:gPatStr> \<<fwAction:gPatSentence>\>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+
+      <when test="$eventType = 'NETSCALER-APPFW-APPFW_COOKIE'">
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[<srcIpAddr:gPatIpAddr> <:gPatStr> <:gPatStr> <:gPatStr> <infoURL:gPatStr> Cookie validation failed for <:gPatStr> \<<fwAction:gPatSentence>\>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+
+      <when test="$eventType = 'NETSCALER-APPFW-APPFW_FIELDCONSISTENCY'">
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr> <:gPatStr> <:gPatStr> <:gPatStr> <infoURL:gPatStr> Field consistency check failed for field.*\<<fwAction:gPatSentence>\>]]></regex>
+            </collectAndSetAttrByRegex>
+          </case>
+          <case>
+            <collectAndSetAttrByRegex src="$_body">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr> <:gPatStr> <:gPatStr> <:gPatStr>]]></regex>
+            </collectAndSetAttrByRegex>
+          </case>
+        </switch>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+
+      <when test="$eventType = 'NETSCALER-APPFW-APPFW_SIGNATURE_MATCH'">
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[<srcIpAddr:gPatIpAddr> <:gPatStr> <:gPatStr> <:gPatStr> <infoURL:gPatStr> Signature violation rule ID <ruleId:gPatInt>:.*\<<fwAction:gPatSentence>\>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+
+      <when test="$eventType = 'NETSCALER-APPFW-APPFW_SQL'">
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[<srcIpAddr:gPatIpAddr> <:gPatStr> <:gPatStr> <:gPatStr> <infoURL:gPatStr> SQL Keyword check failed for field\s<_badfield:patStrEndLT>.*\<<fwAction:gPatSentence>\>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$eventType = 'NETSCALER-TCP-CONN_TERMINATE'">
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Source <srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>\s+-\s+Destination <destIpAddr:gPatIpAddr>:<destIpPort:gPatInt>\s+-\s+Start Time <:gPatStr>\s+(?:GMT\s+)?-\s+End Time <:gPatStr>\s+(?:GMT\s+)?-\s+Total_bytes_send\s+<sentBytes64:gPatInt>\s+-\s+Total_bytes_recv\s+<recvBytes64:gPatInt>]]></regex>
+        </collectAndSetAttrByRegex>
+      </when>
+
+      <when test="$eventType = 'NETSCALER-TCP-CONN_DELINK'">
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Source <srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>\s+-\s+Vserver <hostIpAddr:gPatIpAddr>:<ipPort:gPatInt>\s+-\s+NatIP <:gPatIpAddr>:<:gPatInt>\s+-\s+Destination <destIpAddr:gPatIpAddr>:<destIpPort:gPatInt>\s+-\s+Delink Time <:gPatStr>\s+-\s+Total_bytes_send\s+<sentBytes64:gPatInt>\s+-\s+Total_bytes_recv\s+<recvBytes64:gPatInt>]]></regex>
+        </collectAndSetAttrByRegex>
+      </when>
+
+      <when test="$eventType = 'NETSCALER-TCP-OTHERCONN_DELINK'">
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Source <srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>\s+-\s+Vserver <hostIpAddr:gPatIpAddr>:<ipPort:gPatInt>\s+-\s+NatIP <:gPatIpAddr>:<:gPatInt>\s+-\s+Destination <destIpAddr:gPatIpAddr>(?:\:<destIpPort:gPatInt>)?\s+-\s+Delink Time <:gPatStr>\s+(?:GMT\s+)?Total_bytes_send\s+<sentBytes64:gPatInt>\s+-\s+Total_bytes_recv\s+<recvBytes64:gPatInt>]]></regex>
+        </collectAndSetAttrByRegex>
+      </when>
+    </choose>
+
+    <when test="exist _vserver">
+      <switch>
+        <!-- IP or FQDN -->
+        <case>
+          <collectAndSetAttrByRegex src="$_vserver">
+            <regex><![CDATA[^(?:<destIpAddr:gPatIpAddr>|<destName:gPatHostName>)$]]></regex>
+          </collectAndSetAttrByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _duration">
+      <switch>
+        <!-- duration givin in format: Duration 00:20:38 -->
+        <case>
+          <collectAndSetAttrByRegex src="$_duration">
+            <regex><![CDATA[^<_hours:gPatInt>:<_min:gPatInt>:<_sec:gPatInt>$]]></regex>
+          </collectAndSetAttrByRegex>
+          <setEventAttribute attr="_durationSec">0</setEventAttribute>
+          <choose>
+            <when test="not_exist _hours"/>
+            <when test="not_exist _min"/>
+            <when test="not_exist _sec"/>
+            <otherwise>
+              <when test="$_hours != '00'">
+                <setEventAttribute attr="_hourToSec">scale($_hours, 3600)</setEventAttribute>
+                <setEventAttribute attr="_durationSec">add($_durationSec, $_hourToSec)</setEventAttribute>
+              </when>
+              <when test="$_min != '00'">
+                <setEventAttribute attr="_minToSec">scale($_min, 60)</setEventAttribute>
+                <setEventAttribute attr="_durationSec">add($_durationSec, $_minToSec)</setEventAttribute>
+              </when>
+              <when test="$_sec != '00'">
+                <setEventAttribute attr="_durationSec">add($_durationSec, $_sec)</setEventAttribute>
+              </when>
+              <!-- finally, scale to milliseconds -->
+              <setEventAttribute attr="durationMSec">scale($_durationSec, 1000)</setEventAttribute>
+            </otherwise>
+          </choose>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist infoURL">
+      <setEventAttribute attr="destName">extractHostFromURL($infoURL)</setEventAttribute>
+    </when>
+    <when test="exist userGrp">
+      <setEventAttribute attr="userGrp">trimAttribute($userGrp, " .")</setEventAttribute>
+      <switch>
+        <case>
+          <collectAndSetAttrByRegex src="$userGrp">
+            <regex><![CDATA["<userGrp:patStrEndQuote>"]]></regex>
+          </collectAndSetAttrByRegex>
+        </case>
+        <default>
+        </default>
+      </switch>
+    </when>
+  </parsingInstructions>
+</eventParser>

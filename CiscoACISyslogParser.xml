@@ -1,0 +1,168 @@
+<eventParser name="CiscoACISyslogParser">
+  <deviceType>
+    <Vendor>Cisco</Vendor>
+    <Model>Cisco ACI</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<190>: 2024 Apr 04 13:25:25 MDT : %LOG_LOCAL7-6-SYSTEM_MSG: [E4204936][transition][info][sys] %ACLLOG-5-ACLLOG_PKTLOG_DENY: CName: EXAMPLE_01:TEST(VXLAN: 1234567), VlanType: FD_VLAN, Vlan-Id: 9, SMac: 0x1234abcd12ab, DMac:0x0102abcd01ab, SIP: 192.168.1.2, DIP: 192.168.2.3, SPort: 12345, DPort: 11223, Src Intf: port-channel9, Proto: 6, PktLen: 130]]></testEvent>
+    <testEvent><![CDATA[<158> Aug 01 16:00:04 fab2-p1-apic1 %LOG_LOCAL3-6-SYSTEM_MSG [E4208219][link-state-change][info][topology/pod-1/lnkcnt-216/lnk-2101-1-9-to-216-1-49] Link State of Fabric Link is set to ok]]></testEvent>
+    <testEvent><![CDATA[<123> Aug 22 22:45:28 apic1 %LOG_LOCAL0-2-SYSTEM_MSG [F0110][soaking][node-failed][critical][topology/pod-1/node-102/fault-F0110]Node 102 not reachable. unknown]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patStrEndColon"><![CDATA[[^:]*]]></pattern>
+    <pattern name="patExceptBrac"><![CDATA[[^\[\]]+]]></pattern>
+    <pattern name="patExceptPerc"><![CDATA[[^%]+]]></pattern>
+    <pattern name="patExceptDash"><![CDATA[[^-]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[%LOG_LOCAL[0-7]-[0-7]-SYSTEM_MSG:?\s*(?:\[.*\]){4,5}]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <!-- Most notable, live sample logs are missing host from Cisco ACI message format -->
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>:?\s*<_year:gPatYear>\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_tz:gPatStr>(?:\s+<_host:gPatStr>)?\s*:\s+%LOG_LOCAL[0-7]-[0-7]-SYSTEM_MSG:\s+<_header2:patExceptPerc>%<_evIdPrefix:patExceptDash>(?:-<:patExceptDash>)?-<_severity:gPatInt>-<_evIdSuffix:patStrEndColon>: <_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>:?\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_host:gPatStr>\s+%LOG_LOCAL[0-7]-<_severity:gPatInt>-SYSTEM_MSG:?\s+<_header2:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+
+    <setEventAttribute attr="eventType">Cisco-ACI-Generic</setEventAttribute>
+
+    <when test="exist _host">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_host">
+            <regex><![CDATA[^(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatStr>)]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <choose>
+      <when test="not_exist _year"/>
+      <when test="exist _tz">
+        <!-- Existing functions dont handle tz like EDT only +-00:00 format -->
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_tz">
+              <regex><![CDATA[^<_tz:gPatTimeZone>$]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+          </case>
+          <default>
+            <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+    <setEventAttribute attr="totFlows">1</setEventAttribute>
+
+    <when test="exist _header2">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_header2">
+            <!-- [code][lifecycle state][rule][severity text][DN of affected MO] -->
+            <regex><![CDATA[^\[<errorCode:patExceptBrac>\]\[<status:patExceptBrac>\]\[<ruleName:patExceptBrac>\]\[<_severityText:patExceptBrac>\]\[<details:patExceptBrac>\]\s*<msg:gPatMesgBody>?]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventType">combineMsgId("Cisco-ACI-", $ruleName)</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_header2">
+            <regex><![CDATA[^\[<errorCode:patExceptBrac>\]\[<status:patExceptBrac>\]\[<_severityText:patExceptBrac>\]\[<details:patExceptBrac>\]\s*<msg:gPatMesgBody>?]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventType">combineMsgId("Cisco-ACI-", $status)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _evIdPrefix">
+      <when test="exist _evIdSuffix">
+        <setEventAttribute attr="eventType">combineMsgId("Cisco-ACI-", $_evIdPrefix, "-", $_evIdSuffix)</setEventAttribute>
+      </when>
+    </when>
+
+    <setEventAttribute attr="eventAction">0</setEventAttribute>
+    <setEventAttribute attr="hostIpAddr">$reptDevIpAddr</setEventAttribute>
+
+    <choose>
+      <when test="$_severity IN '6, 7'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_severity = '1'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+      <when test="$_severity = '2'">
+        <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+      </when>
+      <when test="$_severity IN '3, 4'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_severity = '5'">
+        <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="$eventType = 'Cisco-ACI-ACLLOG-ACLLOG_PKTLOG_DENY'">
+        <collectAndSetAttrByRegex src="$_evIdSuffix">
+          <regex><![CDATA[.*_<action:gPatWord>$]]></regex>
+        </collectAndSetAttrByRegex>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[CName:\s*<_cname:gPatStrComma>,\s+VlanType:\s*<:gPatStr>,\s+Vlan-Id:\s*<hostVLAN:gPatInt>,\s+SMac:\s*<_srcMACAddr:gPatStr>,\s+DMac:\s*<_destMACAddr:gPatStr>,\s+SIP:\s*<srcIpAddr:gPatIpAddr>,\s+DIP:\s*<destIpAddr:gPatIpAddr>,\s+SPort:\s*<srcIpPort:gPatIpPort>,\s+DPort:\s*<destIpPort:gPatIpPort>,\s+Src Intf:\s*<srcIntfName:gPatStrComma>,\s+Proto:\s*<ipProto:gPatInt>]]></regex>
+        </collectAndSetAttrByRegex>
+      </when>
+      <when test="$eventType = 'Cisco-ACI-link-state-change'">
+        <collectAndSetAttrByRegex src="$details">
+          <regex><![CDATA[.*\/<intfName:gPatStr>$]]></regex>
+        </collectAndSetAttrByRegex>
+      </when>
+      <otherwise/>
+    </choose>
+
+    <when test="exist _srcMACAddr">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_srcMACAddr">
+            <regex><![CDATA[^0x<_srcMACAddr:gPatStr>$]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="srcMACAddr">normalizeMAC($_srcMACAddr)</setEventAttribute>
+        </case>
+        <default>
+          <setEventAttribute attr="srcMACAddr">normalizeMAC($_srcMACAddr)</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+    <when test="exist _destMACAddr">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_destMACAddr">
+            <regex><![CDATA[^0x<_destMACAddr:gPatStr>$]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="destMACAddr">normalizeMAC($_destMACAddr)</setEventAttribute>
+        </case>
+        <default>
+          <setEventAttribute attr="destMACAddr">normalizeMAC($_destMACAddr)</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+  </parsingInstructions>
+</eventParser>
