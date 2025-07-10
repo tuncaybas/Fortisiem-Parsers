@@ -1,0 +1,62 @@
+<eventFormatRecognizer><![CDATA[antikor]]></eventFormatRecognizer>
+<patternDefinitions>
+<pattern name="patEpochSec"><![CDATA[\d{10}]]></pattern>
+<pattern name="patSec"><![CDATA[\d{3}]]></pattern>
+</patternDefinitions>
+<parsingInstructions>
+<switch>
+<case>
+<collectFieldsByRegex src="$_rawmsg">
+<regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTimeMSec>\s+<:gPatWord>\s+<:gPatWord>-<_type:gPatWord>:\s+<_body:gPatMesgBody>]]></regex>
+</collectFieldsByRegex>
+<setEventAttribute attr="eventType">combineMsgId("antikor-", $_type)</setEventAttribute>
+</case>
+<case>
+<collectFieldsByRegex src="$_rawmsg">
+<regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTimeMSec>\s+<:gPatWord>\s+<:gPatWord>-<_type:gPatWord>-<_type2:gPatWord>:\s+<_body:gPatMesgBody>]]></regex>
+</collectFieldsByRegex>
+<setEventAttribute attr="eventType">combineMsgId("antikor-", $_type,"-",$_type2)</setEventAttribute>
+</case>
+</switch>
+<setEventAttribute attr="eventAction">0</setEventAttribute>
+<choose>
+<when test="matches($_body, '^\{')">
+<choose>
+<when test="$_type = 'gd'">
+<collectAndSetAttrByJSON src="$_body">
+<attrKeyMap attr="islem" key="islem"/>
+<attrKeyMap attr="_time" key="tarih"/>
+<attrKeyMap attr="paketYonu" key="paketYonu"/>
+<attrKeyMap attr="ethernet" key="ethernet"/>
+<attrKeyMap attr="log_intf" key="log_intf"/>
+<attrKeyMap attr="srcIpAddr" key="kaynakIP"/>
+<attrKeyMap attr="srcIpPort" key="kaynakPort"/>
+<attrKeyMap attr="destIpAddr" key="hedefIP"/>
+<attrKeyMap attr="destIpPort" key="hedefPort"/>
+<attrKeyMap attr="kuralSeti" key="kuralSeti"/>
+<attrKeyMap attr="kuralNo" key="kuralNo"/>
+<attrKeyMap attr="tcpFlags" key="tcpFlags"/>
+<attrKeyMap attr="analysis" key="analysis"/>
+<attrKeyMap attr="srcProto" key="sub_proto"/>
+<attrKeyMap attr="userId" key="kaynakKullaniciAdi"/>
+</collectAndSetAttrByJSON>
+</when>
+<when test="matches($_type, 'web')">
+<collectAndSetAttrByJSON src="$_body">
+<attrKeyMap attr="srcMACAddr" key="mac_adresi"/>
+<attrKeyMap attr="srcIpAddr" key="istemci_ip_adresi"/>
+<attrKeyMap attr="srcIpPort" key="istemci_portu"/>
+<attrKeyMap attr="destIpAddr" key="server_ip_adresi"/>
+<attrKeyMap attr="destIpPort" key="servis_portu"/>
+<attrKeyMap attr="httpMethod" key="http_metod"/>
+<attrKeyMap attr="remoteURL" key="alan_adi"/>
+<attrKeyMap attr="_reqLength" key="indirmeboyutu"/>
+<attrKeyMap attr="httpContentLen" key="indirmeboyutu"/>
+<attrKeyMap attr="httpStatusCode" key="http_kodu"/>
+<attrKeyMap attr="mimeType" key="mime_type"/>
+</collectAndSetAttrByJSON>
+</when>
+</choose>
+</when>
+</choose>
+</parsingInstructions>
