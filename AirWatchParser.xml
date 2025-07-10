@@ -1,0 +1,51 @@
+<eventParser name="AirWatchParser">
+  <deviceType>
+    <Vendor>AirWatch</Vendor>
+    <Model>MDM</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<13> February 25 14:57:34 AirWatch  AirWatch Syslog Details are as follows Event Type: Console, Event: AdminRoleModified, User: domain1\user1, Event Source: Server, Event Module: Administration, Event Category: UserManagement, Event Data: Event Timestamp: February 25, 2016 14:57:34]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>\s+<:gPatWord>\s+<:gPatDay>\s+<:gPatTime>\s+AirWatch\s]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>\s+<_mon:gPatWord>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+AirWatch\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">AirWatch-MDM-Generic</setEventAttribute>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^AirWatch Syslog Details are as follows <_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+
+        <collectAndSetAttrByKeyValuePair sep=", " src="$_body">
+          <attrKeyMap attr="_eventType" key="Event: "/>
+          <attrKeyMap attr="user" key="User: "/>
+        </collectAndSetAttrByKeyValuePair>
+
+        <when test="exist _eventType">
+          <setEventAttribute attr="eventType">combineMsgId("AirWatch-MDM-", $_eventType)</setEventAttribute>
+        </when>
+
+        <when test="exist user">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$user">
+                <regex><![CDATA[<domain:gPatStr>[\\]<user:gPatStr>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+        </when>
+      </case>
+      <default/>
+    </switch>
+  </parsingInstructions>
+</eventParser>

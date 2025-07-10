@@ -1,0 +1,250 @@
+<eventParser name="AlcatelOmniSwitchesParser">
+  <deviceType>
+    <Vendor>Alcatel</Vendor>
+    <Model>OmniSwitch</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[SAT JUN 18 08:09:30 2016            CLI    info [CLISHELL 45] Maximum number of login attempts reached]]></testEvent>
+    <testEvent><![CDATA[FRI APR 29 10:05:26 2016    CSM-CHASSIS    info == CSM == CERTIFYing software process started]]></testEvent>
+    <testEvent><![CDATA[FRI APR 29 10:05:34 2016            FTP    info Get /flash/switch/snmp.engine!]]></testEvent>
+    <testEvent><![CDATA[SAT APR 23 11:58:48 2016        LINKAGG    info Aggregate Down . port: 14006 agg: 29]]></testEvent>
+    <testEvent><![CDATA[FRI MAY 27 12:51:43 2016          MIPGW    info === stp === stpNewRoot trap generated]]></testEvent>
+    <testEvent><![CDATA[SUN JUL 17 00:33:56 2016       OSPF-VRF    info default:OSPF Nbr=192.168.254.38 RID=192.168.132.1 state 2WAY]]></testEvent>
+    <testEvent><![CDATA[WED JUN 15 12:39:39 2016        SESSION    info [SES] Authentication failed: Session 41, access type Ssh]]></testEvent>
+    <testEvent><![CDATA[MON MAR 28 14:16:40 2016            SSH    info Session 16, Session Deleted]]></testEvent>
+    <testEvent><![CDATA[FRI APR 08 15:43:08 2016            STP    info Topology changed on VLAN/STP id 1]]></testEvent>
+    <testEvent><![CDATA[MON MAR 28 14:10:45 2016         SYSTEM    info Create Missing Switch log file(s). File Size=1000000 bytes]]></testEvent>
+  </testEvents>
+  <patternDefinitions>
+    <pattern name="patAlcatelMod"><![CDATA[CLI|CSM-CHASSIS|CVM-CHASSIS|FTP|LINKAGG|MIPGW|OSPF-VRF|SESSION|SSH|STP|SYSTEM|TELNET]]></pattern>
+    <pattern name="patMon"><![CDATA[JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC]]></pattern>
+    <pattern name="patWeekday"><![CDATA[MON|TUE|WED|THU|FRI|SAT|SUN]]></pattern>
+    <pattern name="patStrExclamation"><![CDATA[[^!]*]]></pattern>
+    <pattern name="patStrQuoted"><![CDATA[[^"]*]]></pattern>
+    <pattern name="patStrEndDot"><![CDATA[[^\.]*]]></pattern>
+  </patternDefinitions>
+  <eventFormatRecognizer><![CDATA[<:patWeekday>\s+<:patMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatYear>\s+<:patAlcatelMod>\s+<:gPatStr>\s+]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_weekDay:patWeekday>\s+<_mon:patMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>\s+<_part:patAlcatelMod>\s+<:gPatStr>\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">combineMsgId("Alcatel-OmniSwitch-", $_part)</setEventAttribute>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <choose>
+      <when test="$_part = 'CLI'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[\[CLISHELL <:gPatInt>\] Maximum number of login attempts reached]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Alcatel-OmniSwitch-CLI-ExcessiveLogin</setEventAttribute>
+      </when>
+      <when test="$_part = 'CSM-CHASSIS'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[==\s*CSM\s*==\s*CERTIFYing\s*software\s*process\s*started]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Alcatel-OmniSwitch-CSM-CHASSIS-SoftwareCertStarted</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[==\s*CSM\s*==\s*Flash\s*Synchronization\s*process\s*completed\s*successfully]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Alcatel-OmniSwitch-CSM-CHASSIS-FlashSyncComplete</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[==\s*CSM\s*==\s*ftp\s*in\s*progress,\s*please\s*wait\s*...]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Alcatel-OmniSwitch-CSM-CHASSIS-FTP_Progress</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[==\s*CSM\s*==\s*Ni\s*run\s*time\s*configuration\s*is\s*synchronized]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Alcatel-OmniSwitch-CSM-CHASSIS-RunTimeSync</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[==\s*CSM\s*==\s*Please\s*wait\s*while\s*module\s*\d+\s*performs\s*Certify\s*process\s*...]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Alcatel-OmniSwitch-CSM-CHASSIS-CertifyWait</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[==\s*CSM\s*==\s*Primary.CMM\s*is\s*to\s*Flash\s*Synchro\s*with\s*slot\s*\d+\s*.]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Alcatel-OmniSwitch-CSM-CHASSIS-FlashSyncro</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[==\s*CSM\s*==\s*Secondary\s*may\s*need\s*to\s*REBOOT\s*and\s*CERTIFY\s*new\s*images\s*...]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Alcatel-OmniSwitch-CSM-CHASSIS-Reboot</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[==\s*CSM\s*==\s*Setting\s*CERTIFY\s*Timeout\s*for\s*\d+\s*seconds]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Alcatel-OmniSwitch-CSM-CHASSIS-CertifyTimeoutSet</setEventAttribute>
+          </case>
+        </switch>
+      </when>
+      <when test="$_part = 'CVM-CHASSIS'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[==\s*CVM\s*==\s*Synchro\s*Timer\s*set\s*for\s*\d+\s*seconds]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Alcatel-OmniSwitch-CVM-CHASSIS-SynchroTimer</setEventAttribute>
+      </when>
+      <when test="$_part = 'FTP'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Get\s*<filePath:patStrExclamation>!]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Alcatel-OmniSwitch-FTP-Get</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Session\s*<ipConnId:gPatInt>\s*Ending]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Alcatel-OmniSwitch-FTP-SessionEnd</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Session\s*<ipConnId:gPatInt>\s*New\s*Connection,\s*Client\s*Address\s*<srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Alcatel-OmniSwitch-FTP-NewSession</setEventAttribute>
+          </case>
+        </switch>
+      </when>
+      <when test="$_part = 'LINKAGG'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Aggregate\s*Down\s*\.\s*port:\s*<devPort:gPatInt>\s*agg:\s*<devAggr:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Alcatel-OmniSwitch-LINKAGG-AggregateDown</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Aggregate\s*UP\s*\.\s*port:\s*<devPort:gPatInt>\s*agg:\s*<devAggr:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Alcatel-OmniSwitch-LINKAGG-AggregateUp</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Port\s*Join\s*\.\s*port:\s*<devPort:gPatInt>\s*agg:\s*<devAggr:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Alcatel-OmniSwitch-LINKAGG-PortJoin</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Port\s*Leave\s*\.\s*port:\s*<devPort:gPatInt>\s*agg:\s*<devAggr:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Alcatel-OmniSwitch-LINKAGG-PortLeave</setEventAttribute>
+          </case>
+        </switch>
+      </when>
+      <when test="$_part = 'MIPGW'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[===\s*stp\s*===\s*stpNewRoot\s*trap\s*generated]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Alcatel-OmniSwitch-MIPGW-TrapGenerated</setEventAttribute>
+      </when>
+      <when test="$_part = 'OSPF-VRF'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[default:OSPF\s*Nbr=<destIpAddr:gPatIpAddr>\s*RID=<srcIpAddr:gPatIpAddr>\s*state\s*<_state:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId("Alcatel-OmniSwitch-OSPF-VRF-", $_state)</setEventAttribute>
+      </when>
+      <when test="$_part = 'SESSION'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[SES\]\s*Authentication\s*failed:\s*Session\s*<ipConnId:gPatInt>,\s*access\s*type\s*<appName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Alcatel-OmniSwitch-SESSION-LoginFailure</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[SES\]\s*Authentication\s*succeed:\s*Session\s*<ipConnId:gPatInt>,\s*access\s*type\s*<appName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Alcatel-OmniSwitch-SESSION-LoginSuccess</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[SES\]\s*Session\s*<ipConnId:gPatInt>,\s*IP\s*address\s*<srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Alcatel-OmniSwitch-SESSION-Info1</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[\[SES\]\s*Session\s*<ipConnId:gPatInt>,\s*user\s*"<user:patStrQuoted>"]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Alcatel-OmniSwitch-SESSION-Info2</setEventAttribute>
+          </case>
+        </switch>
+      </when>
+      <when test="$_part = 'SSH'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Session\s*<ipConnId:gPatInt>\s*New\s*<appName:gPatStr>\s*Connection\s*from\s*<srcIpAddr:gPatIpAddr>\s*port\s*<srcIpPort:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Alcatel-OmniSwitch-SSH-LoginSuccess</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[SSH\s*:\s*The\s*Value\s*set\s*for\s*IPC\s*socket\s*max\s*segment\s*size\s*is\s*\d+]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Alcatel-OmniSwitch-SSH-Info1</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Session\s*<ipConnId:gPatInt>,\s*Session\s*Deleted]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Alcatel-OmniSwitch-SSH-SessionDeleted</setEventAttribute>
+          </case>
+        </switch>
+      </when>
+      <when test="$_part = 'STP'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[Topology\s*changed\s*on\s*VLAN/STP\s*id\s*<hostVLAN:gPatInt>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Alcatel-OmniSwitch-STP-TopoChanged</setEventAttribute>
+      </when>
+      <when test="$_part = 'SYSTEM'">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[Create\s*Missing\s*Switch\s*log\s*file\(s\)\.\s*File\s*Size=\d+\s*bytes]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Alcatel-OmniSwitch-SYSTEM-NoLogFile</setEventAttribute>
+      </when>
+      <when test="$_part = 'TELNET'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[New\s*telnet\s*connection,\s*Address\s*<srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Alcatel-OmniSwitch-TELNET-LoginSuccess</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Session\s*<ipConnId:gPatInt>,\s*Created]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Alcatel-OmniSwitch-TELNET-SessionCreated</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[Session\s*<ipConnId:gPatInt>,\s*Session\s*Ending]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Alcatel-OmniSwitch-TELNET-SessionDeleted</setEventAttribute>
+          </case>
+        </switch>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

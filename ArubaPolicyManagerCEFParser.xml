@@ -1,0 +1,100 @@
+<eventParser name="ArubaPolicyManagerCEFParser">
+
+  <deviceType>
+    <Vendor>Aruba</Vendor>
+    <Model>ClearPass PolicyManager</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[\s*CEF\s*:\d+\|Aruba Networks\|ClearPass\|]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<143>Jan 11 2024 11:33:41 172.30.1.2 CEF:0|Aruba Networks|ClearPass|6.11.1.251304|2000|Logged in users|1|cat=Session Logs dvc=172.30.1.2 duser=test user destinationServiceName=Aruba 802.1X Wireless dpriv=SmartDevice, [User Authenticated] dmac=abcdef123456 dst=172.30.1.3 src=172.30.1.4 rt=Jan 11 2024 11:32:09 cs2=RADIUS cs2Label=Source cs3= cs3Label=Auth Type]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patStrEndSep"><![CDATA[[^|]*]]></pattern>
+  </patternDefinitions>
+
+  <parsingInstructions>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>?\s*<_mon:gPatMon>\s+<_day:gPatDay>\s+<:gPatYear>\s+<_time:gPatTime>\s+(?:<:gPatStr>|<:gPatIpAddr>\s+)?CEF\s*:\d+\|Aruba Networks\|ClearPass\|<appVersion:patStrEndSep>\|<:patStrEndSep>\|<_et:patStrEndSep>\|<_sev:patStrEndSep>\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_body">
+      <attrKeyMap attr="categoryType" key="cat"/>
+      <attrKeyMap attr="destServiceName" key="destinationServiceName"/>
+      <attrKeyMap attr="destMACAddr" key="dmac"/>
+      <attrKeyMap attr="deviceType" key="dpriv"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="destUser" key="duser"/>
+      <attrKeyMap attr="hostIpAddr" key="dvc"/>
+      <attrKeyMap attr="_rt" key="rt"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="user" key="user"/>
+      <attrKeyMap attr="_cs1" key="cs1"/>
+      <attrKeyMap attr="_cs1Label" key="cs1Label"/>
+      <attrKeyMap attr="_cs2" key="cs2"/>
+      <attrKeyMap attr="_cs2Label" key="cs2Label"/>
+      <attrKeyMap attr="_cs3" key="cs3"/>
+      <attrKeyMap attr="_cs3Label" key="cs3Label"/>
+    </collectFieldsByKeyValuePair>
+
+    <choose>
+      <when test="exist _et">
+        <setEventAttribute attr="_et">replaceStringByRegex($_et, "\s+", "-")</setEventAttribute>
+        <setEventAttribute attr="eventType">combineMsgId("Aruba-ClearPass-CEF-", $_et)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">Aruba-ClearPass-CEF-Generic</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs2Label"/>
+      <when test="not_exist _cs2"/>
+      <when test="$_cs2Label = 'Source'">
+        <setEventAttribute attr="dataSource">$_cs2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs3Label"/>
+      <when test="not_exist _cs3"/>
+      <when test="$_cs3Label = 'Auth Type'">
+        <setEventAttribute attr="authenMethod">$_cs3</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="$_sev = '0'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventSeverity">$_sev</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist _rt">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_rt">
+            <regex><![CDATA[<_mon1:gPatMon>\s+<_day1:gPatDay>\s+<_year1:gPatYear>\s+<_time1:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventTime">toDateTime($_mon1, $_day1, $_year1, $_time1)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="not_exist user">
+      <when test="exist destUser">
+        <setEventAttribute attr="user">$destUser</setEventAttribute>
+      </when>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

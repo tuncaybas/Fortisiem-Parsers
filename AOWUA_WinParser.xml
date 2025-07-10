@@ -1,0 +1,385 @@
+<eventParser name="AOWUA_WinParser">
+  <deviceType>
+    <Vendor>Microsoft</Vendor>
+    <Model>Windows</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[2015-02-10T02:55:03Z WIN-2008-LAW-agent 192.168.1.30 AccelOps-WUA-FileMon [monitorStatus]="Success" [userId]="Administrator" [eventTime]="Feb 10 2015 02:55:00" [filePath]="C:\\test\\test.txt" [osObjAction]="Modified" [hashCode]="29de240060f396fdd8bd30695aa6447d" [msg]=""]]></testEvent>
+    <testEvent><![CDATA[2015-02-13T03:00:12Z WIN-2008-LAW-agent 10.1.2.242 AccelOps-WUA-InstSw [monitorStatus]="Success" [osObjAction]="Added" [appName]="Safari" [vendor]="Apple Inc." [appVersion]="5.34.57.2"]]></testEvent>
+    <testEvent><![CDATA[2015-02-11T05:54:45Z example.com 192.168.1.30 AccelOps-WUA-Powershell [monitorStatus]="Success" [msg]=""]]></testEvent>
+    <testEvent><![CDATA[2015-02-10T08:05:07Z WIN-2008-LAW-agent 192.168.1.30 AccelOps-WUA-Registry [monitorStatus]="Success" [regKeyPath]="HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Component Based Servicing" [regValueName]="SessionIdLow" [regValueType]="4" [osObjAction]="Modified" [oldRegValue]="tzQTxA==" [newRegValue]="9p21Cw=="]]></testEvent>
+    <testEvent><![CDATA[2015-02-11T05:46:58Z example.com 192.168.1.30 AccelOps-WUA-WMI [monitorStatus]="Success"  [__CLASS]="Win32_NetworkAdapter" [AdapterType]="" [AdapterTypeId]="" [AutoSense]="" [Availability]="3" [Caption]="[00000003] WAN Miniport (PPTP)" [ConfigManagerErrorCode]="0" [ConfigManagerUserConfig]="0" [CreationClassName]="Win32_NetworkAdapter" [Description]="WAN Miniport (PPTP)" [DeviceID]="3" [ErrorCleared]="" [ErrorDescription]="" [GUID]="" [Index]="3" [InstallDate]="" [Installed]="-1" [InterfaceIndex]="4" [LastErrorCode]="" [MACAddress]="" [Manufacturer]="Microsoft" [MaxNumberControlled]="0" [MaxSpeed]="" [Name]="WAN Miniport (PPTP)" [NetConnectionID]="" [NetConnectionStatus]="" [NetEnabled]="" [NetworkAddresses]="" [PermanentAddress]="" [PhysicalAdapter]="0" [PNPDeviceID]="ROOT\\MS_PPTPMINIPORT\\0000" [PowerManagementCapabilities]="" [PowerManagementSupported]="0" [ProductName]="WAN Miniport (PPTP)" [ServiceName]="PptpMiniport" [Speed]="" [Status]="" [StatusInfo]="" [SystemCreationClassName]="Win32_ComputerSystem" [SystemName]="WIN-I6UT18V6CBR"]]></testEvent>
+    <testEvent><![CDATA[2015-02-25T07:08:50Z WIN-2008-LAW-agent 10.1.2.242 AccelOps-WUA-User [monitorStatus]="Success" [msg]="this is the new line added at 02251508"]]></testEvent>
+    <testEvent><![CDATA[2016-06-03T09:41:46Z example.com 192.168.1.10 AccelOps-WUA-RemovableMedia-Insert [monitorStatus]="Success" [Locale]="en-GB" [MachineGuid]="11111111-1111-1111-1111-111111111111" [timeZone]="+0530" [user]="" [domain]="" [eventTime]="Jun 03 2016 09:41:46" [fileName]="" [diskDrive]="F:" [osObjAction]="" [diskType]="Optical" [diskName]="" [diskVendor]="" [hwDiskModel]="CD-R" [msg]="Storage media inserted."]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patWUAMod"><![CDATA[AgentStatus|Certificate|FileMon|InstSw|Powershell|Registry|RemovableMedia|User|UserFile|WMI]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\s<:gPatHostName>\s+<:gPatIpAddr>\s+AccelOps-WUA-<:patWUAMod>[- ]]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[(?:<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>Z|<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>)\s+<reptDevName:gPatHostName>\s+<reptDevIpAddr:gPatIpAddr>\s+AccelOps-WUA-<_category:gPatWord>(?:-<_action:gPatStr>)?\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, "UTC")</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">Windows Agent</setEventAttribute>
+    <setEventAttribute attr="hostName">$reptDevName</setEventAttribute>
+
+    <choose>
+      <when test="exist _action">
+        <setEventAttribute attr="eventType">combineMsgId("AO-WUA-", $_category, "-", $_action)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">combineMsgId("AO-WUA-", $_category)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <collectAndSetAttrByKeyValuePair sep=" [" src="$_body">
+      <attrKeyMap attr="_class" key="[__CLASS]="/>
+      <attrKeyMap attr="domain" key="[Account Domain]="/>
+      <attrKeyMap attr="user" key="[Account Name]="/>
+      <attrKeyMap attr="appName" key="[appName]="/>
+      <attrKeyMap attr="appVersion" key="[appVersion]="/>
+      <attrKeyMap attr="archiveSet" key="[archiveSet]="/>
+      <attrKeyMap attr="_certAction" key="[certAction]="/>
+      <attrKeyMap attr="certInfo" key="[common_name]="/>
+      <attrKeyMap attr="srcName" key="[computer]="/>
+      <attrKeyMap attr="computer" key="[computer]="/>
+      <attrKeyMap attr="_description" key="[Description]="/>
+      <attrKeyMap attr="diskDisplayName" key="[diskDisplayName]="/>
+      <attrKeyMap attr="diskName" key="[diskName]="/>
+      <attrKeyMap attr="diskType" key="[diskType]="/>
+      <attrKeyMap attr="diskVendor" key="[diskVendor]="/>
+      <attrKeyMap attr="domain" key="[domain]="/>
+      <attrKeyMap attr="errorString" key="[errorString]="/>
+      <attrKeyMap attr="eventSource" key="[eventSource]="/>
+      <attrKeyMap attr="daysToExpiry" key="[expiry_in_days]="/>
+      <attrKeyMap attr="fileName" key="[fileName]="/>
+      <attrKeyMap attr="fileOwner" key="[fileOwner]="/>
+      <attrKeyMap attr="filePath" key="[filePath]="/>
+      <attrKeyMap attr="hashAlgo" key="[hashAlgo]="/>
+      <attrKeyMap attr="hashCode" key="[hashCode]="/>
+      <attrKeyMap attr="targetHashCode" key="[targetHashCode]="/>
+      <attrKeyMap attr="hwDiskModel" key="[hwDiskModel]="/>
+      <attrKeyMap attr="isMediaEncrypted" key="[isMediaEncrypted]="/>
+      <attrKeyMap attr="issuer" key="[issuer]="/>
+      <attrKeyMap attr="hostKeyAlgo" key="[key_algorithm]="/>
+      <attrKeyMap attr="hostKeyStrength" key="[key_strength]="/>
+      <attrKeyMap attr="usageType" key="[key_usage]="/>
+      <attrKeyMap attr="machineGUID" key="[MachineGuid]="/>
+      <attrKeyMap attr="machineGUID" key="[machineGUID]="/>
+      <attrKeyMap attr="status" key="[monitorStatus]="/>
+      <attrKeyMap attr="msg" key="[msg]="/>
+      <attrKeyMap attr="newRegValue" key="[newRegValue]="/>
+      <attrKeyMap attr="validTo" key="[not_valid_after]="/>
+      <attrKeyMap attr="validFrom" key="[not_valid_before]="/>
+      <attrKeyMap attr="osObjType" key="[objectType]="/>
+      <attrKeyMap attr="oldRegValue" key="[oldRegValue]="/>
+      <attrKeyMap attr="osObjAction" key="[osObjAction]="/>
+      <attrKeyMap attr="osObjType" key="[osObjType]="/>
+      <attrKeyMap attr="folder" key="[path]="/>
+      <attrKeyMap attr="procName" key="[procName]="/>
+      <attrKeyMap attr="regKeyPath" key="[regKeyPath]="/>
+      <attrKeyMap attr="regValueName" key="[regValueName]="/>
+      <attrKeyMap attr="isSelfSigned" key="[self_signed]="/>
+      <attrKeyMap attr="isCertAuthority" key="[ca]="/>
+      <attrKeyMap attr="serialNumber" key="[serial]="/>
+      <attrKeyMap attr="serviceName" key="[ServiceName]="/>
+      <attrKeyMap attr="serviceName" key="[Service Name]="/>
+      <attrKeyMap attr="hashSHA1" key="[sha1]="/>
+      <attrKeyMap attr="signatureAlgo" key="[signing_algorithm]="/>
+      <attrKeyMap attr="_subject" key="[subject]="/>
+      <attrKeyMap attr="user" key="[user]="/>
+      <attrKeyMap attr="user" key="[userId]="/>
+      <attrKeyMap attr="securityId" key="[userSID]="/>
+      <attrKeyMap attr="appVendor" key="[vendor]="/>
+      <attrKeyMap attr="hostVendor" key="[vendor]="/>
+      <attrKeyMap attr="serviceFileName" key="[Service File Name]="/>
+      <attrKeyMap attr="serviceAccount" key="[Service Account]="/>
+      <attrKeyMap attr="serviceType" key="[Service Type]="/>
+      <attrKeyMap attr="targetFileDeny" key="[targetFileDeny]="/>
+      <attrKeyMap attr="targetFilePermit" key="[targetFilePermit]="/>
+      <attrKeyMap attr="targetUser" key="[targetUser]="/>
+      <attrKeyMap attr="targetUserType" key="[targetUserType]="/>
+      <attrKeyMap attr="phCustId" key="[phCustId]="/>
+      <attrKeyMap attr="customer" key="[customer]="/>
+      <attrKeyMap attr="hashSHA256" key="[hash256]="/>
+      <attrKeyMap attr="hashCode" key="[hash256]="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <when test="exist regKeyPath">
+      <when test="exist regValueName">
+        <setEventAttribute attr="regKeyPath">combineMsgId($regKeyPath, "\", $regValueName)</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="not_exist serviceName">
+      <when test="exist serviceFileName">
+        <setEventAttribute attr="serviceName">$serviceFileName</setEventAttribute>
+      </when>
+    </when>
+    <choose>
+      <when test="not_exist status"/>
+      <when test="$status = 'Failed'">
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </otherwise>
+    </choose>
+    <when test="exist hashSHA256">
+      <setEventAttribute attr="hashAlgo">SHA256</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="$_category = 'UserFile'">
+        <when test="$eventType = 'AO-WUA-UserFile-ExchangeTrackLog'">
+          <collectAndSetAttrByPosWithNestedSep src="$msg" L1Sep="," L2Sep="&quot;&quot;">
+            <attrPosMap attr="_dateTime" pos="1"/>
+            <attrPosMap attr="srcIpAddr" pos="2"/>
+            <!-- client-ip -->
+            <attrPosMap attr="srcName" pos="3"/>
+            <!-- client-hostname -->
+            <attrPosMap attr="destIpAddr" pos="4"/>
+            <!-- server-ip -->
+            <attrPosMap attr="destName" pos="5"/>
+            <!-- server-hostname -->
+            <attrPosMap attr="exchSrcContext" pos="6"/>
+            <!-- source-context -->
+            <attrPosMap attr="exchConnectorId" pos="7"/>
+            <!-- connector-id -->
+            <attrPosMap attr="exchTransport" pos="8"/>
+            <!-- source -->
+            <attrPosMap attr="_eventId" pos="9"/>
+            <!-- event-id -->
+            <attrPosMap attr="exchIntMsgId" pos="10"/>
+            <!-- internal-message-id -->
+            <attrPosMap attr="exchMsgId" pos="11"/>
+            <!-- message-id -->
+            <attrPosMap attr="receiverMailAddr" pos="12"/>
+            <!-- recipient-address -->
+            <attrPosMap attr="receiverMailStatus" pos="13"/>
+            <!-- recipient-status -->
+            <attrPosMap attr="totBytes64" pos="14"/>
+            <!-- total-bytes -->
+            <attrPosMap attr="receiverMailCount" pos="15"/>
+            <!-- recipient-count -->
+            <attrPosMap attr="relatedReceiverMailAddr" pos="16"/>
+            <!-- related-recipient-address -->
+            <attrPosMap attr="exchMsgReference" pos="17"/>
+            <!-- reference -->
+            <attrPosMap attr="mailSubject" pos="18"/>
+            <!-- message-subject -->
+            <attrPosMap attr="senderMailAddr" pos="19"/>
+            <!-- sender-address -->
+            <attrPosMap attr="mailReturnPath" pos="20"/>
+            <!-- return-path -->
+            <attrPosMap attr="exchMsgInfo" pos="21"/>
+            <!-- message-info -->
+            <attrPosMap attr="exchMsgDirection" pos="22"/>
+            <!-- directionality -->
+            <attrPosMap attr="exchTenantId" pos="23"/>
+            <!-- tenant-id -->
+            <attrPosMap attr="mailOrigClientIp" pos="24"/>
+            <!-- original-client-ip -->
+            <attrPosMap attr="mailOrigServerIp" pos="25"/>
+            <!-- original-server-ip -->
+            <attrPosMap attr="exchCustomData" pos="26"/>
+            <!-- custom-data -->
+          </collectAndSetAttrByPosWithNestedSep>
+
+          <collectAndSetAttrByRegex src="$_dateTime">
+            <!-- 2012-02-14T00:00:00.549Z -->
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d{3}<_tz:gPatTimeZone>]]></regex>
+          </collectAndSetAttrByRegex>
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $_eventId)</setEventAttribute>
+        </when>
+
+        <when test="$eventType = 'AO-WUA-UserFile-Radius-NPS'">
+          <when test="exist msg">
+            <setEventAttribute attr="_info"><![CDATA[replaceStringByRegex($msg, "\s+\w+=[^>]*", "")]]></setEventAttribute>
+            <collectAndSetAttrByKeyValuePair sep="&lt;" src="$_info">
+              <attrKeyMap attr="sessionId" key="&lt;Acct-Session-Id&gt;"/>
+              <attrKeyMap attr="srcName" key="&lt;Client-Friendly-Name&gt;"/>
+              <attrKeyMap attr="srcIpAddr" key="&lt;Client-IP-Address&gt;"/>
+              <attrKeyMap attr="computer" key="&lt;Computer-Name&gt;"/>
+              <attrKeyMap attr="eventSource" key="&lt;Event-Source&gt;"/>
+              <attrKeyMap attr="user" key="&lt;Fully-Qualifed-User-Name&gt;"/>
+            </collectAndSetAttrByKeyValuePair>
+          </when>
+        </when>
+        <when test="$eventType = 'AO-WUA-UserFile-MS-NPS'">
+          <setEventAttribute attr="eventType">MS-NPS-Generic</setEventAttribute>
+          <collectAndSetAttrByPosWithQuotes src="$msg" sep="," quo="&quot;">
+            <attrPosMap attr="computer" pos="1"/>
+            <attrPosMap attr="serviceName" pos="2"/>
+            <attrPosMap attr="_date" pos="3"/>
+            <attrPosMap attr="_time" pos="4"/>
+            <attrPosMap attr="_packetType" pos="5"/>
+            <attrPosMap attr="user" pos="6"/>
+            <attrPosMap attr="fqdnName" pos="7"/>
+            <attrPosMap attr="calledStationId" pos="8"/>
+            <attrPosMap attr="callingStationId" pos="9"/>
+            <attrPosMap attr="nasId" pos="12"/>
+            <attrPosMap attr="nasPortId" pos="14"/>
+            <attrPosMap attr="srcIpAddr" pos="16"/>
+            <attrPosMap attr="srcName" pos="17"/>
+            <attrPosMap attr="deviceTime" pos="18"/>
+            <attrPosMap attr="nasPortType" pos="20"/>
+            <attrPosMap attr="serviceType" pos="23"/>
+            <attrPosMap attr="authenMethod" pos="24"/>
+            <attrPosMap attr="policyName" pos="25"/>
+            <attrPosMap attr="sessionTimeoutSec" pos="28"/>
+            <attrPosMap attr="eapType" pos="31"/>
+            <attrPosMap attr="remoteVpnIpAddr" pos="47"/>
+            <attrPosMap attr="localVpnIpAddr" pos="48"/>
+            <attrPosMap attr="policyName" pos="61"/>
+          </collectAndSetAttrByPosWithQuotes>
+          <setEventAttribute attr="hostName">$computer</setEventAttribute>
+          <when test="exist _date">
+            <collectFieldsByRegex src="$_date">
+              <regex><![CDATA[<_mon:gPatMonNum>/<_day:gPatDay>/<_year:gPatYear>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+          </when>
+          <setEventAttribute attr="eventType">combineMsgId("MS-NPS-", $serviceName)</setEventAttribute>
+          <when test="exist _packetType">
+            <choose>
+              <when test="$_packetType = 1">
+                <setEventAttribute attr="eventType">combineMsgId($eventType, "-Access-Request")</setEventAttribute>
+              </when>
+              <when test="$_packetType = 2">
+                <setEventAttribute attr="eventType">combineMsgId($eventType, "-Access-Accept")</setEventAttribute>
+              </when>
+              <when test="$_packetType = 3">
+                <setEventAttribute attr="eventType">combineMsgId($eventType, "-Access-Reject")</setEventAttribute>
+              </when>
+              <when test="$_packetType = 4">
+                <setEventAttribute attr="eventType">combineMsgId($eventType, "-Accounting-Request")</setEventAttribute>
+              </when>
+              <when test="$_packetType = 5">
+                <setEventAttribute attr="eventType">combineMsgId($eventType, "-Accounting-Response")</setEventAttribute>
+              </when>
+              <when test="$_packetType = 11">
+                <setEventAttribute attr="eventType">combineMsgId($eventType, "-Access-Challenge")</setEventAttribute>
+              </when>
+              <when test="$_packetType = 12">
+                <setEventAttribute attr="eventType">combineMsgId($eventType, "-Status-Server")</setEventAttribute>
+              </when>
+              <when test="$_packetType = 13">
+                <setEventAttribute attr="eventType">combineMsgId($eventType, "-Status-Client")</setEventAttribute>
+              </when>
+              <when test="$_packetType = 255">
+                <setEventAttribute attr="eventType">combineMsgId($eventType, "-Reserved")</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$user">
+                <regex><![CDATA[<domain:gPatMesgBody>[\\]<user:gPatMesgBody>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+        </when>
+      </when>
+
+      <when test="$_category = 'FileMon'">
+        <choose>
+          <when test="not_exist osObjAction">
+            <when test="matches($errorString, 'cannot find the path')">
+              <setEventAttribute attr="eventType">combineMsgId($eventType, "-Target-Missing")</setEventAttribute>
+            </when>
+          </when>
+
+          <when test="$osObjAction = 'Renamed [Old Name]'">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-Renamed-Old-Name")</setEventAttribute>
+          </when>
+
+          <when test="$osObjAction = 'Renamed [New Name]'">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-Renamed-New-Name")</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $osObjAction)</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+
+      <when test="$_category IN 'InstSw, Registry'">
+        <when test="exist osObjAction">
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $osObjAction)</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$_category = 'WMI'">
+        <when test="exist _class">
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $_class)</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$_category = 'RemovableMedia'">
+        <choose>
+          <when test="not_exist fileName"/>
+          <when test="not_exist osObjAction"/>
+          <when test="$osObjAction = 'Added'">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-AddFile")</setEventAttribute>
+          </when>
+          <when test="$osObjAction = 'Modified'">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-ModifyFile")</setEventAttribute>
+          </when>
+          <when test="$osObjAction = 'Removed'">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-RemoveFile")</setEventAttribute>
+          </when>
+          <when test="matches($osObjAction, '^Renamed\s')">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-RenameFile")</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <when test="$_category = 'AgentStatus'">
+        <choose>
+          <when test="exist status">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $status)</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <when test="$_category = 'Certificate'">
+        <when test="exist _certAction">
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $_certAction)</setEventAttribute>
+        </when>
+
+        <when test="exist hashSHA1">
+          <setEventAttribute attr="fingerprintId">$hashSHA1</setEventAttribute>
+        </when>
+
+        <when test="exist _subject">
+          <setEventAttribute attr="issuedTo">$_subject</setEventAttribute>
+        </when>
+      </when>
+    </choose>
+
+    <when test="exist user">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$user">
+            <regex><![CDATA[<_domain:gPatMesgBody>[\\]<user:gPatMesgBody>]]></regex>
+          </collectFieldsByRegex>
+          <when test="not_exist domain">
+            <when test="exist _domain">
+              <setEventAttribute attr="domain">$_domain</setEventAttribute>
+            </when>
+          </when>
+        </case>
+        <default/>
+      </switch>
+    </when>
+  </parsingInstructions>
+</eventParser>

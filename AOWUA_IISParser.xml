@@ -1,0 +1,103 @@
+<eventParser name="AOWUA_IISParser">
+  <deviceType>
+    <Vendor>Microsoft</Vendor>
+    <Model>Windows</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Microsoft</Vendor>
+    <Model>IIS</Model>
+    <Version>ANY</Version>
+    <Name>Microsoft IIS</Name>
+  </appType>
+
+  <testEvents>
+    <testEvent><![CDATA[2015-02-11T02:29:12Z WIN-2008-LAW-agent 192.168.1.30 AccelOps-WUA-IIS [monitorStatus]="Success" [date]="2015-02-11" [time]="02:25:36" [s-ip]="10.1.2.242" [cs-method]="GET" [cs-uri-stem]="/" [cs-uri-query]="-" [s-port]="80" [cs-username]="-" [c-ip]="10.1.20.102" [cs(User-Agent)]="Mozilla/5.0+(Windows+NT+6.1;+WOW64)+AppleWebKit/537.36+(KHTML,+like+Gecko)+Chrome/40.0.2214.111+Safari/537.36" [sc-status]="304" [sc-substatus]="0" [sc-win32-status]="0" [time-taken]="62" [site]="Default Web Site" [format]="W3C"]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\s<:gPatHostName>\s+<:gPatIpAddr>\s+AccelOps-WUA-IIS[- ]]]></eventFormatRecognizer>
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[(?:<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>Z|<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>)\s+<reptDevName:gPatHostName>\s+<reptDevIpAddr:gPatIpAddr>\s+AccelOps-WUA-IIS(?:-\S+)?\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, "UTC")</setEventAttribute>
+    <setEventAttribute attr="eventType">AO-WUA-IIS</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">Windows Agent</setEventAttribute>
+
+    <collectAndSetAttrByKeyValuePair sep=" [" src="$_body">
+      <attrKeyMap attr="srcIpAddr" key="[c-ip]="/>
+      <attrKeyMap attr="httpUserAgent" key="[cs(User-Agent)]="/>
+      <attrKeyMap attr="httpMethod" key="[cs-method]="/>
+      <attrKeyMap attr="uriQuery" key="[cs-uri-query]="/>
+      <attrKeyMap attr="uriStem" key="[cs-uri-stem]="/>
+      <attrKeyMap attr="user" key="[cs-username]="/>
+      <attrKeyMap attr="_date" key="[date]="/>
+      <attrKeyMap attr="machineGUID" key="[MachineGuid]="/>
+      <attrKeyMap attr="machineGUID" key="[machineGUID]="/>
+      <attrKeyMap attr="status" key="[monitorStatus]="/>
+      <attrKeyMap attr="destIpAddr" key="[s-ip]="/>
+      <attrKeyMap attr="destIpPort" key="[s-port]="/>
+      <attrKeyMap attr="httpStatusCode" key="[sc-status]="/>
+      <attrKeyMap attr="httpSubStatusCode" key="[sc-substatus]="/>
+      <attrKeyMap attr="httpWin32Status" key="[sc-win32-status]="/>
+      <attrKeyMap attr="srvInstName" key="[site]="/>
+      <attrKeyMap attr="durationMSec" key="[time-taken]="/>
+      <attrKeyMap attr="serviceName" key="[Service Name]="/>
+      <attrKeyMap attr="serviceFileName" key="[Service File Name]="/>
+      <attrKeyMap attr="serviceAccount" key="[Service Account]="/>
+      <attrKeyMap attr="serviceType" key="[Service Type]="/>
+      <attrKeyMap attr="phCustId" key="[phCustId]="/>
+      <attrKeyMap attr="customer" key="[customer]="/>
+    </collectAndSetAttrByKeyValuePair>
+    <when test="not_exist serviceName">
+      <when test="exist serviceFileName">
+        <setEventAttribute attr="serviceName">$serviceFileName</setEventAttribute>
+      </when>
+    </when>
+    <choose>
+      <when test="not_exist httpStatusCode"/>
+
+      <when test="matches($httpStatusCode, '^2')">
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-Web-Request-Success")</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="matches($httpStatusCode, '^3')">
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-Web-Request-Redirect")</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="matches($httpStatusCode, '^4')">
+        <choose>
+          <when test="matches($httpStatusCode, '^400')">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-Web-Bad-Request")</setEventAttribute>
+          </when>
+
+          <when test="matches($httpStatusCode, '^401')">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-Web-Client-Access-Denied")</setEventAttribute>
+          </when>
+
+          <when test="matches($httpStatusCode, '^403')">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-Web-Forbidden-Access-Denied")</setEventAttribute>
+          </when>
+
+          <when test="matches($httpStatusCode, '^411')">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-Web-Length-Reqd-Access-Denied")</setEventAttribute>
+          </when>
+
+          <otherwise>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-Web-Client-Error")</setEventAttribute>
+          </otherwise>
+        </choose>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="matches($httpStatusCode, '^5')">
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-Web-Server-Error")</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

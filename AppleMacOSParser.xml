@@ -1,0 +1,50 @@
+<eventParser name="AppleMacOSParser">
+  <deviceType>
+    <Vendor>Apple</Vendor>
+    <Model>macOS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<119>Jul 29 21:36:27 lab1-mac storagekitd[18654]: disk1s1s1 appears to be an APFS snapshot disk.]]></testEvent>
+    <testEvent><![CDATA[<5>Jul 30 09:59:26 lab1-mac CalendarAgent[642]:]]></testEvent>
+    <testEvent><![CDATA[<26>Jul 29 14:06:31 lab1-mac enSiloCollector[87]: enSilo Collector: Connection blocked for process /Users/user1/Downloads/FileZilla-Installer.app/Contents/MacOS/FileZilla-Installer (pid:18446744073709551615)]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern list="begin" name="patMacDaemon"><![CDATA[com\.apple\.xpc\.launchd|storagekitd|powerd|timed|sessionlogoutd|syspolicyd|fortiinsight|awdd|Microsoft Teams Helper \(Renderer\)|]]></pattern>
+    <pattern list="continue" name="patMacDaemon"><![CDATA[accountsd|ExecutionPolicyService|kcm|enSiloCollector|diagnostics_agent|SoftwareUpdateNotificationManager|softwareupdated|syncdefaultsd|activateSettings|]]></pattern>
+    <pattern list="end" name="patMacDaemon"><![CDATA[coreauthd|VTDecoderXPCService|Skype Helper \(Renderer\)|installd|CalendarAgent|iCloudNotificationAgent]]></pattern>
+    <pattern name="patStrLeftSB"><![CDATA[[^\[]*]]></pattern>
+    <pattern name="patNoUnderScore"><![CDATA[[^_\[\]/]*]]></pattern>
+    <pattern name="patStrRightAngle"><![CDATA[[^\>]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+<:patMacDaemon>\[<:gPatInt>\]:?]]></eventFormatRecognizer>
+
+  <setEventAttribute attr="eventType">macOS-generic</setEventAttribute>
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+<_daemonName:patStrLeftSB>\[<procId:gPatInt>\]:?(?:\s+<_body:gPatMesgBody>)?]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+    <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+
+    <when test="exist _daemonName">
+      <setEventAttribute attr="_daemonName">replaceStringByRegex($_daemonName, "\s+", "_")</setEventAttribute>
+      <setEventAttribute attr="_daemonName">replaceStringByRegex($_daemonName, "\(", "")</setEventAttribute>
+      <setEventAttribute attr="_daemonName">replaceStringByRegex($_daemonName, "\)", "")</setEventAttribute>
+      <setEventAttribute attr="procName">$_daemonName</setEventAttribute>
+      <setEventAttribute attr="eventType">combineMsgId("macOS-", $_daemonName)</setEventAttribute>
+    </when>
+
+    <when test="exist _body">
+      <setEventAttribute attr="msg">$_body</setEventAttribute>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

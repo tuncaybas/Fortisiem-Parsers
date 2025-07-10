@@ -1,0 +1,189 @@
+<eventParser name="ArborSpectrumParser">
+  <deviceType>
+    <Vendor>Arbor</Vendor>
+    <Model>Spectrum</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<9>May  8 11:36:39 example.com arbor-spectrum: Policy Violation: src=1.1.1.1|dst=1.1.1.2|dst_port=80|proto=6|severity=1|alerting_host=example.com|policy_src=etpro|sig_id=snort_sig_1_35591|sig_name=ET TROJAN JS/Nemucod requesting EXE payload 2016-02-01|reference=Unknown]]></testEvent>
+    <testEvent><![CDATA[<9>May  8 14:45:49 example.com arbor-spectrum: Detection: host_ip=1.1.1.1|type=ATLAS_AND_OTHER_EVENT|type_id=3|ts=1525790490|group_id=3]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\barbor-spectrum:\s+(?:Policy Violation|Detection)]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>\s*<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<reptDevName:gPatStr>\s+arbor-spectrum:\s+<_msgType:gPatStrEndColon>:\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">Arbor-Spectrum-Generic</setEventAttribute>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+
+    <collectFieldsByKeyValuePair src="$_body" sep="|" kvsep="=">
+      <attrKeyMap attr="hostIpAddr" key="host_ip"/>
+      <attrKeyMap attr="type" key="type"/>
+      <attrKeyMap attr="incidentCreateTime" key="ts"/>
+      <attrKeyMap attr="groupID" key="group_id"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="destIpPort" key="dst_port"/>
+      <attrKeyMap attr="ipProto" key="proto"/>
+      <attrKeyMap attr="_severity" key="severity"/>
+      <attrKeyMap attr="hostName" key="alerting_host"/>
+      <attrKeyMap attr="srcApp" key="policy_src"/>
+      <attrKeyMap attr="policyId" key="policy_id"/>
+      <attrKeyMap attr="policyName" key="policy_name"/>
+      <attrKeyMap attr="policyDetails" key="cat_info"/>
+      <attrKeyMap attr="ipsSignatureId" key="sig_id"/>
+      <attrKeyMap attr="signatureName" key="sig_name"/>
+      <attrKeyMap attr="eventName" key="sig_name"/>
+      <attrKeyMap attr="exchMsgReference" key="reference"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="$_msgType = 'Detection'">
+      <when test="exist type">
+        <setEventAttribute attr="eventType">combineMsgId("Arbor-Spectrum-Detection-", $type)</setEventAttribute>
+      </when>
+      <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+    </when>
+
+    <when test="$_msgType = 'Policy Violation'">
+      <when test="$srcApp IN 'snort, etpro'">
+        <when test="exist ipsSignatureId">
+          <setEventAttribute attr="eventType">combineMsgId("Arbor-PolicyViolation-", $srcApp, "-", $ipsSignatureId)</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$srcApp = 'built-in'">
+        <when test="exist policyName">
+          <setEventAttribute attr="_policyNameNoSpace">replaceStringByRegex($policyName, "\s+", "")</setEventAttribute>
+          <setEventAttribute attr="eventType">combineMsgId("Arbor-PolicyViolation-", $srcApp, "-", $_policyNameNoSpace)</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$srcApp = 'atlas'">
+        <when test="exist policyName">
+          <setEventAttribute attr="_policyNameNoSpace">replaceStringByRegex($policyName, "\s+", "")</setEventAttribute>
+          <setEventAttribute attr="eventType">combineMsgId("Arbor-PolicyViolation-", $srcApp, "-", $_policyNameNoSpace)</setEventAttribute>
+        </when>
+        <when test="exist policyDetails">
+          <collectFieldsByRegex src="$policyDetails">
+            <regex><![CDATA[\[{<_catInfo1:gPatMesgBodyMin>}<_catRest:gPatMesgBody>]]></regex>
+          </collectFieldsByRegex>
+        </when>
+        <when test="$_catRest != ']'">
+          <collectFieldsByRegex src="$_catRest">
+            <regex><![CDATA[,\s*{<_catInfo2:gPatMesgBodyMin>}<_catRest:gPatMesgBody>]]></regex>
+          </collectFieldsByRegex>
+        </when>
+        <when test="$_catRest != ']'">
+          <collectFieldsByRegex src="$_catRest">
+            <regex><![CDATA[,\s*{<_catInfo3:gPatMesgBodyMin>}<_catRest:gPatMesgBody>]]></regex>
+          </collectFieldsByRegex>
+        </when>
+        <when test="$_catRest != ']'">
+          <collectFieldsByRegex src="$_catRest">
+            <regex><![CDATA[,\s*{<_catInfo4:gPatMesgBodyMin>}<_catRest:gPatMesgBody>]]></regex>
+          </collectFieldsByRegex>
+        </when>
+        <when test="$_catRest != ']'">
+          <collectFieldsByRegex src="$_catRest">
+            <regex><![CDATA[,\s*{<_catInfo5:gPatMesgBodyMin>}<_catRest:gPatMesgBody>]]></regex>
+          </collectFieldsByRegex>
+        </when>
+
+        <when test="exist _catInfo1">
+          <collectFieldsByKeyValuePair src="$_catInfo1" sep=", " kvsep=": ">
+            <attrKeyMap attr="_catTitle1" key="'category_title'"/>
+            <attrKeyMap attr="_subCatTitle1" key="'subcategory_title'"/>
+          </collectFieldsByKeyValuePair>
+          <setEventAttribute attr="threatCategory">combineMsgId($_catTitle1, "/", $_subCatTitle1)</setEventAttribute>
+        </when>
+
+        <when test="exist _catInfo2">
+          <collectFieldsByKeyValuePair src="$_catInfo2" sep=", " kvsep=": ">
+            <attrKeyMap attr="_catTitle2" key="'category_title'"/>
+            <attrKeyMap attr="_subCatTitle2" key="'subcategory_title'"/>
+          </collectFieldsByKeyValuePair>
+          <setEventAttribute attr="threatCategory">combineMsgId($threatCategory, ", ", $_catTitle2, "/", $_subCatTitle2)</setEventAttribute>
+        </when>
+        <when test="exist _catInfo3">
+          <collectFieldsByKeyValuePair src="$_catInfo3" sep=", " kvsep=": ">
+            <attrKeyMap attr="_catTitle3" key="'category_title'"/>
+            <attrKeyMap attr="_subCatTitle3" key="'subcategory_title'"/>
+          </collectFieldsByKeyValuePair>
+          <setEventAttribute attr="threatCategory">combineMsgId($threatCategory, ", ", $_catTitle3, "/", $_subCatTitle3)</setEventAttribute>
+        </when>
+        <when test="exist _catInfo4">
+          <collectFieldsByKeyValuePair src="$_catInfo4" sep=", " kvsep=": ">
+            <attrKeyMap attr="_catTitle4" key="'category_title'"/>
+            <attrKeyMap attr="_subCatTitle4" key="'subcategory_title'"/>
+          </collectFieldsByKeyValuePair>
+          <setEventAttribute attr="threatCategory">combineMsgId($threatCategory, ", ", $_catTitle4, "/", $_subCatTitle4)</setEventAttribute>
+        </when>
+        <when test="exist _catInfo5">
+          <collectFieldsByKeyValuePair src="$_catInfo5" sep=", " kvsep=": ">
+            <attrKeyMap attr="_catTitle5" key="'category_title'"/>
+            <attrKeyMap attr="_subCatTitle5" key="'subcategory_title'"/>
+          </collectFieldsByKeyValuePair>
+          <setEventAttribute attr="threatCategory">combineMsgId($threatCategory, ", ", $_catTitle5, "/", $_subCatTitle5)</setEventAttribute>
+        </when>
+      </when>
+
+    </when>
+
+    <when test="exist _severity">
+      <when test="$srcApp IN 'snort, etpro'">
+        <when test="$_severity = '1'">
+          <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        </when>
+        <when test="$_severity = '2'">
+          <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        </when>
+        <when test="$_severity = '3'">
+          <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$srcApp = 'atlas'">
+        <when test="$_severity = '1'">
+          <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        </when>
+        <when test="$_severity = '2'">
+          <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+        </when>
+        <when test="$_severity = '3'">
+          <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        </when>
+        <when test="$_severity = '4'">
+          <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+        </when>
+        <when test="$_severity = '5'">
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </when>
+        <when test="$_severity = '6'">
+          <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+        </when>
+        <when test="$_severity = '7'">
+          <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+        </when>
+        <when test="$_severity = '8'">
+          <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+        </when>
+        <when test="$_severity = '9'">
+          <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$srcApp = 'stix'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="$srcApp = 'built-in'">
+        <setEventAttribute attr="eventSeverity">$_severity</setEventAttribute>
+      </when>
+    </when>
+  </parsingInstructions>
+</eventParser>

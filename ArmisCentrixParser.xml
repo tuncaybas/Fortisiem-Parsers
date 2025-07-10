@@ -1,0 +1,281 @@
+<eventParser name="ArmisCentrixParser">
+  <deviceType>
+    <Vendor>Armis</Vendor>
+    <Model>Centrix</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[^\[(?:Armis-Alert|Armis-Activity|Armis-Vuln-Detected)\] = ]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[[Armis-Activity] = {"activityInfo":{"activityUUID":"YeLpJpMBAAAAAGeKIsDu","connectionIds":[],"content":"Version: TLS 1.3, Selected Cipher Suite: TLS_AES_128_GCM_SHA256, Selected Cipher Suite Security Level: Recommended","decisionData":{"clientOfferedSuites":["TLS_AES_128_GCM_SHA256","TLS_AES_256_GCM_SHA384","TLS_CHACHA20_POLY1305_SHA256","TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384","TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256","TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256","TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384","TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256","TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256","TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA","TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA","TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA","TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA"],"host":"example.com","selectedSuite":"TLS_AES_128_GCM_SHA256","selectedSuiteSecurityLevel":"Recommended","srcDeviceId":273,"srcIp":"172.16.156.21","srcMac":"11:11:11:11:11:11","version":"TLS 1.3"},"destinationEndpoints":[{"id":"example.com","name":"example.com"}],"deviceIds":[273],"protocol":"Network","sensor":{"name":"Fortigate 10.10.10.2","type":"Fortigate"},"site":{"location":"Lausanne, Switzerland","name":"dbianchi"},"sites":[{"location":"Lausanne, Switzerland","name":"dbianchi"}],"sourceEndpoints":[{"id":273,"ip":["172.16.156.32"],"macAddress":["11:11:11:11:11:11"],"name":"iPhone"}],"time":"2024-11-13T19:03:36+00:00","title":"iPhone connected with 172.16.156.21 to 'example.com' using ssl","type":"SSL Connection"},"phCustId":1,"serverIp":"10.10.10.10","serverName":"example.armis.com"}]]></testEvent>
+    <testEvent><![CDATA[[Armis-Alert] = {"alertInfo":{"activityUUIDs":["uIKJzJMBAAAAAGeKi9Nr","TIwFzZMBAAAAAGeKyEer","bZeNzpMBAAAAAGeK90py","L5eBz5MBAAAAAGeKNZui","er9O0ZMBAAAAAGeKouT5"],"affectedDevicesCount":1,"alertId":1241,"classification":"Security - Other","connectionIds":[],"description":"Mitre Tactic: Command and Control. Mitre Technique: Application Layer Protocol. The policy detects any type of communication from the network to external hosts.","destinationEndpoints":[{"id":"10.10.10.6","name":"10.10.10.6"},{"id":"10.10.10.208","name":"10.10.10.208"},{"id":"example.net","name":"example.net"}],"deviceIds":[402],"mitreAttackLabels":null,"policyId":"27949","policyLabels":["security","it_security","threat_it"],"policyTitle":"Device communication to external host","severity":"Medium","sourceEndpoints":[{"id":402,"ip":["10.30.5.71"],"macAddress":["11:11:11:11:11:11"],"name":"ems"}],"status":"Unhandled","statusChangeTime":"2024-12-15T22:56:26.475346+00:00","time":"2024-12-15T22:56:26.475346+00:00","title":"Device communication to external host","type":"System Policy Violation"},"phCustId":1,"policyInfo":{"action":{"params":{"consolidation":{"amount":1,"unit":"Days"},"description":"Mitre Tactic: Command and Control. Mitre Technique: Application Layer Protocol. The policy detects any type of communication from the network to external hosts.","endpoint":"ALL","severity":"medium","title":"Device communication to external host","type":"Security - Other"},"type":"alert"},"actions":[{"params":{"consolidation":{"amount":1,"unit":"Days"},"description":"Mitre Tactic: Command and Control. Mitre Technique: Application Layer Protocol. The policy detects any type of communication from the network to external hosts.","endpoint":"ALL","severity":"medium","title":"Device communication to external host","type":"Security - Other"},"type":"alert"}],"description":"Mitre Tactic: Command and Control. Mitre Technique: Application Layer Protocol. The policy detects any type of communication from the network to external hosts.","id":"27949","isEnabled":true,"labels":["Security","IT","Threat"],"mitreAttackLabels":null,"name":"Device communication to external host","riskFactorData":null,"ruleType":"IP_CONNECTION","rules":{"and":["endpointB:(role:Server networkLocation:External)"]}},"serverIp":"10.10.10.10","serverName":"example.armis.com"}]]></testEvent>
+    <testEvent><![CDATA[[Armis-Vuln-Detected] = {"deviceInfo":{"FortiSIEMModel":"iOS","FortiSIEMVendor":"Apple","accessSwitch":null,"boundaries":"N/A","businessImpact":"Unassigned","category":"Handhelds","customProperties":{},"dataSources":[{"firstSeen":"2024-12-13T20:50:56.533807+00:00","instances":[{"firstSeen":"2024-12-13T20:50:56.533807+00:00","lastSeen":"2024-12-20T08:01:26.193042+00:00","name":"Dbianchi_VM_TPFGT"}],"lastSeen":"2024-12-20T08:01:26.193042+00:00","name":"Fortinet FortiGate","types":["Firewall","NAC"]},{"firstSeen":"2024-12-13T20:50:47+00:00","instances":[],"lastSeen":"2024-12-13T20:50:47+00:00","name":"Traffic Inspection","types":["Traffic Inspection","Data Analysis"]}],"firstSeen":"2024-12-13T20:50:49.630642+00:00","id":418,"ipAddress":"10.10.10.40","ipv6":null,"lastSeen":"2024-12-20T09:23:15.970986+00:00","macAddress":"11:11:11:11:11:11","manufacturer":"Apple","model":"iPhone 11","name":null,"names":"iPhone 11","operatingSystem":"iOS","operatingSystemVersion":"18.0","purdueLevel":4.0,"riskLevel":100,"sensor":{"name":"Fortigate 10.10.10.2","type":"Fortigate"},"site":{"location":"Lausanne, Switzerland","name":"dbianchi"},"tags":[],"type":"Mobile Phones","userIds":[],"visibility":"Full"},"phCustId":1,"serverIp":"10.10.10.10","serverName":"example.armis.com","vulnInfo":{"affectedDevicesCount":5,"attackComplexity":"Low","attackVector":"Network","availabilityImpact":"High","avmRating":null,"avmRatingManualChangeReason":null,"avmRatingManualChangedBy":"","avmRatingManualUpdateTime":null,"botnets":null,"cisaDueDate":null,"commonName":null,"confidentialityImpact":"None","cveUid":"CVE-2024-44297","cvssScore":6.5,"cvssScoreV4":null,"description":"The issue was addressed with improved bounds checks. This issue is fixed in tvOS 18.1, iOS 18.1 and iPadOS 18.1, iOS 17.7.1 and iPadOS 17.7.1, macOS Ventura 13.7.1, macOS Sonoma 14.7.1, watchOS 11.1, visionOS 2.1. Processing a maliciously crafted message may lead to a denial-of-service.","epssPercentile":0.37,"epssScore":0.00083000000000000001,"exploitabilityScore":2.7999999999999998,"firstDetected":"2024-11-14T19:36:03.866464+00:00","firstReferencePublishDate":null,"firstWeaponizedReferencePublishDate":null,"hasRansomware":null,"hasRemediationInfo":"No","id":"CVE-2024-44297","impactScore":3.6000000000000001,"integrityImpact":"None","isWeaponized":null,"lastDetected":"2024-12-18T23:02:43.121441+00:00","latestExploitUpdate":null,"numOfExploits":0,"numberOfThreatActors":0,"privilegesRequired":"None","publishedDate":"2024-10-28T21:15:08.910000+00:00","reportedByGoogleZeroDays":null,"scope":"Unchanged","score":6.5,"severity":"Medium","status":"Open","threatActors":null,"threatTags":null,"type":"OS","userInteraction":"Required"}}]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\[<eventType:gPatStrRightSB>\]\s*=\s*<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <choose>
+      <when test="$eventType = 'Armis-Vuln-Detected'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="phCustId" key="phCustId"/>
+          <attrKeyMap attr="reptDevIpAddr" key="serverIp"/>
+          <attrKeyMap attr="reptDevName" key="serverName"/>
+          <attrKeyMap attr="extEventRecvProto" key="extEventRecvProto"/>
+          <attrKeyMap attr="serverIpAddr" key="serverIp"/>
+          <attrKeyMap attr="serverName" key="serverName"/>
+          <attrKeyMap attr="vulnCVEId" key="vulnInfo.cveUid"/>
+          <attrKeyMap attr="vulnName" key="vulnInfo.commonName"/>
+          <attrKeyMap attr="vulnCvssScore" key="vulnInfo.cvssScoreV4"/>
+          <attrKeyMap attr="vulnCvssScore" key="vulnInfo.cvssScore"/>
+          <attrKeyMap attr="vulnDesc" key="vulnInfo.description"/>
+          <attrKeyMap attr="_firstSeen" key="vulnInfo.firstDetected"/>
+          <attrKeyMap attr="_lastSeen" key="vulnInfo.lastDetected"/>
+          <attrKeyMap attr="cvssIntegrityImpact" key="vulnInfo.integrityImpact"/>
+          <attrKeyMap attr="_severity" key="vulnInfo.severity"/>
+          <attrKeyMap attr="vulnScore" key="vulnInfo.score"/>
+          <attrKeyMap attr="status" key="vulnInfo.status"/>
+          <attrKeyMap attr="tagName" key="vulnInfo.threatTags"/>
+          <attrKeyMap attr="vulnType" key="vulnInfo.type"/>
+          <!-- deviceInfo -->
+          <attrKeyMap attr="hostIpAddrList" key="deviceInfo.ipAddress"/>
+          <attrKeyMap attr="_hostIpAddrList" key="deviceInfo.ipv6"/>
+          <attrKeyMap attr="osName" key="deviceInfo.operatingSystem"/>
+          <attrKeyMap attr="osType" key="deviceInfo.operatingSystem"/>
+          <attrKeyMap attr="osVersion" key="deviceInfo.operatingSystemVersion"/>
+          <attrKeyMap attr="hostVendor" key="deviceInfo.FortiSIEMVendor"/>
+          <attrKeyMap attr="hostModel" key="deviceInfo.FortiSIEMModel"/>
+          <attrKeyMap attr="deviceType" key="deviceInfo.type"/>
+          <attrKeyMap attr="hostName" key="deviceInfo.name"/>
+          <attrKeyMap attr="hostId" key="deviceInfo.id"/>
+        </collectAndSetAttrByJSON>
+
+        <!-- Scanner detected vuln rules rely on vulnName, sometimes only vuln id present -->
+        <choose>
+          <when test="exist vulnName"/>
+          <when test="not_exist vulnCVEId"/>
+          <otherwise>
+            <!-- set cve id to vulnName if not exist -->
+            <setEventAttribute attr="vulnName">$vulnCVEId</setEventAttribute>
+          </otherwise>
+        </choose>
+
+        <choose>
+          <when test="not_exist hostIpAddrList">
+            <when test="exist _hostIpAddrList">
+              <setEventAttribute attr="hostIpAddrList">$_hostIpAddrList</setEventAttribute>
+            </when>
+          </when>
+          <when test="$hostIpAddrList = '[]'">
+            <when test="exist _hostIpAddrList">
+              <setEventAttribute attr="hostIpAddrList">$_hostIpAddrList</setEventAttribute>
+            </when>
+          </when>
+          <otherwise/>
+        </choose>
+
+        <when test="exist hostIpAddrList">
+          <setEventAttribute attr="hostIpAddrList">replaceStringByRegex($hostIpAddrList,"[\[\] \"\n\t]+", "")</setEventAttribute>
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$hostIpAddrList">
+                <regex><![CDATA[<hostIpAddr:gPatIpAddr>.*]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+        </when>
+
+        <!--  Scanner detected vuln rules rely on hostName, set if not present -->
+        <choose>
+          <when test="exist hostName"/>
+          <when test="exist hostIpAddr">
+            <setEventAttribute attr="hostName">$hostIpAddr</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="hostName">$reptDevName</setEventAttribute>
+          </otherwise>
+        </choose>
+
+      </when>
+      <when test="$eventType = 'Armis-Alert'">
+        <!-- normalize type/subtype with cef parser -->
+        <setEventAttribute attr="type">Alert</setEventAttribute>
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="phCustId" key="phCustId"/>
+          <attrKeyMap attr="reptDevIpAddr" key="serverIp"/>
+          <attrKeyMap attr="reptDevName" key="serverName"/>
+          <attrKeyMap attr="serverIpAddr" key="serverIp"/>
+          <attrKeyMap attr="extEventRecvProto" key="extEventRecvProto"/>
+          <attrKeyMap attr="serverName" key="serverName"/>
+          <attrKeyMap attr="policyDetails" key="policyInfo.description"/>
+          <attrKeyMap attr="policyId" key="policyInfo.id"/>
+          <attrKeyMap attr="tagName" key="policyInfo.labels"/>
+          <attrKeyMap attr="policyName" key="policyInfo.name"/>
+          <attrKeyMap attr="policyIdentityType" key="policyInfo.ruleType"/>
+          <attrKeyMap attr="details" key="policyInfo.rules"/>
+          <attrKeyMap attr="alertIdStr" key="alertInfo.alertId"/>
+          <attrKeyMap attr="uuid" key="alertInfo.activityUUID"/>
+          <attrKeyMap attr="alertCategory" key="alertInfo.classification"/>
+          <attrKeyMap attr="description" key="alertInfo.description"/>
+          <attrKeyMap attr="deviceIdentification" key="alertInfo.deviceIds"/>
+          <attrKeyMap attr="_severity" key="alertInfo.severity"/>
+          <attrKeyMap attr="status" key="alertInfo.status"/>
+          <attrKeyMap attr="title" key="alertInfo.title"/>
+          <attrKeyMap attr="_policyTitle" key="alertInfo.policyTitle"/>
+          <attrKeyMap attr="subtype" key="alertInfo.type"/>
+          <attrKeyMap attr="_lastSeen" key="alertInfo.time"/>
+          <attrKeyMap attr="_destinationEndpoints" key="alertInfo.destinationEndpoints"/>
+          <attrKeyMap attr="_sourceEndpoints" key="alertInfo.sourceEndpoints"/>
+        </collectAndSetAttrByJSON>
+        <when test="exist subtype">
+          <setEventAttribute attr="eventType">combineMsgId("Armis-Alert-", $subtype)</setEventAttribute>
+          <setEventAttribute attr="eventType">replaceStrInStr($eventType, " ", "-")</setEventAttribute>
+        </when>
+      </when>
+      <when test="$eventType = 'Armis-Activity'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="phCustId" key="phCustId"/>
+          <attrKeyMap attr="reptDevIpAddr" key="serverIp"/>
+          <attrKeyMap attr="reptDevName" key="serverName"/>
+          <attrKeyMap attr="extEventRecvProto" key="extEventRecvProto"/>
+          <attrKeyMap attr="serverIpAddr" key="serverIp"/>
+          <attrKeyMap attr="serverName" key="serverName"/>
+          <attrKeyMap attr="subtype" key="activityInfo.type"/>
+          <attrKeyMap attr="title" key="activityInfo.title"/>
+          <attrKeyMap attr="uuid" key="activityInfo.activityUUID"/>
+          <attrKeyMap attr="_lastSeen" key="activityInfo.time"/>
+          <attrKeyMap attr="lineContent" key="activityInfo.content"/>
+          <attrKeyMap attr="deviceIdentification" key="activityInfo.deviceIds"/>
+          <attrKeyMap attr="appTransportProto" key="activityInfo.protocol"/>
+          <attrKeyMap attr="sensorValue" key="activityInfo.sensor.name"/>
+          <attrKeyMap attr="hostLocation" key="activityInfo.site.location"/>
+          <attrKeyMap attr="site" key="activityInfo.site.name"/>
+          <attrKeyMap attr="_destinationEndpoints" key="activityInfo.destinationEndpoints"/>
+          <attrKeyMap attr="_sourceEndpoints" key="activityInfo.sourceEndpoints"/>
+        </collectAndSetAttrByJSON>
+
+        <!-- Armis publishes a list of activity types -->
+        <!-- e.g. SSL Connection activity type results in EventType: Armis-Activity-SSL-Connection -->
+        <when test="exist subtype">
+          <setEventAttribute attr="eventType">combineMsgId("Armis-Activity-", $subtype)</setEventAttribute>
+          <setEventAttribute attr="eventType">replaceStrInStr($eventType, " ", "-")</setEventAttribute>
+        </when>
+
+      </when>
+      <otherwise/>
+    </choose>
+
+    <when test="exist _destinationEndpoints">
+      <setEventAttribute attr="_destinationEndpoints">replaceStringByRegex($_destinationEndpoints,"[\[\] \"\n\t\{\}]+", "")</setEventAttribute>
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_destinationEndpoints">
+            <regex><![CDATA[.*name:<destIpAddr:gPatIpAddr>.*]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <collectFieldsByRegex src="$_destinationEndpoints">
+            <regex><![CDATA[.*name:<destName:gPatStrComma>.*]]></regex>
+          </collectFieldsByRegex>
+        </default>
+      </switch>
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_destinationEndpoints">
+            <regex><![CDATA[.*ip:<destIpAddrList:gPatStrComma>,.*name:<destName:gPatStrComma>.*]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _sourceEndpoints">
+      <setEventAttribute attr="_sourceEndpoints">replaceStringByRegex($_sourceEndpoints,"[\[\] \"\n\t\{\}]+", "")</setEventAttribute>
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_sourceEndpoints">
+            <regex><![CDATA[.*name:<srcIpAddr:gPatIpAddr>.*]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <collectFieldsByRegex src="$_sourceEndpoints">
+            <regex><![CDATA[.*name:<srcName:gPatStrComma>.*]]></regex>
+          </collectFieldsByRegex>
+        </default>
+      </switch>
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_sourceEndpoints">
+            <regex><![CDATA[.*ip:<srcIpAddrList:gPatStrComma>,.*name:<srcName:gPatStrComma>.*]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist srcIpAddrList">
+      <setEventAttribute attr="srcIpAddrList">replaceStringByRegex($srcIpAddrList,"[\[\] \"\n\t]+", "")</setEventAttribute>
+      <collectFieldsByRegex src="$srcIpAddrList">
+        <regex><![CDATA[<srcIpAddr:gPatIpAddr>.*]]></regex>
+      </collectFieldsByRegex>
+    </when>
+
+    <when test="exist destIpAddrList">
+      <setEventAttribute attr="destIpAddrList">replaceStringByRegex($destIpAddrList,"[\[\] \"\n\t]+", "")</setEventAttribute>
+      <collectFieldsByRegex src="$destIpAddrList">
+        <regex><![CDATA[<destIpAddr:gPatIpAddr>.*]]></regex>
+      </collectFieldsByRegex>
+    </when>
+
+    <when test="exist deviceIdentification">
+      <setEventAttribute attr="deviceIdentification">replaceStringByRegex($deviceIdentification,"[\[\] \"\n\t]+", "")</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist _severity"/>
+      <when test="$_severity = 'Critical'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+      <when test="$_severity = 'High'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_severity = 'Medium'">
+        <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+      </when>
+      <when test="$_severity = 'Low'">
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+      <otherwise/>
+    </choose>
+
+    <when test="exist _firstSeen">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_firstSeen">
+            <regex><![CDATA[<_fsYear:gPatYear>-<_fsMon:gPatMonNum>-<_fsDay:gPatDay>T<_fsTime:gPatTime>(?:\.\d+)?<_fsTz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="firstSeenTime">toDateTime($_fsMon, $_fsDay, $_fsYear, $_fsTime, $_fsTz)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _lastSeen">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_lastSeen">
+            <regex><![CDATA[<_lsYear:gPatYear>-<_lsMon:gPatMonNum>-<_lsDay:gPatDay>T<_lsTime:gPatTime>(?:\.\d+)?<_lsTz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="lastSeenTime">toDateTime($_lsMon, $_lsDay, $_lsYear, $_lsTime, $_lsTz)</setEventAttribute>
+          <setEventAttribute attr="eventTime">$lastSeenTime</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

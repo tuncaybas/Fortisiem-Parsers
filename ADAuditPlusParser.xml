@@ -1,0 +1,80 @@
+<eventParser name="ADAuditPlusParser">
+  <deviceType>
+    <Vendor>ManageEngine</Vendor>
+    <Model>ADAuditPlus</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<110>1 2019-02-18T17:30:15.000+04:00 test-host-01 ADAuditPlus - - -  [ Category = LogonReports ]  [ REPORT_PROFILE = Logon Failures for Admin Users ]  [ USERNAME = testuser ]  [ CLIENT_IP_ADDRESS = 192.168.1.2 ]  [ CLIENT_HOST_NAME = testuser-01.example.com ]  [ TIME_GENERATED = 1550496615 ]  [ RECORD_NUMBER = 12345678 ]  [ EVENT_TYPE = 16 ]  [ EVENT_TYPE_TEXT = Failure ]  [ DOMAIN = domain1/example.com ]  [ SOURCE = testuser-02.example.com ]  [ LOGON_SERVICE = domain1/example.com ]  [ USER_SID = %{S-1-5-32-1234567898-98765432123-1122334455-1122} ]  [ ERROR_CODE = 0x18 ]  [ ERROR_CODE_TEXT = Bad password ]  [ EVENT_NUMBER = 4771 ]  [ REMARKS = Kerberos pre-authentication failed. ]]]></testEvent>
+    <testEvent><![CDATA[<110>1 2019-02-18T17:28:19.000+04:00 test-host-02 ADAuditPlus - - -  [ Category = LogonReports ]  [ REPORT_PROFILE = All Users Logon ]  [ USERNAME = sampleuser ]  [ CLIENT_IP_ADDRESS = 192.168.1.3 ]  [ CLIENT_HOST_NAME = 192.168.1.3 ]  [ TIME_GENERATED = 1550496499 ]  [ RECORD_NUMBER = 98765432 ]  [ EVENT_TYPE = 8 ]  [ EVENT_TYPE_TEXT = Success ]  [ DOMAIN = acme ]  [ SOURCE = example-01.test.com ]  [ LOGON_SERVICE = example ]  [ USER_SID = %{S-1-5-32-1234567898-98987676545-1122334455-1122} ]  [ ERROR_CODE = 0x0 ]  [ ERROR_CODE_TEXT = - ]  [ EVENT_NUMBER = 4768 ]  [ REMARKS = A Kerberos authentication ticket (TGT) was requested. ]]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\s+ADAuditPlus\s*-\s*-\s*-\s+]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\d+\s+<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTimeMSec><_zone:gPatTimeZone>\s+<reptDevName:gPatHostName>\s+ADAuditPlus\s*-\s*-\s*-\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">ADAuditPlus-Generic</setEventAttribute>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+
+    <collectAndSetAttrByKeyValuePair sep=" ]" src="$_body">
+      <attrKeyMap attr="domain" key="[ ACCOUNT_DOMAIN = "/>
+      <attrKeyMap attr="targetUser" key="[ ACCOUNT_NAME = "/>
+      <attrKeyMap attr="appName" key="[ APPLICATION_NAME = "/>
+      <attrKeyMap attr="authenMethod" key="[ AUTHENTICATION_PACKAGE = "/>
+      <attrKeyMap attr="procName" key="[ AUTHENTICATION_PACKAGE_NAME = "/>
+      <attrKeyMap attr="winLogonId" key="[ CALLER_LOGON_ID = "/>
+      <attrKeyMap attr="procId" key="[ CALLER_PROCESS_ID = "/>
+      <attrKeyMap attr="procName" key="[ CALLER_PROCESS_NAME = "/>
+      <attrKeyMap attr="domain" key="[ CALLER_USER_DOMAIN = "/>
+      <attrKeyMap attr="winLogonCallerUser" key="[ CALLER_USER_NAME = "/>
+      <attrKeyMap attr="winEvtCategory" key="[ Category = "/>
+      <attrKeyMap attr="srcName" key="[ CLIENT_HOST_NAME = "/>
+      <attrKeyMap attr="srcIpAddr" key="[ CLIENT_IP_ADDRESS = "/>
+      <attrKeyMap attr="user" key="[ CLIENT_USER_NAME = "/>
+      <attrKeyMap attr="domain" key="[ DOMAIN = "/>
+      <attrKeyMap attr="winLogonFailCode2" key="[ ERROR_CODE = "/>
+      <attrKeyMap attr="errReason" key="[ ERROR_CODE_TEXT = "/>
+      <attrKeyMap attr="_id" key="[ EVENT_NUMBER = "/>
+      <attrKeyMap attr="_type" key="[ EVENT_TYPE_TEXT = "/>
+      <attrKeyMap attr="fileName" key="[ FILE_NAME = "/>
+      <attrKeyMap attr="eventDesc" key="[ FORMAT_MESSAGE = "/>
+      <attrKeyMap attr="winLogonId" key="[ LOGON_ID = "/>
+      <attrKeyMap attr="procName" key="[ LOGON_PROCESS = "/>
+      <attrKeyMap attr="procName" key="[ LOGON_PROCESS_NAME = "/>
+      <attrKeyMap attr="winSrvcName" key="[ LOGON_SERVICE = "/>
+      <attrKeyMap attr="winLogonType" key="[ LOGON_TYPE = "/>
+      <attrKeyMap attr="winLogonType" key="[ LOGON_TYPE_TEXT = "/>
+      <attrKeyMap attr="classifier" key="[ OBJECT_CLASS = "/>
+      <attrKeyMap attr="classifier" key="[ OBJECT_CLASS_TEXT = "/>
+      <attrKeyMap attr="osObjName" key="[ OBJECT_NAME = "/>
+      <attrKeyMap attr="osObjName" key="[ OBJECT_NAME_TEXT = "/>
+      <attrKeyMap attr="_type" key="[ OPERATION_TYPE = "/>
+      <attrKeyMap attr="seqNum" key="[ RECORD_NUMBER = "/>
+      <attrKeyMap attr="msg" key="[ REMARKS = "/>
+      <attrKeyMap attr="profileName" key="[ REPORT_PROFILE = "/>
+      <attrKeyMap attr="severity" key="[ SEVERITY = "/>
+      <attrKeyMap attr="srcName" key="[ SOURCE = "/>
+      <attrKeyMap attr="srcIpPort" key="[ SOURCE_PORT = "/>
+      <attrKeyMap attr="user" key="[ USERNAME = "/>
+      <attrKeyMap attr="securityId" key="[ USER_SID = "/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <when test="exist securityId">
+      <collectFieldsByRegex src="$securityId">
+        <regex><![CDATA[%\{<securityId:gPatMesgBodyMin>\}]]></regex>
+      </collectFieldsByRegex>
+    </when>
+
+    <when test="exist _id">
+      <setEventAttribute attr="eventType">combineMsgId("ADAuditPlus-",$_id)</setEventAttribute>
+      <when test="exist _type">
+        <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$_type)</setEventAttribute>
+      </when>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

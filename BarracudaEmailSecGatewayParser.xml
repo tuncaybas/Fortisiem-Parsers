@@ -1,0 +1,187 @@
+<eventParser name="BarracudaEmailSecGatewayParser">
+  <deviceType>
+    <Vendor>Barracuda</Vendor>
+    <Model>Email Security Gateway</Model>
+    <Version>ANY</Version>
+  </deviceType>
+  <patternDefinitions>
+    <pattern name="patBaMod"><![CDATA[inbound/pass[12]|outbound/smtp|outbound/qmgr|notify/smtp|scan|web]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[^<:gPatSyslogPRI>?\s*<:patBaMod>(?:\[\d+\])?: ]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<23>inbound/pass1[923]: 127.0.0.1 1300386119-473aa6a90001-sB89EM 0 0 RECV - 1 4D760309475 250 2.6.0  <E6BB7C56C6761D42AEAFBF7FC6E17E920156A38D@abc.com> Queued mail for delivery]]></testEvent>
+    <testEvent><![CDATA[<23>outbound/smtp[945]: 127.0.0.1 1300386119-473aa6a90001-sB89EM 0 0 SEND - 1 4D760309475 250 2.6.0  <E6BB7C56C6761D42AEAFBF7FC6E17E920156A38D@abc.com> Queued mail for delivery]]></testEvent>
+    <testEvent><![CDATA[<23>scan[9390]: example.com[192.168.0.1] 1300386126-4739a8be0001-R6OEVB 1300386126 1300386128 SCAN - abc@example.com abc@abc.com - 7 61 - SZ:34602 SUBJ:subject]]></testEvent>
+    <testEvent><![CDATA[scan: example.com[1.1.1.1] 1402091449-03d1245abb0dc90001-Gn0Vn3 1402091449 1402091451 SCAN ENC support@a.com jn@b.com 0.001 0 0 - SZ:9992 SUBJ:subject]]></testEvent>
+    <testEvent><![CDATA[inbound/pass1: a.net.in[1.2.3.4] 1402428661-250148-30458-416-1 1402428662 1402428662 RECV wautorun@pata-nfs-1 - 2 18 -]]></testEvent>
+    <testEvent><![CDATA[outbound/smtp: 127.0.0.1 1402428315-03d12476f7015b0001-hBfcsw 0 0 SEND ENC 1 F2A9FD80132 250 2.6.0 <LYRIS-258502052-8899728-2014.06.10-15.00.26--s#a.com@a.com> [InternalId=24940257] Queued mail for delivery #to#10.1.8.200]]></testEvent>
+    <testEvent><![CDATA[outbound/qmgr: 127.0.0.1 1402246809-03d1342dd3f3ab0001-fPlmAA 0 0 SEND - 4 DFCD628AC11F Returned to]]></testEvent>
+    <testEvent><![CDATA[web: [localhost] user[a@b.com] CHANGE user_quarantine_notify (Daily)]]></testEvent>
+    <testEvent><![CDATA[<142> web: [1.1.1.1] DELETE (a@b.com - 1526402456-06d0aa7bae39f40001-tHVDGC) [a@b.com]]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^\s*<:gPatSyslogPRI>?\s*<:patBaMod>(?:\[\d+\])?:\s+<_client:gPatStr>\s+(?:<smtpMsgId:gPatStr>\s+)?<_startTime:gPatInt>\s+<_endTime:gPatInt>\s+<_Mode:gPatWord>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:patBaMod>:\s+\[<_client:gPatStr>\]\s+(?:user\[<user:gPatStrRightSB>\]\s+)?<_Mode:gPatWord>\s+<msg:gPatStrLeftParen>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <setEventAttribute attr="eventType">Barracuda_SpamFirewall_Generic</setEventAttribute>
+
+    <!--Handle message body-->
+    <choose>
+      <when test="$_Mode = 'SCAN'">
+        <setEventAttribute attr="_modelow">scan</setEventAttribute>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<:gPatStr>\s+<_sender:gPatStr>\s+<_receiver:gPatStr>\s+<_score:gPatStr>\s+<_action:gPatInt>\s+<barracudaReason:gPatInt>\s+<msg:gPatMesgBody>\s+SUBJ:<mailSubject:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <when test="$_score != '-'">
+          <setEventAttribute attr="spamScore">$_score</setEventAttribute>
+        </when>
+      </when>
+      <when test="$_Mode = 'RECV'">
+        <setEventAttribute attr="_modelow">recv</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<_sender:gPatStr>\s+<_receiver:gPatStr>\s+<_action:gPatInt>\s+<barracudaReason:gPatInt>\s+<msg:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default>
+            <when test="matches($_body, 'Queued mail')">
+              <setEventAttribute attr="_actionMode">queued</setEventAttribute>
+            </when>
+          </default>
+        </switch>
+      </when>
+      <when test="$_Mode = 'SEND'">
+        <setEventAttribute attr="_modelow">send</setEventAttribute>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<:gPatStr>\s+<_action:gPatInt>\s+<:gPatStr>\s+<msg:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+
+        <when test="matches($msg, 'Queued mail')">
+          <setEventAttribute attr="_actionMode">queued</setEventAttribute>
+        </when>
+      </when>
+      <when test="$_Mode = 'CHANGE'">
+        <setEventAttribute attr="_modelow">user-config-change</setEventAttribute>
+      </when>
+      <when test="$_Mode = 'DELETE'">
+        <setEventAttribute attr="_modelow">delete</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _sender">
+      <when test="$_sender != '-'">
+        <setEventAttribute attr="senderMailAddr">$_sender</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _receiver">
+      <when test="$_receiver != '-'">
+        <setEventAttribute attr="receiverMailAddr">$_receiver</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _action">
+      <choose>
+        <when test="$_Mode IN 'SCAN, RECV'">
+          <choose>
+            <when test="$_action = '0'">
+              <setEventAttribute attr="_actionMode">allow</setEventAttribute>
+            </when>
+            <when test="$_action = '1'">
+              <setEventAttribute attr="_actionMode">abort</setEventAttribute>
+            </when>
+            <when test="$_action = '2'">
+              <setEventAttribute attr="_actionMode">block</setEventAttribute>
+            </when>
+            <when test="$_action = '3'">
+              <setEventAttribute attr="_actionMode">quarantine</setEventAttribute>
+            </when>
+            <when test="$_action = '4'">
+              <setEventAttribute attr="_actionMode">tag</setEventAttribute>
+            </when>
+            <when test="$_action = '5'">
+              <setEventAttribute attr="_actionMode">defer</setEventAttribute>
+            </when>
+            <when test="$_action = '6'">
+              <setEventAttribute attr="_actionMode">per-user-quarantine</setEventAttribute>
+            </when>
+            <when test="$_action = '7'">
+              <setEventAttribute attr="_actionMode">whitelist</setEventAttribute>
+            </when>
+          </choose>
+        </when>
+        <when test="$_Mode = 'SEND'">
+          <choose>
+            <when test="$_action = '1'">
+              <setEventAttribute attr="_actionMode">deliver</setEventAttribute>
+            </when>
+            <when test="$_action = '2'">
+              <setEventAttribute attr="_actionMode">reject</setEventAttribute>
+            </when>
+            <when test="$_action = '3'">
+              <setEventAttribute attr="_actionMode">defer</setEventAttribute>
+            </when>
+            <when test="$_action = '4'">
+              <setEventAttribute attr="_actionMode">expired</setEventAttribute>
+            </when>
+          </choose>
+        </when>
+      </choose>
+    </when>
+
+    <!--Handle client ip and host name-->
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_client">
+          <regex><![CDATA[<reptDevName:gPatStr>\[<srcIpAddr:gPatIpAddr>\]]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_client">
+          <regex><![CDATA[<srcIpAddr:gPatIpAddr>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_client">
+          <regex><![CDATA[<srcName:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <!--Handle message code-->
+    <!--Handle start time-->
+    <when test="exist _startTime">
+      <when test="$_startTime != '0'">
+        <setEventAttribute attr="deviceTime">$_startTime</setEventAttribute>
+      </when>
+    </when>
+
+    <!--Set Event type-->
+    <choose>
+      <when test="exist _actionMode">
+        <setEventAttribute attr="eventType">combineMsgId("Barracuda-SpamFirewall-", $_modelow, "-", $_actionMode)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">combineMsgId("Barracuda-SpamFirewall-", $_modelow)</setEventAttribute>
+      </otherwise>
+    </choose>
+  </parsingInstructions>
+
+</eventParser>

@@ -1,0 +1,81 @@
+<eventParser name="AlcideKAuditParser">
+  <deviceType>
+    <Vendor>Alcide</Vendor>
+    <Model>KAudit</Model>
+    <Version>ANY</Version>
+  </deviceType>
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>\s*<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+AlcideKAudit:\s*\{.*\}]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<109>Feb 28 07:09:18 AlcideKAudit: {"category":"anomaly","cluster":"devel","etype":"cluster","reasons":[{"values":{"high":[1]},"doc":"change in count of unique unusual URIs in read access attempts","period":180000,"direction":"read"}],"time":1582873380000,"short-doc":"change in targets of access attempts","project":"alcide-rnd","context":{"unusual-uri":["LHUt"]},"period":180000,"eid":"cluster","confidence":"high","doc":"unusual change in count of unique unusual URIs in access attempts","direction":"read"}]]></testEvent>
+  </testEvents>
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>\s*<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+AlcideKAudit:\s*<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventType">AlcideKAudit-Generic"</setEventAttribute>
+
+    <collectAndSetAttrByJSON src="$_body">
+      <attrKeyMap attr="_eventTime" key="time"/>
+      <attrKeyMap attr="apiGroup" key="api-group"/>
+      <attrKeyMap attr="ruleName" key="rule"/>
+      <attrKeyMap attr="resourceName" key="resource-namespace"/>
+      <attrKeyMap attr="resourceType" key="resource-type"/>
+      <attrKeyMap attr="subResource" key="subresource"/>
+      <attrKeyMap attr="uriQuery" key="uri"/>
+      <attrKeyMap attr="command" key="verb"/>
+      <attrKeyMap attr="osObjAccessType" key="access-type"/>
+      <attrKeyMap attr="callerSuppliedUserAgent" key="context.caller-supplied-user-agent"/>
+      <attrKeyMap attr="httpUserAgent" key="context.original-user-agent"/>
+      <attrKeyMap attr="userId" key="user-id"/>
+      <attrKeyMap attr="userGrp" key="user-groups"/>
+      <attrKeyMap attr="impersonatedPrincipal" key="impersonated-principal"/>
+      <attrKeyMap attr="impersonatedUserId" key="impersonated-user-id"/>
+      <attrKeyMap attr="impersonatedUserGrp" key="impersonated-groups"/>
+      <attrKeyMap attr="threatCategory" key="category"/>
+      <attrKeyMap attr="cluster" key="cluster"/>
+      <attrKeyMap attr="objType" key="etype"/>
+      <attrKeyMap attr="_threatLevel" key="reasons[0].values"/>
+      <attrKeyMap attr="threatScore" key="reasons[0].values.high[0]"/>
+      <attrKeyMap attr="description" key="reasons.doc"/>
+      <attrKeyMap attr="durationMSec" key="reasons.period"/>
+      <attrKeyMap attr="direction" key="reasons.direction"/>
+      <attrKeyMap attr="eventTime" key="time"/>
+      <attrKeyMap attr="srcGeoCountryCode" key="caller-ip-country"/>
+      <attrKeyMap attr="eventDesc" key="short-doc"/>
+      <attrKeyMap attr="srcIpAddr" key="caller-ip"/>
+      <attrKeyMap attr="projectId" key="project"/>
+      <attrKeyMap attr="srcASNum32" key="caller-ip-asn"/>
+      <attrKeyMap attr="durationMSec" key="period"/>
+      <attrKeyMap attr="managedEntity" key="eid"/>
+      <attrKeyMap attr="ipsConfidence" key="confidence"/>
+      <attrKeyMap attr="description" key="doc"/>
+      <attrKeyMap attr="direction" key="direction"/>
+    </collectAndSetAttrByJSON>
+
+    <when test="exist _threatLevel">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_threatLevel">
+            <regex><![CDATA[\{.*?"<threatLevel:gPatStr>"\s*:.*}]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="threatLevel">$_threatLevel</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+    <when test="exist threatCategory">
+      <setEventAttribute attr="eventType">combineMsgId("AlcideKAudit-",$threatCategory)</setEventAttribute>
+      <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "\s+", "-")</setEventAttribute>
+    </when>
+
+    <when test="exist _eventTime">
+      <setEventAttribute attr="eventTime">divide($_eventTime, 1000)</setEventAttribute>
+    </when>
+  </parsingInstructions>
+
+</eventParser>

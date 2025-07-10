@@ -1,0 +1,185 @@
+<eventParser name="BlueCatAddressManagerParser">
+
+  <deviceType>
+    <Vendor>BlueCat</Vendor>
+    <Model>AddressManager</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patStrDoubleQuoted"><![CDATA[[^"]*]]></pattern>
+    <pattern name="patExceptSlash"><![CDATA[[^/]*]]></pattern>
+    <pattern name="patExceptComma"><![CDATA[[^,]+]]></pattern>
+  </patternDefinitions>
+
+  <!-- First define an apache user/pw by logging into target FSM collector, and running the command: htpasswd -b /etc/httpd/accounts/passwds <user> '<password>' -->
+  <!-- This relies on the HTTPS POST Feature -->
+  <eventFormatRecognizer><![CDATA[\[PH_DEV_MON_CUSTOM_JSON\]:\[reptVendor\]=BlueCat,\[reptModel\]=AddressManager,]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[[PH_DEV_MON_CUSTOM_JSON]:[reptVendor]=BlueCat,[reptModel]=AddressManager,[reptDevName]=bluecatnetworks,[reptDevIpAddr]=141.193.213.21,[json]={"data":{"dhcpv4Message":{"chaddr":"00:00:00:00:00:01","siaddr":"0.0.0.0","secs":0,"hType":1,"xId":"0xc123456d","yiaddr":"192.168.1.1","giaddr":"192.168.1.2","options":[{"optionId":53,"messageType":"DHCP Ack","messageTypeId":5},{"serverId":"192.168.1.25","optionId":54},{"optionId":51,"leaseTime":67556},{"subnetMask":"255.255.255.0","optionId":1},{"router":["192.168.1.100"],"optionId":3},{"domainNameServer":["192.168.1.8","192.168.1.9","192.168.1.10"],"optionId":6},{"domainName":"domain.local","optionId":15},{"netBIOSNameServer":["192.168.1.82"],"optionId":44},{"optionId":46,"netBIOSNodeType":"H-node"},{"optionData":"00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00","optionId":81},{"optionData":"00 00 00 00 00 00 00 00 00 00 00 00 00 00 00","optionId":82}],"flags":"0x0000","hops":1,"ciaddr":"0.0.0.0","hLength":6,"op":2}},"schemaVersion":"1.0.0","headers":{"http_version":"HTTP/1.1","content_length":"37932","content_type":"application/json","request_method":"POST","http_user_agent":"Vector/0.22.1 (x86_64-unknown-linux-gnu)","http_host":"192.168.1.191:80","http_accept":null,"request_path":"/","accept_encoding":"identity"},"time":1719422428,"sourceId":"11111111-1111-1111-1111-111111111111","type":"dhcpactivity","timePrecision":"s","key":"11111111-1111-1111-1111-111111111111","@version":"1","tags":["_geoip_lookup_failure"],"payloadType":"dhcpv4-packet","host":"192.168.1.20","serverId":"dhcp-09","@timestamp":"2024-06-26T17:20:11.570Z"}]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\[PH_DEV_MON_CUSTOM_JSON\]:\[reptVendor\]=BlueCat,\[reptModel\]=AddressManager,\[reptDevName\]=<reptDevName:patExceptComma>,\[reptDevIpAddr\]=<reptDevIpAddr:gPatIpAddr>,\[json\]=<_json:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">BlueCat-Generic</setEventAttribute>
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+
+    <collectAndSetAttrByJSON src="$_json">
+      <!-- DHCP Activity event message -->
+      <attrKeyMap attr="type" key="payloadType"/>
+      <attrKeyMap attr="_version" key="@version"/>
+      <attrKeyMap attr="_key" key="key"/>
+      <!-- dhcpactivity -->
+      <attrKeyMap attr="type" key="type"/>
+      <attrKeyMap attr="deviceTime" key="time"/>
+      <!-- payloadType dhcpv4-packet -->
+      <attrKeyMap attr="_bootpCode" key="data.dhcpv4Message.op"/>
+      <attrKeyMap attr="_htypeCode" key="data.dhcpv4Message.hType"/>
+      <attrKeyMap attr="_addrLen" key="data.dhcpv4Message.hLength"/>
+      <attrKeyMap attr="hopNum" key="data.dhcpv4Message.hops"/>
+      <attrKeyMap attr="transactionId" key="data.dhcpv4Message.xId"/>
+      <!-- duration of transaction durationMSec -->
+      <attrKeyMap attr="_duration" key="data.dhcpv4Message.secs"/>
+      <attrKeyMap attr="flag" key="data.dhcpv4Message.flags"/>
+      <!-- only populated if the client is in BOUND, RENEW, or REBINDING state and can respond to ARP requests -->
+      <attrKeyMap attr="_clientIp" key="data.dhcpv4Message.ciaddr"/>
+      <!-- Also the client IP -->
+      <attrKeyMap attr="_clientIp" key="data.dhcpv4Message.yiaddr"/>
+      <!-- BOOTSTRAP Server IP -->
+      <attrKeyMap attr="_serverIpAddr" key="data.dhcpv4Message.siaddr"/>
+      <attrKeyMap attr="_dhcpGateway" key="data.dhcpv4Message.giaddr"/>
+      <attrKeyMap attr="_clientHwAddr" key="data.dhcpv4Message.chaddr"/>
+      <attrKeyMap attr="_options" key="data.dhcpv4Message.options"/>
+      <!-- payloadType dhcpv6-packet -->
+      <!-- dhcpv6Message -->
+      <attrKeyMap attr="subtype" key="data.dhcpv6Message.messageType"/>
+      <attrKeyMap attr="msgId" key="data.dhcpv6Message.messageTypeId"/>
+      <attrKeyMap attr="transactionId" key="data.dhcpv6Message.transactionId"/>
+      <attrKeyMap attr="_options" key="data.dhcpv6Message.options"/>
+      <!-- dhcpv6RelayMessage -->
+      <attrKeyMap attr="subtype" key="data.dhcpv6RelayMessage.messageType"/>
+      <attrKeyMap attr="msgId" key="data.dhcpv6RelayMessage.messageTypeId"/>
+      <attrKeyMap attr="hopNum" key="data.dhcpv6RelayMessage.hopCount"/>
+      <attrKeyMap attr="_linkAddr" key="data.dhcpv6RelayMessage.linkAddress"/>
+      <attrKeyMap attr="_peerAddr" key="data.dhcpv6RelayMessage.peerAddress"/>
+      <attrKeyMap attr="_options" key="data.dhcpv6RelayMessage.options"/>
+
+    </collectAndSetAttrByJSON>
+
+    <!-- Get some of the dhcp options -->
+    <!-- Since we already map the array to _options, use .find without preceding obj -->
+    <when test="exist _options">
+      <collectAndSetAttrByJsonArray src="$_options" sep=",">
+        <attrKeyMap attr="gateway" key=".find(optionId='3', router[0])"/>
+        <attrKeyMap attr="dhcpSubnetMask" key=".find(optionId='1', subnetMask)"/>
+        <attrKeyMap attr="dnsServer" key=".find(optionId='6', domainNameServer[0])"/>
+        <attrKeyMap attr="domain" key=".find(optionId='15', domainName)"/>
+      </collectAndSetAttrByJsonArray>
+    </when>
+
+    <!-- Set bootp message display -->
+    <choose>
+      <when test="not_exist _bootpCode"/>
+      <!-- 1 BOOTREQUEST 2 BOOTREPLY -->
+      <when test="$_bootpCode = '1'">
+        <setEventAttribute attr="subtype">BOOTREQUEST</setEventAttribute>
+      </when>
+      <when test="$_bootpCode = '2'">
+        <setEventAttribute attr="subtype">BOOTREPLY</setEventAttribute>
+      </when>
+    </choose>
+
+    <!-- set type and subtypes -->
+    <when test="exist type">
+      <setEventAttribute attr="eventType">combineMsgId("BlueCat-", $type)</setEventAttribute>
+    </when>
+    <when test="exist subtype">
+      <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $subtype)</setEventAttribute>
+    </when>
+
+    <!-- Hardware address type -->
+    <choose>
+      <when test="not_exist _htypeCode"/>
+      <when test="$_htypeCode = '1'">
+        <setEventAttribute attr="addressType">Ethernet</setEventAttribute>
+      </when>
+      <when test="$_htypeCode = '2'">
+        <setEventAttribute attr="addressType">Experimental Ethernet</setEventAttribute>
+      </when>
+      <when test="$_htypeCode = '3'">
+        <setEventAttribute attr="addressType">Amateur Radio AX.25</setEventAttribute>
+      </when>
+      <when test="$_htypeCode = '4'">
+        <setEventAttribute attr="addressType">Proteon ProNET Token Ring</setEventAttribute>
+      </when>
+      <when test="$_htypeCode = '5'">
+        <setEventAttribute attr="addressType">Chaos</setEventAttribute>
+      </when>
+      <when test="$_htypeCode = '6'">
+        <setEventAttribute attr="addressType">IEEE 802 Networks</setEventAttribute>
+      </when>
+      <when test="$_htypeCode = '7'">
+        <setEventAttribute attr="addressType">ARCNET</setEventAttribute>
+      </when>
+      <when test="$_htypeCode = '8'">
+        <setEventAttribute attr="addressType">Hyperchannel</setEventAttribute>
+      </when>
+      <when test="$_htypeCode = '9'">
+        <setEventAttribute attr="addressType">Lanstar</setEventAttribute>
+      </when>
+      <when test="$_htypeCode = '10'">
+        <setEventAttribute attr="addressType">Autonet Short Address</setEventAttribute>
+      </when>
+      <when test="$_htypeCode IN '11,12'">
+        <setEventAttribute attr="addressType">LocalTalk</setEventAttribute>
+      </when>
+      <when test="$_htypeCode = '13'">
+        <setEventAttribute attr="addressType">Ultra Link</setEventAttribute>
+      </when>
+      <when test="$_htypeCode = '14'">
+        <setEventAttribute attr="addressType">SMDS</setEventAttribute>
+      </when>
+      <when test="$_htypeCode = '15'">
+        <setEventAttribute attr="addressType">FrameRelay</setEventAttribute>
+      </when>
+      <when test="$_htypeCode = '16'">
+        <setEventAttribute attr="addressType">ATM</setEventAttribute>
+      </when>
+    </choose>
+
+    <!-- set client mac -->
+    <when test="exist _clientHwAddr">
+      <setEventAttribute attr="hostMACAddr">normalizeMAC($_clientHwAddr)</setEventAttribute>
+    </when>
+
+    <when test="exist _clientIp">
+      <when test="$_clientIp != '0.0.0.0'">
+        <setEventAttribute attr="hostIpAddr">$_clientIp</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _serverIpAddr">
+      <when test="$_serverIpAddr != '0.0.0.0'">
+        <setEventAttribute attr="serverIpAddr">$_serverIpAddr</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _dhcpGateway">
+      <when test="$_dhcpGateway != '0.0.0.0'">
+        <setEventAttribute attr="dhcpGateway">$_dhcpGateway</setEventAttribute>
+      </when>
+    </when>
+
+    <!-- convert transaction duration in secs to msec -->
+    <when test="exist _duration">
+      <setEventAttribute attr="durationMSec">scale($_duration, 1000)</setEventAttribute>
+    </when>
+
+  </parsingInstructions>
+
+</eventParser>
+

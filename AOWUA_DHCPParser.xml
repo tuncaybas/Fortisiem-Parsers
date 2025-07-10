@@ -1,0 +1,111 @@
+<eventParser name="AOWUA_DHCPParser">
+  <deviceType>
+    <Vendor>Microsoft</Vendor>
+    <Model>Windows</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Microsoft</Vendor>
+    <Model>DHCP</Model>
+    <Version>ANY</Version>
+    <Name>DHCP Server</Name>
+  </appType>
+
+  <testEvents>
+    <testEvent><![CDATA[2015-02-11T02:07:45Z WIN-2008-LAW-agent 192.168.1.30 AccelOps-WUA-DHCP [monitorStatus]="Success" [ID]="01" [Date]="02/11/15" [Time]="10:07:43" [Description]="Stopped" [IP Address]="" [Host Name]="" [MAC Address]="" [User Name]="" [ TransactionID]="0" [ QResult]="6" [Probationtime]="" [ CorrelationID]="" [Dhcid.]=""]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions/>
+
+  <eventFormatRecognizer><![CDATA[\s<:gPatHostName>\s+<:gPatIpAddr>\s+AccelOps-WUA-DHCP[- ]]]></eventFormatRecognizer>
+
+  <languageLoader>
+    <language>AOWUA_DHCPParser-zh_CN</language>
+    <language>AOWUA_DHCPParser-zh_TW</language>
+  </languageLoader>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[(?:<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>Z|<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>)\s+<reptDevName:gPatHostName>\s+<reptDevIpAddr:gPatIpAddr>\s+AccelOps-WUA-DHCP(?:-\S+)?\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, "UTC")</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">Windows Agent</setEventAttribute>
+
+    <collectAndSetAttrByKeyValuePair sep=" [" src="$_body">
+      <attrKeyMap attr="_description" key="[Description]="/>
+      <attrKeyMap attr="computer" key="[Host Name]="/>
+      <attrKeyMap attr="hostName" key="[Host Name]="/>
+      <attrKeyMap attr="hostIpAddr" key="[IP Address]="/>
+      <attrKeyMap attr="machineGUID" key="[MachineGuid]="/>
+      <attrKeyMap attr="machineGUID" key="[machineGUID]="/>
+      <attrKeyMap attr="_mac" key="[MAC Address]="/>
+      <attrKeyMap attr="status" key="[monitorStatus]="/>
+      <attrKeyMap attr="user" key="[User Name]="/>
+      <attrKeyMap attr="serviceName" key="[Service Name]="/>
+      <attrKeyMap attr="serviceFileName" key="[Service File Name]="/>
+      <attrKeyMap attr="serviceAccount" key="[Service Account]="/>
+      <attrKeyMap attr="serviceType" key="[Service Type]="/>
+      <attrKeyMap attr="phCustId" key="[phCustId]="/>
+      <attrKeyMap attr="customer" key="[customer]="/>
+    </collectAndSetAttrByKeyValuePair>
+    <when test="not_exist serviceName">
+      <when test="exist serviceFileName">
+        <setEventAttribute attr="serviceName">$serviceFileName</setEventAttribute>
+      </when>
+    </when>
+    <choose>
+      <when test="not_exist _description"/>
+
+      <when test="matches($_description, __i18n_patAssign)">
+        <setEventAttribute attr="eventType">AO-WUA-DHCP-IP-ASSIGN</setEventAttribute>
+      </when>
+
+      <when test="matches($_description, __i18n_patRenew)">
+        <setEventAttribute attr="eventType">AO-WUA-DHCP-IP-LEASE-RENEW</setEventAttribute>
+      </when>
+
+      <when test="matches($_description, __i18n_patDNS_Update_Successful)">
+        <setEventAttribute attr="eventType">AO-WUA-DHCP-DNS-UPDATE-SUCCESS</setEventAttribute>
+      </when>
+
+      <when test="matches($_description, __i18n_patDNS_Update_Request)">
+        <setEventAttribute attr="eventType">AO-WUA-DHCP-DNS-UPDATE-REQUEST</setEventAttribute>
+      </when>
+
+      <when test="matches($_description, __i18n_patDNS_Update_Failed)">
+        <setEventAttribute attr="eventType">AO-WUA-DHCP-DNS-UPDATE-FAILED</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+
+      <when test="matches($_description, __i18n_patNACK)">
+        <setEventAttribute attr="eventType">AO-WUA-DHCP-DNS-LEASE-DENY</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+
+      <when test="matches($_description, __i18n_patScope_Full)">
+        <setEventAttribute attr="eventType">AO-WUA-DHCP-SCOPE-FULL</setEventAttribute>
+      </when>
+
+      <when test="matches($_description, __i18n_patDeleted)">
+        <setEventAttribute attr="eventType">AO-WUA-DHCP-LEASE_DELETED</setEventAttribute>
+      </when>
+
+      <when test="matches($_description, __i18n_patDatabase_Cleanup_Begin)">
+        <setEventAttribute attr="eventType">AO-WUA-DHCP-DATABASE-CLEANUP-BEGIN</setEventAttribute>
+      </when>
+
+      <otherwise>
+        <setEventAttribute attr="eventType">AO-WUA-DHCP-Generic</setEventAttribute>
+        <setEventAttribute attr="msg">$_description</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist _mac">
+      <setEventAttribute attr="hostMACAddr">normalizeMAC($_mac)</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>

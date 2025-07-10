@@ -1,0 +1,125 @@
+<eventParser name="ArmisCEFParser">
+  <deviceType>
+    <Vendor>Armis</Vendor>
+    <Model>Asset Intelligence Platform</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[CEF:0|Armis|Alert|1.0|9|SYSTEM_POLICY_VIOLATION|MEDIUM|start="Jun 26 2023 02:23:10" act=SYSTEM_POLICY_VIOLATION src= spt= suser="* * * *" dst=11.12.13.14 dpt=443 smac=00:01:02:03:04:05 dmac= duser="* * * *" cs1=https://test.armis.com/alert/1 cs1label=url cs2=17 cs2label=srcDeviceId cs3= cs3label=dstDeviceId cs4="Detected network policy violation from gns3-linuxmint to 11.12.13.14 via HTTPS over port 443" cs4label=activityTitle ]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[CEF:\d+\|Armis\|]]></eventFormatRecognizer>
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[^CEF\s*:\d+\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="eventType">CEF-Armis-Generic</setEventAttribute>
+    <when test="matches($_body, '\\\|')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "\|", "::TEMP::")</setEventAttribute>
+    </when>
+    <setEventAttribute attr="_body">replaceStrInStr($_body, "|", "::SEP::")</setEventAttribute>
+    <when test="matches($_body, '::TEMP::')">
+      <setEventAttribute attr="_body">replaceStrInStr($_body, "::TEMP::", "|")</setEventAttribute>
+    </when>
+    <collectAndSetAttrByPos sep="::SEP::" src="$_body">
+      <attrPosMap attr="_devVendor" pos="1"/>
+      <attrPosMap attr="type" pos="2"/>
+      <attrPosMap attr="appVersion" pos="3"/>
+      <attrPosMap attr="eventSeverity" pos="4"/>
+      <attrPosMap attr="subtype" pos="5"/>
+      <attrPosMap attr="eventSeverityCat" pos="6"/>
+      <attrPosMap attr="_extension" pos="7"/>
+    </collectAndSetAttrByPos>
+    <setEventAttribute attr="eventType">combineMsgId("Armis-",$type,"-", $subtype)</setEventAttribute>
+    <setEventAttribute attr="_extension">replaceStrInStr($_extension, "\=", "=")</setEventAttribute>
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_extension">
+      <attrKeyMap attr="activityName" key="act"/>
+      <attrKeyMap attr="appTransportProto" key="app"/>
+      <attrKeyMap attr="_cs1Label" key="cs1label"/>
+      <attrKeyMap attr="_cs1" key="cs1"/>
+      <attrKeyMap attr="_cs2Label" key="cs2label"/>
+      <attrKeyMap attr="_cs2" key="cs2"/>
+      <attrKeyMap attr="_cs3Label" key="cs3label"/>
+      <attrKeyMap attr="_cs3" key="cs3"/>
+      <attrKeyMap attr="_cs4Label" key="cs4label"/>
+      <attrKeyMap attr="_cs4" key="cs4"/>
+      <attrKeyMap attr="destMACAddr" key="dmac"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="destUser" key="duser"/>
+      <attrKeyMap attr="srcMACAddr" key="smac"/>
+      <attrKeyMap attr="srcIpPort" key="spt"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="_startTime" key="start"/>
+      <attrKeyMap attr="userId" key="suid"/>
+      <attrKeyMap attr="srcUser" key="suser"/>
+      <attrKeyMap attr="devEventTypeGrp" key="cat"/>
+    </collectFieldsByKeyValuePair>
+
+    <choose>
+      <when test="not_exist _cs1Label"/>
+      <when test="not_exist _cs1"/>
+      <when test="$_cs1Label = 'url'">
+        <setEventAttribute attr="infoURL">$_cs1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs2Label"/>
+      <when test="not_exist _cs2"/>
+      <when test="$_cs2Label = 'srcDeviceId'">
+        <setEventAttribute attr="srcId">$_cs2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs3Label"/>
+      <when test="not_exist _cs3"/>
+      <when test="$_cs3Label = 'dstDeviceId'">
+        <setEventAttribute attr="destId">$_cs3</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs4Label"/>
+      <when test="not_exist _cs4"/>
+      <when test="$_cs4Label = 'activityTitle'">
+        <setEventAttribute attr="title">$_cs4</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="exist activityName">
+        <setEventAttribute attr="eventType">combineMsgId("Armis-", $type, "-", $activityName)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">combineMsgId("Armis-",$type, "-", $subtype)</setEventAttribute>
+      </otherwise>
+    </choose>
+    <setEventAttribute attr="eventType">replaceStringByRegex($eventType, ":\s+", "-")</setEventAttribute>
+    <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "\s+", "-")</setEventAttribute>
+    <when test="exist _startTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_startTime">
+            <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="startTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <choose>
+      <when test="$eventSeverityCat = 'LOW'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$eventSeverityCat = 'MEDIUM'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </otherwise>
+    </choose>
+  </parsingInstructions>
+</eventParser>

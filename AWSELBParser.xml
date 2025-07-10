@@ -1,0 +1,80 @@
+<eventParser name="AWSELBParser">
+  <deviceType>
+    <Vendor>Amazon</Vendor>
+    <Model>AWS ELB</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[2015-05-13T23:39:43.945958Z my-loadbalancer 192.168.131.39:2817 10.0.0.1:80 0.000073 0.001048 0.000057 200 200 0 29 "GET http://www.example.com:80/ HTTP/1.1" "curl/7.38.0" - -]]></testEvent>
+    <testEvent><![CDATA[2015-05-13T23:39:43.945958Z my-loadbalancer 192.168.131.39:2817 10.0.0.1:80 0.001065 0.000015 0.000023 - - 57 502 "- - - " "-" ECDHE-ECDSA-AES128-GCM-SHA256 TLSv1.2]]></testEvent>
+    <testEvent><![CDATA[AWS-ELB:phCustId=1,reptDevIpAddr=10.10.103.205,reptDevName=amazon.com,msg=http 2021-02-11T01:56:06.000372Z app/shashi-elb/061d492a88a60fb1 10.10.168.108:46938 - -1 -1 -1 503 - 500 337 "POST http://10.10.29.144:80/boaform/admin/formLogin HTTP/1.1" "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:71.0) Gecko/20100101 Firefox/71.0" - - arn:aws:elasticloadbalancing:us-west-2:623885071509:targetgroup/shashi-tg/974fbb8764192573 "Root=1-60248eb5-01950dcf187ac3c244ab2231" "-" "-" 0 2021-02-11T01:56:05.999000Z "forward" "-" "-" "-" "-" "-" "-"]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patFloat"><![CDATA[-?\d+(?:\.\d*)?]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[^\s*(?:AWS-ELB:phCustId=<:gPatStrComma>,reptDevIpAddr=<:gPatStrComma>,reptDevName=<:gPatStrComma>,msg=<appTransportProto:gPatStr>\s+)?<:gPatYear>-<:gPatMonNum>-<:gPatDay>T<:gPatTime>\.\d{6}Z\s+<:gPatStr>\s+<:gPatIpAddr>:<:gPatInt>\s+<:gPatStr>\s+<:patFloat>\s+<:patFloat>\s+<:patFloat>\s+<:gPatStr>\s+<:gPatStr>\s+<:gPatInt>\s+<:gPatInt>\s+"<:gPatStr>\s+<:gPatStr>\s+<:gPatStr>\s*"\s+"<:gPatStrDQ>"\s+<:gPatStr>\s+<:gPatStr>\s*]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[^\s*(?:AWS-ELB:phCustId=<phCustId:gPatStrComma>,reptDevIpAddr=<reptDevIpAddr:gPatStrComma>,reptDevName=<reptDevName:gPatStrComma>,msg=<appTransportProto:gPatStr>\s+)?<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d{6}Z\s+<loadBalancerName:gPatStr>\s+<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>\s+<_dest:gPatStr>\s+<_reqTime:patFloat>\s+<:patFloat>\s+<_respTime:patFloat>\s+<_httpStatusCode:gPatStr>\s+<:gPatStr>\s+<recvBytes64:gPatInt>\s+<sentBytes64:gPatInt>\s+"<_httpMethod:gPatStr>\s+<_infoURL:gPatStr>\s+<_httpVersion:gPatStr>\s*"\s+"<httpUserAgent:gPatStrDQ>"\s+<_encryptAlgo:gPatStr>\s]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, "UTC")</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">AWS_ELB</setEventAttribute>
+
+    <when test="$_httpMethod != '-'">
+      <setEventAttribute attr="httpMethod">$_httpMethod</setEventAttribute>
+    </when>
+
+    <when test="$_infoURL != '-'">
+      <setEventAttribute attr="infoURL">$_infoURL</setEventAttribute>
+    </when>
+
+    <when test="$_httpStatusCode != '-'">
+      <setEventAttribute attr="httpStatusCode">$_httpStatusCode</setEventAttribute>
+    </when>
+
+    <when test="$_httpVersion != '-'">
+      <setEventAttribute attr="httpVersion">$_httpVersion</setEventAttribute>
+    </when>
+
+    <when test="$_encryptAlgo != '-'">
+      <setEventAttribute attr="encryptAlgo">$_encryptAlgo</setEventAttribute>
+    </when>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_dest">
+          <regex><![CDATA[<destIpAddr:gPatIpAddr>:<destIpPort:gPatInt>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+
+    <choose>
+      <when test="exist infoURL">
+        <choose>
+          <when test="matches($infoURL, '^https://')">
+            <setEventAttribute attr="eventType">ELB-HTTPS-Entry</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">ELB-HTTP-Entry</setEventAttribute>
+          </otherwise>
+        </choose>
+        <setEventAttribute attr="destName">extractHostFromURL($infoURL)</setEventAttribute>
+      </when>
+      <when test="exist encryptAlgo">
+        <setEventAttribute attr="eventType">ELB-SSL-Entry</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">ELB-TCP-Entry</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <setEventAttribute attr="reqProcessTimeAvg">scale($_reqTime, 1000)</setEventAttribute>
+    <setEventAttribute attr="respProcessTimeAvg">scale($_respTime, 1000)</setEventAttribute>
+  </parsingInstructions>
+</eventParser>

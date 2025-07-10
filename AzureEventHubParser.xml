@@ -1,0 +1,555 @@
+<eventParser name="AzureEventHubParser">
+
+  <deviceType>
+    <Vendor>Microsoft</Vendor>
+    <Model>Azure Event Hub</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[MS_EVENT_HUB eventHubName=xxxx event={"average":0,"count":0,"maximum":0,"metricName":"INTERR","minimum":0,"resourceId":"/SUBSCRIPTIONS/11111111-1111-1111-1111-111111111111/RESOURCEGROUPS/ANDY_TEST/PROVIDERS/MICROSOFT.EVENTHUB/NAMESPACES/FORTISIEMEVENTHUB","time":"2019-12-26T22:36:00.0000000Z","timeGrain":"PT1M","total":0}]]></testEvent>
+    <testEvent><![CDATA[MS_EVENT_HUB eventHubName=xxxx event={"time": "2019-09-20T00:59:14.03Z", "resourceId": "/SUBSCRIPTIONS/11111111-1111-1111-1111-111111111111/RESOURCEGROUPS/RDXMANAGED/PROVIDERS/MICROSOFT.STORAGE/STORAGEACCOUNTS/RDXMANAGEDDISKS462", "correlationId": "11111111-1111-1111-1111-111111111111", "operationName": "Microsoft.Resourcehealth/healthevent/Updated/action", "level": "Information", "resultType": "Updated", "category": "Action", "location": "global", "properties": {"eventCategory":"ResourceHealth","eventProperties":{"title":"This Storage Account was throttled because it exceeded its Azure Storage scalability limits.","details":"AccountClientThrottling","currentHealthStatus":"","previousHealthStatus":"","type":"Downtime","cause":"UserInitiated"}}}]]></testEvent>
+    <testEvent><![CDATA[MS_EVENT_HUB eventHubName=xxxx event={"category":"AppServiceHTTPLogs","properties":{"CIp":"10.10.10.10","Cookie":"-","CsBytes":1560,"CsHost":"http://www.electrorent.com","CsMethod":"GET","CsUriQuery":"X-ARR-LOG-ID=11111111-1111-1111-1111-111111111111","CsUriStem":"/static/js/main.30c03f27.chunk.js","CsUsername":"-","Referer":"https://www.electrorent.com/products/datacom-ethernet-sdh-sonet-testers/oc-3ds1e1154mb-test-sets/viavi-solutions-inc/csc-e1-p1/01t1O000004TkvDQAS","Result":"Success","SPort":"443","ScBytes":449231,"ScStatus":200,"ScSubStatus":"0","ScWin32Status":"0","TimeTaken":2312,"UserAgent":"Mozilla/5.0+(X11;+Linux+x86_64)+AppleWebKit/537.36+(KHTML,+like+Gecko)+HeadlessChrome/84.0.4147.89+Safari/537.36+Prerender+(+https://github.com/prerender/prerender)"},"resourceId":"/SUBSCRIPTIONS/11111111-1111-1111-1111-111111111111/RESOURCEGROUPS/WWW.ELECTRORENT.COM-PROD/PROVIDERS/MICROSOFT.WEB/SITES/ER-PROD-WEBSITE","time":"2021-01-08T18:54:27.5807691Z"}]]></testEvent>
+    <testEvent><![CDATA[MS_EVENT_HUB eventHubName=xxxx event={"Category":"AppServiceFileAuditLogs","OperationName":"Create/Update","Properties":{"OperationName":"Create/Update","Path":"/site/wwwroot/static/js/main.30c03f27.chunk.js/","Process":"WebApp"},"ResourceId":"/SUBSCRIPTIONS/11111111-1111-1111-1111-111111111111/RESOURCEGROUPS/http://WWW.ELECTRORENT.COM-PROD/PROVIDERS/MICROSOFT.WEB/SITES/ER-PROD-WEBSITE","time":"2021-01-08T18:55:55.5580406Z"}]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patJson"><![CDATA[\{.*\}]]></pattern>
+    <pattern name="patSlash"><![CDATA[[^/]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[^\s*(?:MS_EVENT_HUB eventHubName=\S+ event=)?(?:\{.*"[oO]perationName":\s*"(?:Microsoft|MICROSOFT)\..*\}|\{.*"[rR]esourceId":\s*".*(?:Microsoft|MICROSOFT)\..*\})]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">MS_EvtHub_Generic</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">AZURE_PYTHON_SDK</setEventAttribute>
+    <setEventAttribute attr="_et">0</setEventAttribute>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^MS_EVENT_HUB eventHubName=<eventHubName:gPatStr> event=<_body:patJson>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default>
+        <setEventAttribute attr="_body">$_rawmsg</setEventAttribute>
+      </default>
+    </switch>
+
+    <collectAndSetAttrByJSON src="$_body">
+      <attrKeyMap attr="appRole" key="AppRoleInstance"/>
+      <attrKeyMap attr="appRoleDesc" key="AppRoleName"/>
+      <attrKeyMap attr="numJob" key="Average"/>
+      <attrKeyMap attr="poolName" key="backendPoolName"/>
+      <attrKeyMap attr="settingsName" key="backendSettingName"/>
+      <attrKeyMap attr="srcIpAddr" key="CallerIpAddress"/>
+      <attrKeyMap attr="srcIpAddr" key="callerIpAddress"/>
+      <attrKeyMap attr="categoryType" key="Category"/>
+      <attrKeyMap attr="categoryType" key="category"/>
+      <attrKeyMap attr="browserName" key="ClientBrowser"/>
+      <attrKeyMap attr="srcGeoCity" key="ClientCity"/>
+      <attrKeyMap attr="srcGeoCountry" key="ClientCountryOrRegion"/>
+      <attrKeyMap attr="srcIpAddr" key="ClientIP"/>
+      <attrKeyMap attr="hostModel" key="ClientModel"/>
+      <attrKeyMap attr="osType" key="ClientOS"/>
+      <attrKeyMap attr="srcGeoState" key="ClientStateOrProvince"/>
+      <attrKeyMap attr="srcType" key="ClientType"/>
+      <attrKeyMap attr="azureCorrelationId" key="CorrelationId"/>
+      <attrKeyMap attr="azureCorrelationId" key="correlationId"/>
+      <attrKeyMap attr="count" key="Count"/>
+      <attrKeyMap attr="dependencyType" key="DependencyType"/>
+      <attrKeyMap attr="durationMSec" key="DurationMs"/>
+      <attrKeyMap attr="durationMSec" key="durationMs"/>
+      <attrKeyMap attr="azureEventId" key="EventDataId"/>
+      <attrKeyMap attr="azureEventId" key="eventDataId"/>
+      <attrKeyMap attr="azureEventId" key="EventId"/>
+      <attrKeyMap attr="compEventName" key="EventName"/>
+      <attrKeyMap attr="uriStem" key="HttpPath"/>
+      <attrKeyMap attr="identity" key="identity"/>
+      <attrKeyMap attr="authAction" key="Identity.Authorization.Action"/>
+      <attrKeyMap attr="userPrincipalName" key="identity.authorization.evidence.principalId"/>
+      <attrKeyMap attr="principal" key="identity.authorization.evidence.principalType"/>
+      <attrKeyMap attr="role" key="Identity.Authorization.Evidence.Role"/>
+      <attrKeyMap attr="role" key="identity.authorization.evidence.role"/>
+      <attrKeyMap attr="roleId" key="identity.authorization.evidence.roleAssignmentId"/>
+      <attrKeyMap attr="scope" key="identity.authorization.evidence.roleAssignmentScope"/>
+      <attrKeyMap attr="roleId" key="identity.authorization.evidence.roleDefinitionId"/>
+      <attrKeyMap attr="identityScope" key="identity.authorization.scope"/>
+      <attrKeyMap attr="clientAppId" key="identity.claims.appid"/>
+      <attrKeyMap attr="authenMethod" key="identity.claims.appidacr"/>
+      <attrKeyMap attr="authServerName" key="Identity.Claims.Aud"/>
+      <attrKeyMap attr="authServerName" key="identity.claims.aud"/>
+      <attrKeyMap attr="expiredDate" key="identity.claims.exp"/>
+      <attrKeyMap attr="appGroupName" key="identity.claims.groups"/>
+      <attrKeyMap attr="identityClaimIssuedAt" key="identity.claims.iat"/>
+      <attrKeyMap attr="srcIpAddr" key="identity.claims.ipaddr"/>
+      <attrKeyMap attr="srcIpAddr" key="Identity.Claims.IpAddr"/>
+      <attrKeyMap attr="issuer" key="identity.claims.iss"/>
+      <attrKeyMap attr="user" key="Identity.Claims.Name"/>
+      <attrKeyMap attr="user" key="identity.claims.name"/>
+      <attrKeyMap attr="identityClaimNotBefore" key="identity.claims.nbf"/>
+      <attrKeyMap attr="uuid" key="identity.claims.puid"/>
+      <attrKeyMap attr="token" key="identity.claims.uti"/>
+      <attrKeyMap attr="userRole" key="identity.claims.wids"/>
+      <attrKeyMap attr="logLevel" key="identity.level"/>
+      <attrKeyMap attr="opName" key="identity.operationName"/>
+      <attrKeyMap attr="resourceId" key="Ikey"/>
+      <attrKeyMap attr="resourceId" key="Key"/>
+      <attrKeyMap attr="_level" key="Level"/>
+      <attrKeyMap attr="_level" key="level"/>
+      <attrKeyMap attr="hostLocation" key="location"/>
+      <attrKeyMap attr="serverName" key="LogicalServerName"/>
+      <attrKeyMap attr="maxValue" key="maximum"/>
+      <attrKeyMap attr="msg" key="Message"/>
+      <attrKeyMap attr="metricName" key="MetricName"/>
+      <attrKeyMap attr="minValue" key="minimum"/>
+      <attrKeyMap attr="appName" key="MonitoringApplication"/>
+      <attrKeyMap attr="hostId" key="Node"/>
+      <attrKeyMap attr="operationId" key="OperationId"/>
+      <attrKeyMap attr="opName" key="OperationName"/>
+      <attrKeyMap attr="opName" key="operationName"/>
+      <attrKeyMap attr="appVersion" key="operationVersion"/>
+      <attrKeyMap attr="parentId" key="ParentId"/>
+      <attrKeyMap attr="bucketName" key="PerformanceBucket"/>
+      <attrKeyMap attr="phCustId" key="phCustId"/>
+      <attrKeyMap attr="action" key="Properties.Action"/>
+      <attrKeyMap attr="actionTime" key="properties.activityDateTime"/>
+      <attrKeyMap attr="actionName" key="properties.activityDisplayName"/>
+      <attrKeyMap attr="detailSeq" key="properties.additionalDetails.key"/>
+      <attrKeyMap attr="details" key="properties.additionalDetails.value"/>
+      <attrKeyMap attr="appName" key="Properties.AppDisplayName"/>
+      <attrKeyMap attr="appName" key="properties.appDisplayName"/>
+      <attrKeyMap attr="clientAppId" key="properties.appId"/>
+      <attrKeyMap attr="policyName" key="properties.appliedConditionalAccessPolicies"/>
+      <attrKeyMap attr="principal" key="properties.appServicePrincipalId"/>
+      <attrKeyMap attr="resvUsedStorageMB" key="properties.ArchiveTierStorageConsumedInMBs"/>
+      <attrKeyMap attr="details" key="properties.authenticationDetails"/>
+      <attrKeyMap attr="authenMethod" key="properties.authenticationProtocol"/>
+      <attrKeyMap attr="authenMethod" key="properties.authenticationRequirement"/>
+      <attrKeyMap attr="policyDetails" key="properties.authenticationRequirementPolicies"/>
+      <attrKeyMap attr="authStrength" key="properties.authenticationStrengths"/>
+      <attrKeyMap attr="srcASNum32" key="properties.autonomousSystemNumber"/>
+      <attrKeyMap attr="cpuSysPct" key="properties.avg_cpu_percent"/>
+      <attrKeyMap attr="destName" key="Properties.BackendHostname"/>
+      <attrKeyMap attr="appVersion" key="properties.BackupItemAppVersion"/>
+      <attrKeyMap attr="item" key="properties.BackupItemFriendlyName"/>
+      <attrKeyMap attr="containerName" key="properties.BackupItemName"/>
+      <attrKeyMap attr="backupStatus" key="properties.BackupItemProtectionState"/>
+      <attrKeyMap attr="objType" key="properties.BackupItemType"/>
+      <attrKeyMap attr="oid" key="properties.BackupItemUniqueId"/>
+      <attrKeyMap attr="appServerInstance" key="properties.BackupManagementServerUniqueId"/>
+      <attrKeyMap attr="objType" key="properties.BackupManagementType"/>
+      <attrKeyMap attr="cacheScope" key="Properties.CacheStatus"/>
+      <attrKeyMap attr="appCategory" key="properties.category"/>
+      <attrKeyMap attr="appName" key="properties.clientAppUsed"/>
+      <attrKeyMap attr="credentialType" key="properties.clientCredentialType"/>
+      <attrKeyMap attr="srcIpAddr" key="Properties.ClientIP"/>
+      <attrKeyMap attr="srcIpPort" key="Properties.ClientPort"/>
+      <attrKeyMap attr="policyStatus" key="properties.conditionalAccessStatus"/>
+      <attrKeyMap attr="destIpAddr" key="properties.conditions.destinationIP"/>
+      <attrKeyMap attr="destIpPort" key="properties.conditions.destinationPortRange"/>
+      <attrKeyMap attr="_ipProto" key="properties.conditions.protocols"/>
+      <attrKeyMap attr="srcIpAddr" key="properties.conditions.sourceIP"/>
+      <attrKeyMap attr="srcIpPort" key="properties.conditions.sourcePortRange"/>
+      <attrKeyMap attr="ipConnId" key="Properties.ConnectionId"/>
+      <attrKeyMap attr="azureCorrelationId" key="properties.correlationId"/>
+      <attrKeyMap attr="createTime" key="properties.createdDateTime"/>
+      <attrKeyMap attr="authenMethod" key="properties.crossTenantAccessType"/>
+      <attrKeyMap attr="details" key="Properties.Details.Data"/>
+      <attrKeyMap attr="fileName" key="Properties.Details.File"/>
+      <attrKeyMap attr="lineNumber" key="Properties.Details.Line"/>
+      <attrKeyMap attr="serviceDesc" key="properties.details.matches"/>
+      <attrKeyMap attr="msg" key="Properties.Details.Message"/>
+      <attrKeyMap attr="browserName" key="properties.deviceDetail.browser"/>
+      <attrKeyMap attr="deviceIdentification" key="properties.deviceDetail.deviceID"/>
+      <attrKeyMap attr="srcName" key="Properties.DeviceDetail.DisplayName"/>
+      <attrKeyMap attr="srcName" key="properties.deviceDetail.displayName"/>
+      <attrKeyMap attr="osName" key="Properties.DeviceDetail.OperatingSystem"/>
+      <attrKeyMap attr="osName" key="properties.deviceDetail.operatingSystem"/>
+      <attrKeyMap attr="direction" key="properties.direction"/>
+      <attrKeyMap attr="endpoint" key="properties.EndpointName"/>
+      <attrKeyMap attr="managedEntity" key="properties.entity"/>
+      <attrKeyMap attr="errReason" key="Properties.ErrorInfo"/>
+      <attrKeyMap attr="azureEventCategory" key="Properties.EventCategory"/>
+      <attrKeyMap attr="azureEventCategory" key="properties.eventCategory"/>
+      <attrKeyMap attr="authenMethod" key="properties.EventData.AuthenticationPackageName"/>
+      <attrKeyMap attr="procId" key="properties.EventData.CallerProcessId"/>
+      <attrKeyMap attr="procName" key="properties.EventData.CallerProcessName"/>
+      <attrKeyMap attr="osObjHandleID" key="properties.EventData.HandleId"/>
+      <attrKeyMap attr="integrityLevel" key="properties.EventData.ImpersonationLevel"/>
+      <attrKeyMap attr="hostIpAddr" key="properties.EventData.IpAddress"/>
+      <attrKeyMap attr="ipPort" key="properties.EventData.IpPort"/>
+      <attrKeyMap attr="srcApp" key="properties.EventData.LmPackageName"/>
+      <attrKeyMap attr="winLogonGUID" key="properties.EventData.LogonGuid"/>
+      <attrKeyMap attr="procName" key="properties.EventData.LogonProcessName"/>
+      <attrKeyMap attr="loginType" key="properties.EventData.LogonType"/>
+      <attrKeyMap attr="newSecurityDescriptor" key="properties.EventData.NewSd"/>
+      <attrKeyMap attr="targetOsObjName" key="properties.EventData.ObjectName"/>
+      <attrKeyMap attr="osObjName" key="properties.EventData.ObjectServer"/>
+      <attrKeyMap attr="objType" key="properties.EventData.ObjectType"/>
+      <attrKeyMap attr="originalSecurityDescriptor" key="properties.EventData.OldSd"/>
+      <attrKeyMap attr="appTransportProto" key="properties.EventData.PackageName"/>
+      <attrKeyMap attr="privName" key="properties.EventData.PrivilegeList"/>
+      <attrKeyMap attr="procId" key="properties.EventData.ProcessId"/>
+      <attrKeyMap attr="procName" key="properties.EventData.ProcessName"/>
+      <attrKeyMap attr="winLogonFailCode2" key="properties.EventData.Status"/>
+      <attrKeyMap attr="domain" key="properties.EventData.SubjectDomainName"/>
+      <attrKeyMap attr="winLogonId" key="properties.EventData.SubjectLogonId"/>
+      <attrKeyMap attr="user" key="properties.EventData.SubjectUserName"/>
+      <attrKeyMap attr="securityId" key="properties.EventData.SubjectUserSid"/>
+      <attrKeyMap attr="targetDomain" key="properties.EventData.TargetDomainName"/>
+      <attrKeyMap attr="targetUserId" key="properties.EventData.TargetLogonId"/>
+      <attrKeyMap attr="targetSid" key="properties.EventData.TargetSid"/>
+      <attrKeyMap attr="targetUser" key="properties.EventData.TargetUserName"/>
+      <attrKeyMap attr="targetUserSid" key="properties.EventData.TargetUserSid"/>
+      <attrKeyMap attr="targetHostName" key="properties.EventData.Workstation"/>
+      <attrKeyMap attr="hostName" key="properties.EventData.WorkstationName"/>
+      <attrKeyMap attr="actionName" key="Properties.EventName"/>
+      <attrKeyMap attr="actionName" key="properties.eventName"/>
+      <attrKeyMap attr="sessionId" key="Properties.EventProperties.AccountSessionId"/>
+      <attrKeyMap attr="sessionId" key="properties.eventProperties.accountSessionId"/>
+      <attrKeyMap attr="targetType" key="Properties.EventProperties.AttackedResourceType"/>
+      <attrKeyMap attr="targetType" key="properties.eventProperties.attackedResourceType"/>
+      <attrKeyMap attr="_attacker" key="Properties.EventProperties.Attackers"/>
+      <attrKeyMap attr="_attacker" key="properties.eventProperties.attackers"/>
+      <attrKeyMap attr="statusDetailedReason" key="Properties.EventProperties.Cause"/>
+      <attrKeyMap attr="statusDetailedReason" key="properties.eventProperties.cause"/>
+      <attrKeyMap attr="targetName" key="Properties.EventProperties.CompromisedEntity"/>
+      <attrKeyMap attr="targetName" key="properties.eventProperties.compromisedEntity"/>
+      <attrKeyMap attr="newStatus" key="Properties.EventProperties.CurrentHealthStatus"/>
+      <attrKeyMap attr="newStatus" key="properties.eventProperties.currentHealthStatus"/>
+      <attrKeyMap attr="details" key="Properties.EventProperties.Details"/>
+      <attrKeyMap attr="details" key="properties.eventProperties.details"/>
+      <attrKeyMap attr="remedyAction" key="Properties.EventProperties.RemediationSteps"/>
+      <attrKeyMap attr="remedyAction" key="properties.eventProperties.remediationSteps"/>
+      <attrKeyMap attr="command" key="Properties.EventProperties.SuspiciousCommandLine"/>
+      <attrKeyMap attr="command" key="properties.eventProperties.suspiciousCommandLine"/>
+      <attrKeyMap attr="title" key="Properties.EventProperties.Title"/>
+      <attrKeyMap attr="title" key="properties.eventProperties.title"/>
+      <attrKeyMap attr="type" key="Properties.EventProperties.Type"/>
+      <attrKeyMap attr="type" key="properties.eventProperties.type"/>
+      <attrKeyMap attr="user" key="Properties.EventProperties.UserName"/>
+      <attrKeyMap attr="user" key="properties.eventProperties.userName"/>
+      <attrKeyMap attr="propValue" key="properties.ExtendedProperties"/>
+      <attrKeyMap attr="isFlagged" key="properties.flaggedForReview"/>
+      <attrKeyMap attr="tenantId" key="properties.homeTenantId"/>
+      <attrKeyMap attr="hostName" key="properties.host"/>
+      <attrKeyMap attr="targetHostName" key="Properties.Hostname"/>
+      <attrKeyMap attr="httpHost" key="Properties.HttpHost"/>
+      <attrKeyMap attr="httpMethod" key="Properties.HttpMethod"/>
+      <attrKeyMap attr="httpStatusCode" key="properties.httpStatus"/>
+      <attrKeyMap attr="httpStatusCode" key="Properties.HttpStatusCode"/>
+      <attrKeyMap attr="httpSubStatusCode" key="Properties.HttpStatusDetails"/>
+      <attrKeyMap attr="httpVersion" key="Properties.HttpVersion"/>
+      <attrKeyMap attr="morId" key="properties.id"/>
+      <attrKeyMap attr="tokenIssuerType" key="properties.incomingTokenType"/>
+      <attrKeyMap attr="initiated" key="properties.initiatedBy"/>
+      <attrKeyMap attr="instanceName" key="Properties.InstanceId"/>
+      <attrKeyMap attr="_bytesRead" key="properties.io_bytes_read"/>
+      <attrKeyMap attr="_bytesWritten" key="properties.io_bytes_written"/>
+      <attrKeyMap attr="_requestCount" key="properties.io_requests"/>
+      <attrKeyMap attr="srcIpAddr" key="Properties.IpAddress"/>
+      <attrKeyMap attr="srcIpAddr" key="properties.ipAddress"/>
+      <attrKeyMap attr="isInteractive" key="Properties.IsInteractive"/>
+      <attrKeyMap attr="isInteractive" key="properties.isInteractive"/>
+      <attrKeyMap attr="_isReceived" key="properties.isReceivedFromClient"/>
+      <attrKeyMap attr="_isRecieved" key="Properties.IsRecievedFromClient"/>
+      <attrKeyMap attr="_restricted" key="properties.isTenantRestricted"/>
+      <attrKeyMap attr="_isThrough" key="properties.isThroughGlobalSecureAccess"/>
+      <attrKeyMap attr="hostGeoCity" key="properties.location.city"/>
+      <attrKeyMap attr="hostGeoCountry" key="properties.location.countryOrRegion"/>
+      <attrKeyMap attr="hostGeoLatitude" key="properties.location.geoCoordinates.latitude"/>
+      <attrKeyMap attr="hostGeoLongitude" key="properties.location.geoCoordinates.longitude"/>
+      <attrKeyMap attr="hostGeoState" key="properties.location.state"/>
+      <attrKeyMap attr="_logged" key="properties.loggedByService"/>
+      <attrKeyMap attr="srcMACAddr" key="properties.macAddress"/>
+      <attrKeyMap attr="activeConns" key="properties.matchedConnections"/>
+      <attrKeyMap attr="msg" key="Properties.Message"/>
+      <attrKeyMap attr="msg" key="properties.message"/>
+      <attrKeyMap attr="msg" key="Properties.Msg"/>
+      <attrKeyMap attr="hostLocation" key="properties.networkLocationDetails"/>
+      <attrKeyMap attr="opName" key="properties.operationType"/>
+      <attrKeyMap attr="transactionId" key="properties.originalRequestId"/>
+      <attrKeyMap attr="uriStem" key="properties.originalRequestUriWithArgs"/>
+      <attrKeyMap attr="lastRequestMethod" key="properties.originalTransferMethod"/>
+      <attrKeyMap attr="policyDetails" key="Properties.Policies"/>
+      <attrKeyMap attr="policyDetails" key="properties.policies"/>
+      <attrKeyMap attr="policyName" key="properties.policy"/>
+      <attrKeyMap attr="ipPolicyId" key="Properties.policyId"/>
+      <attrKeyMap attr="scope" key="Properties.PolicyScope"/>
+      <attrKeyMap attr="policyIdentity" key="properties.PolicyUniqueId"/>
+      <attrKeyMap attr="srcIpAddr" key="properties.primaryIPv4Address"/>
+      <attrKeyMap attr="priority" key="properties.priority"/>
+      <attrKeyMap attr="containerId" key="properties.ProtectedContainerUniqueId"/>
+      <attrKeyMap attr="machineGUID" key="properties.ProtectedServerUniqueId"/>
+      <attrKeyMap attr="groupName" key="properties.ProtectionGroupName"/>
+      <attrKeyMap attr="recvBytes" key="properties.receivedBytes"/>
+      <attrKeyMap attr="msgId" key="properties.RecordId"/>
+      <attrKeyMap attr="sentBytes" key="Properties.RequestBytes"/>
+      <attrKeyMap attr="uriQuery" key="Properties.RequestPath"/>
+      <attrKeyMap attr="appTransportProto" key="Properties.RequestProtocol"/>
+      <attrKeyMap attr="queryData" key="properties.requestQuery"/>
+      <attrKeyMap attr="uriStem" key="Properties.RequestUri"/>
+      <attrKeyMap attr="resvStorageMB" key="properties.reserved_storage_mb"/>
+      <attrKeyMap attr="resourceName" key="properties.resourceDisplayName"/>
+      <attrKeyMap attr="targetResourceId" key="properties.resourceId"/>
+      <attrKeyMap attr="servicePolicy" key="properties.resourceServicePrincipalId"/>
+      <attrKeyMap attr="tenantId" key="properties.resourceTenantId"/>
+      <attrKeyMap attr="recvBytes" key="properties.responseBytes"/>
+      <attrKeyMap attr="resultType" key="properties.result"/>
+      <attrKeyMap attr="errReason" key="properties.resultReason"/>
+      <attrKeyMap attr="details" key="properties.riskDetail"/>
+      <attrKeyMap attr="threatCategory" key="properties.riskEventTypes_v2"/>
+      <attrKeyMap attr="threatLevelOverall" key="properties.riskLevelAggregated"/>
+      <attrKeyMap attr="threatLevel" key="properties.riskLevelDuringSignIn"/>
+      <attrKeyMap attr="status" key="properties.riskState"/>
+      <attrKeyMap attr="ruleName" key="Properties.RoutingRuleName"/>
+      <attrKeyMap attr="ruleId" key="Properties.RuleId"/>
+      <attrKeyMap attr="ruleName" key="properties.ruleName"/>
+      <attrKeyMap attr="ruleIdStr" key="Properties.ruleSetType"/>
+      <attrKeyMap attr="playbookName" key="properties.RunbookName"/>
+      <attrKeyMap attr="backupStatus" key="properties.SecondaryBackupProtectionState"/>
+      <attrKeyMap attr="appProtoId" key="Properties.SecurityProtocol"/>
+      <attrKeyMap attr="sentBytes" key="properties.sentBytes"/>
+      <attrKeyMap attr="latency" key="properties.serverResponseLatency"/>
+      <attrKeyMap attr="serverName" key="properties.serverRouted"/>
+      <attrKeyMap attr="svcStatus" key="properties.serverStatus"/>
+      <attrKeyMap attr="userKey" key="properties.servicePrincipalCredentialKeyId"/>
+      <attrKeyMap attr="userId" key="properties.servicePrincipalId"/>
+      <attrKeyMap attr="userPrincipalName" key="properties.servicePrincipalName"/>
+      <attrKeyMap attr="transactionId" key="properties.serviceRequestId"/>
+      <attrKeyMap attr="policyDetails" key="properties.sessionLifetimePolicies"/>
+      <attrKeyMap attr="protectionStatus" key="properties.signInTokenProtectionStatus"/>
+      <attrKeyMap attr="site" key="Properties.Site"/>
+      <attrKeyMap attr="nepDevIpAddr" key="Properties.SocketIp"/>
+      <attrKeyMap attr="requestContext" key="Properties.SourceContext"/>
+      <attrKeyMap attr="spanId" key="Properties.SpanId"/>
+      <attrKeyMap attr="_startTime" key="properties.startTime"/>
+      <attrKeyMap attr="status" key="properties.State"/>
+      <attrKeyMap attr="status" key="properties.Status"/>
+      <attrKeyMap attr="details" key="properties.status.additionalDetails"/>
+      <attrKeyMap attr="errorNo" key="Properties.Status.ErrorCode"/>
+      <attrKeyMap attr="errorNo" key="properties.status.errorCode"/>
+      <attrKeyMap attr="errReason" key="Properties.Status.FailureReason"/>
+      <attrKeyMap attr="errReason" key="properties.status.failureReason"/>
+      <attrKeyMap attr="errorCode" key="properties.statusCode"/>
+      <attrKeyMap attr="errorCode" key="Properties.StatusCode"/>
+      <attrKeyMap attr="msg" key="properties.statusMessage"/>
+      <attrKeyMap attr="errorCode" key="properties.statusMessage.error.code"/>
+      <attrKeyMap attr="errReason" key="properties.statusMessage.error.errorDetails.code"/>
+      <attrKeyMap attr="errReason" key="properties.statusMessage.error.errorDetails.message"/>
+      <attrKeyMap attr="errorString" key="properties.statusMessage.error.message"/>
+      <attrKeyMap attr="status" key="properties.statusMessage.status"/>
+      <attrKeyMap attr="usedStorageMB" key="properties.storage_space_used_mb"/>
+      <attrKeyMap attr="resvStorageMB" key="properties.StorageAllocatedInMBs"/>
+      <attrKeyMap attr="usedStorageMB" key="properties.StorageConsumedInMBs"/>
+      <attrKeyMap attr="diskDisplayName" key="properties.StorageName"/>
+      <attrKeyMap attr="_totalStorageGB" key="properties.StorageTotalSizeInGBs"/>
+      <attrKeyMap attr="diskType" key="properties.StorageType"/>
+      <attrKeyMap attr="hwDiskSerial" key="properties.StorageUniqueId"/>
+      <attrKeyMap attr="subnetPrefix" key="properties.subnetPrefix"/>
+      <attrKeyMap attr="orgUnit" key="properties.targetResources.administrativeUnits"/>
+      <attrKeyMap attr="targetName" key="properties.targetResources.displayName"/>
+      <attrKeyMap attr="targetResourceId" key="properties.targetResources.id"/>
+      <attrKeyMap attr="targetUser" key="properties.targetResources.modifiedProperties.displayName"/>
+      <attrKeyMap attr="targetUserId" key="properties.targetResources.modifiedProperties.newValue"/>
+      <attrKeyMap attr="oldTargetUser" key="properties.targetResources.modifiedProperties.oldvalue"/>
+      <attrKeyMap attr="targetType" key="properties.targetResources.type"/>
+      <attrKeyMap attr="tenantId" key="properties.tenantId"/>
+      <attrKeyMap attr="httpResponseTimeMs" key="Properties.TimeTaken"/>
+      <attrKeyMap attr="loadTime" key="Properties.TimeToFirstByte"/>
+      <attrKeyMap attr="tokenIssuerName" key="Properties.TokenIssuerName"/>
+      <attrKeyMap attr="tokenIssuerName" key="properties.tokenIssuerName"/>
+      <attrKeyMap attr="tokenIssuerType" key="Properties.TokenIssuerType"/>
+      <attrKeyMap attr="tokenIssuerType" key="properties.tokenIssuerType"/>
+      <attrKeyMap attr="trackStatements" key="Properties.TrackingReference"/>
+      <attrKeyMap attr="transactionId" key="Properties.TransactionId"/>
+      <attrKeyMap attr="type" key="properties.type"/>
+      <attrKeyMap attr="token" key="properties.uniqueTokenIdentifier"/>
+      <attrKeyMap attr="httpUserAgent" key="Properties.UserAgent"/>
+      <attrKeyMap attr="httpUserAgent" key="properties.userAgent"/>
+      <attrKeyMap attr="user" key="Properties.UserDisplayName"/>
+      <attrKeyMap attr="user" key="properties.userDisplayName"/>
+      <attrKeyMap attr="userId" key="properties.userId"/>
+      <attrKeyMap attr="userPrincipalName" key="Properties.UserPrincipalName"/>
+      <attrKeyMap attr="userPrincipalName" key="properties.userPrincipalName"/>
+      <attrKeyMap attr="userType" key="properties.userType"/>
+      <attrKeyMap attr="oid" key="properties.VaultUniqueId"/>
+      <attrKeyMap attr="cpuCore" key="properties.virtual_core_count"/>
+      <attrKeyMap attr="networkId" key="properties.vnetResourceGuid"/>
+      <attrKeyMap attr="volName" key="properties.VolumeFriendlyName"/>
+      <attrKeyMap attr="appResponseTimeMSec" key="properties.WAFEvaluationTime"/>
+      <attrKeyMap attr="appVersion" key="ReleaseVersion"/>
+      <attrKeyMap attr="reptDevIpAddr" key="reptDevIpAddr"/>
+      <attrKeyMap attr="reptDevName" key="reptDevName"/>
+      <attrKeyMap attr="groupName" key="ResourceGroup"/>
+      <attrKeyMap attr="resourceId" key="ResourceGUID"/>
+      <attrKeyMap attr="resourceName" key="ResourceId"/>
+      <attrKeyMap attr="resourceName" key="resourceId"/>
+      <attrKeyMap attr="errorCode" key="ResultCode"/>
+      <attrKeyMap attr="description" key="ResultDescription"/>
+      <attrKeyMap attr="description" key="resultDescription"/>
+      <attrKeyMap attr="actionResult" key="ResultSignature"/>
+      <attrKeyMap attr="actionResult" key="resultSignature"/>
+      <attrKeyMap attr="resultType" key="ResultType"/>
+      <attrKeyMap attr="resultType" key="resultType"/>
+      <attrKeyMap attr="newLocation" key="RoleLocation"/>
+      <attrKeyMap attr="tenantId" key="RPTenant"/>
+      <attrKeyMap attr="scope" key="Scope"/>
+      <attrKeyMap attr="appVersion" key="SDKVersion"/>
+      <attrKeyMap attr="subscriptionId" key="SubscriptionId"/>
+      <attrKeyMap attr="status" key="Success"/>
+      <attrKeyMap attr="deviceIdentification" key="systemId"/>
+      <attrKeyMap attr="targetName" key="Target"/>
+      <attrKeyMap attr="tenantId" key="tenantId"/>
+      <attrKeyMap attr="_timestamp" key="Time"/>
+      <attrKeyMap attr="_timestamp" key="time"/>
+      <attrKeyMap attr="_timeGrain" key="TimeGrain"/>
+      <attrKeyMap attr="_timestamp" key="timeStamp"/>
+      <attrKeyMap attr="_total" key="Total"/>
+      <attrKeyMap attr="type" key="Type"/>
+      <attrKeyMap attr="infoURL" key="Url"/>
+    </collectAndSetAttrByJSON>
+
+    <choose>
+      <when test="not_exist _level"/>
+      <when test="$_level IN 'warning,Warning'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_level IN 'error,Error'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist resourceName">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$resourceName">
+            <regex><![CDATA[\/SUBSCRIPTIONS\/<subscriptionId:patSlash>\/RESOURCEGROUPS\/<resourceGroup:patSlash>\/PROVIDERS\/<providerName:patSlash>\/]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _timestamp">
+      <!-- 2025-03-06T18:02:42.1396910Z -->
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_timestamp">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>(?:\.\d+)?(?:<_tz:gPatTimeZone>)?]]></regex>
+          </collectFieldsByRegex>
+
+          <choose>
+            <when test="exist _tz">
+              <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+            </when>
+            <otherwise>
+              <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+            </otherwise>
+          </choose>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _ardStartTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_ardStartTime">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>(?:\.\d+)?<_tz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="ardStartTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <when test="exist _startTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_startTime">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>(?:\.\d+)?<_tz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="startTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <when test="exist _statusMessage">
+      <switch>
+        <case>
+          <collectAndSetAttrByJSON src="$_statusMessage">
+            <attrKeyMap attr="monitoringPointStatus" key="status"/>
+            <attrKeyMap attr="errorCode" key="error.code"/>
+            <attrKeyMap attr="errorString" key="error.message"/>
+            <attrKeyMap attr="_errorDetails" key="error.errorDetails"/>
+            <attrKeyMap attr="scope" key="error.errorDetails"/>
+          </collectAndSetAttrByJSON>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <when test="exist _errorDetails">
+      <switch>
+        <case>
+          <setEventAttribute attr="_errorDetails">replaceStringByRegex($_errorDetails, "[\[\]]", "")</setEventAttribute>
+          <collectAndSetAttrByJSON src="$_errorDetails">
+            <attrKeyMap attr="actionError" key="code"/>
+            <attrKeyMap attr="propErrorDetails" key="message"/>
+          </collectAndSetAttrByJSON>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <!--"attackers":["IP Address: 192.144.212.207"]-->
+    <when test="exist _attacker">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_attacker">
+            <regex><![CDATA[.*<srcIpAddr:gPatIpAddr>.*]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+      <setEventAttribute attr="_attacker">replaceStringByRegex($_attacker, "[\[\]]", "")</setEventAttribute>
+      <setEventAttribute attr="_attacker">replaceStringByRegex($_attacker, "\"[^:]+:", "")</setEventAttribute>
+      <setEventAttribute attr="srcIpAddrList">replaceStringByRegex($_attacker, "\"", "")</setEventAttribute>
+    </when>
+
+    <when test="exist _totalStorageGB">
+      <setEventAttribute attr="totalStorageMB">scale($_totalStorageGB, 1024)</setEventAttribute>
+    </when>
+
+    <when test="exist _ipProto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_ipProto)</setEventAttribute>
+    </when>
+
+    <when test="exist opName">
+      <setEventAttribute attr="_opName">toLower($opName)</setEventAttribute>
+      <when test="matches($_opName, '^microsoft\.)">
+        <setEventAttribute attr="_opName">replaceStringByRegex($_opName, "^microsoft\.|\(|\)", "")</setEventAttribute>
+        <setEventAttribute attr="eventType">combineMsgId("MS_EvtHub_", $_opName)</setEventAttribute>
+        <setEventAttribute attr="_et">1</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="$_et = '0'">
+      <when test="exist azureEventCategory">
+        <choose>
+          <when test="not_exist _opName">
+            <setEventAttribute attr="_opName">Generic</setEventAttribute>
+          </when>
+          <when test="not_matches($_opName, '.')">
+            <setEventAttribute attr="_opName">Generic</setEventAttribute>
+          </when>
+        </choose>
+        <setEventAttribute attr="eventType">combineMsgId("MS_EvtHub_", $azureEventCategory, "_", $_opName)</setEventAttribute>
+      </when>
+    </when>
+    <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "/", "_")</setEventAttribute>
+  </parsingInstructions>
+</eventParser>

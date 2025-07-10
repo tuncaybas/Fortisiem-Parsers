@@ -1,0 +1,66 @@
+<eventParser name="AvayaCMParser">
+  <deviceType>
+    <Vendor>Avaya</Vendor>
+    <Model>Communication Manager</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[ AccelOps-FileLog-AvayaCM ]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[Wed Feb  4 14:37:41 2015 1.2.3.4 AccelOps-FileLog-AvayaCM [Time of day-hours]="11" [Time of day-minutes]="36" [Duration-hours]="0" [Duration-minutes]="00" [Duration-tenths of minutes]="5" [Condition code]="9" [Dialed number]="5908" [Calling number]="2565522011" [FRL]="5" [Incoming circuit ID]="001" [Feature flag]="0" [Attendant console]="8" [Incoming TAC]="01 1" [INS]="0" [IXC]="00" [Packet count]="12" [TSC flag]="1"]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatWord>\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>\s+<reptDevIpAddr:gPatIpAddr>\s+AccelOps-FileLog-AvayaCM\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <collectAndSetAttrByKeyValuePair sep=" [" src="$_body">
+      <attrKeyMap attr="_hour" key="[Time of day-hours]="/>
+      <attrKeyMap attr="_minute" key="[Time of day-minutes]="/>
+      <attrKeyMap attr="_hourDur" key="[Duration-hours]="/>
+      <attrKeyMap attr="_minuteDur" key="[Duration-minutes]="/>
+      <attrKeyMap attr="_dminuteDur" key="[Duration-tenths of minutes]="/>
+      <attrKeyMap attr="finalCalledPartyNumber" key="[Calling number]="/>
+      <attrKeyMap attr="originalCalledPartyNumber" key="[Dialed number]="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <when test="exist _hour">
+      <when test="exist _minute">
+        <setEventAttribute attr="_time">combineMsgId($_hour, ":", $_minute, ":00")</setEventAttribute>
+      </when>
+    </when>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+
+    <choose>
+      <when test="exist _hourDur">
+        <setEventAttribute attr="_hour">scale($_hourDur, 3600000)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="_hour">0</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <choose>
+      <when test="exist _minuteDur">
+        <setEventAttribute attr="_min">scale($_minuteDur, 60000)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="_min">0</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <choose>
+      <when test="exist _dminuteDur">
+        <setEventAttribute attr="_sec">scale($_dminuteDur, 6000)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="_sec">0</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <setEventAttribute attr="durationMSec">add($_hour, $_min, $_sec)</setEventAttribute>
+    <setEventAttribute attr="eventType">Avaya-CM-CDR</setEventAttribute>
+  </parsingInstructions>
+</eventParser>

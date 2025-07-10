@@ -1,0 +1,111 @@
+<eventParser name="BarracudaEmailGWDefenseParser">
+  <deviceType>
+    <Vendor>Barracuda</Vendor>
+    <Model>Email Gateway Defense</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patBaMod"><![CDATA[ESS\d+\[\d\]:]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>\s+<:gPatYear>-<:gPatMonNum>-<:gPatDay>T<:gPatTime><:gPatTimeZone>\s+<:gPatStr>\s+<:patBaMod>]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<6> 2025-01-15T21:11:17Z test-host123 ESS75529[1]: {"message_id":"1736975473-104112-1425-41000-1","src_ip":"192.168.1.2","hdr_from":"\"Test Inc.\" \u003ctest@news.com\u003e","account_id":"ESS75529","domain_id":"162024","ptr_record":"mail-abcrecord123456.outbound.protection.outlook.com","attachments":null,"recipients":[{"action":"allowed","reason":"ip","reason_extra":"192.168.1.2, in Domain Settings: test.com","delivered":"delivered","delivery_detail":"test-com.mail.protection.outlook.com:25:250 2.6.0 \u003ctest@@news.com\u003e [InternalId=1122334455, Hostname=MY-TEST-HOST123.OUTLOOK.COM] 70297 bytes in 0.074, 916.391 KB/sec Queued mail for delivery","email":"user1@test.com","taxonomy":"policy"}],"hdr_to":"user1@test.com","recipient_count":1,"dst_domain":"test.com","size":57533,"subject":"This is the latest news today!","env_from":"msprvs1=xyz123=originaluser@yourdomain.com","timestamp":"2025-01-15T21:11:14+0000","geoip":"US","tls":true}]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>\s+<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime><_tz:gPatTimeZone>\s+<reptDevName:gPatHostName>\s+<:patBaMod>\s*<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+
+    <choose>
+      <when test="not_exist _year"/>
+      <when test="not_exist _mon"/>
+      <when test="not_exist _day"/>
+      <when test="not_exist _time"/>
+      <when test="exist _tz">
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <setEventAttribute attr="eventType">Barracuda-EmailGWDefense-Generic</setEventAttribute>
+    <setEventAttribute attr="_body">replaceStringByRegex($_body, "\\u003c", "&lt;")</setEventAttribute>
+    <setEventAttribute attr="_body">replaceStringByRegex($_body, "\\u003e", "&gt;")</setEventAttribute>
+
+    <collectAndSetAttrByJSON src="$_body">
+      <attrKeyMap attr="accountId" key="account_id"/>
+      <attrKeyMap attr="attachments" key="attachments"/>
+      <attrKeyMap attr="destDomain" key="dst_domain"/>
+      <attrKeyMap attr="senderMailAddr" key="hdr_from"/>
+      <attrKeyMap attr="receiverMailAddr" key="hdr_to"/>
+      <attrKeyMap attr="msgId" key="message_id"/>
+      <attrKeyMap attr="dnsQueryName" key="ptr_record"/>
+      <attrKeyMap attr="action" key="recipients[0].action"/>
+      <attrKeyMap attr="status" key="recipients[0].delivered"/>
+      <attrKeyMap attr="details" key="recipients[0].delivery_detail"/>
+      <attrKeyMap attr="emailId" key="recipients[0].email"/>
+      <attrKeyMap attr="reason" key="recipients[0].reason"/>
+      <attrKeyMap attr="size" key="size"/>
+      <attrKeyMap attr="srcIpAddr" key="src_ip"/>
+      <attrKeyMap attr="mailSubject" key="subject"/>
+      <attrKeyMap attr="_timestamp" key="timestamp"/>
+      <attrKeyMap attr="statusDetailedReason" key="recipients[0].reason_extra"/>
+      <attrKeyMap attr="tlsEstablished" key="tls"/>
+    </collectAndSetAttrByJSON>
+
+    <when test="exist _timestamp">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_timestamp">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime><_tz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist action">
+      <setEventAttribute attr="eventType">combineMsgId("Barracuda-EmailGWDefense-",$action)</setEventAttribute>
+    </when>
+
+    <when test="not_exist action">
+      <when test="exist status">
+        <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$status)</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist senderMailAddr">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$senderMailAddr">
+            <regex><![CDATA[\<<senderMailAddr:gPatStr>\>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist receiverMailAddr">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$receiverMailAddr">
+            <regex><![CDATA[\<<receiverMailAddr:gPatStr>\>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

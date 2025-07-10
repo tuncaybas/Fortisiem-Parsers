@@ -1,0 +1,79 @@
+<eventParser name="AtlassianBeaconWebhooksParser">
+  <deviceType>
+    <Vendor>Atlassian</Vendor>
+    <Model>Beacon</Model>
+    <Version>ANY</Version>
+  </deviceType>
+  <testEvents>
+    <testEvent><![CDATA[[PH_DEV_MON_CUSTOM_JSON]:[reptVendor]=Atlassian,[reptModel]=Beacon,[reptDevName]=test.com,[reptDevIpAddr]=11.11.11.11,[json]={"alertDetailURL":"https://beacon.atlassian.com/w/11111111-1111-1111-1111-111111111111/alerts/c111e111a11bfd11d1111c1d?atlOrigin=eyJpIjoiODUwMmU1NmFkMTMzNDYxZGJjODk1NmY1MGVmNDkzN1IiLCJwIjoiYmVhY11uIn1","alertId":"c111e111a11bfd11d1111c1d","alertTitle":"Sensitive data detected: Atlassian API token","detectionTime":1711493273898,"activity":{"action":"READ","subject":{"ari":"ari:cloud:confluence::site/11111111-1111-1111-1111-111111111111","containerAri":"ari:cloud:platform::org/j1111j1b-11d1-1a11-j111-11111a111111","ati":"ati:cloud:confluence:space"},"time":{"start":"2023-11-11T11:11:11.111Z","end":"2023-11-11T11:11:11.111Z"}},"actor":{"accountId":"111111:11111111-1111-1111-1111-111111111111","name":"Mei Liu","sessions":[{"ipAddress":"11.11.11.11","userAgent":"Mozilla/1.1 (Macintosh; Intel Mac OS X 11_11_1) AppleWebKit/111.1.11 (KHTML, like Gecko) Version/11.1.1 Safari/111.1.11","loginTime":"2023-11-11T11:11:11.111Z","lastActiveTime":"2023-11-11T11:11:11.111Z"}],"url":"https://beacon.atlassian.com/w/11111111-1111-1111-1111-111111111111/users/111111:11111111-1111-1111-1111-111111111111?atlOrigin=eyJpIjoiODUwMmU1NmFkMTMzNDYxZGJjODk1NmY1MGVmNDkzN1IiLCJwIjoiYmVhY11uIn1"},"alert":{"created":"2023-11-11T11:11:11.111Z","id":"c111e111a11bfd11d1111c1d","product":"CONFLUENCE","site":"https://fortisiem.atlassian.net?atlOrigin=eyJpIjoiODUwMmU1NmFkMTMzNDYxZGJjODk1NmY1MGVmNDkzN1IiLCJwIjoiYmVhY11uIn1","title":"Sensitive data detected: Atlassian API token","url":"https://beacon.atlassian.com/w/11111111-1111-1111-1111-111111111111/alerts/c111e111a11bfd11d1111c1d?atlOrigin=eyJpIjoiODUwMmU1NmFkMTMzNDYxZGJjODk1NmY1MGVmNDkzN1IiLCJwIjoiYmVhY11uIn1"},"id":"c111e111a11bfd11d1111c1d","timestamp":1711493273898,"type":"beacon:create:test","workspace":{"cloudId":"11111111-1111-1111-1111-111111111111","id":"11111111-1111-1111-1111-111111111111","orgId":"j1111j1b-11d1-1a11-j111-11111a111111"}}]]></testEvent>
+  </testEvents>
+  <eventFormatRecognizer><![CDATA[\[PH_DEV_MON_CUSTOM_JSON]\:\[reptVendor\]=Atlassian,\[reptModel\]=Beacon,]]></eventFormatRecognizer>
+  <parsingInstructions>
+    <collectFieldsByKeyValuePair kvsep="]=" sep=",[" src="$_rawmsg">
+      <attrKeyMap attr="reptDevName" key="reptDevName"/>
+      <attrKeyMap attr="reptDevIpAddr" key="reptDevIpAddr"/>
+      <attrKeyMap attr="_json" key="json"/>
+    </collectFieldsByKeyValuePair>
+    <setEventAttribute attr="extEventRecvProto">WEBHOOK</setEventAttribute>
+    <when test="exist _json">
+      <collectAndSetAttrByJSON src="$_json">
+        <attrKeyMap attr="infoURL" key="alertDetailURL"/>
+        <attrKeyMap attr="alertIdStr" key="alertId"/>
+        <attrKeyMap attr="alertName" key="alertTitle"/>
+        <attrKeyMap attr="_eventTime" key="detectionTime"/>
+        <attrKeyMap attr="actionName" key="activity.action"/>
+        <attrKeyMap attr="_actionTime" key="activity.time.start"/>
+        <attrKeyMap attr="userId" key="actor.accountId"/>
+        <attrKeyMap attr="user" key="actor.name"/>
+        <attrKeyMap attr="_createTime" key="alert.created"/>
+        <attrKeyMap attr="product" key="alert.product"/>
+        <attrKeyMap attr="site" key="alert.site"/>
+        <attrKeyMap attr="uuid" key="id"/>
+        <attrKeyMap attr="type" key="type"/>
+      </collectAndSetAttrByJSON>
+    </when>
+    <when test="exist _actionTime">
+      <switch>
+        <case>
+          <!--2023-11-11T11:11:11.111Z"-->
+          <collectAndSetAttrByRegex src="$_actionTime">
+
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+          </collectAndSetAttrByRegex>
+          <setEventAttribute attr="actionTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <when test="exist _eventTime">
+      <switch>
+        <case>
+          <collectAndSetAttrByRegex src="$_eventTime">
+            <regex><![CDATA[<_ms:gPatInt>]]></regex>
+          </collectAndSetAttrByRegex>
+          <setEventAttribute attr="eventTime">divide($_ms, 1000)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <when test="exist _createTime">
+      <switch>
+        <case>
+          <collectAndSetAttrByRegex src="$_createTime">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+          </collectAndSetAttrByRegex>
+          <setEventAttribute attr="createTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <setEventAttribute attr="eventType">Atlassian-Beacon-Generic</setEventAttribute>
+    <when test="exist alertName">
+      <setEventAttribute attr="eventType">combineMsgId("Atlassian-Beacon-", $alertName)</setEventAttribute>
+      <setEventAttribute attr="eventType">replaceStringByRegex($eventType, ":\s*", "-")</setEventAttribute>
+      <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "\s+", "_")</setEventAttribute>
+      <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,213 @@
+<eventParser name="BarracudaWebSecGWParser">
+  <deviceType>
+    <Vendor>Barracuda</Vendor>
+    <Model>Web Security Gateway</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[Sep 19 17:07:07 2016 barracuda http_scan[3365]: 1158710827 1 10.1.1.8 172.27.72.27 text/html 10.1.1.8 http://www.purple.com/index.css 2704 BYF ALLOWED CLEAN 2 1 0 1 3 (-) 1 adult 0 - 0 example.com adult,porn ANON http:.//www.example.com/index.html example.com adult 1]]></testEvent>
+    <testEvent><![CDATA[<164>http_scan[6318]: 1483983626 1 10.1.1.1 12.1.0.0 application/x-javascript 10.1.1.1 http://abc.com/uvp/js/x.js? 16677 BYF ALLOWED CLEAN 2 0 0 0 0 (-) 0 - 0 - 0 example.com news [ANON] http://acd.com/ abc.com news 0]]></testEvent>
+    <testEvent><![CDATA[<164> barracuda_pqman: 1524755721 1 10.1.1.1 1.2.3.4 - 10.1.1.1 https://example.com/ 0 BYF ALLOWED CLEAN 2 1 1 0 0 (-) 1 CUSTOM-151673236925781 0 - 0 example.com business,CUSTOM-151673236925781 [ldap0:user1] https://example.com/ - - 0]]></testEvent>
+    <testEvent><![CDATA[<164>barracuda_pqman[27088]: 1459965663 1 10.1.1.2 12.1.1.2 - 10.1.1.2 https://abc.com/ 0 BYF ALLOWED CLEAN 2 1 0 1 3 (-) 1 shopping 0 - 0 example.com shopping,CUSTOM-140657649511160 [ANON] https://abc.com/ - - 0]]></testEvent>
+    <testEvent><![CDATA[Sep 19 17:08:00 2016 barracuda http_scan[3365]: 1158710880 1 10.1.1.8 127.0.0.1 - 10.1.1.8 http://www.eicar.org/download/eicar.com.txt 0 BYF BLOCKED VIRUS stream=>Eicar-Test-Signature FOUND 2 0 0 0 0 - 0 - 0 - 0 eicar.org computing-technology ANON http://www.somedomain.com/index.html somedomain.com news 0]]></testEvent>
+  </testEvents>
+
+  <!-- pattern definitions -->
+  <patternDefinitions>
+    <pattern name="patBarracudaDaemon"><![CDATA[(?:barracuda[\s_])?(?:pqman|https?_scan)]]></pattern>
+    <pattern name="patFwActions"><![CDATA[ALLOWED|BLOCKED|DETECTED]]></pattern>
+    <pattern name="patExceptInt"><![CDATA[[^\d]+]]></pattern>
+    <pattern name="patReason"><![CDATA[CLEAN|VIRUS|SPYWARE]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>?\s*(?:<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatYear>\s+)?<:patBarracudaDaemon>(?:\[\d+\])?:\s+]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>?\s*(?:<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>\s+)?<type:patBarracudaDaemon>(?:\[\d+\])?:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+    <setEventAttribute attr="eventAction">0</setEventAttribute>
+    <setEventAttribute attr="eventType">Barracuda-WebSecGateway-Generic</setEventAttribute>
+    <choose>
+      <when test="not_exist _mon"/>
+      <when test="not_exist _day"/>
+      <when test="not_exist _time"/>
+      <when test="not_exist _year"/>
+      <otherwise>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </otherwise>
+    </choose>
+    <!-- normalize type remove barracuda and spaces -->
+    <when test="exist type">
+      <setEventAttribute attr="type">replaceStringByRegex($type, "barracuda[\s_]+", "")</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist type"/>
+      <when test="$type IN 'http_scan, https_scan, pqman'">
+        <setEventAttribute attr="eventType">Barracuda-WebSecGateway-traffic</setEventAttribute>
+        <!-- https://campus.barracuda.com/product/websecuritygateway/doc/6160435/syslog-and-the-barracuda-web-security-gateway/ -->
+        <choose>
+          <!-- blocked events contain an extra position field at 12:details for block appended to reason -->
+          <when test="matches($_body, 'BYF BLOCKED')">
+            <switch>
+              <case>
+                <collectFieldsByRegex src="$_rawmsg">
+                  <regex><![CDATA[<deviceTime:gPatInt>\s+<:gPatInt>\s+<srcIpAddr:gPatIpAddr>(?:\(<postNATSrcIpAddr:gPatIpAddr>\))?\s+<destIpAddr:gPatIpAddr>(?:\(<postNATDestIpAddr:gPatIpAddr>\))?\s+<httpContentType:gPatStr>\s+<:gPatStr>\s+<downloadURL:gPatStr>\s+<totBytes64:gPatInt>\s+BYF\s+<fwAction:gPatWord>\s+<reason:patReason>(?:\s+<details:patExceptInt>)?<_body2:gPatMesgBody>]]></regex>
+                </collectFieldsByRegex>
+              </case>
+              <default/>
+            </switch>
+            <collectAndSetAttrByPos sep=" " src="$_body2">
+              <attrPosMap attr="_formatVersion" pos="1"/>
+              <attrPosMap attr="_matchFlag" pos="2"/>
+              <attrPosMap attr="_timeFlag" pos="3"/>
+              <attrPosMap attr="action" pos="4"/>
+              <attrPosMap attr="_srcType" pos="5"/>
+              <attrPosMap attr="_srcDetail" pos="6"/>
+              <attrPosMap attr="_dstType" pos="7"/>
+              <attrPosMap attr="_dstDetail" pos="8"/>
+              <attrPosMap attr="_spyType" pos="9"/>
+              <attrPosMap attr="virusName" pos="10"/>
+              <attrPosMap attr="riskScore" pos="11"/>
+              <attrPosMap attr="_matchedPart" pos="12"/>
+              <attrPosMap attr="webCategory" pos="13"/>
+              <attrPosMap attr="userType" pos="14"/>
+              <attrPosMap attr="httpReferrer" pos="15"/>
+              <attrPosMap attr="_destDomain" pos="16"/>
+              <attrPosMap attr="_referrerCategory" pos="17"/>
+              <attrPosMap attr="_wsaRemoteTraffic" pos="18"/>
+            </collectAndSetAttrByPos>
+          </when>
+          <otherwise>
+            <!-- other events dont have details at pos 12 -->
+            <collectAndSetAttrByPos sep=" " src="$_body">
+              <attrPosMap attr="deviceTime" pos="1"/>
+              <attrPosMap attr="_singleDigit" pos="2"/>
+              <attrPosMap attr="_srcIp" pos="3"/>
+              <attrPosMap attr="_destIp" pos="4"/>
+              <attrPosMap attr="httpContentType" pos="5"/>
+              <attrPosMap attr="_src" pos="6"/>
+              <attrPosMap attr="downloadURL" pos="7"/>
+              <attrPosMap attr="totBytes64" pos="8"/>
+              <attrPosMap attr="_BYF" pos="9"/>
+              <attrPosMap attr="fwAction" pos="10"/>
+              <attrPosMap attr="reason" pos="11"/>
+              <attrPosMap attr="_formatVersion" pos="12"/>
+              <attrPosMap attr="_matchFlag" pos="13"/>
+              <attrPosMap attr="_timeFlag" pos="14"/>
+              <attrPosMap attr="action" pos="15"/>
+              <attrPosMap attr="_srcType" pos="16"/>
+              <attrPosMap attr="_srcDetail" pos="17"/>
+              <attrPosMap attr="_dstType" pos="18"/>
+              <attrPosMap attr="_dstDetail" pos="19"/>
+              <attrPosMap attr="_spyType" pos="20"/>
+              <attrPosMap attr="virusName" pos="21"/>
+              <attrPosMap attr="riskScore" pos="22"/>
+              <attrPosMap attr="_matchedPart" pos="23"/>
+              <attrPosMap attr="webCategory" pos="24"/>
+              <attrPosMap attr="userType" pos="25"/>
+              <attrPosMap attr="httpReferrer" pos="26"/>
+              <attrPosMap attr="_destDomain" pos="27"/>
+              <attrPosMap attr="_referrerCategory" pos="28"/>
+              <attrPosMap attr="_wsaRemoteTraffic" pos="29"/>
+            </collectAndSetAttrByPos>
+          </otherwise>
+        </choose>
+
+        <when test="exist _srcIp">
+          <setEventAttribute attr="msg">$_srcIp</setEventAttribute>
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_srcIp">
+                <regex><![CDATA[^<srcIpAddr:gPatIpAddr>(?:\(<postNATSrcIpAddr:gPatIpAddr>\))?]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+        </when>
+        <when test="exist _destIp">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_destIp">
+                <regex><![CDATA[^<destIpAddr:gPatIpAddr>(?:\(<postNATDestIpAddr:gPatIpAddr>\))?]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+        </when>
+        <when test="exist reason">
+          <!-- strip static string BYF -->
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$reason)</setEventAttribute>
+        </when>
+        <when test="exist fwAction">
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$fwAction)</setEventAttribute>
+        </when>
+
+        <when test="exist _srcType">
+          <choose>
+            <when test="not_exist _srcDetail"/>
+            <when test="$_srcType = '1'">
+              <setEventAttribute attr="srcUserGrp">$_srcDetail</setEventAttribute>
+            </when>
+            <when test="$_srcType = '3'">
+              <setEventAttribute attr="user">$_srcDetail</setEventAttribute>
+            </when>
+          </choose>
+        </when>
+
+        <when test="exist _dstType">
+          <choose>
+            <when test="not_exist _dstDetail"/>
+            <when test="$_dstType = '1'">
+              <setEventAttribute attr="webCategory">$_dstDetail</setEventAttribute>
+            </when>
+            <when test="$_dstType = '3'">
+              <setEventAttribute attr="destDomain">$_dstDetail</setEventAttribute>
+            </when>
+            <when test="$_dstType = '4'">
+              <setEventAttribute attr="mimeType">$_dstDetail</setEventAttribute>
+            </when>
+            <when test="$_dstType = '5'">
+              <setEventAttribute attr="virusName">$_dstDetail</setEventAttribute>
+            </when>
+            <when test="$_dstType = '8'">
+              <setEventAttribute attr="appName">$_dstDetail</setEventAttribute>
+            </when>
+          </choose>
+        </when>
+
+        <when test="exist action">
+          <!-- policy action vs proxy action, this is not the overall action, but the specific policy action. fwAction reports result -->
+          <choose>
+            <when test="$action = '0'">
+              <!-- allowed -->
+              <setEventAttribute attr="action">allowed</setEventAttribute>
+            </when>
+            <when test="$action = '1'">
+              <!-- denied -->
+              <setEventAttribute attr="action">denied</setEventAttribute>
+            </when>
+            <when test="$action = '2'">
+              <!-- redirected -->
+              <setEventAttribute attr="action">redirected</setEventAttribute>
+            </when>
+            <otherwise>
+              <!-- allowed but some other operation such as rewritten, matched and allowed, or branched -->
+              <setEventAttribute attr="action">allowed</setEventAttribute>
+            </otherwise>
+          </choose>
+        </when>
+
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

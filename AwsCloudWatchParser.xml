@@ -1,0 +1,261 @@
+<eventParser name="AwsCloudWatchParser">
+  <deviceType>
+    <Vendor>Amazon</Vendor>
+    <Model>AWS CloudWatch</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[[AWS_CLOUDWATCH_EVENT_DATA] = {"accountName":"abc@b.com","awsRegion":"us-east-2","eventCategory":"Management","eventID":"11111111-1111-1111-1111-111111111111","eventName":"DescribeInstances","eventSource":"ec2.amazonaws.com","eventTime":"2021-06-21T17:20:05Z","eventType":"AwsApiCall","eventVersion":"1.08","groupName":"aws-cloudtrail-logs-623885071509-c249cecd","managementEvent":true,"phCustId":1,"readOnly":true,"recipientAccountId":"623885071509","reptDevIpAddr":"","reptDevName":"10.11.11.11","requestID":"11111111-1111-1111-1111-111111111111","requestParameters":{"filterSet":{"items":[{"name":"private-ip-address","valueSet":{"items":[{"value":"10.0.1.252"}]}}]},"instancesSet":{}},"responseElements":null,"sourceIPAddress":"10.10.10.10","streamName":"623885071509_CloudTrail_us-east-2","userAgent":"aws-sdk-php/3.145.0 GuzzleHttp/7","userIdentity":{"accessKeyId":"AXXXXXXXXXXXXXXXXXXX","accountId":"623885071509","arn":"arn:aws:iam::623885071509:user/Rui.Shi","principalId":"AIDAIYWGFW2DJBOWQVMIE","type":"IAMUser","userName":"user1"}}]]></testEvent>
+    <testEvent><![CDATA[[AWS_CLOUDWATCH_EVENT_DATA] = {"accountName":"1234567890","awsRegion":"us-west-2","groupName":"MyFlowLogGroup","phCustId":1,"raw_event":"2 1234567890 eni-504a1234 2.2.2.2 192.168.1.25 58010 5986 6 1 40 1706285064 1706285065 ACCEPT OK","reptDevIpAddr":"1.1.1.1","reptDevName":"amazon.com","streamName":"eni-*-all"}]]></testEvent>
+    <testEvent><![CDATA[[AWS_CLOUDWATCH_EVENT_DATA] = {"accountName":"1234567890","action":"ALLOW","awsRegion":"us-east-1","formatVersion":1,"groupName":"aws-waf-logs-waf_api_example","httpRequest":{"args":"","clientIp":"2.2.2.2","country":"US","fragment":"","headers":[{"name":"X-Forwarded-For","value":"2.2.2.2, 3.3.3.3"},{"name":"X-Forwarded-Proto","value":"https"},{"name":"X-Forwarded-Port","value":"443"},{"name":"Host","value":"zh71vh4fxj.execute-api.us-east-1.amazonaws.com"},{"name":"X-Amzn-Trace-Id","value":"Root=1-68002b2a-2e7b10ac47542e7d5d51dce6"},{"name":"CloudFront-Is-Mobile-Viewer","value":"false"},{"name":"sec-fetch-site","value":"cross-site"},{"name":"priority","value":"u=1, i"},{"name":"CloudFront-Is-SmartTV-Viewer","value":"false"},{"name":"CloudFront-Viewer-ASN","value":"2222"},{"name":"User-Agent","value":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"},{"name":"Via","value":"2.0 dbb1a0d298f6a202c2f5a2e11bef88fe.cloudfront.net (CloudFront)"},{"name":"X-Amz-Cf-Id","value":"JYtPvY2p6RVH7ErCNiSbERAPk62s2SPKaRE2eXoS3iVRPhi9-enE9g=="},{"name":"sec-ch-ua","value":"\"Google Chrome\";v=\"135\", \"Not-A.Brand\";v=\"8\", \"Chromium\";v=\"135\""},{"name":"CloudFront-Is-Desktop-Viewer","value":"true"},{"name":"Accept-Language","value":"en-GB,en-US;q=0.9,en;q=0.8"},{"name":"Accept","value":"application/json, text/plain, */*"},{"name":"Authorization","value":"REDACTED"},{"name":"Referer","value":"https://abc.abccloud.com/"},{"name":"Accept-Encoding","value":"gzip, deflate, br, zstd"},{"name":"CloudFront-Is-Tablet-Viewer","value":"false"},{"name":"sec-fetch-mode","value":"cors"},{"name":"origin","value":"https://abc.abccloud.com"},{"name":"CloudFront-Forwarded-Proto","value":"https"},{"name":"sec-fetch-dest","value":"empty"},{"name":"CloudFront-Viewer-Country","value":"US"},{"name":"sec-ch-ua-mobile","value":"?0"},{"name":"sec-ch-ua-platform","value":"\"Windows\""}],"host":"","httpMethod":"GET","httpVersion":"HTTP/1.1","requestId":"JIuuwEz1oAMECig=","scheme":"","uri":"/dev-stage/api/user"},"httpSourceId":"123456789:zh71vh4fxj:abc-defg","httpSourceName":"APIGW","labels":[{"name":"awswaf:clientip:geo:country:US"},{"name":"awswaf:forwardedip:geo:region:US-CA"},{"name":"awswaf:clientip:geo:region:US-CA"},{"name":"awswaf:forwardedip:geo:country:US"}],"nonTerminatingMatchingRules":[],"phCustId":1,"rateBasedRuleList":[],"reptDevIpAddr":"4.4.4.4","reptDevName":"amazon.com","requestHeadersInserted":null,"responseCodeSent":null,"ruleGroupList":[{"customerConfig":null,"excludedRules":null,"nonTerminatingMatchingRules":[],"ruleGroupId":"AWS#AWSManagedRulesCommonRuleSet","terminatingRule":null},{"customerConfig":null,"excludedRules":null,"nonTerminatingMatchingRules":[],"ruleGroupId":"AWS#AWSManagedRulesKnownBadInputsRuleSet","terminatingRule":null},{"customerConfig":null,"excludedRules":null,"nonTerminatingMatchingRules":[],"ruleGroupId":"AWS#AWSManagedRulesAdminProtectionRuleSet","terminatingRule":null},{"customerConfig":null,"excludedRules":null,"nonTerminatingMatchingRules":[],"ruleGroupId":"AWS#AWSManagedRulesAmazonIpReputationList","terminatingRule":null},{"customerConfig":null,"excludedRules":null,"nonTerminatingMatchingRules":[],"ruleGroupId":"AWS#AWSManagedRulesAnonymousIpList","terminatingRule":null}],"streamName":"us-east-1_waf_api_abc*","terminatingRuleId":"Default_Action","terminatingRuleMatchDetails":[],"terminatingRuleType":"REGULAR","timestamp":1744841514810,"webaclId":"arn:aws:wafv2:us-east-1:1234567890:regional/webacl/waf_api_abc/d084f06c-b626-47c1-bda9-8e0e0abe1701"}]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\[AWS_CLOUDWATCH_EVENT_DATA\] = ]]></eventFormatRecognizer>
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[\[AWS_CLOUDWATCH_EVENT_DATA\] = <_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <setEventAttribute attr="extEventRecvProto">AWS_CLOUDWATCH</setEventAttribute>
+    <choose>
+      <when test="matches($_body, 'raw_event')">
+        <!-- raw event is not entirely json, and must be parsed -->
+        <collectAndSetAttrByJSON src="$_body">
+          <!-- FSM JSON Headers -->
+          <attrKeyMap attr="phCustId" key="phCustId"/>
+          <attrKeyMap attr="accountName" key="accountName"/>
+          <attrKeyMap attr="awsRegion" key="awsRegion"/>
+          <attrKeyMap attr="groupName" key="groupName"/>
+          <attrKeyMap attr="streamName" key="logStreamName"/>
+          <attrKeyMap attr="reptDevIpAddr" key="reptDevIpAddr"/>
+          <attrKeyMap attr="reptDevName" key="reptDevName"/>
+          <!-- only present if the raw event submitted to cloudwatch log stream is not json format -->
+          <attrKeyMap attr="_rawEvent" key="raw_event"/>
+        </collectAndSetAttrByJSON>
+        <when test="exist _rawEvent">
+          <switch>
+            <case>
+              <!-- aws flow log 2 62111111111 eni-504a8123 1.1.1.1 192.168.1.25 32510 2204 6 1 44 1706008522 1706008548 ACCEPT OK -->
+              <collectFieldsByRegex src="$_rawEvent">
+                <regex><![CDATA[<version:gPatInt>\s<accountId:gPatInt>\s<srcIntfName:gPatStr>\s(?:<srcIpAddr:gPatIpAddr>|[-])\s(?:<destIpAddr:gPatIpAddr>|[-])\s(?:<srcIpPort:gPatInt>|[-])\s(?:<destIpPort:gPatInt>|[-])\s(?:<ipProto:gPatInt>|[-])\s(?:<sentPkts64:gPatInt>|[-])\s(?:<sentBytes64:gPatInt>|[-])\s<startTime:gPatInt>\s<endTime:gPatInt>\s<fwAction:gPatStr>\s<status:gPatStr>]]></regex>
+              </collectFieldsByRegex>
+              <choose>
+                <when test="$fwAction != '-'">
+                  <setEventAttribute attr="eventType">combineMsgId("AWS_VPC_FLOW_", $fwAction)</setEventAttribute>
+                </when>
+                <otherwise>
+                  <setEventAttribute attr="eventType">combineMsgId("AWS_VPC_FLOW_", $status)</setEventAttribute>
+                </otherwise>
+              </choose>
+
+              <choose>
+                <when test="$fwAction = 'ACCEPT'">
+                  <setEventAttribute attr="eventAction">0</setEventAttribute>
+                </when>
+                <when test="$fwAction = 'REJECT'">
+                  <setEventAttribute attr="eventAction">1</setEventAttribute>
+                </when>
+              </choose>
+
+              <when test="exist endTime">
+                <setEventAttribute attr="_duration">calculateLatency($endTime, $startTime)</setEventAttribute>
+                <setEventAttribute attr="durationMSec">scale($_duration, 1000)</setEventAttribute>
+              </when>
+
+            </case>
+            <default>
+              <setEventAttribute attr="eventType">AWS_CloudWatch_Generic</setEventAttribute>
+              <setEventAttribute attr="msg">$_rawEvent</setEventAttribute>
+            </default>
+          </switch>
+        </when>
+      </when>
+      <otherwise>
+        <!-- The json log raw event is appended to the base FSM fields seen above -->
+        <setEventAttribute attr="eventType">AWS_CloudWatch_Generic</setEventAttribute>
+
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="_eventTime" key="eventTime"/>
+          <attrKeyMap attr="version" key="eventVersion"/>
+          <attrKeyMap attr="serviceName" key="eventSource"/>
+          <attrKeyMap attr="_eventName" key="eventName"/>
+          <attrKeyMap attr="awsEventId" key="eventID"/>
+          <attrKeyMap attr="_srcIpAddr" key="sourceIPAddress"/>
+          <attrKeyMap attr="errorString" key="errorCode"/>
+          <attrKeyMap attr="errReason" key="errorMessage"/>
+          <attrKeyMap attr="user" key="userName"/>
+          <attrKeyMap attr="userType" key="userType"/>
+          <attrKeyMap attr="principal" key="userPrincipalId"/>
+          <attrKeyMap attr="userArn" key="userArn"/>
+          <attrKeyMap attr="accountId" key="accountId"/>
+          <attrKeyMap attr="accessKeyId" key="accessKeyId"/>
+          <attrKeyMap attr="accountId" key="resources[0].accountId"/>
+          <attrKeyMap attr="actionName" key="eventType"/>
+          <attrKeyMap attr="user" key="userIdentity.userName"/>
+          <attrKeyMap attr="userType" key="userIdentity.type"/>
+          <attrKeyMap attr="principal" key="userIdentity.principalId"/>
+          <attrKeyMap attr="userArn" key="userIdentity.arn"/>
+          <attrKeyMap attr="accountId" key="userIdentity.accountId"/>
+          <attrKeyMap attr="accessKeyId" key="userIdentity.accessKeyId"/>
+          <attrKeyMap attr="caller" key="userIdentity.invokedBy"/>
+          <attrKeyMap attr="_date" key="userIdentity.sessionContext.attributes.creationDate"/>
+          <attrKeyMap attr="mfaAuthenticated" key="userIdentity.sessionContext.attributes.mfaAuthenticated"/>
+          <attrKeyMap attr="awsActionResult" key="responseElements._return"/>
+          <attrKeyMap attr="accessKeyId" key="responseElements.credentials.accessKeyId"/>
+          <attrKeyMap attr="description" key="requestParameters.description"/>
+          <attrKeyMap attr="targetUser" key="requestParameters.userName"/>
+          <attrKeyMap attr="userGrp" key="requestParameters.groupName"/>
+          <attrKeyMap attr="policyName" key="requestParameters.policyName"/>
+          <attrKeyMap attr="groupID" key="requestParameters.groupId"/>
+          <attrKeyMap attr="vpcId" key="requestParameters.vpcId"/>
+          <attrKeyMap attr="profileName" key="requestParameters.instanceProfileName"/>
+          <attrKeyMap attr="role" key="requestParameters.roleName"/>
+          <attrKeyMap attr="volumeId" key="requestParameters.volumeId"/>
+          <attrKeyMap attr="ec2InstanceId" key="requestParameters.instanceId"/>
+          <attrKeyMap attr="ec2InstanceId" key="requestParameters.instancesSet.item[0].instanceId"/>
+          <attrKeyMap attr="ec2InstanceId" key="requestParameters.instancesSet.items[0].instanceId"/>
+          <attrKeyMap attr="ec2InstanceId" key="requestParameters.instances[0].instanceId"/>
+          <attrKeyMap attr="ec2InstanceId" key="responseElements.instances[0].instanceId"/>
+          <attrKeyMap attr="ec2InstanceId" key="responseElements.instances.instanceId"/>
+          <attrKeyMap attr="ec2CurrentState" key="responseElements.instances.currentState.name"/>
+          <attrKeyMap attr="ec2PreviousState" key="responseElements.instances.previousState.name"/>
+          <attrKeyMap attr="_status" key="responseElements.ConsoleLogin"/>
+          <attrKeyMap attr="resourceType" key="resourceType"/>
+          <attrKeyMap attr="ipProto" key="requestParameters.ipPermissions.items[0].ipProtocol"/>
+          <attrKeyMap attr="srcIpPort" key="requestParameters.ipPermissions.items[0].fromPort"/>
+          <attrKeyMap attr="destIpPort" key="requestParameters.ipPermissions.items[0].toPort"/>
+          <attrKeyMap attr="instanceArchitecture" key="requestParameters.architecture"/>
+          <attrKeyMap attr="diskName" key="requestParameters.blockDeviceMapping.items[0].deviceName"/>
+          <attrKeyMap attr="snapshotId" key="requestParameters.snapshotId"/>
+          <attrKeyMap attr="snapshotId" key="requestParameters.blockDeviceMapping.items[0].ebs.snapshotId"/>
+          <attrKeyMap attr="kernelId" key="requestParameters.kernelId"/>
+          <attrKeyMap attr="elasticLoadBalancerPageSize" key="requestParameters.pageSize"/>
+          <attrKeyMap attr="launchConfigName" key="requestParameters.launchConfigurationName"/>
+          <attrKeyMap attr="imageName" key="requestParameters.imageId"/>
+          <attrKeyMap attr="loadBalancerName" key="requestParameters.loadBalancerName"/>
+          <!-- WAF-specific fields -->
+          <attrKeyMap attr="groupName" key="groupName"/>
+          <attrKeyMap attr="action" key="action"/>
+          <attrKeyMap attr="accountName" key="accountName"/>
+          <attrKeyMap attr="awsRegion" key="awsRegion"/>
+          <attrKeyMap attr="streamName" key="streamName"/>
+          <attrKeyMap attr="userArn" key="webaclId"/>
+          <attrKeyMap attr="srcIpAddr" key="httpRequest.clientIp"/>
+          <attrKeyMap attr="uriStem" key="httpRequest.uri"/>
+          <attrKeyMap attr="httpMethod" key="httpRequest.httpMethod"/>
+          <attrKeyMap attr="sessionId" key="httpRequest.requestId"/>
+          <attrKeyMap attr="_eventTime" key="timestamp"/>
+        </collectAndSetAttrByJSON>
+        <when test="exist _eventTime">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_eventTime">
+                <regex><![CDATA[^<_timestamp:gPatInt>$]]></regex>
+              </collectFieldsByRegex>
+              <!-- WAF attribute timestamp is in epoch milliseconds -->
+              <setEventAttribute attr="eventTime">divide($_timestamp, 1000)</setEventAttribute>
+            </case>
+            <case>
+              <collectFieldsByRegex src="$_eventTime">
+                <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime><_zone:gPatTimeZone>]]></regex>
+              </collectFieldsByRegex>
+              <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time, $_zone)</setEventAttribute>
+            </case>
+            <default/>
+          </switch>
+        </when>
+
+        <when test="exist _srcIpAddr">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_srcIpAddr">
+                <regex><![CDATA[^<srcIpAddr:gPatIpAddr>$]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default>
+              <setEventAttribute attr="srcName">$_srcIpAddr</setEventAttribute>
+            </default>
+          </switch>
+        </when>
+
+        <when test="exist _date">
+          <collectFieldsByRegex src="$_date">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>Z]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="tempCredCreationDate">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </when>
+
+        <!-- CloudTrail -->
+        <when test="exist serviceName">
+          <setEventAttribute attr="_res">replaceStringByRegex($serviceName, "\..*", "")</setEventAttribute>
+          <setEventAttribute attr="eventType">combineMsgId("AWS-CloudTrail-", $_res, "-", $_eventName)</setEventAttribute>
+        </when>
+
+        <!-- WAF -->
+        <when test="matches($groupName, 'aws-waf-logs-')">
+          <setEventAttribute attr="eventType">combineMsgId('AWS-WAF-', $action)</setEventAttribute>
+        </when>
+
+        <when test="exist _status">
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $_status)</setEventAttribute>
+        </when>
+
+        <choose>
+          <when test="$eventType = 'AWS-CloudTrail-EC2-DescribeInstances'">
+            <collectAndSetAttrByKeyValuePair sep=" [" src="$_body">
+              <attrKeyMap attr="_hostIpAddr" key="[requestParameters/filterSet/items/0/valueSet/items/0/value]="/>
+            </collectAndSetAttrByKeyValuePair>
+            <collectAndSetAttrByKeyValuePair sep=" [" src="$_body">
+              <attrKeyMap attr="_ec2Name" key="[requestParameters/filterSet/items/0/name]="/>
+            </collectAndSetAttrByKeyValuePair>
+            <choose>
+              <when test="not_exist _hostIpAddr"/>
+              <when test="$_ec2Name = 'instance-state-name'">
+                <setEventAttribute attr="ec2CurrentState">$_hostIpAddr</setEventAttribute>
+              </when>
+              <when test="$_ec2Name = 'private-ip-address'">
+                <switch>
+                  <case>
+                    <collectFieldsByRegex src="$_hostIpAddr">
+                      <regex><![CDATA[^<hostIpAddr:gPatIpAddr>$]]></regex>
+                    </collectFieldsByRegex>
+                  </case>
+                  <default>
+                    <setEventAttribute attr="hostName">$_hostIpAddr</setEventAttribute>
+                  </default>
+                </switch>
+              </when>
+            </choose>
+          </when>
+          <when test="$eventType = 'AWS-CloudTrail-EC2-RegisterImage'">
+            <collectAndSetAttrByKeyValuePair sep=" [" src="$_body">
+              <attrKeyMap attr="imageName" key="[requestParameters/name]="/>
+            </collectAndSetAttrByKeyValuePair>
+          </when>
+          <when test="$eventType = 'AWS-CloudTrail-EC2-CreateImage'">
+            <collectAndSetAttrByKeyValuePair sep=" [" src="$_body">
+              <attrKeyMap attr="imageName" key="[requestParameters/name]="/>
+            </collectAndSetAttrByKeyValuePair>
+          </when>
+          <when test="matches($eventType, 'AWS-CloudTrail-SIGNIN-ConsoleLogin')">
+            <when test="exist userArn">
+              <switch>
+                <case>
+                  <collectFieldsByRegex src="$userArn">
+                    <regex><![CDATA[^arn.*/<user:gPatStr>]]></regex>
+                  </collectFieldsByRegex>
+                </case>
+                <default/>
+              </switch>
+            </when>
+          </when>
+        </choose>
+      </otherwise>
+    </choose>
+  </parsingInstructions>
+</eventParser>

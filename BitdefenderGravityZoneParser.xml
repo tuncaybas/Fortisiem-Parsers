@@ -1,0 +1,270 @@
+<eventParser name="BitdefenderGravityZoneParser">
+  <deviceType>
+    <Vendor>Bitdefender</Vendor>
+    <Model>GravityZone</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<20>Mar 15 23:24:06 gz gravityzone: [uc] {"computer_name":"example","computer_ip":"10.1.1.1","computer_id":"532806300678598e738b4571","product_installed":"EPS","uc_type":"application","application_path":"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe","status":"uc_application_blocked","last_blocked":"2015-03-15T21:23:33.000Z","count":3,"module":"uc"}]]></testEvent>
+    <testEvent><![CDATA[<21>Mar 15 23:36:14 gz gravityzone: [fw] {"computer_name":"example","computer_ip":"10.1.1.1","computer_id":"532806300678598e738b4571","product_installed":"EPS","status":"traffic_blocked","local_port":"55045","protocol_id":"6","application_path":"c:\\program files\\teamviewer\\version9\\teamviewer_service.exe","last_blocked":"2015-03-15T21:35:54.000Z","count":1,"module":"fw"}]]></testEvent>
+    <testEvent><![CDATA[<22>Mar 15 23:50:48 gz gravityzone: [aph] {"computer_name":"example","computer_ip":"10.1.1.1","computer_id":"532806300678598e738b4571","product_installed":"EPS","aph_type":"phishing","url":"http:\/\/www.programa10.com\/plugins\/editors\/tinymce\/jscripts\/tiny_mce\/themes\/simple\/images\/-\/3247164f529bd895ed5dfae4b17630d7\/Confirm.php","status":"aph_blocked","last_blocked":"2015-03-15T21:50:15.000Z","count":2,"module":"aph"}]]></testEvent>
+    <testEvent><![CDATA[<23>Mar 15 23:53:56 gz gravityzone: [dp] {"computer_name":"example","computer_ip":"10.1.1.1","computer_id":"532806300678598e738b4571","product_installed":"EPS","target_type":"http","blocking_rule_name":"test","url":"http:\/\/www.numarcertificat.com\/telefon-0765448162.php","status":"data_protection_blocked","last_blocked":"2015-03-15T21:53:50.000Z","count":1,"module":"dp"}]]></testEvent>
+    <testEvent><![CDATA[<24>Mar 15 23:09:27 gz gravityzone: [modules] {"computer_name":"example","computer_ip":"10.1.1.1","computer_id":"53280630067 8598e738b4571","product_installed":"EPS","malware_status":1,"aph_status":1,"firewall_status":1,"avc_status":0,"ids_status":0,"uc _web_filtering":0,"uc_categ_filtering":0,"uc_application_status":0,"dp_status":0,"module":"modules"}]]></testEvent>
+    <testEvent><![CDATA[<17>Mar 15 23:13:06 gz gravityzone: [avc] {"computer_name":"example","computer_ip":"10.1.1.1","computer_id":"532806300678598e738b457e","product_installed":"EPS","exploit_type":"AVC Blocked Exploit","exploit_path":"C:\\Users\\username.DEMOLAB\\Desktop\\avcsim_v2\\avcsim\\avcsim\\win32\\avcsim32.exe","status":"avc_blocked","last_blocked":"2015-03-15T21:13:03.000Z","count":1,"module":"avc"}]]></testEvent>
+    <testEvent><![CDATA[<15>Mar 15 23:04:56 gz gravityzone: [av] {"computer_name":"example","computer_ip" :"10.1.1.1","computer_id":"532806300678598e738b4571","product_installed":"E PS","malware_type":"file","malware_name":"BAT.Trojan.FormatC.Z","file_path":"C:\ \Users\\username\\Desktop\\New Text Document.txt","final_status":"quarantined"," timestamp":"2015-03-15T21:04:49.000Z","module":"av"}]]></testEvent>
+    <testEvent><![CDATA[<38>Jun 22 08:05:39 precise64 gravityzone: [sva] {"powered_off":0, "product_update_available":1, "product_reboot_required":0, "lastupdate":"1425637239", "updatesigam":"7.59556", "module":"sva", "computer_name":"example", "computer_ip":"10.10.10.10", "computer_id":"5587befab1a43dee368b4568", "product_installed":"SVA"}]]></testEvent>
+    <testEvent><![CDATA[<25>Jun 22 07:56:34 precise64 gravityzone: {"name":"example","created":"2015-06-22T10:56:33+03:00","company_name":"example","user_name":"user1@abc.com","license_key":"MJSJGIC","threshold":7,"days":6}]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[(?:<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatStr>\s+gravityzone:)|(?:\[PH_DEV_MON_CUSTOM_JSON\]:\[reptVendor\]=Bitdefender,\[reptModel\]=GravityZone.*,\[(?:json|sub_json)\]=)]]></eventFormatRecognizer>
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[\[PH_DEV_MON_CUSTOM_JSON\]:\[reptVendor\]=Bitdefender,\[reptModel\]=GravityZone,\[reptDevName\]=<reptDevName:gPatStrComma>(?:,\[reptDevIpAddr\]=<reptDevIpAddr:gPatStrComma>)?,\[json\]=<_body1:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^<_prefix:gPatMesgBody>,\[json\]=<_body1:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="_prefix">combineMsgId($_prefix,",[sub_json]=")</setEventAttribute>
+
+        <!-- [PH_DEV_MON_CUSTOM_JSON]:[reptVendor]=Bitdefender,[reptModel]=GravityZone,[reptDevName]=cloud.gravityzone.bitdefender.com_10.10.10.10,[json]={"jsonrpc":"2.0","method":"addEvents","params":{"events":[{"computer_name":"example","computer_fqdn":"fc-win7-example","computer_ip":"10.10.10.11","computer_id":"59a1604e60369e06733f8abb","product_installed":"BEST","malware_type":"file","malware_name":"EICAR-Test-File (not a virus)","file_path":"C:\\eicar0000001.txt","hash":"8b3f191819931d1f2cef7289239b5f77c00b079847b9c2636e56854d1e5eff71","final_status":"deleted","timestamp":"2017-09-08T12:01:36.000Z","companyId":"62a92960315a119dbe0b0246","module":"av","_testEvent_":true},{"computer_name":"example","computer_fqdn":"example","computer_ip":"10.10.10.11","computer_id":"59a1604e60369e06733f8abb","product_installed":"BEST","malware_type":"file","malware_name":"EICAR-Test-File (not a virus)","file_path":"C:\\eicar0000001.txt","hash":"8b3f191819931d1f2cef7289239b5f77c00b079847b9c2636e56854d1e5eff71","final_status":"deleted","timestamp":"2017-09-08T12:01:36.000Z","companyId":"62a92960315a119dbe0b0246","module":"av","_testEvent_":true},{"computer_name":"example","computer_fqdn":"fc-win7-example","computer_ip":"10.10.10.11","computer_id":"59a1604e60369e06733f8abb","product_installed":"BEST","malware_type":"file","malware_name":"EICAR-Test-File (not a virus)","file_path":"C:\\eicar0000001.txt","hash":"8b3f191819931d1f2cef7289239b5f77c00b079847b9c2636e56854d1e5eff71","final_status":"deleted","timestamp":"2017-09-08T12:01:36.000Z","companyId":"62a92960315a119dbe0b0246","module":"av","_testEvent_":true}]},"id":1660923455412} -->
+        <setEventAttribute attr="_resultCount">splitJsonEvent($_body1, "params.events", $_prefix, "", "true")</setEventAttribute>
+      </case>
+      <case>
+        <!-- [PH_DEV_MON_CUSTOM_JSON]:[reptVendor]=Bitdefender,[reptModel]=GravityZone,[reptDevName]=cloud.gravityzone.bitdefender.com_10.10.10.10,[sub_json]={"id":1660923455412,"jsonrpc":"2.0","method":"addEvents","params":{"events":{"_testEvent_":true,"companyId":"62a92960315a119dbe0b0246","computer_fqdn":"fc-win7-Example","computer_id":"59a1604e60369e06733f8abb","computer_ip":"10.10.10.10","computer_name":"FC-WIN7-Example","file_path":"C:\\eicar0000001.txt","final_status":"deleted","hash":"8b3f191819931d1f2cef7289239b5f77c00b079847b9c2636e56854d1e5eff71","malware_name":"EICAR-Test-File (not a virus)","malware_type":"file","module":"av","product_installed":"BEST","timestamp":"2017-09-08T12:01:36.000Z"}}} -->
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[\[PH_DEV_MON_CUSTOM_JSON\]:\[reptVendor\]=Bitdefender,\[reptModel\]=GravityZone,\[reptDevName\]=<reptDevName:gPatStrComma>(?:,\[reptDevIpAddr\]=<reptDevIpAddr:gPatStrComma>)?,\[sub_json\]=<_body1:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <collectAndSetAttrByJSON src="$_body1">
+          <attrKeyMap attr="_body" key="params.events"/>
+        </collectAndSetAttrByJSON>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<reptDevName:gPatStr>\s+gravityzone:\s+(?:\[<:gPatStr>\]\s+)?<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+        <setEventAttribute attr="_body">replaceStringByRegex($_body, "”", "\"")</setEventAttribute>
+        <setEventAttribute attr="_body">replaceStringByRegex($_body, "\\\s+\\", "\\\\")</setEventAttribute>
+      </case>
+      <default/>
+    </switch>
+
+    <when test="exist _body">
+      <collectAndSetAttrByJSON src="$_body">
+        <!--"created":"2015-03-15T21:07:37+00:00"-->
+        <attrKeyMap attr="_collectorTime" key="created"/>
+        <attrKeyMap attr="hostName" key="computer_name"/>
+        <attrKeyMap attr="_eventname" key="name"/>
+        <attrKeyMap attr="fqdnName" key="computer_fqdn"/>
+        <attrKeyMap attr="hostIpAddr" key="computer_ip"/>
+        <attrKeyMap attr="machineGUID" key="computer_id"/>
+        <attrKeyMap attr="vmName" key="VM_NAME"/>
+        <attrKeyMap attr="vmGuestId" key="VM_ID"/>
+        <attrKeyMap attr="uuid" key="UUID_INSTANCE"/>
+        <attrKeyMap attr="virusType" key="malware_type"/>
+        <attrKeyMap attr="virusName" key="malware_name"/>
+        <attrKeyMap attr="filePath" key="file_path"/>
+        <attrKeyMap attr="_status" key="final_status"/>
+        <!-- timestamp":"2015-03-15T21:04:49.000Z"-->
+        <attrKeyMap attr="_eventTime" key="timestamp"/>
+        <attrKeyMap attr="virusType" key="exploit_type"/>
+        <attrKeyMap attr="virusName" key="exploit_name"/>
+        <attrKeyMap attr="filePath" key="exploit_path"/>
+        <attrKeyMap attr="_status" key="status"/>
+        <!--"last_blocked":"2015-03-15T21:53:50.000Z"-->
+        <attrKeyMap attr="_incidentLastSeen" key="last_blocked"/>
+        <attrKeyMap attr="countAllocated" key="count"/>
+        <attrKeyMap attr="threatCategory" key="aph_type"/>
+        <attrKeyMap attr="infoURL" key="url"/>
+        <attrKeyMap attr="destIpPort" key="local_port"/>
+        <attrKeyMap attr="ipProto" key="protocol_id"/>
+        <attrKeyMap attr="filePath" key="application_path"/>
+        <attrKeyMap attr="srcIpAddr" key="source_ip"/>
+        <attrKeyMap attr="threatCategory" key="uc_type"/>
+        <attrKeyMap attr="errReason" key="block_type"/>
+        <attrKeyMap attr="threatCategory" key="categories"/>
+        <attrKeyMap attr="threatCategory" key="target_type"/>
+        <attrKeyMap attr="ruleName" key="blocking_rule_name"/>
+        <attrKeyMap attr="phyMachPowerStateCode" key="powered_off"/>
+        <attrKeyMap attr="updateCount" key="product_update_available"/>
+        <attrKeyMap attr="_isRebootRequired" key="product_reboot_required"/>
+        <attrKeyMap attr="status" key="uc_application_status"/>
+        <attrKeyMap attr="_licenseKey" key="license_key"/>
+        <attrKeyMap attr="countAllocated" key="used"/>
+        <attrKeyMap attr="user" key="user_name"/>
+        <attrKeyMap attr="user" key="user.name"/>
+        <attrKeyMap attr="userId" key="user.id"/>
+        <attrKeyMap attr="count" key="total"/>
+        <attrKeyMap attr="_recvForHisCompany" key="recv_for_his_company"/>
+        <attrKeyMap attr="_recvForPartnerCompany" key="recv_for_partner_company"/>
+        <attrKeyMap attr="errorNo" key="error_code"/>
+        <attrKeyMap attr="errReason" key="error_message"/>
+        <attrKeyMap attr="user" key="users"/>
+        <attrKeyMap attr="backupStatus" key="backup_status"/>
+        <attrKeyMap attr="isSuccess" key="is_successful"/>
+        <attrKeyMap attr="_isScheduled" key="is_scheduled"/>
+        <attrKeyMap attr="version" key="db_version"/>
+        <attrKeyMap attr="type" key="location_type"/>
+        <attrKeyMap attr="filePath" key="location"/>
+        <!--"next_backup":"2016-02-11T14:27:43+00:00"-->
+        <attrKeyMap attr="_updateTime" key="next_backup"/>
+        <attrKeyMap attr="countAllocated" key="mailboxes"/>
+        <attrKeyMap attr="count" key="license_limit"/>
+        <!--"date":"11 Feb 2016, 14:27:41 +00:00"-->
+        <attrKeyMap attr="_actionTime" key="date"/>
+        <attrKeyMap attr="osType" key="platform"/>
+        <attrKeyMap attr="browserName" key="browser"/>
+        <attrKeyMap attr="browserName" key="browser_name"/>
+        <attrKeyMap attr="_browserVersion" key="browser_version"/>
+        <attrKeyMap attr="srcIpAddr" key="ip"/>
+        <attrKeyMap attr="certInfo" key="certificate_type"/>
+        <attrKeyMap attr="daysToAccountExpiry" key="days_left"/>
+        <attrKeyMap attr="daysToAccountExpiry" key="days"/>
+        <attrKeyMap attr="_protectedItem" key="protected_entities"/>
+        <attrKeyMap attr="fileId" key="csv_id"/>
+        <!--"last_notification_date":"2016-02-11T14:27:44+00:00"-->
+        <attrKeyMap attr="_incidentLastSeen" key="last_notification_date"/>
+        <attrKeyMap attr="incidentId" key="endpoint_id"/>
+        <attrKeyMap attr="serverName" key="server_name"/>
+        <attrKeyMap attr="phAgentId" key="installed_agent"/>
+        <attrKeyMap attr="senderMailAddr" key="sender"/>
+        <attrKeyMap attr="receiverMailAddr" key="recipients"/>
+        <attrKeyMap attr="mailSubject" key="subject"/>
+        <attrKeyMap attr="scanBegin" key="detection_time"/>
+        <attrKeyMap attr="virusName" key="detected_malware"/>
+        <attrKeyMap attr="targetName" key="target_name"/>
+        <attrKeyMap attr="policyName" key="policy_name"/>
+        <attrKeyMap attr="procId" key="taskId"/>
+        <attrKeyMap attr="task" key="taskName"/>
+        <attrKeyMap attr="activityType" key="taskType"/>
+        <attrKeyMap attr="targetName" key="targetName"/>
+        <attrKeyMap attr="isSuccess" key="isSuccessful"/>
+        <attrKeyMap attr="osType" key="os"/>
+        <attrKeyMap attr="hostIpAddr" key="device_ip"/>
+        <!--"request_time":"11 Feb 2016, 14:27:41 +00:00"-->
+        <attrKeyMap attr="_actionTime" key="request_time"/>
+        <attrKeyMap attr="_newVersion" key="available_version"/>
+        <attrKeyMap attr="version" key="current_version"/>
+        <!-- "release_date":"22 Jun 2015, 12:50:05 +03:00"-->
+        <attrKeyMap attr="_updateTime" key="release_date"/>
+        <attrKeyMap attr="loadAvg1min" key="loadAverage"/>
+        <attrKeyMap attr="cpuUtil" key="cpuUsage"/>
+        <attrKeyMap attr="memUtil" key="memoryUsage"/>
+        <attrKeyMap attr="portCapUtil" key="networkUsage"/>
+        <attrKeyMap attr="module" key="module"/>
+      </collectAndSetAttrByJSON>
+    </when>
+    <choose>
+      <when test="not_exist module">
+        <setEventAttribute attr="eventType">Bitdefender-GravityZone</setEventAttribute>
+      </when>
+      <when test="$module = 'av'">
+        <setEventAttribute attr="eventType">Bitdefender-GravityZone-Malware</setEventAttribute>
+      </when>
+      <when test="$module = 'avc'">
+        <setEventAttribute attr="eventType">Bitdefender-GravityZone-Behavioral</setEventAttribute>
+      </when>
+      <when test="$module = 'aph'">
+        <setEventAttribute attr="eventType">Bitdefender-GravityZone-Phishing</setEventAttribute>
+      </when>
+      <when test="$module = 'uc'">
+        <setEventAttribute attr="eventType">Bitdefender-GravityZone-AppOrWebControl</setEventAttribute>
+      </when>
+      <when test="$module = 'fw'">
+        <setEventAttribute attr="eventType">Bitdefender-GravityZone-Firewall</setEventAttribute>
+      </when>
+      <when test="$module = 'dp'">
+        <setEventAttribute attr="eventType">Bitdefender-GravityZone-DataProtection</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">Bitdefender-GravityZone</setEventAttribute>
+      </otherwise>
+    </choose>
+    <when test="exist _collectorTime">
+      <collectFieldsByRegex src="$_collectorTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s*T\s*<_time:gPatTime>\s*<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="collectorTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+    <when test="exist _eventTime">
+      <collectFieldsByRegex src="$_eventTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s*T\s*<_time:gPatTimeMSec>\s*<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+    <when test="exist _incidentLastSeen">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_incidentLastSeen">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s*T\s*<_time:gPatTimeMSec>\s*<_tz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_incidentLastSeen">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s*T\s*<_time:gPatTime>\s*<_tz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+      </switch>
+      <setEventAttribute attr="incidentLastSeen">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <when test="exist _actionTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_actionTime">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s*T\s*<_time:gPatTime>\s*<_tz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_actionTime">
+            <regex><![CDATA[<_day:gPatDay>\s+<_mon:gPatMon>\s+<_year:gPatYear>\s*,\s*<_time:gPatTime>\s*<_tz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+      </switch>
+      <setEventAttribute attr="actionTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <when test="exist _updateTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_updateTime">
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s*T\s*<_time:gPatTime>\s*<_tz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$_updateTime">
+            <regex><![CDATA[<_day:gPatDay>\s+<_mon:gPatMon>\s+<_year:gPatYear>\s*,\s*<_time:gPatTime>\s*<_tz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+      </switch>
+      <setEventAttribute attr="updateTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+    <when test="exist infoURL">
+      <setEventAttribute attr="destName">extractHostFromURL($infoURL)</setEventAttribute>
+    </when>
+    <when test="exist _eventname">
+      <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$_eventname)</setEventAttribute>
+    </when>
+    <when test="exist _status">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_status">
+            <regex><![CDATA[\s*\d+]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="status">$_status</setEventAttribute>
+        </case>
+        <default>
+          <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$_status)</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+    <when test="$eventType = 'Bitdefender-GravityZone'">
+      <setEventAttribute attr="eventType">Bitdefender-GravityZone-Generic</setEventAttribute>
+    </when>
+    <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "\s+", "_")</setEventAttribute>
+  </parsingInstructions>
+</eventParser>

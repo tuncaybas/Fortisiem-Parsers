@@ -1,0 +1,94 @@
+<eventParser name="Bit9Parser">
+  <deviceType>
+    <Vendor>Bit9</Vendor>
+    <Model>Security Platform</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>(?:\d+\s+<:gPatYear>-<:gPatMonNum>-<:gPatDay>T<:gPatTime>Z\s+<:gPatHostName>\s+<:gPatStrEndColon>|<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatStr>)\s+Bit9 event:\s]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<14>1 2015-04-06T16:24:02Z server1.foo.com - - - - Bit9 event:  text="Server discovered new file 'c:\usersacct\appdata\local\temp\3cziegdd.dll' [361aa7fbd5d00aa9952e94adc01d6f8d4cb08766eb03ff522ba5c7a2f9e99f9f]." type="Discovery" subtype="New file on network" hostname="SVR123" username="SVR123\acct" date="4/6/2015 4:22:52 PM" ip_address="10.168.1.1" process="c:\abc\infrastructure\bin\scannerreset.exe" file_path="c:\users\acct\appdata\local\temp\3cziegdd.dll" file_name="3cziegdd.dll" file_hash="361aa7fbd5d00aa9952e94adc01d6f8d4cb08766eb03ff522ba5c7a2f9e99f9f" installer_name="csc.exe" policy="High Enforce" process_key="11111111-1111-1111-1111-111111111111" server_version="7.2.0.1395" file_trust="-2" file_threat="-2" process_trust="-1" process_threat="-1"]]></testEvent>
+    <testEvent><![CDATA[<13>Sep 14 14:02:14 example.com Bit9 event:  text="Computer BURGESSGROUP\MARYA-E7440 discovered new file '\\fileserver1\users shared folders\deployment center\messagestore\bgmessenger.exe' [2f92fb917c4f3faf481d63302ee1a17640a7e98d6786d3acddca1a733e762663]. DiscoveredBy[Kernel:Execute] FileCreated[9/1/2015 4:12:10 PM] Discovered[9/14/2015 2:02:24 PM (Hash: 9/14/2015 2:02:24 PM)]" type="Discovery" subtype="New unapproved file to computer" hostname="BURGESSGROUP\MARYA-E7440" username="BURGESSGROUP\Mary.Altieri" date="9/14/2015 2:02:25 PM" ip_address="192.168.52.51" process="c:\windows\explorer.exe" file_path="\\fileserver1\users shared folders\deployment center\messagestore\bgmessenger.exe" file_name="bgmessenger.exe" file_hash="2f92fb917c4f3faf481d63302ee1a17640a7e98d6786d3acddca1a733e762663" installer_name="explorer.exe" policy="Low Enforcement" process_key="11111111-1111-1111-1111-111111111111" server_version="7.2.1.710" file_trust="-1" file_threat="-1" process_trust="10" process_threat="0"]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>(?:\d+\s+<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>Z\s+<reptDevName:gPatHostName>\s+<:gPatStrEndColon>|<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<reptDevName:gPatStr>)\s+Bit9 event:\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <choose>
+      <when test="exist _year">
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <collectAndSetAttrByKeyValuePair sep=" " src="$_body">
+      <attrKeyMap attr="hashCode" key="file_hash="/>
+      <attrKeyMap attr="fileName" key="file_name="/>
+      <attrKeyMap attr="filePath" key="file_path="/>
+      <attrKeyMap attr="fileThreatLevel" key="file_threat="/>
+      <attrKeyMap attr="fileTrustLevel" key="file_trust="/>
+      <attrKeyMap attr="hostName" key="hostname="/>
+      <attrKeyMap attr="hostIpAddr" key="ip_address="/>
+      <attrKeyMap attr="policyName" key="policy="/>
+      <attrKeyMap attr="procName" key="process="/>
+      <attrKeyMap attr="procThreatLevel" key="process_threat="/>
+      <attrKeyMap attr="procTrustLevel" key="process_trust="/>
+      <attrKeyMap attr="ruleName" key="rule_name="/>
+      <attrKeyMap attr="appVersion" key="server_version="/>
+      <attrKeyMap attr="subtype" key="subtype="/>
+      <attrKeyMap attr="msg" key="text="/>
+      <attrKeyMap attr="type" key="type="/>
+      <attrKeyMap attr="user" key="username="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <choose>
+      <when test="exist type">
+        <setEventAttribute attr="_type">replaceStringByRegex($type, "\s+", "")</setEventAttribute>
+        <choose>
+          <when test="exist subtype">
+            <setEventAttribute attr="_subtype">replaceStringByRegex($subtype, "\s*\(.*\)\s*", "")</setEventAttribute>
+            <setEventAttribute attr="_subtype">replaceStringByRegex($_subtype, "\s+", "-")</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId("Bit9-", $_type, "-", $_subtype)</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">combineMsgId("Bit9-", $_type)</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">Bit9-Generic</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist fileName">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$fileName">
+            <regex><![CDATA[\.<fileType:gPatWord>$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist user">
+      <setEventAttribute attr="user">replaceStringByRegex($user, ".*\\", "")</setEventAttribute>
+    </when>
+
+    <when test="exist hostName">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$hostName">
+            <regex><![CDATA[<domain:gPatStr>[\\]<hostName:gPatStr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+  </parsingInstructions>
+</eventParser>

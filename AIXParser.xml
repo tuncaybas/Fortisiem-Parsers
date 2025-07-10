@@ -1,0 +1,208 @@
+<eventParser name="AIXParser">
+
+  <deviceType>
+    <Vendor>IBM</Vendor>
+    <Model>AIX</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[ Message\sforwarded\sfrom\s<:gPatStrEndColon>: ]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<38>Dec  2 15:47:31 Message forwarded from fiona: syslog: pts/2: failed login attempt for root from 192.168.0.1 ]]></testEvent>
+    <testEvent><![CDATA[<20>Sep 28 10:42:14 Message forwarded from sdmqpws02: sendmail[7274612]: gethostbyaddr(IPv6:::1) failed: 1]]></testEvent>
+    <testEvent><![CDATA[<28>Sep 28 10:22:44 Message forwarded from sdmqpws02: statd[7012574]: statd: cannot talk to statd at unixhome, RPC: 1832-008 Timed out(5)]]></testEvent>
+    <testEvent><![CDATA[<28>Sep 28 10:22:59 Message forwarded from sdmqpws02: statd[7012574]: statd_per_int: cannot talk to statd at unixhome as example.com, RPC: 1832-008 Timed out(5)]]></testEvent>
+    <testEvent><![CDATA[<28>Sep 28 10:45:48 Message forwarded from sdmqpws02: syslog[12189872]: [WARNING policy_manager.cpp:81] WARNING: Could not determine site]]></testEvent>
+    <testEvent><![CDATA[<14>Sep 28 10:32:29 Message forwarded from sdmqpws02: syslog: /etc/ifconfig -a]]></testEvent>
+    <testEvent><![CDATA[<14>Sep 28 10:32:29 Message forwarded from sdmqpws02: syslog: ifconfig -a]]></testEvent>
+    <testEvent><![CDATA[<30>Sep 28 10:35:50 Message forwarded from sdmqpws02: snmpd[7340192]: Received SNMP packet(s) from UDP: [0.0.0.0]->[10.4.171.20]:-10528]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <!--
+	<38>Dec  2 15:47:31 Message forwarded from fiona: syslog: pts/2: failed login attempt for root from 192.168.0.1
+        Attriubtes to be extracted: user, srcIpAddr
+        Derived Attributes to be set: eventType="AIX_Failed_SSH_Login"
+<46>Dec  2 15:46:55 Message forwarded from fiona: syslogd: restart
+Derived Attribute to be set: eventType="AIX_Process_Restart"
+<2>Dec  2 15:50:47 Message forwarded from fiona: unix: bpf: lo0 attached
+<38>Dec  2 15:52:09 Message forwarded from fiona: last message repeated 3 times
+<35>Dec  2 15:55:25 Message forwarded from fiona: tsm: /dev/pts/2: 3004-038 Login timed out after 60 seconds.
+Attributes to be extracted: durationMSec=60000, check combineMsgId
+For example,<setEventAttribute attr="durationMSec">combineMsgId($durationMSec,"000")</setEventAttribute>
+    -->
+
+    <setEventAttribute attr="eventAction">0</setEventAttribute>
+    <setEventAttribute attr="eventType">AIX-Generic</setEventAttribute>
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+
+    <!-- header -->
+    <collectAndSetAttrByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+Message forwarded from\s+<_reptDev:gPatHostName>:\s+<_body:gPatMesgBody>]]></regex>
+    </collectAndSetAttrByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_reptDev">
+          <regex><![CDATA[^<reptDevIpAddr:gPatIpAddr>$]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="reptDevName">""</setEventAttribute>
+      </case>
+      <default>
+        <setEventAttribute attr="reptDevName">$_reptDev</setEventAttribute>
+        <setEventAttribute attr="reptDevIpAddr">resolveDNSName($reptDevName)</setEventAttribute>
+      </default>
+    </switch>
+    <setEventAttribute attr="destIpAddr">$reptDevIpAddr</setEventAttribute>
+
+    <!-- body -->
+    <switch>
+      <!--      <20>Sep 28 10:42:14 Message forwarded from sdmqpws02: sendmail[7274612]: gethostbyaddr(IPv6:::1) failed: 1 -->
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[<swProcName:gPatStr>\[\d+\]:\s*gethostbyaddr\(IPv6:::\d+\)\s+failed:\s*\d+]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">AIX_Failed_Sendmail</setEventAttribute>
+      </case>
+      <!-- <30>Sep 28 10:35:50 Message forwarded from sdmqpws02: snmpd[7340192]: Received SNMP packet(s) from UDP: [0.0.0.0]->[10.4.171.20]:-10528 -->
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[<swProcName:gPatStr>\[\d+\]:\s*Received\s+SNMP\s+packet\(s\)\s+from\s+UDP:\s*\[<srcIpAddr:gPatIpAddr>\]->\[<destIpAddr:gPatIpAddr>\]:-\d+]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">AIX_SNMP_Packet_Received</setEventAttribute>
+      </case>
+      <!-- <28>Sep 28 10:22:44 Message forwarded from sdmqpws02: statd[7012574]: statd: cannot talk to statd at unixhome, RPC: 1832-008 Timed out(5) -->
+      <!-- <28>Sep 28 10:22:59 Message forwarded from sdmqpws02: statd[7012574]: statd_per_int: cannot talk to statd at unixhome as example.com, RPC: 1832-008 Timed out(5) -->
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[<swProcName:gPatStr>\[\d+\]:\s*statd(?:_per_int)?:\s*cannot\s+talk\s+to\s+statd\s+at\s+<hostName:gPatMesgBodyMin>(?:\s+as\s+<domain:gPatStrComma>)?,\s+RPC:\s+\d+-\d+\s+Timed\s+out\(<_timeNum:gPatInt>\)]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="durationMSec">combineMsgId($_timeNum, "000")</setEventAttribute>
+        <setEventAttribute attr="eventType">AIX_Statd_Timeout</setEventAttribute>
+      </case>
+      <!-- <28>Sep 28 10:45:48 Message forwarded from sdmqpws02: syslog[12189872]: [WARNING policy_manager.cpp:81] WARNING: Could not determine site -->
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[<swProcName:gPatStr>\[\d+\]:\s*\[WARNING\s+<fileName:gPatStrEndColon>:<lineNumber:gPatInt>\]\s+WARNING:\s+Could\s+not\s+determine\s+site]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">AIX_Determine_Site_Warned</setEventAttribute>
+      </case>
+      <!-- <14>Sep 28 10:32:29 Message forwarded from sdmqpws02: syslog: /etc/ifconfig -a -->
+      <!-- <14>Sep 28 10:32:29 Message forwarded from sdmqpws02: syslog: ifconfig -a -->
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[<swProcName:gPatStrEndColon>:\s*.*ifconfig\s+]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">AIX_ifconfig_Ran</setEventAttribute>
+      </case>
+      <!-- AIX_Login_Failure -->
+      <case>
+        <!-- <38>Dec  2 15:47:31 Message forwarded from fiona: syslog: pts/2: failed login attempt for root from 10.136.104.105 -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[<swProcName:gPatStrEndColon>:\s[^:]*:\sfailed login attempt for\s<user:gPatWord>\sfrom\s<_src:gPatStr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_src">
+              <regex><![CDATA[<srcIpAddr:gPatIpAddr>]]></regex>
+            </collectAndSetAttrByRegex>
+          </case>
+          <default>
+            <setEventAttribute attr="srcName">$_src</setEventAttribute>
+          </default>
+        </switch>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventType">AIX_Failed_SSH_Login</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </case>
+
+      <!-- AIX_Msg_Repeated -->
+      <!--case>
+	  <collectAndSetAttrByRegex src = "$_body">
+	  <regex><![CDATA[last message repeated\s<times:gPatInt>\stimes]]></regex>
+	  </collectAndSetAttrByRegex>
+	  <setEventAttribute attr="eventAction">2</setEventAttribute>
+	  <setEventAttribute attr="eventType">AIX_Msg_Repeated</setEventAttribute>
+	  <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+	  </case-->
+
+      <!-- AIX_Login_Timeout -->
+      <case>
+        <!-- <35>Dec  2 15:55:25 Message forwarded from fiona: tsm: /dev/pts/2: 3004-038 Login timed out after 60 seconds. -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[<swProcName:gPatStrEndColon>:\s[^:]*:\s<_first:gPatInt>-<_second:gPatInt>\sLogin timed out after\s<_time:gPatInt>\sseconds]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="durationMSec">combineMsgId($_time, "000")</setEventAttribute>
+        <setEventAttribute attr="eventAction">3</setEventAttribute>
+        <setEventAttribute attr="eventType">AIX_SSH_Login_Timeout</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </case>
+
+      <!-- AIX_Unix_Attached -->
+      <!--case>
+	  <collectAndSetAttrByRegex src = "$_body">
+	  <regex><![CDATA[unix:\s[^:]*:\s<:gPatWord>\sattached]]></regex>
+	  </collectAndSetAttrByRegex>
+	  <setEventAttribute attr="eventType">AIX_Unix_Attached</setEventAttribute>
+	  </case-->
+
+      <!-- AIX_Process_Restart -->
+      <case>
+        <!-- <46>Dec  2 15:46:55 Message forwarded from fiona: syslogd: restart -->
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[<swProcName:gPatStrEndColon>:\srestart]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">AIX_Process_Restart</setEventAttribute>
+      </case>
+
+      <!-- AIX_Successful_SSH_Login -->
+      <!-- <38>Oct 14 19:52:47 Message forwarded from ibmaix: sshd[18334]: Accepted password for root from 192.168.26.102 port 2664 ssh2 -->
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[<swProcName:gPatStr>\[\d+\]:\s+Accepted password for <user:gPatStr> from <srcIpAddr:gPatIpAddr> port <srcIpPort:gPatInt>.*]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="eventType">AIX_Successful_SSH_Login</setEventAttribute>
+      </case>
+
+      <!-- AIX_Failed_SSH_Login -->
+      <!-- <38>Oct 14 19:53:06 Message forwarded from ibmaix: sshd[18338]: Failed password for root from 192.168.26.102 port 2673 ssh2 -->
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[<swProcName:gPatStr>\[\d+\]:\s+Failed password for <user:gPatStr> from <srcIpAddr:gPatIpAddr> port <srcIpPort:gPatInt>.*]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+        <setEventAttribute attr="eventType">AIX_Failed_SSH_Login</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </case>
+
+      <!-- AIX_Switch_User -->
+      <!-- <37>Oct 14 20:19:04 Message forwarded from ibmaix: su: from root to guest at /dev/pts/1
+	   <37>Oct 13 14:28:59 Message forwarded from execb80: su: from root to nbsprod at /dev/tty?? -->
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[<swProcName:gPatStrEndColon>:\s+from <user:gPatStr> to <targetUser:gPatStr> at <:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+        <setEventAttribute attr="eventType">AIX_Successful_Switch_User</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </case>
+
+      <!-- AIX_Switch_User -->
+      <!-- <22>Oct 14 20:18:48 Message forwarded from ibmaix: sendmail[18184]: p9F0Im72018184: [192.168.20.116] did not issue MAIL/EXPN/VRFY/ETRN during connection to MTA -->
+      <case>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[sendmail\[\d+\]:\s+<:gPatStrEndColon>:\s+\[<srcIpAddr:gPatIpAddr>\] did not issue <:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+        <setEventAttribute attr="eventType">AIX_Successful_Send_Mail</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="swProcName">sendmail</setEventAttribute>
+      </case>
+
+    </switch>
+  </parsingInstructions>
+</eventParser>

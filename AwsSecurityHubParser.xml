@@ -1,0 +1,475 @@
+<eventParser name="AwsSecurityHubParser">
+
+  <deviceType>
+    <Vendor>Amazon</Vendor>
+    <Model>AWS Security Hub</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[[AWS_SECURITY_HUB_EVENT_DATA] = {"SchemaVersion":"2018-10-08","Id":"arn:aws:securityhub:us-west-2:600000000000:subscription\/cis-aws-foundations-benchmark\/v\/1.2.0\/2.2\/finding\/11111111-1111-1111-1111-111111111111","ProductArn":"arn:aws:securityhub:us-west-2::product\/aws\/securityhub","GeneratorId":"arn:aws:securityhub:::ruleset\/cis-aws-foundations-benchmark\/v\/1.2.0\/rule\/2.2","AwsAccountId":"600000000000","Types":["Software and Configuration Checks\/Industry and Regulatory Standards\/CIS AWS Foundations Benchmark"],"FirstObservedAt":"2019-07-29T21:33:58.665Z","LastObservedAt":"2019-07-29T21:33:58.665Z","CreatedAt":"2019-07-29T21:33:58.665Z","UpdatedAt":"2019-07-29T21:33:58.665Z","Severity":{"Product":2,"Normalized":20},"Title":"2.2 Ensure CloudTrail log file validation is enabled (Scored)","Description":"CloudTrail log file validation creates a digitally signed digest file containing a hash of each log that CloudTrail writes to S3. These digest files can be used to determine whether a log file was changed, deleted, or unchanged after CloudTrail delivered the log. It is recommended that file validation be enabled on all CloudTrails.","Remediation":{"Recommendation":{"Text":"For directions on how to fix this issue, please consult the AWS Security Hub CIS documentation.","Url":"https:\/\/docs.aws.amazon.com\/securityhub\/latest\/userguide\/securityhub-standards.html#securityhub-standards-checks-2.2"}},"ProductFields":{"StandardsGuideArn":"arn:aws:securityhub:::ruleset\/cis-aws-foundations-benchmark\/v\/1.2.0","StandardsGuideSubscriptionArn":"arn:aws:securityhub:us-west-2:600000000000:subscription\/cis-aws-foundations-benchmark\/v\/1.2.0","RuleId":"2.2","RecommendationUrl":"https:\/\/docs.aws.amazon.com\/securityhub\/latest\/userguide\/securityhub-standards.html#securityhub-standards-checks-2.2","RelatedAWSResources:0\/name":"securityhub-cloud-trail-log-file-validation-enabled-zgghkf","RelatedAWSResources:0\/type":"AWS::Config::ConfigRule","RecordState":"ACTIVE","aws\/securityhub\/FindingId":"arn:aws:securityhub:us-west-2::product\/aws\/securityhub\/arn:aws:securityhub:us-west-2:600000000000:subscription\/cis-aws-foundations-benchmark\/v\/1.2.0\/2.2\/finding\/11111111-1111-1111-1111-111111111111","aws\/securityhub\/SeverityLabel":"LOW","aws\/securityhub\/ProductName":"Security Hub","aws\/securityhub\/CompanyName":"AWS"},"Resources":[{"Type":"AwsAccount","Id":"AWS::::Account:600000000000","Partition":"aws","Region":"us-west-2"}],"Compliance":{"Status":"WARNING"},"WorkflowState":"NEW","RecordState":"ACTIVE"}]]></testEvent>
+  </testEvents>
+  <patternDefinitions>
+    <pattern name="patStrDoubleQuoted"><![CDATA[[^"]*]]></pattern>
+    <pattern name="patStrFwdSlash"><![CDATA[[^/]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\[AWS_SECURITY_HUB_EVENT_DATA\] = \s*]]></eventFormatRecognizer>
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\[AWS_SECURITY_HUB_EVENT_DATA\] = <_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="extEventRecvProto">AWS_HUB_SDK</setEventAttribute>
+
+    <setEventAttribute attr="eventType">AWS-Hub-Generic-Event</setEventAttribute>
+    <collectAndSetAttrByJSON src="$_body">
+      <attrKeyMap attr="phCustId" key="phCustId"/>
+      <attrKeyMap attr="reptDevName" key="serverName"/>
+      <attrKeyMap attr="reptDevIpAddr" key="serverIp"/>
+      <!-- Required SecurityFinding fields -->
+      <attrKeyMap attr="accountId" key="AwsAccountId"/>
+      <attrKeyMap attr="_createTime" key="CreatedAt"/>
+      <attrKeyMap attr="msg" key="Description"/>
+      <attrKeyMap attr="generatorId" key="GeneratorId"/>
+      <!-- security findings provider-specific identifier for a finding -->
+      <attrKeyMap attr="msgId" key="Id"/>
+      <attrKeyMap attr="eventSource" key="ProductArn"/>
+      <!-- SchemaVersion not needed parser built for 2018-10-08 -->
+      <attrKeyMap attr="title" key="Title"/>
+      <attrKeyMap attr="_updateTime" key="UpdatedAt"/>
+      <!-- Resources is required, but contents are finding specific -->
+      <attrKeyMap attr="awsRegion" key="Resources[0].Region"/>
+      <attrKeyMap attr="tagName" key="Resources[0].Tags.Name"/>
+      <attrKeyMap attr="resourceType" key="Resources[0].Type"/>
+      <attrKeyMap attr="appRole" key="Resources[0].Details.AwsEc2Instance.IamInstanceProfileArn"/>
+      <attrKeyMap attr="hostIpAddr" key="Resources[0].Details.AwsEc2Instance.IpV4Addresses[0]"/>
+      <attrKeyMap attr="_hostIPList" key="Resources[0].Details.AwsEc2Instance.IpV4Addresses"/>
+      <attrKeyMap attr="subnetId" key="Resources[0].Details.AwsEc2Instance.SubnetId"/>
+      <attrKeyMap attr="instanceType" key="Resources[0].Details.AwsEc2Instance.Type"/>
+      <attrKeyMap attr="vpcId" key="Resources[0].Details.AwsEc2Instance.VpcId"/>
+      <attrKeyMap attr="resourceId" key="Resources[0].Id"/>
+      <attrKeyMap attr="user" key="Resources[0].Details.AwsIamAccessKey.UserName"/>
+      <!-- end required fields -->
+      <!-- Types is an optional field but has key et data when present -->
+      <attrKeyMap attr="_types" key="Types[0]"/>
+      <attrKeyMap attr="_deviceTime" key="FirstObservedAt"/>
+      <!-- Severity.Normalized is deprecated -->
+      <attrKeyMap attr="_severity" key="Severity.Normalized"/>
+      <attrKeyMap attr="_severity" key="Severity.Label"/>
+      <attrKeyMap attr="remedyAction" key="Remediation.Recommendation.Text"/>
+      <attrKeyMap attr="remedyURL" key="Remediation.Recommendation.Url"/>
+      <attrKeyMap attr="confidence" key="Confidence"/>
+      <attrKeyMap attr="clientReputationScore" key="Criticality"/>
+      <attrKeyMap attr="destDomain" key="Network.DestinationDomain"/>
+      <attrKeyMap attr="_destIpAddr1" key="Network.DestinationIpV4"/>
+      <attrKeyMap attr="_destIpAddr2" key="Network.DestinationIpV6"/>
+      <attrKeyMap attr="destIpPort" key="Network.DestinationPort"/>
+      <attrKeyMap attr="direction" key="Network.Direction"/>
+      <attrKeyMap attr="_ipProto" key="Network.Protocol"/>
+      <attrKeyMap attr="srcDomain" key="Network.SourceDomain"/>
+      <attrKeyMap attr="_srcIpAddr1" key="Network.SourceIpV4"/>
+      <attrKeyMap attr="_srcIpAddr2" key="Network.SourceIpV6"/>
+      <attrKeyMap attr="srcMACAddr" key="Network.SourceMac"/>
+      <attrKeyMap attr="srcIpPort" key="Network.SourcePort"/>
+      <attrKeyMap attr="procName" key="Process.Name"/>
+      <attrKeyMap attr="parentProcId" key="Process.ParentPid"/>
+      <attrKeyMap attr="procPath" key="Process.Path"/>
+      <attrKeyMap attr="procId" key="Process.Pid"/>
+      <attrKeyMap attr="threatSource" key="ThreatIntelIndicators.Source"/>
+      <attrKeyMap attr="threatType" key="ThreatIntelIndicators.Type"/>
+      <attrKeyMap attr="threatValue" key="ThreatIntelIndicators.Value"/>
+      <attrKeyMap attr="threatCategory" key="ThreatIntelIndicators.Category"/>
+      <attrKeyMap attr="infoURL" key="ThreatIntelIndicators.SourceUrl"/>
+      <attrKeyMap attr="resoStatus" key="VerificationState"/>
+      <attrKeyMap attr="virusName" key="Malware[0].Name"/>
+      <attrKeyMap attr="virusType" key="Malware[0].Type"/>
+      <attrKeyMap attr="virusQuarantStatus" key="Malware[0].State"/>
+      <attrKeyMap attr="fileName" key="Malware[0].Name"/>
+      <attrKeyMap attr="filePath" key="Malware[0].Path"/>
+      <attrKeyMap attr="complianceStatus" key="Compliance.Status"/>
+      <!-- Product Fields -->
+      <attrKeyMap attr="_productFields" key="ProductFields"/>
+      <attrKeyMap attr="_ipProto" key="ProductFields.action/networkConnectionAction/protocol"/>
+      <attrKeyMap attr="_blocked" key="ProductFields.action/networkConnectionAction/blocked"/>
+      <attrKeyMap attr="_direction" key="ProductFields.action/networkConnectionAction/connectionDirection"/>
+      <attrKeyMap attr="_localIp" key="ProductFields.action/networkConnectionAction/localPortDetails/ipAddressV4"/>
+      <attrKeyMap attr="_localPort" key="ProductFields.action/networkConnectionAction/localPortDetails/port"/>
+      <attrKeyMap attr="_localPortName" key="ProductFields.action/networkConnectionAction/localPortDetails/portName"/>
+      <attrKeyMap attr="_remoteIp" key="ProductFields.action/networkConnectionAction/remoteIpDetails/ipAddressV4"/>
+      <attrKeyMap attr="_remoteIpPort" key="ProductFields.action/networkConnectionAction/remotePortDetails/port"/>
+      <attrKeyMap attr="_remoteIpPortName" key="ProductFields.action/networkConnectionAction/remotePortDetails/portName"/>
+    </collectAndSetAttrByJSON>
+
+    <!-- Get eventSource short name -->
+    <!-- arn:aws:securityhub:us-east-1::product/aws/guardduty -->
+    <when test="exist eventSource">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$eventSource">
+            <regex><![CDATA[^.*/<eventSource:patStrFwdSlash>$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+
+    <choose>
+      <when test="not_exist resourceId"/>
+      <when test="not_exist resourceType"/>
+      <!-- Resource ID arn:aws:ec2:us-east-1:621111111:instance/i-xxxxxxxffd0 -->
+      <when test="$resourceType = 'AwsEc2Instance'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$resourceId">
+              <regex><![CDATA[^.*/<ec2InstanceId:patStrFwdSlash>$]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="resourceId">$ec2InstanceId</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <otherwise>
+        <switch>
+          <case>
+            <!-- get short name of resource out of the ARN -->
+            <collectFieldsByRegex src="$resourceId">
+              <regex><![CDATA[^<:patStrFwdSlash>/<resourceId:gPatStr>$]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </otherwise>
+    </choose>
+
+    <when test="exist _hostIPList">
+      <setEventAttribute attr="hostIpAddrList">replaceStringByRegex($_hostIPList,"[\[\] \"\n\t]+", "")</setEventAttribute>
+    </when>
+
+    <when test="exist _productFields">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_productFields">
+            <regex><![CDATA[.*/ProductName"\s*:\s*"<threatSource:patStrDoubleQuoted>"]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_productFields">
+            <regex><![CDATA[.*/action/actionType"\s*:\s*"<activityType:patStrDoubleQuoted>"]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_productFields">
+            <regex><![CDATA[.*/connectionDirection"\s*:\s*"<direction:patStrDoubleQuoted>"]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_productFields">
+            <regex><![CDATA[.*/protocol"\s*:\s*"<_ipProto:patStrDoubleQuoted>"]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_productFields">
+            <regex><![CDATA[.*/blocked"\s*:\s*"<_blocked:patStrDoubleQuoted>"]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_productFields">
+            <regex><![CDATA[.*/localPortDetails/ipAddressV4"\s*:\s*"<_localIp:patStrDoubleQuoted>"]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_productFields">
+            <regex><![CDATA[.*/localPortDetails/port"\s*:\s*"<_localPort:patStrDoubleQuoted>"]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_productFields">
+            <regex><![CDATA[.*/localPortDetails/portName"\s*:\s*"<_localPortName:patStrDoubleQuoted>"]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_productFields">
+            <regex><![CDATA[.*/remoteIpDetails/ipAddressV4"\s*:\s*"<_remoteIp:patStrDoubleQuoted>"]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_productFields">
+            <regex><![CDATA[.*/remotePortDetails/port"\s*:\s*"<_remoteIpPort:patStrDoubleQuoted>"]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_productFields">
+            <regex><![CDATA[.*/remotePortDetails/portName"\s*:\s*"<_remoteIpPortName:patStrDoubleQuoted>"]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_productFields">
+            <regex><![CDATA[.*"attributes:\d+/key"\s*:\s*"PORT"\s*,\s*"attributes:\d+/value"\s*:\s*"<destIpPort:gPatInt>"]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_productFields">
+            <regex><![CDATA[.*"attributes:\d+/key"\s*:\s*"PROTOCOL"\s*,\s*"attributes:\d+/value"\s*:\s*"<destProto:patStrDoubleQuoted>"]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <!--
+    Informational	0
+    Low	1–39
+    Medium	40–69
+    High	70–89
+    Critical	90–100
+    -->
+    <choose>
+      <when test="not_exist _severity">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <!-- Handling for Security.Label -->
+      <when test="$_severity = 'INFORMATIONAL'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_severity = 'LOW'">
+        <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+      </when>
+      <when test="$_severity = 'MEDIUM'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_severity = 'HIGH'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_severity = 'CRITICAL'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+      <!-- Legacy handling for Normalized integer value -->
+      <when test="matches($_severity, '^[1-9]$|[1-3][0-9]$')">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="matches($_severity, '^[4-6][0-9]$')">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="matches($_severity, '^[2-8][0-9]$')">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="matches($_severity, '^100|9[0-9]$')">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist _ipProto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_ipProto)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist _block"/>
+      <when test="$_block = 'true'">
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventAction">0</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <choose>
+      <when test="exist _srcIpAddr1">
+        <setEventAttribute attr="srcIpAddr">$_srcIpAddr1</setEventAttribute>
+      </when>
+      <when test="exist _srcIpAddr2">
+        <setEventAttribute attr="srcIpAddr">$_srcIpAddr2</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="exist _destIpAddr1">
+        <setEventAttribute attr="destIpAddr">$_destIpAddr1</setEventAttribute>
+      </when>
+      <when test="exist _destIpAddr2">
+        <setEventAttribute attr="destIpAddr">$_destIpAddr2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist activityType"/>
+      <when test="$activityType = 'DNS_REQUEST'">
+        <when test="exist hostIpAddr">
+          <setEventAttribute attr="srcIpAddr">$hostIpAddr</setEventAttribute>
+        </when>
+      </when>
+      <when test="$activityType IN 'AWS_API_CALL, PORT_PROBE'">
+        <setEventAttribute attr="_direction">INBOUND</setEventAttribute>
+        <when test="exist hostIpAddr">
+          <setEventAttribute attr="destIpAddr">$hostIpAddr</setEventAttribute>
+        </when>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="exist direction"/>
+      <when test="exist _direction">
+        <setEventAttribute attr="direction">$_direction</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist direction">
+        <when test="exist _localIp">
+          <setEventAttribute attr="srcIpAddr">$_localIp</setEventAttribute>
+        </when>
+        <when test="exist _localPort">
+          <setEventAttribute attr="srcIpPort">$_localPort</setEventAttribute>
+        </when>
+        <when test="exist _localPortName">
+          <setEventAttribute attr="srcProto">$_localPortName</setEventAttribute>
+        </when>
+        <when test="exist _remoteIp">
+          <setEventAttribute attr="destIpAddr">$_remoteIp</setEventAttribute>
+        </when>
+        <when test="exist _remoteIpPort">
+          <setEventAttribute attr="destIpPort">$_remoteIpPort</setEventAttribute>
+        </when>
+        <when test="exist _remoteIpPortName">
+          <setEventAttribute attr="destProto">$_remoteIpPortName</setEventAttribute>
+        </when>
+      </when>
+      <when test="$direction = 'INBOUND'">
+        <when test="exist _localIp">
+          <setEventAttribute attr="destIpAddr">$_localIp</setEventAttribute>
+        </when>
+        <when test="exist _localPort">
+          <setEventAttribute attr="destIpPort">$_localPort</setEventAttribute>
+        </when>
+        <when test="exist _localPortName">
+          <setEventAttribute attr="destProto">$_localPortName</setEventAttribute>
+        </when>
+        <when test="exist _remoteIp">
+          <setEventAttribute attr="srcIpAddr">$_remoteIp</setEventAttribute>
+        </when>
+        <when test="exist _remoteIpPort">
+          <setEventAttribute attr="srcIpPort">$_remoteIpPort</setEventAttribute>
+        </when>
+        <when test="exist _remoteIpPortName">
+          <setEventAttribute attr="srcProto">$_remoteIpPortName</setEventAttribute>
+        </when>
+      </when>
+      <otherwise>
+        <!-- Assumes outbound -->
+        <when test="exist _localIp">
+          <setEventAttribute attr="srcIpAddr">$_localIp</setEventAttribute>
+        </when>
+        <when test="exist _localPort">
+          <setEventAttribute attr="srcIpPort">$_localPort</setEventAttribute>
+        </when>
+        <when test="exist _localPortName">
+          <setEventAttribute attr="srcProto">$_localPortName</setEventAttribute>
+        </when>
+        <when test="exist _remoteIp">
+          <setEventAttribute attr="destIpAddr">$_remoteIp</setEventAttribute>
+        </when>
+        <when test="exist _remoteIpPort">
+          <setEventAttribute attr="destIpPort">$_remoteIpPort</setEventAttribute>
+        </when>
+        <when test="exist _remoteIpPortName">
+          <setEventAttribute attr="destProto">$_remoteIpPortName</setEventAttribute>
+        </when>
+      </otherwise>
+    </choose>
+
+    <!--"2019-07-29T21:33:58.665Z"-->
+    <when test="exist _deviceTime">
+      <collectFieldsByRegex src="$_deviceTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>(?:\.\d{3})?<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+    <when test="exist _createTime">
+      <collectFieldsByRegex src="$_createTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>(?:\.\d{3})?<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="createTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+    <when test="exist _updateTime">
+      <collectFieldsByRegex src="$_updateTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>(?:\.\d{3})?<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="updateTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <!-- This is not labeled as a core required field, but most findings events seen so far have it and contain key details -->
+    <when test="exist _types">
+      <switch>
+        <case>
+          <!-- format of namespace/category/classifier that classify a finding -->
+          <!-- namespace values are: Software and Configuration Checks | TTPs | Effects | Unusual Behaviors | Sensitive Data Identifications -->
+          <collectFieldsByRegex src="$_types">
+            <regex><![CDATA[^<namespace:patStrFwdSlash>/<categoryType:patStrFwdSlash>/<classifier:patStrFwdSlash>$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <!-- valid examples of namespaces seen -->
+    <!-- Software and Configuration Checks, TTPs, Effects, Unusual Behaviors, Sensitive Data Identification -->
+    <!-- Industry and Regulatory Standards, AWS Security Best Practices -->
+    <when test="exist namespace">
+      <setEventAttribute attr="eventType">combineMsgId("AWS-Hub-", $namespace)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist categoryType"/>
+      <!-- shorten event type, skip appending Industry and Reg standards to ET -->
+      <when test="$categoryType = 'Industry and Regulatory Standards'"/>
+      <otherwise>
+        <setEventAttribute attr="eventType">combineMsgId($eventType,"-", $categoryType)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist classifier">
+      <setEventAttribute attr="eventType">combineMsgId($eventType,"-", $classifier)</setEventAttribute>
+    </when>
+
+    <!-- strip invalid chars from event type -->
+    <setEventAttribute attr="eventType">replaceStrInStr($eventType, "/", "-")</setEventAttribute>
+    <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "\s+|\s*\(", "_")</setEventAttribute>
+
+  </parsingInstructions>
+</eventParser>

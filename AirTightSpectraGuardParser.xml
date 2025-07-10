@@ -1,0 +1,674 @@
+<eventParser name="AirTightSpectraGuardParser">
+  <deviceType>
+    <Vendor>AirTight</Vendor>
+    <Model>SpectraGuard</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[CEF:0\|AirTight\|SpectraGuard\s+Enterprise\|]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<30><2013.09.09 19:45:16>CEF:0|AirTight|SpectraGuard Enterprise|6.7|5.51.515|Authorized AP operating on non-allowed channel|3|msg=Stop: Authorized AP [AP2.12.c11d] is operating on non-allowed channel. rt=Sep 09 2013 19:45:16 UTC dvc=10.255.1.36 externalId=726574 dmac=58:BF:EA:FA:26:EF cs1Label=TargetDeviceName cs1=AP2.12.c11d cs2Label=SSID cs2=TaisWiFiHiSpeed cs3Label=SecuritySetting cs3=802.11i cn1Label=RSSI_dBm cn1=-50 cn2Label=Channel cn2=149 cs4Label=Location cs4=//FB/FBFL2]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>\<<:gPatYear>\.<:gPatMonNum>\.<:gPatDay>\s+<:gPatTime>\>CEF:0\|AirTight\|SpectraGuard\s+Enterprise\|\d+\.\d+\|<_id1:gPatInt>\.<_id2:gPatInt>\.<_id3:gPatInt>\|[^|]*\|<eventSeverity:gPatInt>\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <collectAndSetAttrByKeyValuePair sep=" " src="$_body">
+      <attrKeyMap attr="wlanRssi" key="cn1="/>
+      <attrKeyMap attr="wlanChannelId" key="cn2="/>
+      <attrKeyMap attr="hostName" key="cs1="/>
+      <attrKeyMap attr="wlanSsid" key="cs2="/>
+      <attrKeyMap attr="wlanSecuritySetting" key="cs3="/>
+      <attrKeyMap attr="hostLocation" key="cs4="/>
+      <attrKeyMap attr="destIpPort" key="dpt="/>
+      <attrKeyMap attr="destIpAddr" key="dst="/>
+      <attrKeyMap attr="reptDevIpAddr" key="dvc="/>
+      <attrKeyMap attr="reptDevName" key="dvchost="/>
+      <attrKeyMap attr="destMACAddr" key="dmac="/>
+      <attrKeyMap attr="user" key="user="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <collectFieldsByRegex src="$_body">
+      <regex><![CDATA[\srt=<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>\s]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+
+    <choose>
+      <when test="$_id1 = '5'">
+        <choose>
+          <when test="$_id2 = '51'">
+            <choose>
+              <when test="$_id3 = '301'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Change_Authorized_AP_SSID</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '306'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Authorized_AP_WDS_mode</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '386'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Unencrypted_Authorized_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '515'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Authorized_AP_non-allowed_channel</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '606'">
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[Authorized AP \[<destName:gPatStrRightSB>\]]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">AirTight-SGE-Vulnerable_no_encryption_Authorized_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '613'">
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[Authorized AP \[<destName:gPatStrRightSB>\] is broadcasting SSID \[<wlanSsid:gPatStrRightSB>\]]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">AirTight-SGE-Authorized_AP_broadcasting_SSID</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '614'">
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[Vulnerable SSID \[<wlanSsid:gPatStrRightSB>\] detected on Authorized AP \[<destName:gPatStrRightSB>\]]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">AirTight-SGE-Vulnerable_SSID_Authorized_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '615'">
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[Authorized AP \[<destName:gPatStrRightSB>\]]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">AirTight-SGE-Vulnerable_WEP_Authorized_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '750'">
+                <setEventAttribute attr="eventType">AirTight-SGE-SSID_Broadcast</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '783'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Misconfigured_Authorized_AP_active</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '785'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Potentially_Authorized_AP_Active</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+
+          <when test="$_id2 = '52'">
+            <choose>
+              <when test="$_id3 = '251'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Disassociation_Flood_Attack</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '252'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Disassociation_Broadcast_Attack</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '253'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Association_Flood_Attack</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '254'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Association_Table_Overflow</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '255'">
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[Authorized AP \[<srcMACAddr:gPatStrRightSB>\] and Client \[<destMACAddr:gPatStrRightSB>\]]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">AirTight-SGE-Deauthentication_Flood_Attack</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '256'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Deauthentication_Broadcast_Attack</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '257'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Authentication_Flood_Attack</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '258'">
+                <setEventAttribute attr="eventType">AirTight-SGE-RTS_CTS_Flood</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '259'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Large_NAV</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '260'">
+                <setEventAttribute attr="eventType">AirTight-SGE-EAPOL_Logoff_Flood_Attack</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '261'">
+                <setEventAttribute attr="eventType">AirTight-SGE-EAPOL_Start_Flood_Attack</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '262'">
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[Authorized AP \[<srcMACAddr:gPatStrRightSB>\] and Client \[<destMACAddr:gPatStrRightSB>\]]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">AirTight-SGE-Premature_EAP_Success_Attack</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '263'">
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[Authorized AP \[<srcMACAddr:gPatStrRightSB>\] and Client \[<destMACAddr:gPatStrRightSB>\]]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">AirTight-SGE-Premature_EAP_Failure_Attack</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '265'">
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[Authorized AP \[<srcMACAddr:gPatStrRightSB>\] and Authorized Client \[<destMACAddr:gPatStrRightSB>\]]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">AirTight-SGE-Fata-Jack_Attack</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '266'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Air-Jack_Attack</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '299'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Fake_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '391'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Fake_Client</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '392'">
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[AP \[<srcMACAddr:gPatStrRightSB>\] to Client \[<destMACAddr:gPatStrRightSB>\]]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">AirTight-SGE-NULL_Probe_Response</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '499'">
+                <setEventAttribute attr="eventType">AirTight-SGE-DoS_Attack</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '604'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Offline_DoS_Attack_Detected</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+
+          <when test="$_id2 = '53'">
+            <choose>
+              <when test="$_id3 = '268'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Netstumbler_In_Use</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '269'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Wellenreiter_In_Use</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '400'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Excessive_NULL_Probes</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '537'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Cellular_Activity</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '605'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Offline_Reconnaissance_Tool</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+
+          <when test="$_id2 = '59'">
+            <choose>
+              <when test="$_id3 = '281'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Indeterminate_AP_Active</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '340'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Banned_AP_Active</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '516'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Nonauthorized_AP_Nonallowed_channel</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '600'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Offline_Rogue_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '779'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Rogue_AP_Active</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+
+          <when test="$_id2 = '60'">
+            <choose>
+              <when test="$_id3 = '264'">
+                <setEventAttribute attr="eventType">AirTight-SGE-PSPoll_Attack</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '602'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Offline_Honeypot_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '788'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Honeypot_Evil_Twin</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '906'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Hotspot_Attack</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+
+          <when test="$_id2 = '61'">
+            <choose>
+              <when test="$_id3 = '517'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Adhoc_Network_NonAllowed_Channel</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '610'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Offline_Authorized_Client_Adhoc_Connection</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '791'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Authorized_Client_Adhoc_Network</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '792'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Adhoc_Network_NonAuthorized_Clients</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+
+          <when test="$_id2 = '62'">
+            <choose>
+              <when test="$_id3 = '318'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Weak_WEPIV_Authorized_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '319'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Weak_WEPIV_Authorized_Client</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '500'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Active_WEP_Cracking</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '534'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Active_WPA_Cracking</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+
+          <when test="$_id2 = '65'">
+            <choose>
+              <when test="$_id3 = '502'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Client_RF_Signature_Anomaly</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '601'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Offline_MAC_Spoofing_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '820'">
+                <setEventAttribute attr="eventType">AirTight-SGE-AP_MAC_Spoofing</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '989'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Client_MAC_Spoofing</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+
+          <when test="$_id2 = '66'">
+            <choose>
+              <when test="$_id3 = '323'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Banned_Client</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '330'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Vulnerable_SSID_Probe</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '361'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Hotspot_SSID_Probe</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '498'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Client_Authen_NonCompliant_Authen_Type</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '508'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Client_Bridging_Config</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '603'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Offline_Soft_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '607'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Offline_Client_Rogue_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '608'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Offline_Client_External_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '609'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Offline_Client_Honeypot_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '611'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Offline_Unauth_Client_Auth_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '612'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Offline_Unauth_Client_Rogue_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '780'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Rogue_Client_Active</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '796'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Unauth_Client_Auth_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '798'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Auth_Client_Auth_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '799'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Auth_Client_Misassoc</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '800'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Unauth_Client_Guest_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '991'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Guest_Client_Misassoc</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '992'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Soft_Mobile_Hotspot_AP</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+
+          <when test="$_id2 = '69'">
+            <choose>
+              <when test="$_id3 = '490'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Sensor_Max_Quarantine_Capacity</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '826'">
+                <setEventAttribute attr="eventType">AirTight-SGE-AP_DoS_Prevention</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '831'">
+                <setEventAttribute attr="eventType">AirTight-SGE-AP_Quarantine</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '834'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Client_Quarantine</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+        </choose>
+      </when>
+
+      <when test="$_id1 = '10'">
+        <choose>
+          <when test="$_id2 = '70'">
+            <choose>
+              <when test="$_id3 = '303'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Auth_AP_Inactive</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '327'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Auth_AP_Disconnected</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '450'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Packet_Level_Troubleshooting</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '795'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Event_Level_Troubleshooting</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '997'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Mobile_License_Expiry</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+
+          <when test="$_id2 = '71'">
+            <choose>
+              <when test="$_id3 = '274'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Sensor_Disconnected_From_Server</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '430'">
+                <setEventAttribute attr="eventType">AirTight-SGE-New_Network_Detected</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '491'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Incompatible_Sensor_Version</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '492'">
+                <setEventAttribute attr="eventType">AirTight-SGE-SGE-Lower_Sensor_Version</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '535'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Sensor_Authentication_Failed</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '990'">
+                <setEventAttribute attr="eventType">AirTight-SGE-New_Sensor_Connected</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+
+          <when test="$_id2 = '72'">
+            <choose>
+              <when test="$_id3 = '275'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Server_Started</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '276'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Server_Stopped</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '341'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Sensor_Licensed_Limit_Reached</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '411'">
+                <setEventAttribute attr="eventType">AirTight-SGE-High_Avail_Server_Switch</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '422'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Database_Backup</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '423'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Database_Restore</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '494'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Automatic_Deletion</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '506'">
+                <setEventAttribute attr="eventType">AirTight-SGE-RAID_Array_Failure</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '507'">
+                <setEventAttribute attr="eventType">AirTight-SGE-RAID_Array_Normal</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '533'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Server_Disk_Usage_High</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '994'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Impending_Hard_Disk_Failure</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '995'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Data_Sync_Link_Up</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '996'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Data_Sync_Link_Down</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+        </choose>
+      </when>
+
+      <when test="$_id1 = '11'">
+        <choose>
+          <when test="$_id2 = '80'">
+            <choose>
+              <when test="$_id3 = '362'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Excessive_Probe_Auth_Client</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '383'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Excessive_Probe_Resp_Auth_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '503'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Drop_Signal_Auth_AP</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+
+          <when test="$_id2 = '81'">
+            <choose>
+              <when test="$_id3 = '300'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Change_Beacon_Interval_Auth_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '302'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Change_Channel_Auth_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '518'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Subopt_Coverage_Auth_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '519'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Subopt_Xput_Auth_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '520'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Excessive_RTS_CTS_Auth_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '521'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Excessive_RTS_CTS_Auth_Client</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '522'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Low_Fragment_Thresh_Auth_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '523'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Low_Fragment_Thresh_Auth_Client</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '524'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Long_Preamble_Auth_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '525'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Unsupp_Short_Guard_Intv_Auth_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '526'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Frame_Agg_Below_Max_Auth_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '527'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Excess_Legacy_Mode_Auth_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '528'">
+                <setEventAttribute attr="eventType">AirTight-SGE-40MHZ_ISM_Band_Auth_AP</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+
+          <when test="$_id2 = '82'">
+            <choose>
+              <when test="$_id3 = '510'">
+                <setEventAttribute attr="eventType">AirTight-SGE-High_Fragmentation</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '511'">
+                <setEventAttribute attr="eventType">AirTight-SGE-High_Communication_Errors</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '512'">
+                <setEventAttribute attr="eventType">AirTight-SGE-High_AP_Utilization</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '513'">
+                <setEventAttribute attr="eventType">AirTight-SGE-High_Auxiliary_Traffic</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '514'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Low_Average_Data_Rate</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '532'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Excessive_Associations</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+
+          <when test="$_id2 = '83'">
+            <choose>
+              <when test="$_id3 = '529'">
+                <setEventAttribute attr="eventType">AirTight-SGE-High_NonWiFi_RF_Interference</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '530'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Crowded_AP</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '531'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Crowded_Clients</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '536'">
+                <setEventAttribute attr="eventType">AirTight-SGE-RF_Jamming_Attack</setEventAttribute>
+              </when>
+
+              <when test="$_id3 = '888'">
+                <setEventAttribute attr="eventType">AirTight-SGE-Interference_Auth_AP</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+        </choose>
+      </when>
+    </choose>
+    <when test="not_private_ip destIpAddr">
+      <when test="exist destName">
+        <setEventAttribute attr="domainEntropy">calcDomainEntropy($destName)</setEventAttribute>
+      </when>
+    </when>
+  </parsingInstructions>
+</eventParser>

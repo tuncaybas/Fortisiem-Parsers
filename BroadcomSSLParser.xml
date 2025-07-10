@@ -1,0 +1,45 @@
+<eventParser name="BroadcomSSLParser">
+  <deviceType>
+    <Vendor>Broadcom</Vendor>
+    <Model>SSL Visibility</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<182>Apr 30 16:39:15 dcoxs1 ssldata[17205]: [B:23a35e.4] 1588279155 1.1.1.1:56588 -> 1.1.1.2:80 --- --- --- --- cert fp: rule:0 inspect:proxy-correlated SUCCESS (0x0000000000000000) 0x5c332ecd8aec5b50 Full+Corr x509:--- V[247738]:pT[0x0]:eF[0x10000000831037]:type[Full+Corr]:pol[--]:init[TI]:SNI[--]:dname[?]:dix[0]:chix[0(?)]:rfw[N]:rov[N]:isix[S0]:cver[0x0000]:ver[00.00]cat[0x0]:CF[0x0]:ChF[0x0]:Cmrx[--]:Cmtx[--]:Cocx[0x0]:Cchx[0x0]:Cshx[0x0]:Chrx[0x0]:Ceex[0x0]:SF[0x840242bb686]:ShF[0x294a01800bc7]:Smrx[CH|CKE|FINc]:Smtx[SH|SC|SKE|SHD|TKT|FINs]:Socx[0x20008001792fb]:Schx[0x20008001792fb]:Sshx[0x105a]:Shrx[0x0]:Seex[0x0]:Pxy[CLI]:sint[0x2200010000654]:nt[0xe02603000012cd]:Corr[0x5c332ecd8aec5b91]:ALPN[--]:css[--]:JA3[--]:S018]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+ssldata\[\d+\]:\s]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">Broadcom-SSLv-Generic</setEventAttribute>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[^.*?\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+ssldata\[\d+\]:\s+\[[^]]*\]\s+<deviceTime:gPatInt>\s+<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatIpPort>\s+-\>\s+<destIpAddr:gPatIpAddr>:<destIpPort:gPatIpPort>\s+<:gPatStr>\s+<:gPatStr>\s+<_infoUrl:gPatStr>\s+<_category:gPatStr>\s+.*?\s+rule:<ruleId:gPatInt>\s+<_action:gPatStr>\s+.*?\([^)]*\)\s+<preSessionId:gPatStr>\s+<:gPatStrEndColon>:<:gPatStr>\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="_action">replaceStringByRegex($_action, "[-:]+", "-")</setEventAttribute>
+    <setEventAttribute attr="eventType">combineMsgId("Broadcom-SSLv-", $_action)</setEventAttribute>
+
+    <collectAndSetAttrByKeyValuePair src="$_body" sep="]:">
+      <attrKeyMap attr="postSessionId" key="Corr["/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <choose>
+      <when test="not_exist _infoUrl"/>
+      <when test="matches($_infoUrl, '^-*$')"/>
+      <otherwise>
+        <setEventAttribute attr="infoURL">$_infoUrl</setEventAttribute>
+        <setEventAttribute attr="destName">extractHostFromURL($infoURL)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <choose>
+      <when test="not_exist _category"/>
+      <when test="matches($_category, '^-*$')"/>
+      <otherwise>
+        <setEventAttribute attr="webCategory">$_category</setEventAttribute>
+      </otherwise>
+    </choose>
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,88 @@
+<eventParser name="AIDEParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Unix</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Sourceforge</Vendor>
+    <Model>AIDE</Model>
+    <Version>ANY</Version>
+    <Name>Advanced Intrusion Detection Environment</Name>
+  </appType>
+
+  <patternDefinitions>
+    <pattern name="patAideMod"><![CDATA[AIDE|aide:]]></pattern>
+  </patternDefinitions>
+
+  <!--
+       Set Multiline Syslog rule
+       Begin Pattern: (?:<\d+>)?\w{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}\s+\S+\s+aide:(?= \S)
+       End Pattern:   null
+  -->
+
+  <eventFormatRecognizer><![CDATA[<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+<:patAideMod>\s]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<133>Jan 26 23:00:58 pci-dev-apps01 AIDE  Total number of files:	37956]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>?<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<reptDevName:gPatHostName>\s+<:patAideMod>\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">AIDE-Generic</setEventAttribute>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+
+    <switch>
+      <case>
+        <!-- #012f++++++++++++++++: /etc/exports -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^#012\w[^:]*:\s+<fileName:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">AIDE-change-detail</setEventAttribute>
+      </case>
+      <case>
+        <!-- /var/lib/aide/aide.db  RMD160   : nBGFpcXp/FRhKAiXfuj1SLIljTE=  TIGER    : JPATDGOskzIWFm52sbuSX/Nz3i1JWE56  SHA256   : 47DEQpj8HBSa+/TImW+5JCeuQeRkm5NM  pJWZG3hSuFU=  SHA512   : z4PhNX7vuL3xVChQ1m2AB9Yg5AULVxXc  g/SpIdNs6c5H0NE8XYXysP+DGNKHfuwv  Y7kxvUdBeoGlODJ6+SfaPg==  CRC32    : AAAAAA==  HAVAL    : T2k4Ux8LyJkfYtp7vW994/rURWK4xvTr  8UbVtORvfBc=  GOST     : zoW5nMRnUv/+41yrmnsCeKu0wtIFXP9o  WvSRLElJD40= -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^<dbName:gPatStr>\s+.*\bSHA256\s*:\s*<hashCode:gPatStr>\b]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="hashAlgo">SHA256</setEventAttribute>
+        <setEventAttribute attr="eventType">AIDE-database-hash-detail</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^AIDE\s+found differences between database and filesystem!]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">AIDE-change-found</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^AIDE\s+initialized database at <dbName:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">AIDE-database-init</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^Couldn't open file <dbName:gPatStr> for reading]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">AIDE-database-open-failure</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^New AIDE database written to <dbName:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">AIDE-database-init</setEventAttribute>
+      </case>
+
+      <default/>
+    </switch>
+  </parsingInstructions>
+</eventParser>

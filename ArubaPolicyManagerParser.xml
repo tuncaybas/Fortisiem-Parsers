@@ -1,0 +1,84 @@
+<eventParser name="ArubaPolicyManagerParser">
+
+  <deviceType>
+    <Vendor>Aruba</Vendor>
+    <Model>ClearPass PolicyManager</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>?<:gPatYear>-<:gPatMonNum>-<:gPatDay>\s+<:gPatTime>,\d+\s+<:gPatIpAddr>\s+<:gPatStr>\s+]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<143>2012-05-30 16:07:55,484  192.168.1.68 AO361 0 1 0 protocol=RADIUS,username=test1,login_status=REJECT,request_timestamp=2012-05-30 16:06:23-07,connection_dest_ip_address=192.168.1.68,connection_nad_ip_address=192.168.26.7,]]></testEvent>
+    <testEvent><![CDATA[<143>2015-09-17 15:58:58,474 10.0.0.20 ClearPassAuth 204 1 0 Auth.Username=john,Auth.Service=Aruba-Wireless-Service (xxxxxxx),Auth.Roles=[AirGroup v2]|[Guest]|[User Authenticated],Endpoint.Device-Category=SmartDevice,Endpoint.Device-Family=Apple,Endpoint.MAC-Address=aabbccddeeff,Endpoint.MAC-Vendor=Apple,Endpoint.IP-Address=10.254.0.1,Endpoint.Hostname=My_iPhone,Endpoint.Device-Name=Apple iPhone,Auth.Auth-Status=User]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>?<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>,\d+\s+<hostIpAddr:gPatIpAddr>\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventAction">0</setEventAttribute>
+    <setEventAttribute attr="eventType">Aruba-ClearPass-Generic</setEventAttribute>
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+
+    <collectAndSetAttrByKeyValuePair sep="," src="$_body">
+      <attrKeyMap attr="destIpAddr" key="connection_dest_ip_address="/>
+      <attrKeyMap attr="_deviceTime" key="Common.Request-Timestamp="/>
+      <attrKeyMap attr="_deviceTime" key="timestamp="/>
+      <attrKeyMap attr="_deviceTime" key="request_timestamp="/>
+      <attrKeyMap attr="domain" key="authentication_netbios_name="/>
+      <attrKeyMap attr="_eventType" key="login_status="/>
+      <attrKeyMap attr="nepDevIpAddr" key="connection_nad_ip_address="/>
+      <attrKeyMap attr="srcIpAddr" key="framed_ip_address="/>
+      <attrKeyMap attr="appTransportProto" key="protocol="/>
+      <attrKeyMap attr="_user" key="Common.Username="/>
+      <attrKeyMap attr="_user" key="user_name="/>
+      <attrKeyMap attr="_user" key="username="/>
+      <attrKeyMap attr="_eventType" key="Auth.Auth-Status="/>
+      <attrKeyMap attr="_user" key="Auth.Username="/>
+      <attrKeyMap attr="srcIpAddr" key="Endpoint.IP-Address="/>
+      <attrKeyMap attr="hostMACAddr" key="Common.Host-MAC-Address="/>
+      <attrKeyMap attr="hostMACAddr" key="mac_address="/>
+      <attrKeyMap attr="serviceName" key="Common.Service="/>
+      <attrKeyMap attr="serviceName" key="service_name="/>
+      <attrKeyMap attr="destIpAddr" key="remote_address="/>
+      <attrKeyMap attr="nepDevIpAddr" key="Common.NAS-IP-Address="/>
+      <attrKeyMap attr="nepDevIpAddr" key="nas_ip="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <when test="exist _deviceTime">
+      <collectFieldsByRegex src="$_deviceTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>(?:\.\d+)?[+-]\d+]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+
+    <when test="exist _eventType">
+      <setEventAttribute attr="eventType">combineMsgId("Aruba-ClearPass-", $_eventType)</setEventAttribute>
+      <when test="$_eventType IN 'REJECT, Failed'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _user">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_user">
+            <regex><![CDATA[<domain:gPatStr>(?:\\)<user:gPatStr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="user">$_user</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+    <when test="exist hostMACAddr">
+      <setEventAttribute attr="hostMACAddr">normalizeMAC($hostMACAddr)</setEventAttribute>
+    </when>
+  </parsingInstructions>
+
+</eventParser>

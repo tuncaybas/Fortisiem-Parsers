@@ -1,0 +1,203 @@
+<eventParser name="AOWUA_DNSParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Microsoft</Vendor>
+    <Model>DNS</Model>
+    <Version>ANY</Version>
+    <Name>Microsoft DNS</Name>
+  </appType>
+
+  <testEvents>
+    <testEvent><![CDATA[2015-02-25T01:28:02Z WIN-2008-LAW-agent 10.1.2.242 AccelOps-WUA-DNS [monitorStatus]="Success" [msg]="2/25/2015 9:26:55 AM 00F8 PACKET  0000000001DCDCE0 UDP Rcv 10.1.2.249      0002   Q [0001   D   NOERROR] A      (8)testyjyj(4)yjyj(3)com(0)"]]></testEvent>
+    <testEvent><![CDATA[2015-02-26T02:52:29Z WIN-2008-LAW-agent 10.1.2.242 AccelOps-WUA-DNS [monitorStatus]="Success" [msg]="2/26/2015 10:51:41 AM 00F8 PACKET  000000000296EED0 UDP Snd 10.1.2.249      0002 R Q [8381   DR NXDOMAIN] PTR    (2)22(2)22(2)22(2)10(7)in-addr(4)arpa(0)"]]></testEvent>
+    <testEvent><![CDATA[2015-02-26T02:52:29Z WIN-2008-LAW-agent 10.1.2.242 AccelOps-WUA-DNS [monitorStatus]="Success" [msg]="9/30/2021 4:34:09 PM 1548 PACKET  00000213443A0960 UDP Snd 1.1.1.1         7055   Q [0001   D   NOERROR] PTR    (1)f(1)f(1)f(1)f(1)c(1)a(1)7(1)8(1)8(1)6(1)2(1)5(1)0(1)d(1)8(1)f(1)0(1)0(1)0(1)0(1)0(1)0(1)0(1)0(1)9(1)f(1)9(1)3(1)e(1)1(1)c(1)a(3)ip6(4)arpa(0)"
+]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\s<:gPatHostName>\s+<:gPatIpAddr>\s+AccelOps-WUA-DNS[- ]]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[(?:<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>Z|<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>)\s+<reptDevName:gPatHostName>\s+<reptDevIpAddr:gPatIpAddr>\s+AccelOps-WUA-DNS(?:-\S+)?\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, "UTC")</setEventAttribute>
+    <setEventAttribute attr="eventType">AO-WUA-DNS-Generic</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">Windows Agent</setEventAttribute>
+
+    <!-- Note that in each case the DNS server is the Reporting IP, unless upstream dns is target, assumption is the Windows Agent collects the DNS analytics log file -->
+    <setEventAttribute attr="dnsServer">$reptDevIpAddr</setEventAttribute>
+
+    <collectAndSetAttrByKeyValuePair sep=" [" src="$_body">
+      <attrKeyMap attr="machineGUID" key="[MachineGuid]="/>
+      <attrKeyMap attr="machineGUID" key="[machineGUID]="/>
+      <attrKeyMap attr="status" key="[monitorStatus]="/>
+      <attrKeyMap attr="msg" key="[msg]="/>
+      <attrKeyMap attr="serviceName" key="[Service Name]="/>
+      <attrKeyMap attr="serviceFileName" key="[Service File Name]="/>
+      <attrKeyMap attr="serviceAccount" key="[Service Account]="/>
+      <attrKeyMap attr="serviceType" key="[Service Type]="/>
+      <attrKeyMap attr="destCName" key="[destCName]="/>
+      <attrKeyMap attr="destIpAddr" key="[destIpAddr]="/>
+      <attrKeyMap attr="destName" key="[destName]="/>
+      <attrKeyMap attr="destIpPort" key="[destIpPort]="/>
+      <attrKeyMap attr="recvBytes64" key="[recvBytes]="/>
+      <attrKeyMap attr="srcIpAddr" key="[srcIpAddr]="/>
+      <attrKeyMap attr="srcIpPort" key="[srcIpPort]="/>
+      <attrKeyMap attr="phCustId" key="[phCustId]="/>
+      <attrKeyMap attr="customer" key="[customer]="/>
+    </collectAndSetAttrByKeyValuePair>
+    <when test="not_exist serviceName">
+      <when test="exist serviceFileName">
+        <setEventAttribute attr="serviceName">$serviceFileName</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist msg">
+      <switch>
+        <case>
+          <!-- DNS Debugging Log Packet Format -->
+          <!-- These are only seen from Win DNS Server, typically parsed by agent from file C:\DNSLogs.log -->
+          <!-- Note that response metadata is seen, but the answer is not seen in the log -->
+          <!-- If Other Options -> Details checked, logs will contain response data but is very verbose, and not matched here. -->
+          <collectFieldsByRegex src="$msg">
+            <regex><![CDATA[^.*PACKET\s+<:gPatStr>\s+(?:TCP|UDP)\s+<direction:gPatWord>\s+<_remoteIP:gPatIpAddr>\s+<transactionId:gPatWord>\s+(?:<_queryStep:gPatWord>\s+)?<_opCode:gPatWord>\s*\[<_hexFlags:gPatWord>\s+.*\s+<_errorString:gPatWord>\]\s+<dnsQueryType:gPatWord>\s+<dnsQueryName:gPatStr>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventAction">0</setEventAttribute>
+
+          <!-- Note: transactionId is used to track single connection events and chain them together. A request response from client to server will have one transactionId -->
+          <!-- A recursive lookup from dns server to upstream dns will have another unique transactionId between that request / response flow -->
+
+          <!-- _queryStep contains query type of either R = Response, or Blank implies Query -->
+          <!-- _opCode options are Q = standard query, N = Notify, U = Update, ? = Unknown -->
+          <choose>
+            <when test="exist _queryStep">
+              <!-- Only field value if present is R for Response -->
+              <setEventAttribute attr="type">Response</setEventAttribute>
+            </when>
+            <otherwise>
+              <!-- Blank implies initial Query -->
+              <setEventAttribute attr="type">Query</setEventAttribute>
+            </otherwise>
+          </choose>
+          <!-- Default mark this server as the DNS server in the exchange -->
+          <setEventAttribute attr="dnsServer">$reptDevIpAddr</setEventAttribute>
+
+          <choose>
+            <when test="$direction = 'Snd'">
+              <!-- Determine based on query type if we are sending a response back to client, or doing a recursive query, this determines if _remoteIP is client or upstream dns -->
+              <setEventAttribute attr="srcIpAddr">$reptDevIpAddr</setEventAttribute>
+              <setEventAttribute attr="destIpAddr">$_remoteIP</setEventAttribute>
+              <!-- If Snd log and query, the remote is upstream DNS -->
+              <when test="$type = 'Query'">
+                <setEventAttribute attr="dnsServer">$_remoteIP</setEventAttribute>
+              </when>
+            </when>
+            <otherwise>
+              <!-- Rcv is the other -->
+              <setEventAttribute attr="destIpAddr">$reptDevIpAddr</setEventAttribute>
+              <setEventAttribute attr="srcIpAddr">$_remoteIP</setEventAttribute>
+              <!-- If Rcv log and query is a Response, the remote is upstream DNS -->
+              <when test="$type = 'Response'">
+                <setEventAttribute attr="dnsServer">$_remoteIP</setEventAttribute>
+              </when>
+            </otherwise>
+          </choose>
+
+          <when test="exist dnsQueryName">
+            <setEventAttribute attr="dnsQueryName">replaceStringByRegex($dnsQueryName, "\(\d+\)", ".")</setEventAttribute>
+            <setEventAttribute attr="dnsQueryName">trimAttribute($dnsQueryName, ".")</setEventAttribute>
+            <switch>
+              <case>
+                <!-- parse ip address from reverse dns lookup e.g. ipv4 PTR records -->
+                <collectFieldsByRegex src="$dnsQueryName">
+                  <regex><![CDATA[^<_4thOctet:gPatInt>\.<_3rdOctet:gPatInt>\.<_2ndOctet:gPatInt>\.<_1stOctet:gPatInt>\.in-addr\.arpa$]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="ipVersion">4</setEventAttribute>
+                <setEventAttribute attr="_invertedAddr">combineMsgId($_1stOctet,".",$_2ndOctet,".",$_3rdOctet,".",$_4thOctet)</setEventAttribute>
+                <!-- need to invert the dnsQueryName 11.2.23.172.in-addr.arpa should be 172.23.2.11-->
+                <setEventAttribute attr="dnsQueryIpAddr">$_invertedAddr</setEventAttribute>
+                <!-- For compatibility with rules that reference destName -->
+                <setEventAttribute attr="destName">$_invertedAddr</setEventAttribute>
+              </case>
+              <case>
+                <!-- ipv6 ptr b.a.9.8.7.6.5.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa -->
+                <!-- parse ip address from reverse dns lookup e.g. ipv6 PTR records -->
+                <collectFieldsByRegex src="$dnsQueryName">
+                  <regex><![CDATA[^<_32:gPatWord>\.<_31:gPatWord>\.<_30:gPatWord>\.<_29:gPatWord>\.<_28:gPatWord>\.<_27:gPatWord>\.<_26:gPatWord>\.<_25:gPatWord>\.<_24:gPatWord>\.<_23:gPatWord>\.<_22:gPatWord>\.<_21:gPatWord>\.<_20:gPatWord>\.<_19:gPatWord>\.<_18:gPatWord>\.<_17:gPatWord>\.<_16:gPatWord>\.<_15:gPatWord>\.<_14:gPatWord>\.<_13:gPatWord>\.<_12:gPatWord>\.<_11:gPatWord>\.<_10:gPatWord>\.<_09:gPatWord>\.<_08:gPatWord>\.<_07:gPatWord>\.<_06:gPatWord>\.<_05:gPatWord>\.<_04:gPatWord>\.<_03:gPatWord>\.<_02:gPatWord>\.<_01:gPatWord>\.ip6\.arpa$]]></regex>
+                </collectFieldsByRegex>
+
+                <setEventAttribute attr="ipVersion">6</setEventAttribute>
+                <setEventAttribute attr="_invertedHex1">combineMsgId($_01,$_02,$_03,$_04)</setEventAttribute>
+                <setEventAttribute attr="_invertedHex2">combineMsgId($_05,$_06,$_07,$_08)</setEventAttribute>
+                <setEventAttribute attr="_invertedHex3">combineMsgId($_09,$_10,$_11,$_12)</setEventAttribute>
+                <setEventAttribute attr="_invertedHex4">combineMsgId($_13,$_14,$_15,$_16)</setEventAttribute>
+                <setEventAttribute attr="_invertedHex5">combineMsgId($_17,$_18,$_19,$_20)</setEventAttribute>
+                <setEventAttribute attr="_invertedHex6">combineMsgId($_21,$_22,$_23,$_24)</setEventAttribute>
+                <setEventAttribute attr="_invertedHex7">combineMsgId($_25,$_26,$_27,$_28)</setEventAttribute>
+                <setEventAttribute attr="_invertedHex8">combineMsgId($_29,$_30,$_31,$_32)</setEventAttribute>
+
+                <setEventAttribute attr="_invertedAddr">combineMsgId($_invertedHex1,":",$_invertedHex2,":",$_invertedHex3,":",$_invertedHex4,":",$_invertedHex5,":",$_invertedHex6,":",$_invertedHex7,":",$_invertedHex8)</setEventAttribute>
+                <setEventAttribute attr="dnsQueryIpAddr">$_invertedAddr</setEventAttribute>
+                <!-- For compatibility with rules that reference destName -->
+                <setEventAttribute attr="destName">$_invertedAddr</setEventAttribute>
+
+              </case>
+              <default>
+                <!-- For compatibility with rules that reference destName -->
+                <setEventAttribute attr="destName">$dnsQueryName</setEventAttribute>
+              </default>
+            </switch>
+          </when>
+          <choose>
+            <when test="$_errorString != 'NOERROR'">
+              <setEventAttribute attr="status">Failed</setEventAttribute>
+              <setEventAttribute attr="eventAction">1</setEventAttribute>
+              <setEventAttribute attr="errorString">$_errorString</setEventAttribute>
+            </when>
+            <otherwise>
+              <setEventAttribute attr="status">Success</setEventAttribute>
+            </otherwise>
+          </choose>
+          <setEventAttribute attr="eventType">combineMsgId("AO-WUA-DNS-", $dnsQueryType, "-",$type,"-", $status)</setEventAttribute>
+          <when test="$status = 'Failed'">
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+          </when>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$msg">
+            <regex><![CDATA[ The DNS server has started\.]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventType">AO-WUA-DNS-Started</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$msg">
+            <regex><![CDATA[ The DNS server has finished the background loading of zones\.]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventType">AO-WUA-DNS-ZoneDownloadComplete</setEventAttribute>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$msg">
+            <regex><![CDATA[ The DNS server computer currently does not have a DNS domain name\.]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="eventType">AO-WUA-DNS-NoDomain</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist destName">
+      <when test="exist destIpAddr">
+        <when test="not_private_ip destIpAddr">
+          <setEventAttribute attr="domainEntropy">calcDomainEntropy($destName)</setEventAttribute>
+        </when>
+      </when>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

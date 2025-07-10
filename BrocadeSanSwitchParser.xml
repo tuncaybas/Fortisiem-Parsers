@@ -1,0 +1,38 @@
+<eventParser name="BrocadeSanSwitchParser">
+  <deviceType>
+    <Vendor>Brocade</Vendor>
+    <Model>San Switch</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[<:gPatYear>\s+<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatStr>\s+(?:Security: \w+ (?:login|logout)|\w+ access) by \S+ from src IP <:gPatIpAddr>,]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[2014 Dec 18 16:51:43 va3fcx648s-hud01 Security: SSH logout by svadmin from src IP 10.28.1.21, src MAC 0010.dbff.1008 from USER EXEC mode]]></testEvent>
+    <testEvent><![CDATA[2014 Dec 18 16:52:13 va3fcx648s-hud01 SSH access by noah from src IP 10.28.1.21, src MAC 0010.dbff.1008 rejected, 1 attempt(s)]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_year:gPatYear>\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatStr>\s+(?:Security: )?<appTransportProto:gPatWord> <_action:gPatWord> by <user:gPatStr> from src IP <srcIpAddr:gPatIpAddr>,\s+src MAC\s+<_mac:gPatStr>\s]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <setEventAttribute attr="srcMACAddr">normalizeMAC($_mac)</setEventAttribute>
+
+    <choose>
+      <when test="$_action = 'login'">
+        <setEventAttribute attr="eventType">Brocade-SAN-Login-Success</setEventAttribute>
+      </when>
+      <when test="$_action = 'logout">
+        <setEventAttribute attr="eventType">Brocade-SAN-Logout</setEventAttribute>
+      </when>
+      <when test="$_action = 'access">
+        <setEventAttribute attr="eventType">Brocade-SAN-Login-Failed</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">combineMsgId("Brocade-SAN-", $_action)</setEventAttribute>
+      </otherwise>
+    </choose>
+  </parsingInstructions>
+</eventParser>

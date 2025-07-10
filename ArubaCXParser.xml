@@ -1,0 +1,346 @@
+<eventParser name="ArubaCXParser">
+  <deviceType>
+    <Vendor>Aruba</Vendor>
+    <Model>OS-CX</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<190>1 2021-09-01T12:21:13.109614-06:00 lab-1 hpe-restd 886 - - Event|4605|LOG_INFO|AMM|-|Session ended for user aruba-test, session -QPeHXRdvN11NHfZeZk7xg==]]></testEvent>
+    <testEvent><![CDATA[<190>1 2021-09-01T12:12:56.469251-06:00 lab-1 hpe-pvstd 3357 - - Event|5007|LOG_INFO|MSTR|1|Topology change generated on port 2/1/7 on VLAN 200.]]></testEvent>
+    <testEvent><![CDATA[<190>1 2021-07-08T13:03:51.540688-06:00 lab-1 intfd 776 - - Event|4701|LOG_INFO|||User user1 added user2 with role user_role]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>\d+\s+<:gPatYear>-<:gPatMon>-<:gPatDay>T<:gPatTime>\.\d+<:gPatTimeZone>\s+<:gPatHostName>\s+<:gPatStr>\s+\d+\s+-\s+-\s+Event\|\d+\|<:gPatWord>*\|<:gPatWord>*\|]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>\d+\s+<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>\s+<reptDevName:gPatHostName>\s+<_daemon:gPatStr>\s+<procId:gPatInt>\s+-\s+-\s+Event\|<_eventID:gPatInt>\|<eventSeverityCat:gPatWord>\|<_logType:gPatWord>*\|(?:<:gPatStr>)*\|<msg:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+    <setEventAttribute attr="eventAction">0</setEventAttribute>
+    <choose>
+      <when test="exist _eventID">
+        <!-- e.g. ArubaCx-4602 -->
+        <setEventAttribute attr="eventType">combineMsgId("ArubaCx-", $_eventID)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">ArubaCx-Generic</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+
+    <choose>
+      <when test="not_exist _eventID"/>
+      <!-- These are all REST api events -->
+      <when test="$_eventID = '4601'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[Authentication failed for user <user:gPatMesgBodyMin> in session <sessionId:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-AuthenticationFailed")</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4602'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[Authentication succeeded for user <user:gPatMesgBodyMin> in session <sessionId:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-AuthenticationSuccess")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4603'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[Conflict in authorization configuration\. Existing config::URL\(<_match:gPatStr>\), type\(<_oldValue:gPatStr>\) New config::\(<infoURL:gPatStr>\), type\(<type:gPatStr>\)]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-AuthorizationConfigConflict")</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4604'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[Session started for user <user:gPatMesgBodyMin>, session <sessionId:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-SessionStarted")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4605'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[Session ended for user <user:gPatMesgBodyMin>, session <sessionId:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-SessionEnded")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4606'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[Authorization failed for user <user:gPatMesgBodyMin>, for resource <resourceName:gPatStr>, with action <action:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-AuthorizationFailed")</setEventAttribute>
+        <setEventAttribute attr="eventAction">1</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4607'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[Authorization succeeded for user <user:gPatMesgBodyMin>, for resource <resourceName:gPatStr>, with action <action:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-AuthorizationSuccess")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4608'">
+        <!-- Whether the attempt was allowed or not, but not whether authorization was successful or not-->
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[Authorization allowed for user <user:gPatMesgBodyMin>, for resource <resourceName:gPatStr>, with action <action:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-AuthorizationAllow")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4609'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[User <user:gPatMesgBodyMin> added <targetUser:gPatStr> with role <role:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">ArubaCx-UserAdded</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4610'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[User <user:gPatMesgBodyMin> deleted <targetUser:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">ArubaCx-UserDeleted</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4611'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[User <user:gPatMesgBodyMin> successfully changed password]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">ArubaCx-UserPwChangeSuccess</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4612'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[User <user:gPatMesgBodyMin> password change failed]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">ArubaCx-UserPwChangeFail</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4613'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[<user:gPatMesgBodyMin> has written a new switch configuration to <configName:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-ConfigWritten")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4614'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[<user:gPatMesgBodyMin> has copied switch configuration <oldObjValue:gPatStr> to <newObjValue:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-ConfigCopied")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4615'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[<user:gPatMesgBodyMin> has configured <dnsServerName:gPatStr> DNS nameserver to <newObjValue:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-DnsConfigured")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4616'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[<user:gPatMesgBodyMin> has deleted all DNS nameservers]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-AllDnsDeleted")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4617'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[<user:gPatMesgBodyMin> created <httpEndUri:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-UriCreated")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4618'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[<user:gPatMesgBodyMin> deleted <httpEndUri:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-UriDeleted")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4619'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[<user:gPatMesgBodyMin> modified <httpEndUri:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-UriModified")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4620'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[User: <user:gPatMesgBodyMin> added subscriber: <osObjName:gPatStr>\.]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-AddedSubscriber")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4621'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[User: <user:gPatMesgBodyMin> removed subscriber: <osObjName:gPatStr>\.]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-RemovedSubscriber")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4622'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[Subscriber: <osObjName:gPatStr> added subscription: <_subscription:gPatStr>\.]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-AddedSubscription")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4623'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[Subscriber: <osObjName:gPatStr> removed subscription: <_subscription:gPatStr>\.]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-RemovedSubscription")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4624'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[Unable to add new subscriber. Max number of subscribers has been reached\.]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-MaxSubscribersReached")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4625'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[Unable to add new subscription. Max number of subscriptions for <osObjName:gPatStr> has been reached\.]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-MaxSubscriptionsReached")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4626'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[NAE Script <script:gPatStr> has been created by user <user:gPatMesgBodyMin>\.]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-ScriptCreated")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4627'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[NAE Script <script:gPatStr> has been deleted by user <user:gPatMesgBodyMin>\.]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-ScriptDeleted")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4628'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[NAE Agent <osObjName:gPatStr> has been created by user <user:gPatMesgBodyMin>\.]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-AgentCreated")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4629'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[NAE Agent <osObjName:gPatStr> has been updated by user <user:gPatMesgBodyMin>\.]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-AgentUpdated")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4630'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[NAE Agent <osObjName:gPatStr> has been deleted by user <user:gPatMesgBodyMin>\.]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-AgentDeleted")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4631'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[Error rebooting switch, reboot command: <command:gPatStr>, error received: <errorString:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-SwitchRebootFailed")</setEventAttribute>
+      </when>
+
+      <!-- <190>1 2021-09-01T10:47:09.536916-06:00 lab-1 hpe-pvstd 3357 - - Event|5006|LOG_INFO|MSTR|1|Topology change received on port lag2 from source: 90:20:c2:be:ec:fd on VLAN 233. -->
+      <when test="$_eventID = '5006'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[Topology change received on port <intfName:gPatStr> from source: <srcMACAddr:gPatStr> on VLAN <hostVLAN:gPatStr>\.]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-TopologyChangeReceived")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '5007'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[Topology change generated on port <intfName:gPatStr> on VLAN <hostVLAN:gPatStr>\.]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-TopologyChangeReceived")</setEventAttribute>
+      </when>
+
+      <when test="$_eventID = '403'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[Link status for interface <intfName:gPatStr> is up]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-LinkUP")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '404'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[Link status for interface <intfName:gPatStr> is down]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-LinkDOWN")</setEventAttribute>
+      </when>
+
+      <!-- 2301 to 2303 are AAA events -->
+      <when test="$_eventID = '2301'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[AAA <type:gPatStr> update: <details:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-AAA-Update")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '2302'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[TACACS <type:gPatStr> <action:gPatStr>: <_tacacsevent:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-TACACS-Generic")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '2303'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[RADIUS <type:gPatStr> <action:gPatStr>: <_radiusevent:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-RADIUS-Generic")</setEventAttribute>
+      </when>
+      <!-- 6801 to 6804 are config mgmt events -->
+      <when test="$_eventID = '6801'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[Copying configs from: <oldObjValue:gPatStr> to: <newObjValue:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-ConfigCopied")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '6802'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[Error while copying configs. Error: <errorString:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-ConfigCopyError")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '6803'">
+        <collectFieldsByRegex src="$msg">
+          <!-- Logs a message when config validation prunes tables/columns in startup-config or when errors are encountered -->
+          <regex><![CDATA[<type:gPatStr>:<configValue:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-ConfigErrorGeneric")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '6804'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[Error while copying configs. Error: <errorString:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-ConfigCopyShadowDBError")</setEventAttribute>
+      </when>
+      <!-- 4701 to 4706 are user mgmt events -->
+      <when test="$_eventID = '4701'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[User <user:gPatMesgBodyMin> added <targetUser:gPatStr> with role <role:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">ArubaCx-UserAdded</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4702'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[User <user:gPatMesgBodyMin> deleted <targetUser:gPatStr> with role <role:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">ArubaCx-UserDeleted</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4703'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[User <user:gPatMesgBodyMin> successfully changed password]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">ArubaCx-UserPwChangeSuccess</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4704'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[User <user:gPatMesgBodyMin> password change failed]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">ArubaCx-UserPwChangeFail</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4705'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[User <user:gPatMesgBodyMin> set export password]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-ExportPasswordSet")</setEventAttribute>
+      </when>
+      <when test="$_eventID = '4706'">
+        <collectFieldsByRegex src="$msg">
+          <regex><![CDATA[User <user:gPatMesgBodyMin> restored default export password]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "-DefaultExportPasswordRestored")</setEventAttribute>
+      </when>
+      <otherwise/>
+    </choose>
+  </parsingInstructions>
+</eventParser>

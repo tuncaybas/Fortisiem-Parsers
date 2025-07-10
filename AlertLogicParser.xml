@@ -1,0 +1,21 @@
+<eventParser name="AlertLogicParser">
+  <deviceType>
+    <Vendor>Alert Logic</Vendor>
+    <Model>IPS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[\[AlertLogic_Incident]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[[AlertLogic_Incident]:[comment]=Generic vulnerability scan from 1.1.1.1,[count]=380,[destIpAddr]=10.100.10.112,[eventSeverity]=5,[eventType]=AlertLogic-Incident-recon,[inCustomerId]=53497,[inCustomerName]=Rubicon Global Holdings,[inIncidentAcknowledgeStatus]=Acknowledged - Completed Analysis,[inIncidentAcknowledgeTime]=1466131740,[inIncidentCreateTime]=1466131740,[inIncidentCreatedUserId]=0,[inIncidentEventFirstSeen]=1466131500,[inIncidentEventIdList]=229631,229637,229643,229649,229650,229651,229657,229663,229664,229670,229676,229677,229683,229684,229690,229696,229702,229708,229714,229721,229727,229733,229739,229745,229751,229757,229763,229769,229770,229776,229777,229783,229789,229790,229796,229802,229803,229809,229810,229816,229817,229823,229829,229830,229836,229842,229843,229849,229850,229856,229862,229863,229869,229870,229876,229882,229883,229889,229895,229896,229897,229903,229909,229910,229916,229922,229923,229924,229930,229931,229937,229938,229944,229950,229951,229957,229958,229959,229960,229966,229967,229973,229979,229980,229986,229992,229993,229994,230020,230026,230027,230033,230034,230086,230092,230098,230099,230115,230121,230128,[inIncidentId]=11011077,[inIncidentLastModifiedTime]=1466131740,[inIncidentStatus]=1,[msg]=no description found,[srcIpAddr]=1.1.1.1]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\[<eventType:gPatWord>\]:<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <collectAndSetAttrBySymbol src="$_body" sep=",[" symStart="[" symEnd="]=">
+    </collectAndSetAttrBySymbol>
+  </parsingInstructions>
+</eventParser>

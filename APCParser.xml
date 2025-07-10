@@ -1,0 +1,1086 @@
+<eventParser name="APCParser">
+
+  <deviceType>
+
+    <Vendor>APC</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[SNMPv2-SMI::enterprises\.318 Enterprise Specific Trap]]></eventFormatRecognizer>
+
+  <testEvents>
+
+    <testEvent><![CDATA[2013-11-20 23:22:31 10.97.243.210(via UDP: [10.97.243.210]:65052) TRAP, SNMP v1, community c1cs3vents	SNMPv2-SMI::enterprises.318 Enterprise Specific Trap (636) Uptime: 2:44:03.40	DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (984340) 2:44:03.40	SNMPv2-MIB::snmpTrapOID.0 = OID: SNMPv2-SMI::enterprises.318.0.636]]></testEvent>
+
+  </testEvents>
+
+  <parsingInstructions>
+
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatIpAddr>.*SNMPv2-SMI::enterprises\.318 Enterprise Specific Trap \(<_trapID:gPatInt>\) Uptime:\s+<:gPatStr>\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">Snmp Trap</setEventAttribute>
+
+    <setEventAttribute attr="eventType">APC-Generic</setEventAttribute>
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+    <collectAndSetAttrByKeyValuePair sep="\t" src="$_body">
+      <attrKeyMap attr="errReason" key="SNMPv2-SMI::enterprises.318.2.3.3.0 = STRING: "/>
+      <attrKeyMap attr="_reasonID" key="SNMPv2-SMI::enterprises.318.2.3.1.0 = INTEGER: "/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <choose>
+
+      <when test="$_trapID = '1'">
+        <setEventAttribute attr="eventType">APC-communicationLost</setEventAttribute>
+        <setEventAttribute attr="errorNo">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '2'">
+        <setEventAttribute attr="eventType">APC-upsOverload</setEventAttribute>
+        <setEventAttribute attr="errorNo">2</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '3'">
+        <setEventAttribute attr="eventType">APC-upsDiagnosticsFailed</setEventAttribute>
+        <setEventAttribute attr="errorNo">3</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '4'">
+        <setEventAttribute attr="eventType">APC-upsDischarged</setEventAttribute>
+        <setEventAttribute attr="errorNo">4</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '5'">
+        <setEventAttribute attr="eventType">APC-upsOnBattery</setEventAttribute>
+        <setEventAttribute attr="errorNo">5</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '6'">
+        <setEventAttribute attr="eventType">APC-smartBoostOn</setEventAttribute>
+        <setEventAttribute attr="errorNo">6</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '7'">
+        <setEventAttribute attr="eventType">APC-lowBattery</setEventAttribute>
+        <setEventAttribute attr="errorNo">7</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '8'">
+        <setEventAttribute attr="eventType">APC-communicationEstablished</setEventAttribute>
+        <setEventAttribute attr="errorNo">1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '9'">
+        <setEventAttribute attr="eventType">APC-powerRestored</setEventAttribute>
+        <setEventAttribute attr="errorNo">12</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '10'">
+        <setEventAttribute attr="eventType">APC-upsDiagnosticsPassed</setEventAttribute>
+        <setEventAttribute attr="errorNo">3</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '11'">
+        <setEventAttribute attr="eventType">APC-returnFromLowBattery</setEventAttribute>
+        <setEventAttribute attr="errorNo">7</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '12'">
+        <setEventAttribute attr="eventType">APC-upsTurnedOff</setEventAttribute>
+        <setEventAttribute attr="errorNo">12</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '13'">
+        <setEventAttribute attr="eventType">APC-upsSleeping</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">13</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '14'">
+        <setEventAttribute attr="eventType">APC-upsWokeUp</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">13</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '15'">
+        <setEventAttribute attr="eventType">APC-upsRebootStarted</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">15</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '16'">
+        <setEventAttribute attr="eventType">APC-upsDipSwitchChanged</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">16</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '17'">
+        <setEventAttribute attr="eventType">APC-upsBatteryNeedsReplacement</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">17</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '18'">
+        <setEventAttribute attr="eventType">APC-contactFault</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">18</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '19'">
+        <setEventAttribute attr="eventType">APC-contactFaultResolved</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">18</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '20'">
+        <setEventAttribute attr="eventType">APC-hardwareFailureBypass</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">20</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '21'">
+        <setEventAttribute attr="eventType">APC-softwareBypass</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">20</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '22'">
+        <setEventAttribute attr="eventType">APC-switchedBypass</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">20</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '23'">
+        <setEventAttribute attr="eventType">APC-returnFromBypass</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">20</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '24'">
+        <setEventAttribute attr="eventType">APC-bypassPowerSupplyFailure</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">24</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '25'">
+        <setEventAttribute attr="eventType">APC-baseFanFailure</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">25</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '26'">
+        <setEventAttribute attr="eventType">APC-batteryPackCommLost</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">26</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '27'">
+        <setEventAttribute attr="eventType">APC-batteryPackCommEstablished</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">27</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '28'">
+        <setEventAttribute attr="eventType">APC-calibrationStart</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">28</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '29'">
+        <setEventAttribute attr="eventType">APC-restartAgent</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">29</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '30'">
+        <setEventAttribute attr="eventType">APC-upsTurnedOn</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">12</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '31'">
+        <setEventAttribute attr="eventType">APC-smartTrimOn</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">31</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '32'">
+        <setEventAttribute attr="eventType">APC-codeAuthenticationDone</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">32</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '33'">
+        <setEventAttribute attr="eventType">APC-upsOverloadCleared</setEventAttribute>
+        <setEventAttribute attr="errorNo">2</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '34'">
+        <setEventAttribute attr="eventType">APC-smartBoostOff</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">6</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '35'">
+        <setEventAttribute attr="eventType">APC-smartAvrReducingOff</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">35</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '36'">
+        <setEventAttribute attr="eventType">APC-upsBatteryReplaced</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">17</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '37'">
+        <setEventAttribute attr="eventType">APC-calibrationEnd</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">28</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '38'">
+        <setEventAttribute attr="eventType">APC-dischargeCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">4</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '39'">
+        <setEventAttribute attr="eventType">APC-gracefullShutdown</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">39</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '41'">
+        <setEventAttribute attr="eventType">APC-mspOutletOn</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">41</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '42'">
+        <setEventAttribute attr="eventType">APC-mspOutletOff</setEventAttribute>
+        <setEventAttribute attr="errorNo">41</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '43'">
+        <setEventAttribute attr="eventType">APC-outletReboot</setEventAttribute>
+        <setEventAttribute attr="errorNo">43</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '44'">
+        <setEventAttribute attr="eventType">APC-configChangeSNMP</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">44</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '45'">
+        <setEventAttribute attr="eventType">APC-configChangeOutlet</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">45</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '46'">
+        <setEventAttribute attr="eventType">APC-accessViolationConsole</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">46</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '47'">
+        <setEventAttribute attr="eventType">APC-accessViolationHTTP</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">47</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '48'">
+        <setEventAttribute attr="eventType">APC-passwordChange</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">48</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '49'">
+        <setEventAttribute attr="eventType">APC-badVoltage</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">49</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '50'">
+        <setEventAttribute attr="eventType">APC-badVoltageCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">49</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '51'">
+        <setEventAttribute attr="eventType">APC-chargerFailure</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">51</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '52'">
+        <setEventAttribute attr="eventType">APC-chargerFailureCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">51</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '53'">
+        <setEventAttribute attr="eventType">APC-batteryOverTemperature</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">53</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '54'">
+        <setEventAttribute attr="eventType">APC-batteryOverTemperatureCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">53</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '55'">
+        <setEventAttribute attr="eventType">APC-smartRelayFault</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">55</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '56'">
+        <setEventAttribute attr="eventType">APC-smartRelayFaultCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">55</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '57'">
+        <setEventAttribute attr="eventType">APC-apcEnvHighHumidityThresholdViolation</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">57</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '58'">
+        <setEventAttribute attr="eventType">APC-apcEnvHighHumidityThresholdViolationCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">57</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '59'">
+        <setEventAttribute attr="eventType">APC-temperatureThresholdViolation1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">59</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '60'">
+        <setEventAttribute attr="eventType">APC-temperatureThresholdViolationCleared1</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">59</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '61'">
+        <setEventAttribute attr="eventType">APC-humidityThresholdViolation2</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">61</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '62'">
+        <setEventAttribute attr="eventType">APC-humidityThresholdViolationCleared2</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">61</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '63'">
+        <setEventAttribute attr="eventType">APC-temperatureThresholdViolation2</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">63</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '64'">
+        <setEventAttribute attr="eventType">APC-temperatureThresholdViolationCleared2</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">63</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '65'">
+        <setEventAttribute attr="eventType">APC-mupsCommunicationEstablished</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">66</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '66'">
+        <setEventAttribute attr="eventType">APC-mupsCommunicationLost</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">66</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '67'">
+        <setEventAttribute attr="eventType">APC-batteryIncrease</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">67</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '68'">
+        <setEventAttribute attr="eventType">APC-batteryDecrease</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">67</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '69'">
+        <setEventAttribute attr="eventType">APC-powerModuleIncrease</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">69</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '70'">
+        <setEventAttribute attr="eventType">APC-powerModuleDecrease</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">69</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '71'">
+        <setEventAttribute attr="eventType">APC-intelligenceModuleInserted</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">72</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '72'">
+        <setEventAttribute attr="eventType">APC-intelligenceModuleRemoved</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">72</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '73'">
+        <setEventAttribute attr="eventType">APC-rintelligenceModuleInserted</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">74</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '74'">
+        <setEventAttribute attr="eventType">APC-rintelligenceModuleRemoved</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">74</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '75'">
+        <setEventAttribute attr="eventType">APC-extBatteryFrameIncease</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">76</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '76'">
+        <setEventAttribute attr="eventType">APC-extBatteryFrameDecrease</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">76</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '77'">
+        <setEventAttribute attr="eventType">APC-abnormalCondition</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">77</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '78'">
+        <setEventAttribute attr="eventType">APC-abnormalConditionCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">77</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '79'">
+        <setEventAttribute attr="eventType">APC-deviceStatusChange</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">79</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '80'">
+        <setEventAttribute attr="eventType">APC-noBatteries</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">80</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '81'">
+        <setEventAttribute attr="eventType">APC-noBatteriesCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">80</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '82'">
+        <setEventAttribute attr="eventType">APC-userAdded</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">82</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '83'">
+        <setEventAttribute attr="eventType">APC-userDeleted</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">82</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '84'">
+        <setEventAttribute attr="eventType">APC-userModified</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">84</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '85'">
+        <setEventAttribute attr="eventType">APC-msvmCommunicationEstablished</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">86</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '86'">
+        <setEventAttribute attr="eventType">APC-msvmCommunicationLost</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">86</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '87'">
+        <setEventAttribute attr="eventType">APC-msvmOverload</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">87</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '88'">
+        <setEventAttribute attr="eventType">APC-msvmOverloadCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">87</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '89'">
+        <setEventAttribute attr="eventType">APC-msvmOutletOn</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">90</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '90'">
+        <setEventAttribute attr="eventType">APC-msvmOutletOff</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">90</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '91'">
+        <setEventAttribute attr="eventType">APC-msvmDeviceConfigChange</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">91</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '92'">
+        <setEventAttribute attr="eventType">APC-msvmOutletConfigChange</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">92</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '93'">
+        <setEventAttribute attr="eventType">APC-msvmLowLoad</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">93</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '94'">
+        <setEventAttribute attr="eventType">APC-msvmLowLoadCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">93</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '95'">
+        <setEventAttribute attr="eventType">APC-msvmNearOverload</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">95</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '96'">
+        <setEventAttribute attr="eventType">APC-msvmNearOverloadCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">95</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '97'">
+        <setEventAttribute attr="eventType">APC-msvmPowerSupplyStatusChange</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">97</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '98'">
+        <setEventAttribute attr="eventType">APC-mspCommunicationEstablished</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">99</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '99'">
+        <setEventAttribute attr="eventType">APC-mspCommunicationLost</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">99</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '100'">
+        <setEventAttribute attr="eventType">APC-mspOutletOn</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">101</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '101'">
+        <setEventAttribute attr="eventType">APC-mspOutletOff</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">101</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '102'">
+        <setEventAttribute attr="eventType">APC-mspDeviceConfigChange</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">102</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '103'">
+        <setEventAttribute attr="eventType">APC-mspOutletConfigChange</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">103</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '104'">
+        <setEventAttribute attr="eventType">APC-rsSourceSwitched</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">104</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '105'">
+        <setEventAttribute attr="eventType">APC-rsLostRedundancy</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">105</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '106'">
+        <setEventAttribute attr="eventType">APC-rsRedundancyRestored</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">105</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '107'">
+        <setEventAttribute attr="eventType">APC-rsConfigChange</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">107</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '108'">
+        <setEventAttribute attr="eventType">APC-rsCommunicationEstablished</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">109</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '109'">
+        <setEventAttribute attr="eventType">APC-rsCommunicationLost</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">109</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '110'">
+        <setEventAttribute attr="eventType">APC-dcCommunicationEstablished</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">111</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '111'">
+        <setEventAttribute attr="eventType">APC-dcCommunicationLost</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">111</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '112'">
+        <setEventAttribute attr="eventType">APC-dcPINChanged</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">112</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '113'">
+        <setEventAttribute attr="eventType">APC-dcMajorAlarm</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">113</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '114'">
+        <setEventAttribute attr="eventType">APC-dcMajorAlarmCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">113</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '115'">
+        <setEventAttribute attr="eventType">APC-dcMinorAlarm</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        <setEventAttribute attr="errorNo">115</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '116'">
+        <setEventAttribute attr="eventType">APC-dcMinorAlarmCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">115</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '117'">
+        <setEventAttribute attr="eventType">APC-dcOutputRelayOn</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">118</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '118'">
+        <setEventAttribute attr="eventType">APC-dcOutputRelayOff</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">118</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '119'">
+        <setEventAttribute attr="eventType">APC-dcInputRelayOn</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">120</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '120'">
+        <setEventAttribute attr="eventType">APC-dcInputRelayOff</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">120</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '121'">
+        <setEventAttribute attr="eventType">APC-logicPowerSuppliesIncreased</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">122</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '122'">
+        <setEventAttribute attr="eventType">APC-logicPowerSuppliesDecreased</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">122</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '123'">
+        <setEventAttribute attr="eventType">APC-externalSwitchGearClosed</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">124</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '124'">
+        <setEventAttribute attr="eventType">APC-externalSwitchGearOpened</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">124</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '125'">
+        <setEventAttribute attr="eventType">APC-generalDeviceEvent</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">125</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '126'">
+        <setEventAttribute attr="eventType">APC-atsSourceSwitched</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">126</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '127'">
+        <setEventAttribute attr="eventType">APC-atsLostRedundancy</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">127</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '128'">
+        <setEventAttribute attr="eventType">APC-atsRedundancyRestored</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">127</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '129'">
+        <setEventAttribute attr="eventType">APC-atsConfigChange</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">129</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '130'">
+        <setEventAttribute attr="eventType">APC-atsCommunicationEstablished</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">131</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '131'">
+        <setEventAttribute attr="eventType">APC-atsCommunicationLost</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">131</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '132'">
+        <setEventAttribute attr="eventType">APC-atsOverCurrent</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">132</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '133'">
+        <setEventAttribute attr="eventType">APC-atsOverCurrentCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">133</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '134'">
+        <setEventAttribute attr="eventType">APC-atsPowerSupplyFailure</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">134</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '135'">
+        <setEventAttribute attr="eventType">&gt;APC-atsPowerSupplyFailureCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">134</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '136'">
+        <setEventAttribute attr="eventType">APC-dcMainsFailAlarm</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">136</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '137'">
+        <setEventAttribute attr="eventType">APC-dcMainsFailAlarmCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">136</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '138'">
+        <setEventAttribute attr="eventType">APC-dcFanFailAlarm</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">138</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '139'">
+        <setEventAttribute attr="eventType">APC-dcFanFailAlarmCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">138</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '140'">
+        <setEventAttribute attr="eventType">APC-dcRectifierFailAlarm</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">140</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '141'">
+        <setEventAttribute attr="eventType">APC-dcRectifierFailAlarmCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">140</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '142'">
+        <setEventAttribute attr="eventType">APC-dcCurrentLimitAlarm</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">142</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '143'">
+        <setEventAttribute attr="eventType">APC-dcCurrentLimitAlarmCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">142</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '144'">
+        <setEventAttribute attr="eventType">APC-dcRectifierFailAlarm</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">144</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '145'">
+        <setEventAttribute attr="eventType">APC-dcRectifierFailAlarmCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">144</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '146'">
+        <setEventAttribute attr="eventType">APC-dcMultRectFailAlarm</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">146</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '147'">
+        <setEventAttribute attr="eventType">APC-dcMultRectFailAlarmCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">146</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '148'">
+        <setEventAttribute attr="eventType">APC-dcBatteryBreakerAlarm</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">148</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '149'">
+        <setEventAttribute attr="eventType">APC-dcBatteryBreakerAlarmCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">148</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '150'">
+        <setEventAttribute attr="eventType">APC-dcRectifierOVPAlarm</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">150</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '151'">
+        <setEventAttribute attr="eventType">APC-dcRectifierOVPAlarmCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">150</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '152'">
+        <setEventAttribute attr="eventType">APC-dcLVDImminentAlarm</setEventAttribute>
+        <setEventAttribute attr="errorNo">152</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '153'">
+        <setEventAttribute attr="eventType">APC-dcLVDImminentAlarmCleared</setEventAttribute>
+        <setEventAttribute attr="errorNo">152</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '154'">
+        <setEventAttribute attr="eventType">APC-dcFuseCBAlarm</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">154</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '155'">
+        <setEventAttribute attr="eventType">APC-dcFuseCBAlarmCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">154</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '156'">
+        <setEventAttribute attr="eventType">APC-dcBatteryTestFail</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '157'">
+        <setEventAttribute attr="eventType">APC-dcTemperatureAlarm</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">157</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '158'">
+        <setEventAttribute attr="eventType">APC-dcTemperatureAlarmCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">157</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '159'">
+        <setEventAttribute attr="eventType">APC-dcHumidityAlarm</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">159</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '160'">
+        <setEventAttribute attr="eventType">APC-dcHumidityAlarmCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">159</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '161'">
+        <setEventAttribute attr="eventType">APC-dcBBCommunicationEstablished</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">162</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '162'">
+        <setEventAttribute attr="eventType">APC-dcBBCommunicationLost</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">162</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '163'">
+        <setEventAttribute attr="eventType">APC-iemHighHumidThresholdViolation</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">163</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '164'">
+        <setEventAttribute attr="eventType">APC-iemHighHumidThresholdViolationCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">163</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '165'">
+        <setEventAttribute attr="eventType">APC-iemLowTempThresholdViolation</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">165</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '166'">
+        <setEventAttribute attr="eventType">APC-iemLowTempThresholdViolationCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">165</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '167'">
+        <setEventAttribute attr="eventType">APC-iemHighTempThresholdViolation</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">167</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '168'">
+        <setEventAttribute attr="eventType">APC-iemHighTempThresholdViolationCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">167</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '169'">
+        <setEventAttribute attr="eventType">APC-iemLowHumidThresholdViolation</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">169</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '170'">
+        <setEventAttribute attr="eventType">APC-iemLowHumidThresholdViolationCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">169</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '171'">
+        <setEventAttribute attr="eventType">APC-iemProbeDisconnected</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">171</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '172'">
+        <setEventAttribute attr="eventType">APC-iemProbeConnected</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">171</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '173'">
+        <setEventAttribute attr="eventType">APC-iemContactFault</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <setEventAttribute attr="errorNo">173</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '174'">
+        <setEventAttribute attr="eventType">APC-iemContactFaultCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">173</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '175'">
+        <setEventAttribute attr="eventType">APC-iemRelayFault</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        <setEventAttribute attr="errorNo">175</setEventAttribute>
+      </when>
+
+      <when test="$_trapID = '176'">
+        <setEventAttribute attr="eventType">APC-iemRelayFaultCleared</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="errorNo">175</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

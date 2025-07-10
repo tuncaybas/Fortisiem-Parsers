@@ -1,0 +1,51 @@
+<eventParser name="AlcatelAAAParser">
+  <deviceType>
+    <Vendor>Alcatel-Lucent</Vendor>
+    <Model>8950 AAA</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<38>Nov 12 08:21:15 ETC-AAA AAA: Accounting session continued: User-Name=1stflrconfrm, NAS=1.2.3.4, Port-ID=0/0/1/410, Port=0, MAC=00-23-6A-01-95-06, Acct-Session-Id=000447F8, IP-Address=2.3.4.5]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+AAA:\s]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatHostName>\s+AAA:\s+<_et:gPatStrEndColon>:\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+    <choose>
+      <when test="$_et IN 'Accounting session continued, Acctounting session continued'">
+        <setEventAttribute attr="eventType">Alcatel_AAA_Accounting_Session_Continue</setEventAttribute>
+      </when>
+      <when test="$_et IN 'Accounting session started, Acctounting session started'">
+        <setEventAttribute attr="eventType">Alcatel_AAA_Accounting_Session_Start</setEventAttribute>
+      </when>
+      <when test="$_et IN 'Accounting session stopped, Acctounting session stopped'">
+        <setEventAttribute attr="eventType">Alcatel_AAA_Accounting_Session_Stop</setEventAttribute>
+      </when>
+      <when test="$_et = 'login failed due to Limit reached or exceeded'">
+        <setEventAttribute attr="eventType">Alcatel_AAA_Login_Failed</setEventAttribute>
+      </when>
+      <when test="$_et = 'login ok'">
+        <setEventAttribute attr="eventType">Alcatel_AAA_Login_Success</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="_et">replaceStringByRegex($_et, "\s+", "_")</setEventAttribute>
+        <setEventAttribute attr="eventType">combineMsgId("Alcatel_AAA_", $_et)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <collectAndSetAttrByKeyValuePair sep=", " src="$_body">
+      <attrKeyMap attr="srcIpAddr" key="IP-Address="/>
+      <attrKeyMap attr="srcMACAddr" key="MAC="/>
+      <attrKeyMap attr="nepDevPort" key="NAS="/>
+      <attrKeyMap attr="srcIpPort" key="Port="/>
+      <attrKeyMap attr="nepDevPort" key="Port-ID="/>
+      <attrKeyMap attr="user" key="User-Name="/>
+    </collectAndSetAttrByKeyValuePair>
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,125 @@
+<eventParser name="BoxParser">
+
+  <deviceType>
+    <Vendor>Box.com</Vendor>
+    <Model>Box</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[\[BOX_EVENT_DATA\]\s*=\s*]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[[BOX_EVENT_DATA] = {"created_at":"2018-10-23T01:33:47-07:00","created_by":{"id":"327997400","login":"abc@cdb.com","name":"abc","type":"user"},"event_id":"8a26acc3ffdbcbcf277577b536ae2b8ecd5f228e","event_type":"ITEM_RENAME","phCustId":1,"recorded_at":"2018-10-23T01:33:50-07:00","session_id":null,"source":{"content_created_at":"2018-01-31T00:08:41-08:00","content_modified_at":"2018-01-31T18:38:15-08:00","created_at":"2018-01-31T00:08:41-08:00","created_by":{"id":"327997400","login":"abc@cdb.com","name":"abc","type":"user"},"description":"","etag":"15","file_version":{"id":"286668733434","sha1":"716951e1cedca4abd622a19122b659699d587b7a","type":"file_version"},"id":"272066154959","item_status":"active","modified_at":"2018-10-23T01:33:47-07:00","modified_by":{"id":"327997400","login":"abc@cdb.com","name":"abc","type":"user"},"name":"sssss.docx","owned_by":{"id":"327997400","login":"abc@cdb.com","name":"abc","type":"user"},"parent":{"etag":null,"id":"0","name":"All Files","sequence_id":null,"type":"folder"},"path_collection":{"entries":[{"etag":null,"id":"0","name":"All Files","sequence_id":null,"type":"folder"}],"total_count":1},"purged_at":null,"sequence_id":"15","sha1":"716951e1cedca4abd622a19122b659699d587b7a","shared_link":null,"size":11809,"synced":true,"trashed_at":null,"type":"file"},"type":"event"}]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\[BOX_EVENT_DATA\]\s*=\s*<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="extEventRecvProto">BOX_SDK</setEventAttribute>
+    <setEventAttribute attr="eventType">BOX_Generic_Event</setEventAttribute>
+    <collectAndSetAttrByJSON src="$_body">
+      <attrKeyMap attr="phCustId" key="phCustId"/>
+      <attrKeyMap attr="resourceType" key="streamType"/>
+      <attrKeyMap attr="_eventType" key="event_type"/>
+      <attrKeyMap attr="srcIpAddr" key="ip_address"/>
+      <attrKeyMap attr="reptDevIpAddr" key="serverIp"/>
+      <attrKeyMap attr="reptDevName" key="serverName"/>
+      <attrKeyMap attr="userId" key="created_by.id"/>
+      <attrKeyMap attr="user" key="created_by.name"/>
+      <attrKeyMap attr="_actionTime" key="created_at"/>
+      <attrKeyMap attr="sessionId" key="session_id"/>
+      <attrKeyMap attr="_fileCreateTime" key="source.created_at"/>
+      <attrKeyMap attr="_updateTime" key="source.modified_at"/>
+      <attrKeyMap attr="fileOwner" key="source.created_by.name"/>
+      <attrKeyMap attr="_srcName" key="source.name"/>
+      <attrKeyMap attr="_srcType" key="source.type"/>
+      <attrKeyMap attr="_srcSize" key="source.size"/>
+      <attrKeyMap attr="_srcName" key="source.item_name"/>
+      <attrKeyMap attr="_srcType" key="source.item_type"/>
+      <attrKeyMap attr="groupName" key="source.group_name"/>
+      <attrKeyMap attr="groupID" key="source.group_id"/>
+      <attrKeyMap attr="fileType" key="source.file.type"/>
+      <attrKeyMap attr="fileId" key="source.file.id"/>
+      <attrKeyMap attr="fileName" key="source.file.name"/>
+      <attrKeyMap attr="parentFileName" key="source.parent.name"/>
+      <attrKeyMap attr="parentObjType" key="source.parent.type"/>
+      <attrKeyMap attr="_pathCollection" key="source.path_collection.entries"/>
+      <attrKeyMap attr="fileDesc" key="source.description"/>
+      <attrKeyMap attr="infoURL" key="source.shared_link.url"/>
+      <attrKeyMap attr="downloadURL" key="source.shared_link.download_url"/>
+      <attrKeyMap attr="_fileOwner" key="source.owned_by.name"/>
+      <attrKeyMap attr="_fileOwnerType" key="source.owned_by.type"/>
+      <attrKeyMap attr="filePasswordEnabled" key="shared_link.is_password_enabled"/>
+      <attrKeyMap attr="filePreviewEnabled" key="shared_link.permissions.can_preview"/>
+      <attrKeyMap attr="fileDownloadEnabled" key="shared_link.permissions.can_download"/>
+      <attrKeyMap attr="fileUnshareAtTime" key="shared_link.unshared_at"/>
+      <attrKeyMap attr="filePreviewCount" key="shared_link.preview_count"/>
+      <attrKeyMap attr="fileDownloadCount" key="shared_link.download_count"/>
+      <attrKeyMap attr="comment" key="source.message"/>
+    </collectAndSetAttrByJSON>
+    <choose>
+      <when test="not_exist _fileOwner"/>
+      <when test="not_exist _fileOwnerType"/>
+      <when test="$_fileOwnerType = 'user'">
+        <setEventAttribute attr="fileOwner">$_fileOwner</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _srcType"/>
+      <when test="not_exist _srcName"/>
+      <when test="$_srcType = 'user'">
+        <setEventAttribute attr="srcUser">$_srcName</setEventAttribute>
+      </when>
+      <when test="$_srcType = 'file'">
+        <setEventAttribute attr="fileName">$_srcName</setEventAttribute>
+        <when test="exist _srcSize">
+          <setEventAttribute attr="fileSize">$_srcSize</setEventAttribute>
+        </when>
+      </when>
+      <when test="$_srcType = 'folder'">
+        <setEventAttribute attr="folder">$_srcName</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _pathCollection">
+      <collectAndSetAttrByJsonArray src="$_pathCollection" sep="/">
+        <attrKeyMap attr="_folder" key="entries.find(type='folder', name)"/>
+      </collectAndSetAttrByJsonArray>
+      <when test="exist folder">
+        <when test="exist _folder">
+          <setEventAttribute attr="folder">combineMsgId($_folder, "/", $folder)</setEventAttribute>
+        </when>
+      </when>
+    </when>
+
+    <when test="exist _eventType">
+      <setEventAttribute attr="eventType">combineMsgId("BOX_", $_eventType)</setEventAttribute>
+    </when>
+
+    <when test="exist _updateTime">
+      <!--"2018-10-12T00:33:33-07:00",-->
+      <collectFieldsByRegex src="$_updateTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime><_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="updateTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <when test="exist _actionTime">
+      <!--"2018-10-12T00:33:33-07:00",-->
+      <collectFieldsByRegex src="$_actionTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime><_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <when test="exist _fileCreateTime">
+      <!--"2018-10-12T00:33:33-07:00",-->
+      <collectFieldsByRegex src="$_actionTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime><_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="fileCreateTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,82 @@
+<eventParser name="BarracudaCloudGenFWParser">
+  <deviceType>
+    <Vendor>Barracuda</Vendor>
+    <Model>CloudGen Firewall</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<14>Oct 17 11:29:20 F180 F180/box_Firewall_Activity:  Info     F180 Detect: FWD|UDP|p1|1.2.3.4|55946|00:00:00:00:00:00|1.1.1.1|53||p2||Normal Operation|50.241.120.65|1.1.1.1|0|1|0|0|0|0||DNS||||]]></testEvent>
+    <testEvent><![CDATA[<14>Oct 17 11:29:22 F180 F180/box_Firewall_Activity:  Info     F180 Drop: |TCP|p2|1.2.3.4|443|0e:02:27:fc:fa:9c|1.2.3.4|56194||||TCP Packet Belongs to no Active Session|0.0.0.0|0.0.0.0|0|1|0|0|0|0||||||]]></testEvent>
+    <testEvent><![CDATA[<9>Oct 17 11:29:23 F180 F180/box_Firewall_Activity:  Security F180 Block: FWD|UDP|p1|1.2.3.4|17500|18:03:73:c4:bf:14|1.2.3.4|17500|||LAN-2-LAN|Block Broadcast|0.0.0.0|0.0.0.0|0|1|0|0|0|0||||||]]></testEvent>
+    <testEvent><![CDATA[<14>Oct 17 11:29:24 F180 F180/box_Firewall_Activity:  Info     F180 Allow: FWD|UDP|p1|1.2.3.4|55357|00:50:56:b7:be:15|1.1.1.1|53|domain|p2|LAN-2-INTERNET|Normal Operation|1.2.3.4|1.1.1.1|0|1|0|0|0|0||||||]]></testEvent>
+    <testEvent><![CDATA[<14>Oct 17 11:29:19 F180 F180/box_Firewall_Activity:  Info     F180 Remove: FWD|TCP|p3|1.2.3.4|6129|ac:4b:c8:8c:77:f0|1.2.3.4|443|https|p1|OWA-Inbound/<App>:ALL-APPS|Normal Operation|1.2.3.4|1.2.3.4|0|1|5857|1923|9|14||||||]]></testEvent>
+    <testEvent><![CDATA[<14>May 20 15:55:32 customer-fwl-01 1/Customer-Solutions/customer-fwl-01/box_Firewall_Activity: Info digit-fwl-01 Allow: FWD|TCP|p1|10.10.10.12|52578|22:22:22:22:22:22|10.10.10.10|8638||bond0.202|FortiManager|0|10.10.10.11|172.21.128.62|0|1|0|0|0|0||||||]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+<:gPatStr>/box_<:gPatWord>:]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<reptDevName:gPatHostName>\s+<:gPatStr>/box_<_logsType:gPatWord>:\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="eventType">Barracuda-CloudGenFirewall-Generic</setEventAttribute>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day,$_time)</setEventAttribute>
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+
+    <!-- log type is box_<logsType> i.e. box_Firewall_Activity -->
+    <choose>
+      <when test="matches($_logsType, 'Firewall_Activity')">
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<_logSeverity:gPatStr>\s+<deviceType:gPatStr>\s+<fwAction:gPatWord>:\s+<_logData:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+
+        <setEventAttribute attr="eventType">combineMsgId("Barracuda-CloudGenFirewall-FirewallAct-", $fwAction)</setEventAttribute>
+
+        <choose>
+          <when test="$_logSeverity IN 'Info, Security'">
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+          </when>
+        </choose>
+
+        <choose>
+          <when test="$fwAction IN 'Remove, Detect, Allow, Block, Drop'">
+            <collectAndSetAttrByPos sep="|" src="$_logData">
+              <attrPosMap attr="type" pos="1"/>
+              <attrPosMap attr="_proto" pos="2"/>
+              <attrPosMap attr="srcIntfName" pos="3"/>
+              <attrPosMap attr="srcIpAddr" pos="4"/>
+              <attrPosMap attr="srcIpPort" pos="5"/>
+              <attrPosMap attr="srcMACAddr" pos="6"/>
+              <attrPosMap attr="destIpAddr" pos="7"/>
+              <attrPosMap attr="destIpPort" pos="8"/>
+              <attrPosMap attr="destServiceName" pos="9"/>
+              <attrPosMap attr="destIntfName" pos="10"/>
+              <attrPosMap attr="fwRule" pos="11"/>
+              <attrPosMap attr="opName" pos="12"/>
+              <attrPosMap attr="postNATSrcIpAddr" pos="13"/>
+              <attrPosMap attr="postNATDestIpAddr" pos="14"/>
+              <attrPosMap attr="duration" pos="15"/>
+              <attrPosMap attr="fwConnCount" pos="16"/>
+              <attrPosMap attr="recvBytes" pos="17"/>
+              <attrPosMap attr="sentBytes" pos="18"/>
+              <attrPosMap attr="recvPkts" pos="19"/>
+              <attrPosMap attr="sentPkts" pos="20"/>
+              <attrPosMap attr="user" pos="21"/>
+              <attrPosMap attr="appTransportProto" pos="22"/>
+              <attrPosMap attr="appName" pos="23"/>
+              <attrPosMap attr="targetDomain" pos="24"/>
+              <attrPosMap attr="webCategory" pos="26"/>
+            </collectAndSetAttrByPos>
+          </when>
+        </choose>
+      </when>
+    </choose>
+
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+
+  </parsingInstructions>
+
+</eventParser>

@@ -1,0 +1,36 @@
+<eventParser name="ArubaPolicyManager2Parser">
+
+  <deviceType>
+    <Vendor>Aruba</Vendor>
+    <Model>ClearPass PolicyManager</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patSeverity"><![CDATA[INFO|ERROR]]></pattern>
+  </patternDefinitions>
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>?<:gPatYear>-<:gPatMonNum>-<:gPatDay>\s+<:gPatTime>,\d+\s+\[<:gPatStrRightSB>\]\s+<:patSeverity>\s+\S+\.\S+\s+-\s+]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<142>2016-02-17 02:45:06,874 [DbcnHandlerThread-0x7f5b741de700] INFO  Dbcn.TipsDbcnHandler - notifyDbEntity: Ignore Exception=BaseException: DbcnException: No DbEntityTable for TAG_DEFINITION]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>?<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>\s+<_time:gPatTime>,\d+\s+\[<funName:gPatStrRightSB>\]\s+<_severity:patSeverity>\s+<:gPatStr>\s+-\s+<:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventType">combineMsgId("Aruba-ClearPass-Generic-",$_severity)</setEventAttribute>
+    <choose>
+      <when test="$_severity = 'INFO' ">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <when test="$_severity = 'ERROR' ">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <when test="$_severity = 'WARNING' ">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>
