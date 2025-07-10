@@ -1,0 +1,50 @@
+<eventParser name="DellPowerEdgeParser">
+  <deviceType>
+    <Vendor>Dell</Vendor>
+    <Model>PowerEdge</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<154>2023-03-28T08:44:33.059161-06:00 MX-CW1C1T2 EEMI Audit event from device with { IP } 1.1.1.1 { HostName } 1.1.1.1 { Severity } Critical { MessageID } CUSR1219 { Message }  Description:Unable to log in because the provided username or credentials are invalid. User Name:test Received from address:2.2.2.2 { Recommended Action } Instrumentation didn't provide any recommended action for this event.]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[ EEMI Audit event ]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+
+    <collectAndSetAttrByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>\.\d{6}<_tz:gPatTimeZone> <reptDevName:gPatStr> EEMI Audit event from device with \{ IP \} <reptDevIpAddr:gPatIpAddr> \{ HostName \} <_host:gPatStr> \{ Severity \} <_sev:gPatStr> \{ MessageID \} <_msgId:gPatStr> \{ Message \}\s+Description:<_body:gPatMesgBody>]]></regex>
+    </collectAndSetAttrByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    <setEventAttribute attr="eventType">combineMsgId("Dell-PowerEdge-", $_msgId)</setEventAttribute>
+
+    <choose>
+      <when test="matches($_msgId, 'CUSR1219')">
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[Unable to log in because the provided username or credentials are invalid. User Name:<user:gPatStr> Received from address:<srcIpAddr:gPatIpAddr> \{ Recommended Action \} <recommendedActions:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">combineMsgId("Dell-PowerEdge-", $_msgId, "-Logon-Failure")</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _sev">
+      <choose>
+        <when test="$_sev = 'Critical'">
+          <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+        </when>
+        <when test="$_sev = 'Warning'">
+          <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+        </when>
+        <when test="$_sev = 'Informational'">
+          <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        </when>
+        <otherwise>
+          <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        </otherwise>
+      </choose>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

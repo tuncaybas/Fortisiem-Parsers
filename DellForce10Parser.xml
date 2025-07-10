@@ -1,0 +1,113 @@
+<eventParser name="DellForce10Parser">
+  <deviceType>
+    <Vendor>Dell</Vendor>
+    <Model>Force10</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patForce10Mod"><![CDATA[ARPMGR|FILEMGR|IFMGR|SEC|SSH2|SYS]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[^\s*<:gPatSyslogPRI>?(?:<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>:?\s+(?:<:gPatHostName>:\s+)?%<:gPatStr>\s+%<:patForce10Mod>-\d+-\w+:|\d+\s+<:gPatYear>-<:gPatMonNum>-<:gPatDay>T<:gPatTime>(?:\.\d{3})?<:gPatTimeZone>\s+<:gPatHostName>\s+<:gPatStr>\s+<:patForce10Mod>\s+<:gPatWord>\s+<:gPatStr>\s+<:gPatStr>)\s]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[Feb 11 09:50:21: %STKUNIT0-M:CP %IFMGR-5-OSTATE_UP: Changed interface state to up: Te 0/30]]></testEvent>
+    <testEvent><![CDATA[<190>Jan 6 07:34:34: host1: %STKUNIT0-M:CP %ARPMGR-6-MAC_CHANGE: IP-4-ADDRMOVE: IP address 10.1.48.14 is moved from MAC address 52:54:00:16:5a:74  to MAC address 52:54:00:22:c7:81 .]]></testEvent>
+    <testEvent><![CDATA[<189>Jan 4 08:08:43: host1: %STKUNIT0-M:CP %SEC-5-LOGIN_SUCCESS: Login successful for user alchemy on line vty0 ( 10.1.48.201 )]]></testEvent>
+    <testEvent><![CDATA[<110>1 2017-01-09T15:41:53.191+08:00 p01-ctl-sw2-d5c2f1 - SEC LOGOUT - INFO: Exec session is terminated for user meikang on line vty0 ( 192.168.128.202 )]]></testEvent>
+    <testEvent><![CDATA[Feb 11 08:36:21 utc: %STKUNIT0-M:CP %IFMGR-5-OSTATE_DN: Changed interface state to down: Te 0/31]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>:?\s+(?:utc|<reptDevName:gPatHostName>:\s+)?%<:gPatStr>\s+%<_evIdPrefix:gPatWord>-<_sev:gPatInt>-<_evIdSuffix:gPatWord>:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[\d+\s+<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>(?:\.\d{3})?<_tz:gPatTimeZone>\s+<reptDevName:gPatHostName>\s+<:gPatStr>\s+<_evIdPrefix:patForce10Mod>\s+<_evIdSuffix:gPatWord>\s+<:gPatStr>\s+<:gPatStr>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+      </case>
+    </switch>
+
+    <setEventAttribute attr="eventType">combineMsgId("Dell-Force10-", $_evIdPrefix, "-", $_evIdSuffix)</setEventAttribute>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^Changed\s+interface\s+state\s+to\s+<_state:gPatWord>:\s+<intfName:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <!-- Configured from vty0 ( 192.168.128.11 )by meikang -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^Configured from <:gPatStr> \(\s*<srcIpAddr:gPatIpAddr>\s*\)\s*by <user:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <!-- Copied running-config to startup-config in flash by meikang -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^Copied <:gPatStr> to <:gPatStr> in <:gPatStr> by <user:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <!-- Exec session is terminated for user meikang on line vty0 ( 192.168.128.11 ) -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^Exec session is terminated for user <user:gPatStr> on line <:gPatStr> \(\s*<srcIpAddr:gPatIpAddr>\s*\)]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <!-- Login failure for user meikang on line vty0 ( 192.168.128.11 ) -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^Login <:gPatWord> for user\s+<user:gPatStr>\s+on line\s+<:gPatStr>\s*\(\s*<srcIpAddr:gPatIpAddr>\s*\)]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <!-- Tacacs access accepted for user "meikang" (authentication initiator:  vty0 "192.168.128.11", method "tacacs") -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^<:gPatStr> access accepted for user "<user:gPatStr>" \(authentication initiator:\s+<:gPatStr> "<destIpAddr:gPatIpAddr>",]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <!-- IP-4-ADDRMOVE: IP address 10.1.48.14 is moved from MAC address 52:54:00:16:5a:74  to MAC address 52:54:00:22:c7:81 . -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[IP address\s+<hostIpAddr:gPatIpAddr>\s+is moved from MAC address\s+<srcMACAddr:gPatStr>\s+to MAC address <destMACAddr:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <!-- logging 192.168.128.112 by meikang from vty0 (192.168.128.11)
+             logging 192.168.128.205 udp 50514 by meikang from vty0 (192.168.128.11)
+             no logging 192.168.128.112 by meikang from vty0 (192.168.128.11)
+             no logging source-interface by meikang from vty0 (192.168.128.11)
+        -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^<command:gPatSentence>\s+(?:<destIpAddr:gPatIpAddr>|\w+-interface)\s+(?:<_proto:gPatStr>\s+<destIpPort:gPatInt>\s+)?by <user:gPatStr> from <:gPatStr> \(\s*<srcIpAddr:gPatIpAddr>\s*\)]]></regex>
+        </collectFieldsByRegex>
+
+        <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+      </case>
+
+      <case>
+        <!-- configure by meikang from vty0 (192.168.128.11) -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^<command:gPatSentence>\s+by <user:gPatStr> from <:gPatStr> \(\s*<srcIpAddr:gPatIpAddr>\s*\)]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <default/>
+    </switch>
+  </parsingInstructions>
+</eventParser>

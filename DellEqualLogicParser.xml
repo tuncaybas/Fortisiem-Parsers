@@ -1,0 +1,31 @@
+<eventParser name="DellEqualLogicParser">
+  <deviceType>
+    <Vendor>Dell</Vendor>
+    <Model>EqualLogic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<134>13769:1136:agent:28-Jan-2016 16:56:47.461136:agent.c:1735:AUDIT:Unknown:22.7.1:SNMP packet validation failed, request received from 10.3.5.50]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[^\s*<:gPatSyslogPRI><:gPatInt>:<:gPatInt>:agent:<_day:gPatDay>-<_mon:gPatMon>-<_year:gPatYear>\s+<_time:gPatTime>\.<:gPatInt>:]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[^\s*<:gPatSyslogPRI><:gPatInt>:<:gPatInt>:agent:<_day:gPatDay>-<_mon:gPatMon>-<_year:gPatYear>\s+<_time:gPatTime>\.<:gPatInt>:agent.c:<:gPatInt>:AUDIT:Unknown:\d+\.\d+\.\d+:<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[SNMP packet validation failed, request received from <srcIpAddr:gPatIpAddr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Dell-Equalogic-SNMP-Failed</setEventAttribute>
+      </case>
+      <default>
+        <setEventAttribute attr="eventType">Dell-EqualLogic-Generic</setEventAttribute>
+      </default>
+    </switch>
+  </parsingInstructions>
+</eventParser>

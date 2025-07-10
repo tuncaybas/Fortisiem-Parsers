@@ -1,0 +1,150 @@
+<eventParser name="DataPowerParser">
+  <deviceType>
+    <Vendor>IBM</Vendor>
+    <Model>DataPower</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<11>Sep 29 10:43:32 datapower [0x80e00173][network][error] trans(1711): TCP connection attempt refused from 10.1.2.3 to 10.1.2.3 port 6443]]></testEvent>
+    <testEvent><![CDATA[<12>Sep 29 10:43:33 datapower [Common][0x80e000b3][mpgw][warn] mpgw(PCIDPFacade): trans(23712297)[response][10.1.2.3]: No match from processing policy 'FacadePolicy' - default rule selected.]]></testEvent>
+    <testEvent><![CDATA[<14>Sep 29 10:43:33 datapower [PCISolution][0x80e00383][ws-proxy][info] source-http(LocalHTTPFSH): trans(299243711): WS-Proxy selected: 'RKM_WS'. Operation 'encryptData' matches all criteria.]]></testEvent>
+    <testEvent><![CDATA[<14>Sep 29 10:43:33 datapower [Common][0x80e000b4][mpgw][info] stylepolicy(FacadePolicy): trans(974552007)[request][10.1.2.3]: rule (FacadePolicy_Rule): selected via match 'DPS_Jason_match_all' from processing policy 'FacadePolicy']]></testEvent>
+    <testEvent><![CDATA[<14>Sep 29 10:43:33 datapower [PCISolution][0x80c00002][multistep][info] wsgw(RKM_WS): trans(1040117361)[response]: rule (RKM_WS_rule_1): #1 results: Generated from INPUT. completed OK.]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+datapower\s\[]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+datapower\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^\[<:gPatStrRightSB>\]\[<errorString:gPatStrRightSB>\]\[<_category:gPatStrRightSB>\]\[<_level:gPatStrRightSB>\]\s+<serviceType:gPatStr>\(<_serviceName:gPatStr>\):\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^\[<errorString:gPatStrRightSB>\]\[<_category:gPatStrRightSB>\]\[<_level:gPatStrRightSB>\]\s+<serviceType:gPatStr>\(<_serviceName:gPatStr>\):\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <when test="not_matches($_serviceName, '^\d+$')">
+      <setEventAttribute attr="serviceName">$_serviceName</setEventAttribute>
+    </when>
+
+    <setEventAttribute attr="eventType">combineMsgId("IBM-DataPower-", $_category, "-", $_level)</setEventAttribute>
+
+    <choose>
+      <when test="not_exist errorString"/>
+      <when test="$errorString = '0x80000001'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[trans\(<transactionId:gPatStr>\)\[<_direction:gPatStr>\]:\s+Transaction ID: <globalTransactionId:gPatStr> ::\s+Request Src:\s+<requestSource:gPatStr>\s+Order ID: <orderId:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[trans\(<transactionId:gPatStr>\)\[<_direction:gPatStr>\]:\s+Transaction ID:\s+<globalTransactionId:gPatStr>\s+:: ESB Response Time:\s+<appResponseTimeMSec:gPatInt>ms]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[trans\(<transactionId:gPatStr>\)\[<_direction:gPatStr>\]:\s+Transaction ID: <globalTransactionId:gPatStr> ::\s+Response Time: <appResponseTimeMSec:gPatInt>ms ::\s+Response Status : <appStatus:gPatStr> ::\s+Response Status Desc : <status:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectAndSetAttrByKeyValuePair sep=" " src="$_body">
+              <attrKeyMap attr="funName" key="Function:"/>
+              <attrKeyMap attr="status" key="Status:"/>
+              <attrKeyMap attr="srcIpAddr" key="Ip:"/>
+            </collectAndSetAttrByKeyValuePair>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$errorString = '0x80c00010'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[trans\(<transactionId:gPatStr>\)\[<_direction:gPatStr>\]:\s+Processing of \'<fileName:gPatStr>\' stopped: <status:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[trans\(<transactionId:gPatStr>\)\[<_direction:gPatStr>\]:\s+<msg:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$errorString = '0x80e000d2'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[trans\(<transactionId:gPatStr>\):\s+<msg:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$errorString = '0x80e00130'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[trans\(<transactionId:gPatStr>\)\[<hostIpAddr:gPatIpAddr>\]:\s+<msg:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$errorString = '0x80e00161'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[trans\(<transactionId:gPatStr>\)\[<destIpAddr:gPatIpAddr>\]:\s+<msg:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <collectFieldsByRegex src="$msg">
+              <regex><![CDATA[.+:\s+<srcIpAddr:gPatIpAddr>:<srcIpPort:gPatInt>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+      <when test="$errorString = '0x80e006c1'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[trans\(<transactionId:gPatStr>\)\[<hostIpAddr:gPatIpAddr>\]:\s+<msg:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+    </choose>
+
+    <when test="$serviceType = 'trans'">
+      <setEventAttribute attr="serviceName">Error</setEventAttribute>
+      <setEventAttribute attr="serviceType">Transaction Error</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="$_level = 'critic'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+      <when test="$_level IN 'alert, error'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_level = 'warn'">
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

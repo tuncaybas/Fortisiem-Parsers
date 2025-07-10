@@ -1,0 +1,46 @@
+<eventParser name="DamballaParser">
+  <deviceType>
+    <Vendor>Damballa</Vendor>
+    <Model>Failsafe</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[Damballa\|Failsafe\|[\d.]+\|]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<117>1 2014-09-20T17:23:14+00:00 172.18.3.31 Failsafe 2995 Asset/Infected Damballa|Failsafe|5.2.3|Asset/Infected|Asset/Infected|2|cat=infected|cfp1=6|cfp1Label=Incident Severity|cs6=https://DC1-DFS02-V/assets/268|cs6Label=Asset Detail Link|msg=Asset is infected with a threat|shost=192.168.0.73|sourceServiceName=Windows 7 or 8|src=192.168.0.73|start=1411233794000]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>\d+\s+<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>[+-][\d:]+\s+<:gPatIpAddr>\s+Failsafe\s+<:gPatInt>\s+<_et:gPatStr>(?:[^|]*\|){6}<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="_et">replaceStringByRegex($_et, "/|\s+", "-")</setEventAttribute>
+    <setEventAttribute attr="eventType">combineMsgId("Damballa-Failsafe-", $_et)</setEventAttribute>
+
+    <collectAndSetAttrByKeyValuePair sep="|" src="$_body">
+      <attrKeyMap attr="appName" key="app="/>
+      <attrKeyMap attr="appGroupName" key="cat="/>
+      <attrKeyMap attr="vulnScore" key="cn1="/>
+      <attrKeyMap attr="webCategory" key="cs2="/>
+      <attrKeyMap attr="destIpPort" key="dport="/>
+      <attrKeyMap attr="destIpAddr" key="dst="/>
+      <attrKeyMap attr="reptDevName" key="dvchost="/>
+      <attrKeyMap attr="hashCode" key="fileHash="/>
+      <attrKeyMap attr="filePath" key="filePath="/>
+      <attrKeyMap attr="fileName" key="fname="/>
+      <attrKeyMap attr="fileSize" key="fsize="/>
+      <attrKeyMap attr="recvBytes64" key="in="/>
+      <attrKeyMap attr="msg" key="msg="/>
+      <attrKeyMap attr="sentBytes64" key="out="/>
+      <attrKeyMap attr="_proto" key="proto="/>
+      <attrKeyMap attr="uriStem" key="request="/>
+      <attrKeyMap attr="osType" key="sourceServiceName="/>
+      <attrKeyMap attr="srcIpAddr" key="src="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>

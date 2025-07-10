@@ -1,0 +1,90 @@
+<eventParser name="DellPowerConnectParser">
+  <deviceType>
+    <Vendor>Dell</Vendor>
+    <Model>PowerConnect</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patDellMod"><![CDATA[CLI_WEB|TRAPMGR|UNITMGR]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>\s+<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+(?:<:gPatIpAddr>|<:gPatHostName>)-1\s+<:patDellMod>\[\w+\]:\s]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<189> Apr 13 15:21:08 192.168.5.43-1 CLI_WEB[103917236]: cmd_logger_api.c(140) 5203 %% WEB:192.168.5.101:admin:User requested /VLAN_Membership.html url]]></testEvent>
+    <testEvent><![CDATA[<189> Apr 13 15:21:18 192.168.5.43-1 CLI_WEB[103917236]: cmd_logger_api.c(140) 5204 %% WEB:192.168.5.101:admin:User admin logged out]]></testEvent>
+    <testEvent><![CDATA[<190> Apr 13 15:19:32 192.168.5.43-1 CLI_WEB[103917236]: cmd_logger_api.c(260) 5199 %% [CLI:admin:192.168.5.15] User has succesfully logged in]]></testEvent>
+    <testEvent><![CDATA[<189> Jun 30 16:04:24 Switch-2-1 TRAPMGR[trapTask]: traputil.c(735) 47619 %% 'startup-config' has changed.]]></testEvent>
+    <testEvent><![CDATA[<190> Jun 30 16:04:24 Switch-2-1 UNITMGR[emWeb]: unitmgr.c(6778) 47618 %% Configuration propagation successful for config type 0]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)-1\s+<:patDellMod>\[\w+\]:\s+<:gPatStr>\s+\d+\s+%%\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">Dell-PowerConnect-Generic</setEventAttribute>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^<appTransportProto:gPatWord>:<hostIpAddr:gPatIpAddr>:<user:gPatStrEndColon>:<_detail:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^\[<appTransportProto:gPatWord>:<user:gPatStrEndColon>:<srcIpAddr:gPatIpAddr>\]\s+<_detail:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^Link\s+<_action:gPatStr>:\s+<intfName:gPatStr>]]></regex>
+        </collectFieldsByRegex>
+
+        <choose>
+          <when test="$_action = 'Up'">
+            <setEventAttribute attr="eventType">Dell-PowerConnect-Link-Up</setEventAttribute>
+          </when>
+          <when test="$_action = 'Down'">
+            <setEventAttribute attr="eventType">Dell-PowerConnect-Link-Down</setEventAttribute>
+          </when>
+        </choose>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^Link on <intfName:gPatStr> is failed]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Dell-PowerConnect-Link-Down</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^<intfName:gPatStr> is transitioned from the ]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <default/>
+    </switch>
+
+    <choose>
+      <when test="not_exist _detail"/>
+
+      <when test="matches($_detail, 'logged in')">
+        <setEventAttribute attr="eventType">Dell-PowerConnect-Login</setEventAttribute>
+      </when>
+
+      <when test="matches($_detail, 'logged out')">
+        <setEventAttribute attr="eventType">Dell-PowerConnect-Logout</setEventAttribute>
+      </when>
+
+      <when test="matches($_detail, 'session\[\d+\] created')">
+        <setEventAttribute attr="eventType">Dell-PowerConnect-Session-Created</setEventAttribute>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,86 @@
+<eventParser name="DellUnityParser">
+  <deviceType>
+    <Vendor>Dell</Vendor>
+    <Model>Unity</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<14>Mar 30 14:20:57 test@APM00190314455 Neo_CEM[18456]:  "2023-03-30T14:20:57.759Z" "test@APM00190314455" "Neo_CEM" "18456" "test" "INFO" "14:560005" :: "Authentication failed. Access denied.Username: test ClientIP: 192.168.1.25." :: Category=Audit Component=CASAuthentication TimeZone=UTC ]]></testEvent>
+    <testEvent><![CDATA[<14>Mar 30 14:20:57 test@APM00190314455 Neo_CEM[4312]: "2021-01-03T08:25:00.802Z" "" "Neo_CEM" "4312" "example" "INFO" "14:560001" :: "Authentication successful.Username: example ClientIP: 192.168.1.2." :: Category=Audit Component=CASAuthentication TimeZone=UTC ]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\s+Neo_CEM\[\d+\]:\s+\"\d{4}-\d{2}-\d{2}T]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+
+    <collectAndSetAttrByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<:gPatStr> Neo_CEM\[\d+\]:\s+<_body:gPatMesgBody>]]></regex>
+    </collectAndSetAttrByRegex>
+
+    <setEventAttribute attr="eventType">Dell-Unity-Generic</setEventAttribute>
+
+    <collectAndSetAttrByRegex src="$_body">
+      <regex><![CDATA[\"<_alertTime:gPatStrDQ>\"\s+\"<:gPatStrDQ>\"\s+\"Neo_CEM\"\s+\"<_id:gPatStrDQ>\"\s+\"<:gPatStrDQ>\"\s+\"<_sev:gPatStrDQ>\"\s+\"<_alertId:gPatStrDQ>\"\s+::\s+<_message:gPatMesgBody>]]></regex>
+    </collectAndSetAttrByRegex>
+
+    <switch>
+      <case>
+        <collectAndSetAttrByRegex src="$_message">
+          <regex><![CDATA[TimeZone=<_tz:gPatTimeZone>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time, $_tz)</setEventAttribute>
+      </case>
+      <default>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </default>
+    </switch>
+
+    <collectFieldsByRegex src="$_alertTime">
+      <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>(?:\.\d+)?<_tz:gPatTimeZone>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+
+    <when test="exist _sev">
+      <choose>
+        <when test="$_sev = 'CRITICAL'">
+          <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+        </when>
+        <when test="$_sev = 'ERROR'">
+          <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+        </when>
+        <when test="$_sev = 'WARNING'">
+          <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+        </when>
+        <when test="$_sev = 'NOTICE'">
+          <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+        </when>
+        <when test="$_sev = 'INFO'">
+          <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        </when>
+        <otherwise>
+          <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        </otherwise>
+      </choose>
+    </when>
+
+    <choose>
+      <when test="matches($_alertId, '14:560001')">
+        <collectAndSetAttrByRegex src="$_message">
+          <regex><![CDATA[Authentication successful\.Username: <user:gPatStr> ClientIP: <srcIpAddr:gPatIpAddr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Dell-Unity-Auth-Success</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+
+      <when test="matches($_alertId, '14:560005')">
+        <collectAndSetAttrByRegex src="$_message">
+          <regex><![CDATA[\"Authentication failed\. Access denied\.Username: <user:gPatStr> ClientIP: <srcIpAddr:gPatIpAddr>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="eventType">Dell-Unity-Auth-Failure</setEventAttribute>
+        <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+      </when>
+    </choose>
+
+  </parsingInstructions>
+</eventParser>

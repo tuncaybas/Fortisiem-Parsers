@@ -1,0 +1,108 @@
+<eventParser name="DarkTraceCEFParser">
+  <deviceType>
+    <Vendor>DarkTrace</Vendor>
+    <Model>Darktrace Cyber Intelligence Platform</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[CEF:0|Darktrace|DCIP|3.0.8|537|Antigena/Network/Compliance/Antigena RDP Block|Low| eventId=2 externalId=1462565 art=1536856095244 deviceSeverity=1 rt=1536856054000 shost=example.local src=10.10.1.85 sourceZoneURI=/All Zones/Private Address Space Zones/RFC1918: 10.0.0.0-10.255.255.255 smac=18:66:da:17:bc:b3 dst=202.88.30.105 destinationZoneURI=/All Zones/Public Address Space Zones/APNIC/202.0.0.0-203.0.112.255 (APNIC) dpt=9999 ahost=example.local agt=10.10.28.38 agentZoneURI=/All Zones/Private Address Space Zones/RFC1918: 10.0.0.0-10.255.255.255 av=7.2.4.7831.0 atz=Hongkong aid=3mAvC02UBABCAa72iNm4jZA\=\= at=syslog dvc=10.10.10.10 deviceZoneURI=/All Zones/Private Address Space Zones/RFC1918: 10.0.0.0-10.255.255.255 dtz=Hongkong _cefVer=0.1 ad.darktraceUrl=https://10.10.10.10/#modelbreach/1462565]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[CEF\:\d+\|DarkTrace|DCIP]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[CEF\:<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">DarkTrace-DCIP-Generic</setEventAttribute>
+
+    <setEventAttribute attr="_body">replaceStrInStr($_body, "\|", "::TEMP::")</setEventAttribute>
+    <setEventAttribute attr="_body">replaceStrInStr($_body, "|", "::SEP::")</setEventAttribute>
+    <setEventAttribute attr="_body">replaceStrInStr($_body, "::TEMP::", "|")</setEventAttribute>
+
+    <collectAndSetAttrByPos sep="::SEP::" src="$_body">
+      <attrPosMap attr="_version" pos="1"/>
+      <attrPosMap attr="_sigId" pos="5"/>
+      <attrPosMap attr="categoryType" pos="6"/>
+      <attrPosMap attr="_severity" pos="7"/>
+      <attrPosMap attr="_extension" pos="8"/>
+    </collectAndSetAttrByPos>
+
+    <setEventAttribute attr="_name">replaceStrInStr($categoryType, " ", "-")</setEventAttribute>
+
+    <when test="matches($_name, 'Antigena')">
+      <setEventAttribute attr="_name">replaceStringByRegex($_name, ".+/", "")</setEventAttribute>
+    </when>
+
+    <setEventAttribute attr="eventType">combineMsgId("DarkTrace-DCIP-", $_name)</setEventAttribute>
+    <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "[-]+", "-")</setEventAttribute>
+    <setEventAttribute attr="eventType">replaceStrInStr($eventType, "/", "-")</setEventAttribute>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_extension">
+      <attrKeyMap attr="infoURL" key="ad.darktraceUrl"/>
+      <attrKeyMap attr="hostZoneUri" key="agentZoneURI"/>
+      <attrKeyMap attr="hostIpAddr" key="agt"/>
+      <attrKeyMap attr="hostName" key="ahost"/>
+      <attrKeyMap attr="_deviceTime" key="art"/>
+      <attrKeyMap attr="extEventRecvProto" key="at"/>
+      <attrKeyMap attr="srcTimeZone" key="atz"/>
+      <attrKeyMap attr="appVersion" key="av"/>
+      <attrKeyMap attr="subtype" key="cat"/>
+      <attrKeyMap attr="infoURL" key="darktraceUrl"/>
+      <attrKeyMap attr="destZoneUri" key="destinationZoneURI"/>
+      <attrKeyMap attr="hostMACAddr" key="deviceMacAddress"/>
+      <attrKeyMap attr="destName" key="dhost"/>
+      <attrKeyMap attr="destIpPort" key="dpt"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="destTimeZone" key="dtz"/>
+      <attrKeyMap attr="destUser" key="duser"/>
+      <attrKeyMap attr="srcIpAddr" key="dvc"/>
+      <attrKeyMap attr="hostName" key="dvchost"/>
+      <attrKeyMap attr="extEventId" key="externalId"/>
+      <attrKeyMap attr="attackTechniqueId" key="mitreId"/>
+      <attrKeyMap attr="srcName" key="shost"/>
+      <attrKeyMap attr="srcMACAddr" key="smac"/>
+      <attrKeyMap attr="srcZoneUri" key="sourceZoneURI"/>
+      <attrKeyMap attr="srcIpPort" key="spt"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="user" key="suser"/>
+      <attrKeyMap attr="tagName" key="tags"/>
+    </collectFieldsByKeyValuePair>
+
+    <setEventAttribute attr="_eventType">toLower($eventType)</setEventAttribute>
+    <when test="matches($_eventType, 'block-connections')">
+      <setEventAttribute attr="eventType">DarkTrace-DCIP-Connections-Blocked</setEventAttribute>
+    </when>
+
+    <when test="exist _deviceTime">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_deviceTime">
+            <regex><![CDATA[^<deviceTime:gPatInt>\d{3}$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <choose>
+      <when test="$_severity = 'Low'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$_severity = 'Medium'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <when test="$_severity = 'High'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$_severity = 'Very High'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </otherwise>
+    </choose>
+  </parsingInstructions>
+</eventParser>

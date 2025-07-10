@@ -1,0 +1,99 @@
+<eventParser name="DocuSignParser">
+  <deviceType>
+    <Vendor>DocuSign</Vendor>
+    <Model>DocuSign</Model>
+    <Version>ANY</Version>
+  </deviceType>
+  <testEvents>
+    <testEvent><![CDATA[[PH_DEV_MON_CUSTOM_JSON]:[reptVendor]=DocuSign,[reptModel]=DocuSign,[reptDevName]=DocusignWebhook,[reptDevIpAddr]=10.10.10.10,[json]={"event":"template-modified","apiVersion":"v2.1","uri":"/restapi/v2.1/accounts/11111111-1111-1111-1111-111111111111/templates/11111111-1111-1111-1111-111111111111","retryCount":0,"configurationId":10096638,"generatedDateTime":"2024-04-09T20:44:22.6416504Z","data":{"accountId":"11111111-1111-1111-1111-111111111111","userId":"11111111-1111-1111-1111-111111111111","templateId":"11111111-1111-1111-1111-111111111111","name":"TemplatName","created":"2024-04-09T20:33:23.513"}}]]></testEvent>
+    <testEvent><![CDATA[DOCUSIGN_EVENT:lens-d.docusign.net:10.10.10.10:1 {"timestamp": "2024-05-22T23:01:44.0068364Z", "eventId": "11111111-1111-1111-1111-111111111111", "site": "DEMO", "accountId": "11111111-1111-1111-1111-111111111111", "organizationId": "", "userId": "11111111-1111-1111-1111-111111111111", "integratorKey": "11111111-1111-1111-1111-111111111111", "userAgent": "", "ipAddress": "10.10.10.10", "ipAddressLocation": {"latitude": 47.6, "longitude": -122.33, "country": "united states", "state": "washington", "city": "seattle"}, "object": "Group", "action": "Updated", "property": "", "field": "", "result": "", "source": "Web", "referencedUserId": "", "proxyStatus": "", "proxyType": "", "proxyLevel": "", "latitude": 47.6, "longitude": -122.33, "city": "seattle", "state": "washington", "country": "united states", "device": "", "browser": "", "os": "", "affectedUserId": "", "data": {"GroupId": 17301568}}]]></testEvent>
+  </testEvents>
+  <eventFormatRecognizer><![CDATA[^DOCUSIGN_EVENT:<:gPatStrEndColon>:<:gPatStr> \{|\[PH_DEV_MON_CUSTOM_JSON]\:\[reptVendor\]=DocuSign,\[reptModel\]=DocuSign,]]></eventFormatRecognizer>
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectAndSetAttrByRegex src="$_rawmsg">
+          <regex><![CDATA[\[PH_DEV_MON_CUSTOM_JSON]:<_tmp:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <collectFieldsByKeyValuePair kvsep="]=" sep=",[" src="$_tmp">
+          <attrKeyMap attr="reptDevName" key="reptDevName"/>
+          <attrKeyMap attr="reptDevIpAddr" key="reptDevIpAddr"/>
+          <attrKeyMap attr="_keyword" key="keyword"/>
+          <attrKeyMap attr="_json" key="json"/>
+        </collectFieldsByKeyValuePair>
+        <collectAndSetAttrByJSON src="$_json">
+          <!-- Webhook -->
+          <attrKeyMap attr="actionName" key="event"/>
+          <attrKeyMap attr="version" key="apiVersion"/>
+          <attrKeyMap attr="infoURL" key="uri"/>
+          <attrKeyMap attr="_actionTime" key="generatedDateTime"/>
+          <attrKeyMap attr="templateName" key="data.TemplatName"/>
+          <attrKeyMap attr="accountId" key="data.accountId"/>
+          <attrKeyMap attr="userId" key="data.userId"/>
+        </collectAndSetAttrByJSON>
+        <setEventAttribute attr="eventType">combineMsgId("DocuSign-", $actionName)</setEventAttribute>
+      </case>
+      <case>
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_rawmsg">
+              <regex><![CDATA[^DOCUSIGN_EVENT:<reptDevName:gPatStrEndColon>:<reptDevIpAddr:gPatMesgBodyMin>:<phCustId:gPatInt>\s+<_json:gPatMesgBody>]]></regex>
+            </collectAndSetAttrByRegex>
+          </case>
+          <default>
+            <collectAndSetAttrByRegex src="$_rawmsg">
+              <regex><![CDATA[^DOCUSIGN_EVENT:<reptDevName:gPatStrEndColon>:<reptDevIpAddr:gPatStr>\s+<_json:gPatMesgBody>]]></regex>
+            </collectAndSetAttrByRegex>
+          </default>
+        </switch>
+
+        <setEventAttribute attr="extEventRecvProto">DOCUSIGN_MONITOR_API</setEventAttribute>
+        <collectAndSetAttrByJSON src="$_json">
+          <attrKeyMap attr="_actionTime" key="timestamp"/>
+          <attrKeyMap attr="site" key="site"/>
+          <attrKeyMap attr="accountId" key="accountId"/>
+          <attrKeyMap attr="userId" key="userId"/>
+          <attrKeyMap attr="httpUserAgent" key="userAgent"/>
+          <attrKeyMap attr="browserName" key="userAgentClientInfo.browser.family"/>
+          <attrKeyMap attr="hostName" key="userAgentClientInfo.device.family"/>
+          <attrKeyMap attr="osName" key="userAgentClientInfo.os.family"/>
+          <attrKeyMap attr="hostIpAddr" key="ipAddress"/>
+          <attrKeyMap attr="type" key="object"/>
+          <attrKeyMap attr="actionName" key="action"/>
+          <attrKeyMap attr="propName" key="property"/>
+          <attrKeyMap attr="objType" key="data.EnvelopeType"/>
+          <attrKeyMap attr="targetUserId" key="data.RecipientInfo.UserId"/>
+          <attrKeyMap attr="targetType" key="data.RecipientInfo.RecipientType"/>
+        </collectAndSetAttrByJSON>
+        <setEventAttribute attr="eventType">combineMsgId("DocuSign-", $type, "-", $actionName)</setEventAttribute>
+        <when test="$type IN 'Account,Connect,Organization,User'">
+          <when test="exist propName">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $propName)</setEventAttribute>
+          </when>
+        </when>
+      </case>
+      <default/>
+    </switch>
+    <when test="exist _actionTime">
+      <switch>
+        <case>
+          <!--2024-04-09T20:44:22.6416504Z"-->
+          <collectAndSetAttrByRegex src="$_actionTime">
+
+            <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+          </collectAndSetAttrByRegex>
+          <setEventAttribute attr="actionTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </case>
+        <case>
+          <collectAndSetAttrByRegex src="$_actionTime">
+            <regex><![CDATA[<_sec:gPatInt>]]></regex>
+          </collectAndSetAttrByRegex>
+          <setEventAttribute attr="actionTime">$_sec</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+    <setEventAttribute attr="eventType">replaceStringByRegex($eventType, "\s+", "-")</setEventAttribute>
+  </parsingInstructions>
+</eventParser>

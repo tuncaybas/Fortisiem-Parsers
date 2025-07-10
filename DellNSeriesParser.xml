@@ -1,0 +1,224 @@
+<eventParser name="DellNSeriesParser">
+  <deviceType>
+    <Vendor>Dell</Vendor>
+    <Model>NSeries</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<187> Sep 24 13:17:56 Ashley N3048P Switch Stack  1-1 IPV6[dtlTask]: ip6map.c(3787) 89904 %% Received invalid ip6 packet on Vl1:  TC 0xf3, flow 663552, length 65152, next head 0, hop lim 0, src 8100:c8::f21f:afff:fedf:2080, dst ff02::1:ffdf:2080.]]></testEvent>
+    <testEvent><![CDATA[<187>1 Jan  9 16:03:07.000 192.168.0.15-1 DRIVER[117467844]: broad_hpc_drv.c(4362) 230149630 %% Unit: 0 Blk: 3 MMU MTRO PAR generic parity error.]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patDellNSeriesMod"><![CDATA[BOXSERV|CLI_WEB|CMDLOGGER|DRIVER|FDB|IPV6|TRAPMGR|USER_MGR]]></pattern>
+    <pattern name="patProto"><![CDATA[WEB|CLI]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[^\s*<:gPatSyslogPRI>\d*\s+<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>(?:\.\d{3})?\s+<:gPatMesgBodyMin>-\d+\s+<:patDellNSeriesMod>\[\w]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[^\s*<:gPatSyslogPRI>\d*\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>(?:\.\d{3})?\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatMesgBodyMin>)-\d+\s+<_keyword:patDellNSeriesMod>\[[^]]*\]:\s+<:gPatMesgBodyMin>\(\d+\)\s+\d+\s+%%\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventType">Dell-NSeries-Generic</setEventAttribute>
+
+    <choose>
+      <when test="$_keyword = 'BOXSERV'">
+        <!--
+<190> Sep 24 02:06:21 Ashley Core N4032F Switch 2-1 BOXSERV[boxs Req]: boxs.c(726) 10828 %% Temperature reading of 45 C on sensor 0. Thermal state raised to WARNING.
+<190> Sep 24 02:16:21 Ashley Core N4032F Switch 2-1 BOXSERV[boxs Req]: boxs.c(760) 10830 %% Temperature reading of 40 C on sensor 0. Thermal state lowered to NORMAL.
+        -->
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^Temperature reading of <envTempDegC:gPatInt> C on <hwComponentName:gPatMesgBodyMin>\. Thermal state (?:raised|lowered) to <_severity:gPatWord>]]></regex>
+            </collectFieldsByRegex>
+
+            <choose>
+              <when test="$_severity = 'WARNING'">
+                <setEventAttribute attr="eventType">Dell-NSeries-Temp-Warning</setEventAttribute>
+                <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+              </when>
+
+              <when test="$_severity = 'NORMAL'">
+                <setEventAttribute attr="eventType">Dell-NSeries-Temp-Normal</setEventAttribute>
+              </when>
+            </choose>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$_keyword IN 'CLI_WEB, CMDLOGGER'">
+        <!--
+<189> Sep 28 18:08:32 Ashley Core N4032F Switch 2-1 CLI_WEB[emWeb]: cmd_logger_api.c(140) 11351 %% WEB:192.168.5.101:vcrocca:session[0] created
+<189> Sep 28 18:08:32 Ashley Core N4032F Switch 2-1 CLI_WEB[emWeb]: cmd_logger_api.c(140) 11352 %% WEB:192.168.5.101:vcrocca:User vcrocca logged in
+<189> Sep 28 18:08:32 Ashley Core N4032F Switch 2-1 CLI_WEB[emWeb]: cmd_logger_api.c(140) 11354 %% WEB:192.168.5.101:vcrocca:User requested /dell_logo.html url
+<189> Sep 28 18:14:26 Ashley Core N4032F Switch 2-1 CLI_WEB[emWeb]: cmd_logger_api.c(140) 11366 %% WEB:192.168.5.101:vcrocca:User vcrocca logged out
+<190> Sep 28 18:14:26 Ashley Core N4032F Switch 2-1 CLI_WEB[emWeb]: cmd_logger_api.c(260) 11367 %% [WEB:vcrocca:192.168.5.101] User has logged out
+<190> Sep 23 21:51:01 Ashley Core N4032F Switch 2-1 CLI_WEB[emWeb]: cmd_logger_api.c(260) 10815 %% [CLI:admin:192.168.5.15] User has succesfully logged in
+<190> Sep 28 18:08:32 Ashley Core N4032F Switch 2-1 CLI_WEB[emWeb]: cmd_logger_api.c(260) 11353 %% [WEB:vcrocca:192.168.5.101] User has succesfully logged in
+<189> Sep 23 21:51:01 Ashley Core N4032F Switch 2-1 CMDLOGGER[emWeb]: cmd_logger_api.c(83) 10814 %% CLI:192.168.5.15:admin:User  logged in
+<189> Sep 23 21:51:01 Ashley Core N4032F Switch 2-1 CMDLOGGER[emWeb]: cmd_logger_api.c(83) 10818 %% CLI:192.168.5.15:admin:enable
+<189> Sep 24 04:00:42 Ashley Core N4032F Switch 2-1 CMDLOGGER[emWeb]: cmd_logger_api.c(83) 10875 %% CLI:192.168.5.15:admin:ls
+<189> Sep 24 04:00:42 Ashley Core N4032F Switch 2-1 CMDLOGGER[emWeb]: cmd_logger_api.c(83) 10878 %% CLI:192.168.5.15:admin:/usr/bin/iostat -dkx 10 2
+        -->
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^<appTransportProto:patProto>:<hostIpAddr:gPatIpAddr>:<user:gPatStrEndColon>:<_action:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^\[<appTransportProto:patProto>:<user:gPatStrEndColon>:<hostIpAddr:gPatIpAddr>\]\s+<_action:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+        </switch>
+
+        <choose>
+          <when test="matches($_action, '^User .* logged in')">
+            <setEventAttribute attr="eventType">Dell-NSeries-Login-Success</setEventAttribute>
+          </when>
+
+          <when test="matches($_action, '^User .* logged out')">
+            <setEventAttribute attr="eventType">Dell-NSeries-Logout</setEventAttribute>
+          </when>
+
+          <when test="matches($_action, '^User requested ')">
+          </when>
+
+          <when test="matches($_action, '^session\[\d+\] created')">
+            <setEventAttribute attr="eventType">Dell-NSeries-Session-Created</setEventAttribute>
+          </when>
+
+          <otherwise>
+            <setEventAttribute attr="command">$_action</setEventAttribute>
+            <setEventAttribute attr="eventType">Dell-NSeries-User-Command</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+
+      <when test="$_keyword = 'TRAPMGR'">
+        <!--
+<189> Sep 24 02:06:31 Ashley Core N4032F Switch 2-1 TRAPMGR[boxs Req]: traputil.c(777) 10829 %% Temperature state change alarm: Unit Number: 1 Current: Warning, Previous: Normal
+<189> Sep 24 02:16:31 Ashley Core N4032F Switch 2-1 TRAPMGR[boxs Req]: traputil.c(777) 10831 %% Temperature state change alarm: Unit Number: 1 Current: Normal, Previous: Warning
+<189> Sep 25 15:33:49 Ashley Core N4032F Switch 2-1 TRAPMGR[dot1s_task]: traputil.c(777) 11042 %% Spanning Tree Topology Change Received: MSTID: 0 Po1
+<189> Sep 25 15:33:49 Ashley Core N4032F Switch 2-1 TRAPMGR[dot1s_task]: traputil.c(777) 11043 %% Spanning Tree Topology Change: 0, Unit: 1
+<189> Sep 25 15:33:49 Ashley N3048P Switch Stack  1-1 TRAPMGR[dot1s_task]: traputil.c(777) 92078 %% Spanning Tree Topology Change Received: MSTID: 0 Po10
+<189> Sep 23 21:51:01 Ashley Core N4032F Switch 2-1 TRAPMGR[emWeb]: traputil.c(777) 10817 %% Failed User Login with User ID: admin
+<189> Sep 24 04:00:27 Ashley Core N4032F Switch 2-1 TRAPMGR[emWeb]: traputil.c(777) 10867 %% Multiple Users: CPU
+<189> Sep 28 11:39:19 Ashley N3048P Switch Stack  1-1 TRAPMGR[trapTask]: traputil.c(735) 92896 %% Link Up: Gi1/0/12
+<189> Sep 28 11:39:19 Ashley N3048P Switch Stack  1-1 TRAPMGR[trapTask]: traputil.c(735) 92897 %% Gi1/0/12 is transitioned from the Forwarding state to the Blocking state in instance 0
+<189> Sep 28 11:39:19 Ashley N3048P Switch Stack  1-1 TRAPMGR[trapTask]: traputil.c(735) 92898 %% Gi1/0/12 is transitioned from the Learning state to the Forwarding state in instance 0
+<189> Sep 28 11:39:21 Ashley N3048P Switch Stack  1-1 TRAPMGR[trapTask]: traputil.c(735) 92899 %% Link Down: Gi1/0/12
+<189> Sep 28 11:39:21 Ashley N3048P Switch Stack  1-1 TRAPMGR[trapTask]: traputil.c(735) 92900 %% Link on Gi1/0/12 is failed
+<189> Sep 28 11:42:59 Ashley N3048P Switch Stack  1-1 TRAPMGR[trapTask]: traputil.c(735) 92923 %% multicast storm control is reached on Gi1/0/12. Action taken is trap.
+        -->
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^Temperature state change alarm: Unit Number: <_unit:gPatInt> Current: <_severity:gPatWord>,]]></regex>
+            </collectFieldsByRegex>
+
+            <setEventAttribute attr="eventType">combineMsgId("Dell-NSeries-Temp-", $_severity)</setEventAttribute>
+            <setEventAttribute attr="hwComponentName">combineMsgId("Unit Number: ", $_unit)</setEventAttribute>
+
+            <when test="$_severity = 'Warning'">
+              <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+            </when>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^Failed User Login with User ID: <user:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Dell-NSeries-Login-Failed</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^Link <_status:gPatWord>:\s+<intfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+
+            <choose>
+              <when test="$_status = 'Up'">
+                <setEventAttribute attr="eventType">Dell-NSeries-Link-Up</setEventAttribute>
+              </when>
+              <when test="$_status = 'Down'">
+                <setEventAttribute attr="eventType">Dell-NSeries-Link-Down</setEventAttribute>
+              </when>
+            </choose>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^Link on <intfName:gPatStr> is failed]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Dell-NSeries-Link-Down</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^Spanning Tree Topology Change\b]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Dell-NSeries-SpanningTree-Change</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^<intfName:gPatStr> is transitioned from the <_state1:gPatWord> state to the <_state2:gPatWord> state in instance \d+]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("Dell-NSeries-SpanningTree-", $_state1, "-To-", $_state2)</setEventAttribute>
+          </case>
+
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$_keyword = 'USER_MGR'">
+        <!-- <190> Sep 23 21:51:01 Ashley Core N4032F Switch 2-1 USER_MGR[emWeb]: user_mgr.c(1792) 10816 %% User admin Failed to login because of authentication failures -->
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[User <user:gPatStr> Failed to login]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Dell-NSeries-Login-Failed</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$_keyword = 'IPV6'">
+        <!-- <187> Sep 24 13:17:56 Ashley N3048P Switch Stack  1-1 IPV6[dtlTask]: ip6map.c(3787) 89904 %% Received invalid ip6 packet on Vl1:  TC 0xf3, flow 663552, length 65152, next head 0, hop lim 0, src 8100:c8::f21f:afff:fedf:2080, dst ff02::1:ffdf:2080. -->
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^Received invalid ip6 packet on ]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Dell-NSeries-Invalid-Packet</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$_keyword = 'FDB'">
+        <!-- <189> Feb 8 03:57:56 TEST-DEVICE-001-1 FDB[dtlAddrTask]: fdb.c(651) 212239879 %% NOTE MAC_MOVE: Mac C1:C2:C3:11:22:33 in VLAN: 1192 is overwritten from entryType 1 to 1 and port Gi1/0/48 to Po1 -->
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[NOTE MAC_MOVE: Mac <hostMACAddr:gPatStr> in VLAN: <hostVLAN:gPatInt> is overwritten from <:gPatMesgBodyMin> and port <srcIntfName:gPatStr> to <destIntfName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">Dell-NSeries-MAC_MOVE</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+    </choose>
+  </parsingInstructions>
+</eventParser>

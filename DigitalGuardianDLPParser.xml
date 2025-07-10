@@ -1,0 +1,463 @@
+<eventParser name="DigitalGuardianDLPParser">
+
+  <deviceType>
+    <Vendor>Digital Guardian</Vendor>
+    <Model>DLP Manager Server</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patStrQuote"><![CDATA[[^"]*]]></pattern>
+  </patternDefinitions>
+
+  <testEvents>
+    <testEvent><![CDATA[<133>Agent_Local_Date="2017.10.21" Agent_Local_Time="10/21/2017 9:49:08 PM" Agent_UTC_Time="10/21/2017 1:49:08 PM" Application="wmiapsrv.exe" Computer_Name="deers\NRBPC170004" Computer_Type="0" DNS_Hostname="" Email_Sender="" Email_Subject="" Event_ID="11111111-1111-1111-1111-111111111111" Detail_Event_ID="11111111-1111-1111-1111-111111111111" IP_Address="" Local_Port="" MD5_Hash="11111111-1111-1111-1111-111111111111" Network_Direction="False" Operation="11" Protocol="" Remote_Port="" URL_Path="" Was_Classified="False" Was_File_Captured="False" Was_Mobile_Device="True" Was_PKI_Authenticated="False" Was_Private_Address="True" Was_Removable="False" Was_Rule_Violation="False" Was_Screen_Captured="0" Was_S/MIME_Encrypted="" Was_S/MIME_Signed="" Was_Wireless="False" Custom_ID="" Device_Class="" Device_ID="" Drive_Type="" Friendly_Name="" Product_ID="" Removal_Policy="" Serial_Number="" Storage_Bus_Type="" Supports_Predict_Failure="" Vendor="" Vendor_ID="" Block_Code="0" Bytes_Read="1328190" Bytes_Written="1328190" Destination_Directory="c:\windows\system32\" Destination_File="perfstringbackup.ini" Destination_File_Encryption="0" Destination_File_Extension="ini" Detail_File_Size="1328190" Detail_Was_Blocked="False" Email_Domain_Name="" Email_Recipient="" Email_Recipient_Type="" Printer="" Printer_Jobname="perfstringbackup.tmp" Prompt_Survey_Name="" Source_Directory="c:\windows\system32\" Source_File="perfstringbackup.tmp" Source_File_Encryption="0" Source_File_Extension="tmp" User_Response="" Was_Dest_File_Captured="False" Was_Destination_Classified="False" Was_Destination_Removable="False" Was_Detail_Rule_Violation="False" Was_Detail_Screen_Captured="0" Was_Source_Classified="False" Was_Source_File_Captured="False" Was_Source_Removable="False" Source_Drive_Type="3" Source_Device_ID="11111111-1111-1111-1111-111111111111" Destination_Drive_Type="3" Destination_Device_ID="11111111-1111-1111-1111-111111111111" Domain_Name="NT AUTHORITY" Email_Address="" Employee_Id="" Given_Name="" Surname="" User_ID="11111111-1111-1111-1111-111111111111" User_Name="NT AUTHORITY\SYSTEM" Custom_Int_4="" Custom_String_1="" Custom_String_2="" Custom_String_3="" Custom_String_4="" Custom_String_5="" Custom_String_6="" Event_Display_Name="" Company_Name="microsoft corporation" Product_Name="microsoft® windows® operating system" Product_Version="6.1.7600.16385" Scan_Value_Status="0" Scan_Value_Status_Local_Time="7/15/2017 8:14:18 PM" Scan_Value_Status_Text="Virus Total: 0 / 63 scans positive." Dll_SHA1_Hash="" Dll_SHA256_Hash="" Classification_Policy="" Classification_Rule="" Classification_Type=""]]></testEvent>
+
+    <testEvent><![CDATA[<133>Agent_Begin_Local_Time="10/22/2017 6:19:55 AM" Agent_Begin_UTC_Time="10/21/2017 9:19:55 PM" Agent_End_Local_Time="10/22/2017 6:19:58 AM" Agent_End_UTC_Time="10/21/2017 9:19:58 PM" Agent_Local_Date="2017.10.22" Application="rsautoup.exe" Application_Directory="c:\program files (x86)\rsupport\remoteview 5.0\agent\" Application_Full_Name="rsautoup.exe" Computer_ID="11111111-1111-1111-1111-111111111111" Computer_Name="deers\DITPC160001" Computer_Type="0" MD5_Checksum="a7239cc4f28b97d857d5b873a6611825" MD5_Hash="11111111-1111-1111-1111-111111111111" Process_SHA1_Hash="5607CD4E22873A9882E434773E497B599520E605" Process_SHA256_Hash="15DED80B6E3DC5CF48E70C2E457BDB8D904D17AC60FBB6824FBFA3BE4405465D" Was_Terminal_Session="False" Company_Name="rsupport corporation" Product_Name="rsupport rsautoup application" Product_Version="3, 1, 0, 0" Scan_Value_Status="0" Scan_Value_Status_Local_Time="8/16/2017 3:00:53 PM" Scan_Value_Status_Text="Virus Total: 0 / 57 scans positive." Parent_Application="" Parent_Company_Name="" Parent_Product_Name="" Parent_Product_Version="" User_Name="NT AUTHORITY\SYSTEM"]]></testEvent>
+
+    <testEvent><![CDATA[<129>Agent_Local_Date="2017.10.22" Agent_Local_Time="10/22/2017 7:00:07 AM" Agent_UTC_Time="10/21/2017 10:00:07 PM" Alert_ID="11111111-1111-1111-1111-111111111111" Application="jp2launcher.ex" Block_Code="0" Computer_ID="11111111-1111-1111-1111-111111111111" Computer_Name="deers\NRBPC140011" Computer_Type="0" Email_Sender="" Email_Subject="" Operation="50" Policy="ATP Detect Policy_Edit_Version" Prompt_Survey_Name="" Resolution_Status="False" Rule="[Suspicious]-ATP2020 - Process Making Outbound TCP Network Connection(1)" Rule_Action_Type="1" Rule_Category="5" Severity="2" User_Response="" Was_Blocked="False" Bytes_Read="0" Bytes_Written="0" Destination_Directory="" Destination_File="" Destination_File_Encryption="" Detail_File_Size="0" DNS_Hostname="" Email_Recipient="" Email_Recipient_Type="" IP_Address="" Local_Port="" Network_Direction="False" Object_Type="" Printer="" Printer_Jobname="" Protocol="" Remote_Port="" Source_Directory="" Source_File="" Source_File_Encryption="" URL_Path="" Was_Dest_File_Captured="False" Was_Destination_Classified="False" Was_Destination_Removable="False" Was_PKI_Authenticated="False" Was_Private_Address="False" Was_Screen_Captured="0" Was_S/MIME_Encrypted="False" Was_S/MIME_Signed="False" Was_Source_Classified="False" Was_Source_File_Captured="False" Was_Wireless="False" Resolution_Code="-1" Resolution_Reason="" Resolution_Time="" Resolution_User_Name="" Source_Drive_Type="" Source_Device_ID="" Destination_Drive_Type="" Destination_Device_ID="" Email_Address="ycsin@noroo.com" Employee_Id="DBC151003" Given_Name="" Surname="XXXX " User_ID="11111111-1111-1111-1111-111111111111" User_Name="deers\DBC151003" Custom_Int_4="" Custom_String_1="" Custom_String_2="" Custom_String_3="" Custom_String_4="" Custom_String_5="" Custom_String_6="{11111111-1111-1111-1111-111111111111}" Detail_Event_ID="11111111-1111-1111-1111-111111111111" Event_Display_Name="Network (Secondary)" Dll_SHA1_Hash="" Dll_SHA256_Hash=""]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>(?:Agent_Local_Date="<:patStrQuote>"\s+Agent_Local_Time="<:patStrQuote>"\s+Agent_UTC_Time="<:patStrQuote>"\s+|Agent_Begin_Local_Time="<:patStrQuote>"\s+Agent_Begin_UTC_Time="<:patStrQuote>"\s+Agent_End_Local_Time="<:patStrQuote>"\s+Agent_End_UTC_Time="<:patStrQuote>"\s+Agent_Local_Date="<:patStrQuote>")]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <collectAndSetAttrByKeyValuePair sep=" " src="$_body">
+      <attrKeyMap attr="_beginTime" key="Agent_Begin_Local_Time="/>
+      <attrKeyMap attr="_endTime" key="Agent_End_Local_Time="/>
+      <attrKeyMap attr="_eventTime" key="Agent_Local_Time="/>
+      <attrKeyMap attr="_alertId" key="Alert_ID="/>
+      <attrKeyMap attr="procName" key="Application="/>
+      <attrKeyMap attr="appCategory" key="Application_Directory="/>
+      <attrKeyMap attr="procName" key="Application_Full_Name="/>
+      <attrKeyMap attr="code" key="Block_Code="/>
+      <attrKeyMap attr="recvBytes64" key="Bytes_Read="/>
+      <attrKeyMap attr="sentBytes64" key="Bytes_Written="/>
+      <attrKeyMap attr="appVendor" key="Company_Name="/>
+      <attrKeyMap attr="computerId" key="Computer_ID="/>
+      <attrKeyMap attr="computer" key="Computer_Name="/>
+      <attrKeyMap attr="_computerType" key="Computer_Type="/>
+      <attrKeyMap attr="customer" key="Custom_ID="/>
+      <attrKeyMap attr="destFilePath" key="Destination_Directory="/>
+      <attrKeyMap attr="destFileName" key="Destination_File="/>
+      <attrKeyMap attr="destFileEncryptAlgo" key="Destination_File_Encryption="/>
+      <attrKeyMap attr="destFileExt" key="Destination_File_Extension="/>
+      <attrKeyMap attr="fileSize" key="Detail_File_Size="/>
+      <attrKeyMap attr="deviceType" key="Device_Class="/>
+      <attrKeyMap attr="deviceIdentification" key="Device_ID="/>
+      <attrKeyMap attr="hashSHA1" key="Dll_SHA1_Hash="/>
+      <attrKeyMap attr="hashSHA256" key="Dll_SHA256_Hash="/>
+      <attrKeyMap attr="dnsServerName" key="DNS_Hostname="/>
+      <attrKeyMap attr="domain" key="Domain_Name="/>
+      <attrKeyMap attr="senderMailAddr" key="Email_Address="/>
+      <attrKeyMap attr="mailDomain" key="Email_Domain_Name="/>
+      <attrKeyMap attr="receiverMailAddr" key="Email_Recipient="/>
+      <attrKeyMap attr="_emailReceipientType" key="Email_Recipient_Type="/>
+      <attrKeyMap attr="senderMailAddr" key="Email_Sender="/>
+      <attrKeyMap attr="mailSubject" key="Email_Subject="/>
+      <attrKeyMap attr="employeeId" key="Employee_Id="/>
+      <attrKeyMap attr="_extEventId" key="Event_ID="/>
+      <attrKeyMap attr="_givenName" key="Given_Name="/>
+      <attrKeyMap attr="srcIpAddr" key="IP_Address="/>
+      <attrKeyMap attr="srcIpPort" key="Local_Port="/>
+      <attrKeyMap attr="checksum" key="MD5_Checksum="/>
+      <attrKeyMap attr="hashMD5" key="MD5_Hash="/>
+      <attrKeyMap attr="_networkDirection" key="Network_Direction="/>
+      <attrKeyMap attr="objType" key="Object_Type="/>
+      <attrKeyMap attr="_operation" key="Operation="/>
+      <attrKeyMap attr="policyName" key="Policy="/>
+      <attrKeyMap attr="prtSupplyName" key="Printer="/>
+      <attrKeyMap attr="jobName" key="Printer_Jobname="/>
+      <attrKeyMap attr="hashSHA1" key="Process_SHA1_Hash="/>
+      <attrKeyMap attr="hashSHA256" key="Process_SHA256_Hash="/>
+      <attrKeyMap attr="product" key="Product_Name="/>
+      <attrKeyMap attr="version" key="Product_Version="/>
+      <attrKeyMap attr="_appTransportProto" key="Protocol="/>
+      <attrKeyMap attr="destIpPort" key="Remote_Port="/>
+      <attrKeyMap attr="resoStatus" key="Resolution_Status="/>
+      <attrKeyMap attr="ruleName" key="Rule="/>
+      <attrKeyMap attr="_ruleActionType" key="Rule_Action_Type="/>
+      <attrKeyMap attr="_scanStatus" key="Scan_Value_Status="/>
+      <attrKeyMap attr="_scanLocalTime" key="Scan_Value_Status_Local_Time="/>
+      <attrKeyMap attr="scanStatusDetail" key="Scan_Value_Status_Text="/>
+      <attrKeyMap attr="serialNumber" key="Serial_Number="/>
+      <attrKeyMap attr="_severity" key="Severity="/>
+      <attrKeyMap attr="deviceIdentification" key="Source_Device_ID="/>
+      <attrKeyMap attr="srcFilePath" key="Source_Directory="/>
+      <attrKeyMap attr="srcFileName" key="Source_File="/>
+      <attrKeyMap attr="srcFileEncryptAlgo" key="Source_File_Encryption="/>
+      <attrKeyMap attr="srcFileExt" key="Source_File_Extension="/>
+      <attrKeyMap attr="infoURL" key="URL_Path="/>
+      <attrKeyMap attr="userId" key="User_ID="/>
+      <attrKeyMap attr="user" key="User_Name="/>
+      <attrKeyMap attr="hostVendor" key="Vendor="/>
+      <attrKeyMap attr="sessionStatus" key="Was_Terminal_Session="/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <when test="exist srcFilePath">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_body">
+            <regex><![CDATA[\s+Source_Directory="<srcFilePath:gPatMesgBodyMin>"(?:\s+\w+="|\s*$)]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist destFilePath">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_body">
+            <regex><![CDATA[\s+Destination_Directory="<destFilePath:gPatMesgBodyMin>"(?:\s+\w+="|\s*$)]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist appCategory">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_body">
+            <regex><![CDATA[\s+Application_Directory="<appCategory:gPatMesgBodyMin>"(?:\s+\w+="|\s*$)]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <choose>
+      <when test="exist _alertId">
+        <setEventAttribute attr="eventType">DigitalGuardian-DLP-Alert</setEventAttribute>
+        <setEventAttribute attr="extEventId">$_alertId</setEventAttribute>
+      </when>
+      <when test="exist _extEventId">
+        <setEventAttribute attr="eventType">DigitalGuardian-DLP-Event</setEventAttribute>
+        <setEventAttribute attr="extEventId">$_extEventId</setEventAttribute>
+      </when>
+      <when test="exist _beginTime">
+        <setEventAttribute attr="eventType">DigitalGuardian-DLP-Process</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">DigitalGuardian-DLP-Generic</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <!-- Monitoring Operation -->
+    <choose>
+      <when test="not_exist _operation"/>
+      <when test="$_operation = '0'">
+        <setEventAttribute attr="opName">Unknown</setEventAttribute>
+      </when>
+      <when test="$_operation = '1'">
+        <setEventAttribute attr="opName">CD/DVD-Burn</setEventAttribute>
+      </when>
+      <when test="$_operation = '2'">
+        <setEventAttribute attr="opName">Network-Transfer-Download</setEventAttribute>
+      </when>
+      <when test="$_operation = '3'">
+        <setEventAttribute attr="opName">Network-Transfer-Upload</setEventAttribute>
+      </when>
+      <when test="$_operation = '4'">
+        <setEventAttribute attr="opName">Network-Operation</setEventAttribute>
+      </when>
+      <when test="$_operation = '5'">
+        <setEventAttribute attr="opName">File-Archive</setEventAttribute>
+      </when>
+      <when test="$_operation = '6'">
+        <setEventAttribute attr="opName">File-Extract</setEventAttribute>
+      </when>
+      <when test="$_operation = '7'">
+        <setEventAttribute attr="opName">File-Save-As</setEventAttribute>
+      </when>
+      <when test="$_operation = '8'">
+        <setEventAttribute attr="opName">File-Edit</setEventAttribute>
+      </when>
+      <when test="$_operation = '9'">
+        <setEventAttribute attr="opName">File-Create</setEventAttribute>
+      </when>
+      <when test="$_operation = '10'">
+        <setEventAttribute attr="opName">File-Delete</setEventAttribute>
+      </when>
+      <when test="$_operation = '11'">
+        <setEventAttribute attr="opName">File-Copy</setEventAttribute>
+      </when>
+      <when test="$_operation = '12'">
+        <setEventAttribute attr="opName">File-Move</setEventAttribute>
+      </when>
+      <when test="$_operation = '13'">
+        <setEventAttribute attr="opName">File-Open</setEventAttribute>
+      </when>
+      <when test="$_operation = '14'">
+        <setEventAttribute attr="opName">File-Rename</setEventAttribute>
+      </when>
+      <when test="$_operation = '15'">
+        <setEventAttribute attr="opName">File-Read</setEventAttribute>
+      </when>
+      <when test="$_operation = '16'">
+        <setEventAttribute attr="opName">File-Write</setEventAttribute>
+      </when>
+      <when test="$_operation = '17'">
+        <setEventAttribute attr="opName">File-Recycle</setEventAttribute>
+      </when>
+      <when test="$_operation = '18'">
+        <setEventAttribute attr="opName">File-Restore</setEventAttribute>
+      </when>
+      <when test="$_operation = '19'">
+        <setEventAttribute attr="opName">File-Set-Information</setEventAttribute>
+      </when>
+      <when test="$_operation = '20'">
+        <setEventAttribute attr="opName">File-Close</setEventAttribute>
+      </when>
+      <when test="$_operation = '21'">
+        <setEventAttribute attr="opName">Application-Data-Exchange</setEventAttribute>
+      </when>
+      <when test="$_operation = '22'">
+        <setEventAttribute attr="opName">Print</setEventAttribute>
+      </when>
+      <when test="$_operation = '23'">
+        <setEventAttribute attr="opName">User-Logon</setEventAttribute>
+      </when>
+      <when test="$_operation = '24'">
+        <setEventAttribute attr="opName">User-Logoff</setEventAttribute>
+      </when>
+      <when test="$_operation = '27'">
+        <setEventAttribute attr="opName">Application-Start</setEventAttribute>
+      </when>
+      <when test="$_operation = '28'">
+        <setEventAttribute attr="opName">Send-Mail</setEventAttribute>
+      </when>
+      <when test="$_operation = '29'">
+        <setEventAttribute attr="opName">ADE-Print-Screen</setEventAttribute>
+      </when>
+      <when test="$_operation = '30'">
+        <setEventAttribute attr="opName">ADE-Print-Process</setEventAttribute>
+      </when>
+      <when test="$_operation = '31'">
+        <setEventAttribute attr="opName">ADE-Cut</setEventAttribute>
+      </when>
+      <when test="$_operation = '34'">
+        <setEventAttribute attr="opName">File-Decrypt</setEventAttribute>
+      </when>
+      <when test="$_operation = '35'">
+        <setEventAttribute attr="opName">ADE-Screen-Capture</setEventAttribute>
+      </when>
+      <when test="$_operation = '36'">
+        <setEventAttribute attr="opName">Attach-Mail</setEventAttribute>
+      </when>
+      <when test="$_operation = '38'">
+        <setEventAttribute attr="opName">ADE-Insert-File</setEventAttribute>
+      </when>
+      <when test="$_operation = '39'">
+        <setEventAttribute attr="opName">ADE-Insert-New-Object</setEventAttribute>
+      </when>
+      <when test="$_operation = '40'">
+        <setEventAttribute attr="opName">Document-Repository</setEventAttribute>
+      </when>
+      <when test="$_operation = '41'">
+        <setEventAttribute attr="opName">File-View</setEventAttribute>
+      </when>
+      <when test="$_operation = '42'">
+        <setEventAttribute attr="opName">Device-Detected</setEventAttribute>
+      </when>
+      <when test="$_operation = '43'">
+        <setEventAttribute attr="opName">Device-Missing</setEventAttribute>
+      </when>
+      <when test="$_operation = '44'">
+        <setEventAttribute attr="opName">Device-Added</setEventAttribute>
+      </when>
+      <when test="$_operation = '45'">
+        <setEventAttribute attr="opName">Device-Removed</setEventAttribute>
+      </when>
+      <when test="$_operation = '46'">
+        <setEventAttribute attr="opName">Application-Action</setEventAttribute>
+      </when>
+      <when test="$_operation = '47'">
+        <setEventAttribute attr="opName">Active-Sync-Send</setEventAttribute>
+      </when>
+      <when test="$_operation = '48'">
+        <setEventAttribute attr="opName">Active-Sync-Receive</setEventAttribute>
+      </when>
+      <when test="$_operation = '49'">
+        <setEventAttribute attr="opName">DLL-Load</setEventAttribute>
+      </when>
+      <when test="$_operation = '50'">
+        <setEventAttribute attr="opName">Custom-Event</setEventAttribute>
+      </when>
+      <when test="$_operation = '51'">
+        <setEventAttribute attr="opName">Timer-Event</setEventAttribute>
+      </when>
+      <when test="$_operation = '52'">
+        <setEventAttribute attr="opName">Registry-Event</setEventAttribute>
+      </when>
+      <when test="$_operation = '53'">
+        <setEventAttribute attr="opName">Hook-Event</setEventAttribute>
+      </when>
+      <when test="$_operation = '54'">
+        <setEventAttribute attr="opName">Device-Open</setEventAttribute>
+      </when>
+      <when test="$_operation = '64'">
+        <setEventAttribute attr="opName">Network-Device</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _computerType"/>
+      <when test="$_computerType = '1'">
+        <setEventAttribute attr="osType">Windows</setEventAttribute>
+      </when>
+      <when test="$_computerType = '2'">
+        <setEventAttribute attr="osType">Linux</setEventAttribute>
+      </when>
+      <when test="$_computerType = '3'">
+        <setEventAttribute attr="osType">Mac</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _severity"/>
+      <when test="$_severity = '1'">
+        <!-- Informational-->
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+      <!-- Low -->
+      <when test="$_severity = '2'">
+        <setEventAttribute attr="eventSeverity">2</setEventAttribute>
+      </when>
+      <!-- Medium -->
+      <when test="$_severity = '3'">
+        <setEventAttribute attr="eventSeverity">4</setEventAttribute>
+      </when>
+      <!-- High -->
+      <when test="$_severity = '4'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <!-- Critical -->
+      <when test="$_severity = '5'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+      </when>
+    </choose>
+    <choose>
+      <when test="not_exist _ruleActionType"/>
+      <when test="$_ruleActionType = '1'">
+        <setEventAttribute attr="dlpAction">Continue</setEventAttribute>
+      </when>
+      <when test="$_ruleActionType = '2'">
+        <setEventAttribute attr="dlpAction">Prompt</setEventAttribute>
+      </when>
+      <when test="$_ruleActionType = '3'">
+        <setEventAttribute attr="dlpAction">Block</setEventAttribute>
+      </when>
+      <when test="$_ruleActionType = '4'">
+        <setEventAttribute attr="dlpAction">Lockdown</setEventAttribute>
+      </when>
+      <when test="$_ruleActionType = '7'">
+        <setEventAttribute attr="dlpAction">Classify</setEventAttribute>
+      </when>
+      <when test="$_ruleActionType = '8'">
+        <setEventAttribute attr="dlpAction">Encrypt</setEventAttribute>
+      </when>
+      <when test="$_ruleActionType = '10'">
+        <setEventAttribute attr="dlpAction">Vault</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _emailReceipientType"/>
+      <when test="$_emailReceipientType = '0'">
+        <setEventAttribute attr="receiverMailType">To</setEventAttribute>
+      </when>
+      <when test="$_emailReceipientType = '1'">
+        <setEventAttribute attr="receiverMailType">Cc</setEventAttribute>
+      </when>
+      <when test="$_emailReceipientType = '2'">
+        <setEventAttribute attr="receiverMailType">BCc</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _networkDirection"/>
+      <when test="$_networkDirection = 'FALSE'">
+        <setEventAttribute attr="direction">Inbound</setEventAttribute>
+      </when>
+      <when test="$_networkDirection = 'TRUE'">
+        <setEventAttribute attr="direction">Outbound</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _appTransportProto"/>
+      <when test="$_appTransportProto = '0'">
+        <setEventAttribute attr="appTransportProto">Unknown</setEventAttribute>
+      </when>
+      <when test="$_appTransportProto = '1'">
+        <setEventAttribute attr="appTransportProto">TCP</setEventAttribute>
+      </when>
+      <when test="$_appTransportProto = '2'">
+        <setEventAttribute attr="appTransportProto">UDP</setEventAttribute>
+      </when>
+      <when test="$_appTransportProto = '3'">
+        <setEventAttribute attr="appTransportProto">IPSec</setEventAttribute>
+      </when>
+      <when test="$_appTransportProto = '4'">
+        <setEventAttribute attr="appTransportProto">IPX</setEventAttribute>
+      </when>
+      <when test="$_appTransportProto = '5'">
+        <setEventAttribute attr="appTransportProto">IrDA</setEventAttribute>
+      </when>
+      <when test="$_appTransportProto = '6'">
+        <setEventAttribute attr="appTransportProto">Bluetooth</setEventAttribute>
+      </when>
+      <when test="$_appTransportProto = '7'">
+        <setEventAttribute attr="appTransportProto">HTTP</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _scanStatus"/>
+      <when test="$_scanStatus = '0'">
+        <setEventAttribute attr="scanStatus">Scanned</setEventAttribute>
+      </when>
+      <when test="$_scanStatus = '1'">
+        <setEventAttribute attr="scanStatus">Suspicious</setEventAttribute>
+      </when>
+      <when test="$_scanStatus = '2'">
+        <setEventAttribute attr="scanStatus">Unknown</setEventAttribute>
+      </when>
+      <when test="$_scanStatus = '3'">
+        <setEventAttribute attr="scanStatus">NotSubmitted</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _eventTime">
+      <collectFieldsByRegex src="$_eventTime">
+        <regex><![CDATA[<_mon:gPatMonNum>/<_day:gPatDay>/<_year:gPatYear>\s+<_time:gPatTime>\s<_apm:gPatStr>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time, $_apm)</setEventAttribute>
+    </when>
+
+    <when test="exist _beginTime">
+      <collectFieldsByRegex src="$_beginTime">
+        <regex><![CDATA[<_mon:gPatMonNum>/<_day:gPatDay>/<_year:gPatYear>\s<_time:gPatTime>\s<_apm:gPatStr>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="startTime">toDateTime($_mon, $_day, $_year, $_time, $_apm)</setEventAttribute>
+    </when>
+
+    <when test="exist _endTime">
+      <collectFieldsByRegex src="$_endTime">
+        <regex><![CDATA[<_mon:gPatMonNum>/<_day:gPatDay>/<_year:gPatYear>\s<_time:gPatTime>\s<_apm:gPatStr>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="endTime">toDateTime($_mon, $_day, $_year, $_time, $_apm)</setEventAttribute>
+      <setEventAttribute attr="eventTime">$endTime</setEventAttribute>
+    </when>
+
+    <when test="exist _scanLocalTime">
+      <collectFieldsByRegex src="$_scanLocalTime">
+        <regex><![CDATA[<_mon:gPatMonNum>/<_day:gPatDay>/<_year:gPatYear>\s+<_time:gPatTime>\s<_apm:gPatStr>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="scanEnd">toDateTime($_mon, $_day, $_year, $_time, $_apm)</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>
