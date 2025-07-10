@@ -1,0 +1,71 @@
+<eventParser name="OmicronStationGuardCEFParser">
+  <deviceType>
+    <Vendor>Omicron</Vendor>
+    <Model>StationGuard</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[\bCEF:\d+\|OMICRON\|StationGuard\|]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<134>1 2025-02-27T08:00:00.002Z HOST-TESTDEV101 - - - - CEF:0|OMICRON|StationGuard|3.10.0103|COMM_USE_REPORT_CONTROL_BLOCK_MMS|Communication Event Alert|9|dvchost=HOST-TESTDEV101.omicron.at cs2Label=customDeviceName cs2=Device123 Electric smac=00:0C:29:9B:2E:E6 src=192.168.1.200 spt=12164 dmac=00:0C:60:7E:01:C2 dst=192.168.1.25 dpt=102 cs1Label=mode cs1=normal start=1732092756003 msg=Enabled report control block 'A_URCB01'.]]></testEvent>
+    <testEvent><![CDATA[<134>1 2025-02-27T07:00:00.003Z VBX-DEBER101 - - - - CEF:0|OMICRON|StationGuard|3.10.0103|GOOSE_UNDEFINED|GOOSE Alert|9|dvchost=HOST-TESTDEV101.omicron.at cs2Label=customDeviceName cs2=Device000 smac=00:00:54:7E:01:2C dmac=01:0C:CD:01:00:07 cs1Label=mode cs1=normal start=1732097511177 msg=Unknown GOOSE 'AA1D1Q03Q1CONTROL/LLN0$GO$gcb2' found on network.]]></testEvent>
+    <testEvent><![CDATA[<134>1 2025-02-27T08:00:00.002Z HOST-TESTDEV101 - - - - CEF:0|OMICRON|StationGuard|3.10.0103|IP_TRAFFIC|IP Alert|9|dvchost=HOST-TESTDEV101.omicron.at cs2Label=customDeviceName cs2=Device100 smac=00:0C:29:9B:2E:E6 src=192.168.1.235 dmac=00:0C:60:7E:02:26 dst=192.168.1.200 proto=ICMP cs1Label=mode cs1=normal start=1732092756003 msg='ICMP' network traffic detected.]]></testEvent>
+    <testEvent><![CDATA[<134>1 2025-02-27T08:00:00.002Z HOST-TESTDEV101 - - - - CEF:0|OMICRON|StationGuard|3.10.0103|UNKNOWN_DEVICE|Unknown Device Alert|9|dvchost=HOST-TESTDEV101.omicron.at cs2Label=customDeviceName cs2=Device100 smac=00:0C:29:9B:2E:E6 src=192.168.1.200 cs1Label=mode cs1=normal start=1732092756163 msg=New device detected.]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patOmicron"><![CDATA[[^|]*]]></pattern>
+    <pattern name="patExceptPipe"><![CDATA[[^\|]+]]></pattern>
+  </patternDefinitions>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI>\d+\s+<_year:gPatYear>\-<_mon:gPatMon>\-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>\s+<reptDevName:gPatStr>\s+-\s+-\s+-\s+-\s+CEF:\d+\|OMICRON\|StationGuard\|<appVersion:gPatMesgBodyMin>\|<type:gPatStr>\|<alertCategory:gPatMesgBodyMin>\|<eventSeverity:gPatInt>\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">Omicron-StationGuard-Generic</setEventAttribute>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+
+    <setEventAttribute attr="eventType">combineMsgId("Omicron-StationGuard-",$type)</setEventAttribute>
+
+    <collectFieldsByKeyValuePair kvsep="=" sep=" " src="$_body">
+      <attrKeyMap attr="appTransportProto" key="app"/>
+      <attrKeyMap attr="destMACAddr" key="dmac"/>
+      <attrKeyMap attr="destIpPort" key="dpt"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="hostName" key="dvchost"/>
+      <attrKeyMap attr="ipProto" key="proto"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="srcMACAddr" key="smac"/>
+      <attrKeyMap attr="srcIpPort" key="spt"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="_start" key="start"/>
+      <attrKeyMap attr="_cs1Label" key="cs1Label"/>
+      <attrKeyMap attr="_cs1" key="cs1"/>
+      <attrKeyMap attr="_cs2Label" key="cs2Label"/>
+      <attrKeyMap attr="_cs2" key="cs2"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist _start">
+      <setEventAttribute attr="startTime">divide($_start, 1000)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist _cs1Label"/>
+      <when test="not_exist _cs1"/>
+      <when test="$_cs1Label = 'mode'">
+        <setEventAttribute attr="connMode">$_cs1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs2Label"/>
+      <when test="not_exist _cs2"/>
+      <when test="$_cs2Label = 'customDeviceName'">
+        <setEventAttribute attr="hostName">$_cs2</setEventAttribute>
+      </when>
+    </choose>
+
+  </parsingInstructions>
+</eventParser>

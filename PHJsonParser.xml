@@ -1,0 +1,17 @@
+<eventParser name="PHJsonParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[{"collectorId":10007,"computer":"WIN-ANQ35T4NKLL","count":1,"customer":"org1","destIpAddr":"172.30.56.128","destName":"WIN-ANQ35T4NKLL","deviceTime":1667948299,"domain":"WIN-ANQ35T4NKLL","eventAction":0,"eventId":5993165204129035811,"eventParsedOk":"1","eventSeverity":1,"eventSource":"Microsoft-Windows-Security-Auditing","eventTime":1667948298,"eventType":"Win-Security-4672","extEventRecvProto":"WMI","hostName":"WIN-ANQ35T4NKLL","latency":1000.0,"msg":"Special privileges assigned to new logon.","parserName":"WinOSWmiParser","phCollectorName":"CO5721","phCustId":2000,"phEventCategory":0,"phRecvTime":1667948299,"rawEventMsg":"Tue Nov  8 14:58:19 2022 172.30.56.128 AccelOps-WinLog-WMI [templateName]=\"Get All Logs\" [Category]=\"12548\" [CategoryString]=\"Special Logon\" [ComputerName]=\"WIN-ANQ35T4NKLL\" [Data]=\"NULL\" [EventCode]=\"4672\" [EventIdentifier]=\"4672\" [EventType]=\"4\" [Logfile]=\"Security\" [RecordNumber]=\"8559194\" [SourceName]=\"Microsoft-Windows-Security-Auditing\" [TimeGenerated]=\"20221108225818.696561-000\" [TimeWritten]=\"20221108225818.696561-000\" [Type]=\"Audit Success\" [User]=\"(null)\" [Message]=\"Special privileges assigned to new logon.\" [[Subject]]  [Security ID]=\"S-1-5-21-1824043642-518114487-514709369-500\"  [Account Name]=\"Administrator\"  [Account Domain]=\"WIN-ANQ35T4NKLL\"  [Logon ID]=\"0x8BA146A8\"  [Privileges]=\"SeSecurityPrivilege\" ","relayDevIpAddr":"172.30.57.21","reptDevIpAddr":"172.30.56.128","reptDevName":"WIN-ANQ35T4NKLL","reptModel":"Windows","reptVendor":"Microsoft","seqNum":8559194,"templateName":"Get All Logs","type":"Audit Success","user":"Administrator","winEventId":"4672","winEvtCategory":"Privilege Use","winEvtSubCategory":"Sensitive Privilege Use / Non Sensitive Privilege Use","winLogonId":"0x8BA146A8"}]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[^\s*\{.*"collectorId":.*,"phCustId":.*\}\s*$]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectAndSetAttrByJsonSymbol src="$_rawmsg"/>
+  </parsingInstructions>
+</eventParser>

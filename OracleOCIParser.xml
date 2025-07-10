@@ -1,0 +1,287 @@
+<eventParser name="OracleOCIParser">
+  <deviceType>
+    <Vendor>Oracle</Vendor>
+    <Model>Cloud Infrastructure</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[1 10.10.10.10 oraclecloud.com OCI_AUDIT_LOG: {"data":{"additionalDetails":{"X-Real-Port":64513},"availabilityDomain":"AD1","compartmentId":"ocid1.tenancy.oc1..aaaaaaaambxxxxxxxxxxxxxxx","compartmentName":"testcloud","definedTags":null,"eventGroupingId":"csid0677f0454d549exx/12347b1c76744db7a12a4f0e42185cbe","eventName":"CreateUser","freeformTags":null,"identity":{"authType":"fed","callerId":null,"callerName":null,"consoleSessionId":"csid0677f0454d549exx","credentials":"ST$xxaWdsc2wyNGEyNm80Ynpvc3ZwdHp6ZnU0YVwvZXZhbnNyQGZvcnRpbmV0LmNvbSIsImlzcyI6ImF1dGhTZXJ2aWNlLm9yYWNsZS5jb20iLCJzYW1sX2ZwcmludCI6ImNjOjM4OmJkOmZiOjljOjM5OjQ5OjEzOjk2OjQ1OjRjOjcxOmE3OjQ5OjczOmM5IiwicHR5cGUiOiJ1c2VyIiwic2Vzc19leHAiOiJGcmksIDAzIERlYyAyMDIxIDA2OjQ1OjM5IFVUQyIsImF1ZCI6Im9jaSIsInBzdHlwZSI6ImZlZCIsInR0eXBlIjoic2FtbCIsImV4cCI6MTYzODQ4ODcxMCwiaWF0IjoxNjM4NDg1MTEwLCJqdGkiOiI4YzFiNTkwMi0wY2ZkLTRiNTEtYjM1NS1hYmFlNTUwYWYzY2UiLCJ0ZW5hbnQiOiJvY2lkMS50ZW5hbmN5Lm9jMS4uYWFhYWFhYWFtYnIzdXp6dG95aHdlb2hienFxZG83NzVoN2QzdDU0enBtemtwNGIyY2YzNXZzNTVjazNhIiwiaXNfZmVkIjoidHJ1ZSIsImdycHMiOiJVa1E9O1EyeHZkV1JmUVhKamFHbDBaV04wY3c9PTtVVUU9O1VFMD07VDBOSlgwRmtiV2x1YVhOMGNtRjBiM0p6O1NVUkRVMTlCWkcxcGJtbHpkSEpoZEc5eWN3PT0iLCJqd2siOiJ7XCJraWRcIjpcInB1YmtleS05ZjgyNGUwNS03MWRkLTQzMmQtOGE1Ny01ZmUzZmE5YTg0YjVcIixcIm5cIjpcInF1alA4alVfZDVtbUo0VkthSFpfV1BhWlBfZGN6VjhocFQxeDZXRDFsMkd3Mm9mMUZNSktQTXBIZ3NXbGRWMVRjZzhBX3VfWk9heGlEalpYbDduOXd2bVAwOUo3VXpiTDRHY044VU1nZXZqVWJDekNLcGtlZzc1RHg5a1gzZWVmVWdpVnk0dzVCQmlYZ3BQbnBSc0YycDJ1ZS1XNEo0ZDkwU3k0UENDOU82ZnpjajAtVk9xX1hUYWJEai1RSGo5al9ITDNKbkMyQ3laRUphblFuRXpzbWIxZ2lJQUprc3RLemlWSjlaN2NuUFp4bHBrVlA1WW9EeDd4d3RmQ2pIWVc4YUVXOEpJZ2Vsbk9aa0QwY2ljT0NYRXVsSzN2czdOOHhUTjRudEhYT1hyenZaMmdQX0tfT0IzMjFKdTR0VjlhWU9Ebm5HdDI1YTctNkRNUkUyR0dEd1wiLFwiZVwiOlwiQVFBQlwiLFwia3R5XCI6XCJSU0FcIixcImFsZ1wiOlwiUlMyNTZcIixcInVzZVwiOm51bGx9In0.2MRf_dQD4SSdVrQoL3vmTbh91OCvu8bgrWmWqvKVygk0t1PISKRh9JB_yuAAV3b4OqmQa5Q141PJOuZlbrtX9ViqBtU1mBFkJMHG4QF6I6rdvT3GzkU1-WLRJzclXBRzAYtCIZLeYPq8FbvexwRRtAlqrN7eh4GvgChd6XYsL2ug0e-pC4zU_H1eveYmX9KBZp7zc5zoavpIplWSY-n-BS7RiCuLD56MtSFXhHX1p_nCjvmiNf_3wj01p5VzCxkmKQmwQHAPpVkOLQKGx9x3XT0WTXFwFw8w6Ka--5cengzAd7F-wguL4PdMgL5g9MNCZejY-F5_j5H7NrHqfNMT_A","ipAddress":"192.168.1.25","principalId":"ocid1.saml2idp.oc1..aaaaaaaataxxxxxxxxxxxxsvptzzfu4a/test_user@example.com","principalName":"test_user@example.com","tenantId":"ocid1.tenancy.oc1..aaaaaaaambxxxxxxxxxxxxxxx","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"},"message":"RobTest12 CreateUser succeeded","request":{"action":"POST","headers":{"Accept":["*/*"],"Accept-Encoding":["gzip, deflate, br"],"Accept-Language":["en"],"Authorization":["Signature keyId=\"ST$xxaWdsc2wyNGEyNm80Ynpvc3ZwdHp6ZnU0YVwvZXZhbnNyQGZvcnRpbmV0LmNvbSIsImlzcyI6ImF1dGhTZXJ2aWNlLm9yYWNsZS5jb20iLCJzYW1sX2ZwcmludCI6ImNjOjM4OmJkOmZiOjljOjM5OjQ5OjEzOjk2OjQ1OjRjOjcxOmE3OjQ5OjczOmM5IiwicHR5cGUiOiJ1c2VyIiwic2Vzc19leHAiOiJGcmksIDAzIERlYyAyMDIxIDA2OjQ1OjM5IFVUQyIsImF1ZCI6Im9jaSIsInBzdHlwZSI6ImZlZCIsInR0eXBlIjoic2FtbCIsImV4cCI6MTYzODQ4ODcxMCwiaWF0IjoxNjM4NDg1MTEwLCJqdGkiOiI4YzFiNTkwMi0wY2ZkLTRiNTEtYjM1NS1hYmFlNTUwYWYzY2UiLCJ0ZW5hbnQiOiJvY2lkMS50ZW5hbmN5Lm9jMS4uYWFhYWFhYWFtYnIzdXp6dG95aHdlb2hienFxZG83NzVoN2QzdDU0enBtemtwNGIyY2YzNXZzNTVjazNhIiwiaXNfZmVkIjoidHJ1ZSIsImdycHMiOiJVa1E9O1EyeHZkV1JmUVhKamFHbDBaV04wY3c9PTtVVUU9O1VFMD07VDBOSlgwRmtiV2x1YVhOMGNtRjBiM0p6O1NVUkRVMTlCWkcxcGJtbHpkSEpoZEc5eWN3PT0iLCJqd2siOiJ7XCJraWRcIjpcInB1YmtleS05ZjgyNGUwNS03MWRkLTQzMmQtOGE1Ny01ZmUzZmE5YTg0YjVcIixcIm5cIjpcInF1alA4alVfZDVtbUo0VkthSFpfV1BhWlBfZGN6VjhocFQxeDZXRDFsMkd3Mm9mMUZNSktQTXBIZ3NXbGRWMVRjZzhBX3VfWk9heGlEalpYbDduOXd2bVAwOUo3VXpiTDRHY044VU1nZXZqVWJDekNLcGtlZzc1RHg5a1gzZWVmVWdpVnk0dzVCQmlYZ3BQbnBSc0YycDJ1ZS1XNEo0ZDkwU3k0UENDOU82ZnpjajAtVk9xX1hUYWJEai1RSGo5al9ITDNKbkMyQ3laRUphblFuRXpzbWIxZ2lJQUprc3RLemlWSjlaN2NuUFp4bHBrVlA1WW9EeDd4d3RmQ2pIWVc4YUVXOEpJZ2Vsbk9aa0QwY2ljT0NYRXVsSzN2czdOOHhUTjRudEhYT1hyenZaMmdQX0tfT0IzMjFKdTR0VjlhWU9Ebm5HdDI1YTctNkRNUkUyR0dEd1wiLFwiZVwiOlwiQVFBQlwiLFwia3R5XCI6XCJSU0FcIixcImFsZ1wiOlwiUlMyNTZcIixcInVzZVwiOm51bGx9In0.2MRf_dQD4SSdVrQoL3vmTbh91OCvu8bgrWmWqvKVygk0t1PISKRh9JB_yuAAV3b4OqmQa5Q141PJOuZlbrtX9ViqBtU1mBFkJMHG4QF6I6rdvT3GzkU1-WLRJzclXBRzAYtCIZLeYPq8FbvexwRRtAlqrN7eh4GvgChd6XYsL2ug0e-pC4zU_H1eveYmX9KBZp7zc5zoavpIplWSY-n-BS7RiCuLD56MtSFXhHX1p_nCjvmiNf_3wj01p5VzCxkmKQmwQHAPpVkOLQKGx9x3XT0WTXFwFw8w6Ka--5cengzAd7F-wguL4PdMgL5g9MNCZejY-F5_j5H7NrHqfNMT_A\",version=\"1\",algorithm=\"rsa-sha256\",headers=\"(request-target) host content-length accept-language content-type opc-request-id x-content-sha256 x-date\",signature=\"*****\""],"Connection":["keep-alive"],"Content-Length":["174"],"Content-Type":["application/json"],"Origin":["https://platform-identity-plugin.plugins.oci.oraclecloud.com"],"Referer":["https://platform-identity-plugin.plugins.oci.oraclecloud.com/"],"Sec-Fetch-Dest":["empty"],"Sec-Fetch-Mode":["cors"],"Sec-Fetch-Site":["same-site"],"User-Agent":["Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"],"opc-request-id":["csid0677f0454d549exx/12347b1c76744db7a12a4f0e42185cbe"],"sec-ch-ua":["\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"96\", \"Google Chrome\";v=\"96\""],"sec-ch-ua-mobile":["?0"],"sec-ch-ua-platform":["\"Windows\""],"x-content-sha256":["UJWLbgw4GOOZTZnY4ap4zXf7tudxLNX6tc0SGPdWvak="],"x-date":["Thu, 02 Dec 2021 23:04:15 GMT"]},"id":"csid0677f0454d549exx/12347b1c76744db7a12a4f0e42185cbe/9A11FDF8ECCD9F68241C8F27E4481F61","parameters":{},"path":"/20160918/users/"},"resourceId":"ocid1.user.oc1..aaaaaaaahexxl5b5rdyppc4lyiyoqg74ixuosza","response":{"headers":{"Access-Control-Allow-Credentials":["true"],"Access-Control-Allow-Origin":["https://platform-identity-plugin.plugins.oci.oraclecloud.com"],"Access-Control-Expose-Headers":["opc-previous-page,opc-next-page,opc-client-info,ETag,opc-work-request-id,opc-total-items,opc-request-id,Location"],"Cache-Control":["no-cache, no-store, must-revalidate"],"Content-Length":["805"],"Content-Type":["application/json"],"Date":["Thu, 02 Dec 2021 23:04:15 GMT"],"ETag":["62c85663b3ae5bb5cc5dc02580addf12c30c1fa0"],"Location":["https://identity-control-plane-core.svc.ad1.us-ashburn-1/20160918/users/ocid1.user.oc1..aaaaaaaahexxl5b5rdyppc4lyiyoqg74ixuosza"],"Pragma":["no-cache"],"Timing-Allow-Origin":["https://platform-identity-plugin.plugins.oci.oraclecloud.com"],"Vary":["Origin"],"X-Content-Type-Options":["nosniff"],"opc-request-id":["csid0677f0454d549exx/12347b1c76744db7a12a4f0e42185cbe/9A11FDF8ECCD9F68241C8F27E4481F61"]},"message":null,"payload":{},"responseTime":"2021-12-02T23:04:15.390Z","status":"200"},"stateChange":{"current":{"capabilities":{"canUseApiKeys":true,"canUseAuthTokens":true,"canUseConsolePassword":true,"canUseCustomerSecretKeys":true,"canUseDbCredentials":true,"canUseOAuth2ClientCredentials":true,"canUseSmtpCredentials":true},"compartmentId":"ocid1.tenancy.oc1..aaaaaaaambxxxxxxxxxxxxxxx","definedTags":{},"description":"test","emailVerified":false,"freeformTags":{},"id":"ocid1.user.oc1..aaaaaaaahexxl5b5rdyppc4lyiyoqg74ixuosza","isMfaActivated":false,"lifecycleState":"ACTIVE","name":"RobTest12","timeCreated":"2021-12-02T23:04:15.305Z","timeModified":"2021-12-02T23:04:15.305Z"},"previous":{}}},"dataschema":"2.0","id":"11111111-1111-1111-1111-111111111111","oracle":{"compartmentid":"ocid1.tenancy.oc1..aaaaaaaambxxxxxxxxxxxxxxx","ingestedtime":"2021-12-02T23:04:17.713Z","loggroupid":"_Audit","tenantid":"ocid1.tenancy.oc1..aaaaaaaambxxxxxxxxxxxxxxx"},"source":"RobTest12","specversion":"1.0","time":"2021-12-02T23:04:15.390Z","type":"com.oraclecloud.identityControlPlane.CreateUser"}
+]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patQuote"><![CDATA[[^"]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatInt>\s+<:gPatStr>\s+<:gPatStr>\s+OCI_AUDIT_LOG\s*:\s*]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<phCustId:gPatInt>\s+<reptDevIpAddr:gPatStr>\s+<reptDevName:gPatStr>\s+OCI_AUDIT_LOG\s*:\s*<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^{.*}$]]></regex>
+        </collectFieldsByRegex>
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="details" key="data.additionalDetails"/>
+          <attrKeyMap attr="resourceZone" key="data.availabilityDomain"/>
+          <attrKeyMap attr="compartmentId" key="data.compartmentId"/>
+          <attrKeyMap attr="compartmentName" key="data.compartmentName"/>
+          <attrKeyMap attr="activityName" key="data.eventName"/>
+          <attrKeyMap attr="msg" key="data.message"/>
+          <attrKeyMap attr="authorMethod" key="data.identity.authType"/>
+          <attrKeyMap attr="srcUser" key="data.identity.callerName"/>
+          <attrKeyMap attr="sessionId" key="data.identity.consoleSessionId"/>
+          <attrKeyMap attr="srcIpAddr" key="data.identity.ipAddress"/>
+          <attrKeyMap attr="userPrincipalName" key="data.identity.principalName"/>
+          <attrKeyMap attr="userId" key="data.identity.principalId"/>
+          <attrKeyMap attr="tenantId" key="data.identity.tenantId"/>
+          <attrKeyMap attr="httpUserAgent" key="data.identity.userAgent"/>
+          <attrKeyMap attr="httpMethod" key="data.request.action"/>
+          <attrKeyMap attr="httpRequestHeaders" key="data.request.headers"/>
+          <attrKeyMap attr="httpLimitRate" key="data.request.parameters.limit[0]"/>
+          <attrKeyMap attr="httpEndUri" key="data.request.path"/>
+          <attrKeyMap attr="dataPayload" key="data.response.payload"/>
+          <attrKeyMap attr="httpConnStatus" key="data.response.headers.Connection[0]"/>
+          <attrKeyMap attr="httpContentLen" key="data.response.headers.Content-Length[0]"/>
+          <attrKeyMap attr="httpContentType" key="data.response.headers.Content-Type[0]"/>
+          <!--2021-10-14T19:32:02.519Z"-->
+          <attrKeyMap attr="_httpResponseTime" key="data.response.responseTime"/>
+          <attrKeyMap attr="httpStatusCode" key="data.response.status"/>
+          <attrKeyMap attr="targetResourceId" key="data.resourceId"/>
+          <attrKeyMap attr="version" key="dataschema"/>
+          <attrKeyMap attr="uuid" key="id"/>
+          <!-- 2021-10-14T19:32:06.259Z-->
+          <attrKeyMap attr="_dbTime" key="oracle.ingestedtime"/>
+          <attrKeyMap attr="_logGroup" key="oracle.loggroupid"/>
+          <attrKeyMap attr="eventSource" key="source"/>
+          <attrKeyMap attr="type" key="type"/>
+          <!--2021-10-14T19:32:02.218Z-->
+          <attrKeyMap attr="_deviceTime" key="time"/>
+          <!-- stateChange for CRUD operations on resources -->
+          <attrKeyMap attr="_previousName" key="data.stateChange.previous.name"/>
+          <attrKeyMap attr="_previousId" key="data.stateChange.previous.id"/>
+          <attrKeyMap attr="_previousGroupId" key="data.stateChange.previous.groupId"/>
+          <attrKeyMap attr="_previousUserId" key="data.stateChange.previous.userId"/>
+          <attrKeyMap attr="_currentName" key="data.stateChange.current.name"/>
+          <attrKeyMap attr="_currentId" key="data.stateChange.current.id"/>
+          <attrKeyMap attr="_currentUserId" key="data.stateChange.current.userId"/>
+          <attrKeyMap attr="_currentGroupId" key="data.stateChange.current.groupId"/>
+          <attrKeyMap attr="_currentPolicyStmt" key="data.stateChange.current.statements"/>
+          <attrKeyMap attr="_previousPolicyStmt" key="data.stateChange.previous.statements"/>
+        </collectAndSetAttrByJSON>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[.*"type"\s*:\s*"<type:patQuote>(?:".*|$)]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+
+    <setEventAttribute attr="eventType">Oracle-OCI-Audit-Generic</setEventAttribute>
+    <when test="exist type">
+      <setEventAttribute attr="_type">toLower($type)</setEventAttribute>
+      <setEventAttribute attr="_type">replaceStrInStr($_type, ";", "")</setEventAttribute>
+      <setEventAttribute attr="_type">replaceStrInStr($_type, "*", "")</setEventAttribute>
+      <setEventAttribute attr="_type">replaceStrInStr($_type, "com.oraclecloud.", "")</setEventAttribute>
+      <setEventAttribute attr="_type">replaceStrInStr($_type, ".", "-")</setEventAttribute>
+      <when test="$_type != ''">
+        <!-- Some types in logs don't have meaningful values and when stripped can be empty -->
+        <setEventAttribute attr="eventType">combineMsgId("Oracle-OCI-", $_type)</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _deviceTime">
+      <collectFieldsByRegex src="$_deviceTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>[ T]<_time:gPatTime>\.<_ms:gPatInt><_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+
+      <when test="exist _httpResponseTime">
+        <collectFieldsByRegex src="$_httpResponseTime">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>[ T]<_time:gPatTime>\.<_ms1:gPatInt><_tz:gPatTimeZone>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="_httpResponseTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        <setEventAttribute attr="_httpResponseTimeMs">scale($_httpResponseTime, 1000)</setEventAttribute>
+        <setEventAttribute attr="_httpResponseTimeMs">add($_httpResponseTimeMs, $_ms1)</setEventAttribute>
+        <setEventAttribute attr="_deviceMs">scale($deviceTime, 1000)</setEventAttribute>
+        <setEventAttribute attr="_deviceMs">add($_deviceMs, $_ms)</setEventAttribute>
+        <setEventAttribute attr="httpResponseTimeMs">calculateLatency($_httpResponseTimeMs, $_deviceMs)</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _dbTime">
+      <collectFieldsByRegex src="$_dbTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>[ T]<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="_dbTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <choose>
+      <!-- Several attributes have different meanings based on event type -->
+      <!-- Identity Sign In Events -->
+      <when test="$eventType IN 'Oracle-OCI-identitysignon-federatedloginrequest,Oracle-OCI-identitysignon-federatedinteractiveloginattempt,Oracle-OCI-identitysignon-interactivelogin'">
+        <choose>
+          <when test="not_exist httpStatusCode"/>
+          <when test="$httpStatusCode = '200'">
+            <setEventAttribute attr="status">success</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $status)</setEventAttribute>
+          </when>
+          <otherwise>
+            <!-- Assume failure -->
+            <setEventAttribute attr="status">failure</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $status)</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+      <!-- Group Related Identity Events -->
+      <when test="$eventType = 'Oracle-OCI-identitycontrolplane-creategroup'">
+        <when test="exist _currentName">
+          <setEventAttribute attr="groupName">$_currentName</setEventAttribute>
+        </when>
+        <when test="exist _currentId">
+          <setEventAttribute attr="groupID">$_currentId</setEventAttribute>
+        </when>
+      </when>
+      <when test="$eventType = 'Oracle-OCI-identitycontrolplane-deletegroup'">
+        <when test="exist _previousName">
+          <setEventAttribute attr="groupName">$_previousName</setEventAttribute>
+        </when>
+        <when test="exist _previousId">
+          <setEventAttribute attr="groupID">$_previousId</setEventAttribute>
+        </when>
+      </when>
+      <when test="$eventType = 'Oracle-OCI-identitycontrolplane-addusertogroup'">
+        <when test="exist _currentGroupId">
+          <setEventAttribute attr="groupID">$_currentGroupId</setEventAttribute>
+        </when>
+        <when test="exist _currentUserId">
+          <setEventAttribute attr="targetUserId">$_currentUserId</setEventAttribute>
+        </when>
+      </when>
+      <when test="$eventType = 'Oracle-OCI-identitycontrolplane-removeuserfromgroup'">
+        <when test="exist _previousGroupId">
+          <setEventAttribute attr="groupID">$_previousGroupId</setEventAttribute>
+        </when>
+        <when test="exist _previousUserId">
+          <setEventAttribute attr="targetUserId">$_previousUserId</setEventAttribute>
+        </when>
+      </when>
+      <!-- User Events -->
+      <when test="$eventType = 'Oracle-OCI-identitycontrolplane-deleteuser'">
+        <when test="exist _previousName">
+          <setEventAttribute attr="targetUser">$_previousName</setEventAttribute>
+        </when>
+        <when test="exist _previousId">
+          <setEventAttribute attr="targetUserId">$_previousId</setEventAttribute>
+        </when>
+      </when>
+      <when test="$eventType = 'Oracle-OCI-identitycontrolplane-createuser'">
+        <when test="exist _currentName">
+          <setEventAttribute attr="targetUser">$_currentName</setEventAttribute>
+        </when>
+        <when test="exist _currentId">
+          <setEventAttribute attr="targetUserId">$_currentId</setEventAttribute>
+        </when>
+      </when>
+      <!-- Policy create and delete -->
+      <when test="$eventType = 'Oracle-OCI-identitycontrolplane-createpolicy'">
+        <when test="exist _currentName">
+          <setEventAttribute attr="policyName">$_currentName</setEventAttribute>
+        </when>
+        <when test="exist _currentPolicyStmt">
+          <setEventAttribute attr="policyDetails">$_currentPolicyStmt</setEventAttribute>
+        </when>
+      </when>
+      <when test="$eventType = 'Oracle-OCI-identitycontrolplane-deletepolicy'">
+        <when test="exist _previousName">
+          <setEventAttribute attr="policyName">$_previousName</setEventAttribute>
+        </when>
+        <when test="exist _previousPolicyStmt">
+          <setEventAttribute attr="policyDetails">$_previousPolicyStmt</setEventAttribute>
+        </when>
+      </when>
+      <!-- mfa activity -->
+      <when test="$eventType = 'Oracle-OCI-identitycontrolplane-deletemfatotpdevice'">
+        <when test="exist _previousUserId">
+          <setEventAttribute attr="userId">$_previousUserId</setEventAttribute>
+        </when>
+      </when>
+      <when test="$eventType = 'Oracle-OCI-identitycontrolplane-activatemfatotpdevice'">
+        <when test="exist _currentUserId">
+          <setEventAttribute attr="userId">$_currentUserId</setEventAttribute>
+        </when>
+      </when>
+      <!-- user key operations -->
+      <when test="$eventType IN 'Oracle-OCI-identitycontrolplane-deletecustomersecretkey,Oracle-OCI-identitycontrolplane-deleteoauthclientcredential,Oracle-OCI-identitycontrolplane-deleteapikey,Oracle-OCI-identitycontrolplane-deleteauthtoken'">
+        <when test="exist _previousName">
+          <setEventAttribute attr="targetUser">$_previousName</setEventAttribute>
+        </when>
+        <when test="exist _previousId">
+          <setEventAttribute attr="targetUserId">$_previousId</setEventAttribute>
+        </when>
+      </when>
+      <when test="$eventType = 'Oracle-OCI-identitycontrolplane-createcustomersecretkey'">
+        <when test="exist _currentUserId">
+          <setEventAttribute attr="targetUserId">$_currentUserId</setEventAttribute>
+        </when>
+      </when>
+      <when test="$eventType IN 'Oracle-OCI-identitycontrolplane-uploadapikey,Oracle-OCI-identitycontrolplane-createoauthclientcredential,Oracle-OCI-identitycontrolplane-createauthtoken'">
+        <when test="exist _currentUserId">
+          <setEventAttribute attr="targetUserId">$_currentUserId</setEventAttribute>
+        </when>
+      </when>
+      <when test="$eventType = 'Oracle-OCI-identitycontrolplane-createsmtpcredential'">
+        <when test="exist _currentUserId">
+          <setEventAttribute attr="targetUserId">$_currentUserId</setEventAttribute>
+        </when>
+      </when>
+      <!-- password modify operations -->
+      <when test="$eventType IN 'Oracle-OCI-identitycontrolplane-createorresetpassword,Oracle-OCI-identitycontrolplane-updateuseruipassword,Oracle-OCI-identitycontrolplane-generatetotpseed'">
+        <when test="exist _currentUserId">
+          <setEventAttribute attr="targetUserId">$_currentUserId</setEventAttribute>
+        </when>
+      </when>
+      <otherwise>
+        <!-- Try to assume attribute meaning for most state change events -->
+        <when test="exist _previousName">
+          <setEventAttribute attr="targetOsObjName">$_previousName</setEventAttribute>
+        </when>
+        <when test="exist _previousId">
+          <setEventAttribute attr="targetResourceId">$_previousId</setEventAttribute>
+        </when>
+        <when test="exist _previousGroupId">
+          <setEventAttribute attr="groupID">$_previousGroupId</setEventAttribute>
+        </when>
+        <when test="exist _currentName">
+          <setEventAttribute attr="targetOsObjName">$_currentName</setEventAttribute>
+        </when>
+        <when test="exist _currentId">
+          <setEventAttribute attr="targetResourceId">$_currentId</setEventAttribute>
+        </when>
+      </otherwise>
+    </choose>
+
+    <choose>
+      <when test="not_exist userPrincipalName">
+        <when test="not_exist user">
+          <!-- scenario when only userId present, populate it as username -->
+          <when test="exist userId">
+            <setEventAttribute attr="user">$userId</setEventAttribute>
+          </when>
+        </when>
+      </when>
+      <when test="exist userPrincipalName">
+        <!-- attempt to normalize some attributes -->
+        <when test="not_exist user">
+          <setEventAttribute attr="user">$userPrincipalName</setEventAttribute>
+        </when>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

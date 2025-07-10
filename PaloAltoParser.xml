@@ -1,0 +1,1094 @@
+<eventParser name="PaloAltoParser">
+  <deviceType>
+    <Vendor>Palo Alto</Vendor>
+    <Model>PAN-OS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+  <!-- pattern definitions -->
+  <patternDefinitions>
+    <pattern name="patType"><![CDATA[TRAFFIC|THREAT|CONFIG|SYSTEM|CORRELATION|USERID|HIPMATCH|GLOBALPROTECT|DECRYPTION]]></pattern>
+    <pattern name="patExceptEndJSON"><![CDATA[.+?(?=}",)]]></pattern>
+    <pattern name="patExceptSlash"><![CDATA[[^\/]*]]></pattern>
+    <pattern name="patExceptQuote"><![CDATA[[^']+]]></pattern>
+  </patternDefinitions>
+  <!-- examples
+     <14>May  6 15:51:04 1,2010/05/06 15:51:04,0006C101167,TRAFFIC,start,1,2010/05/06 15:50:58,192.168.28.21,172.16.255.78,::172.16.255.78,172.16.255.78,rule3,,,icmp,vsys1,untrust,untrust,ethernet1/1,ethernet1/1,syslog-172.16.20.152,2010/05/06 15:51:04,600,2,0,0,0,0,0x40,icmp,allow,196,196,196,2,2010/05/06 15:50:58,0,any,0
+	 <14>May  6 15:51:15 1,2010/05/06 15:51:15,0006C101167,SYSTEM,general,0,2010/05/06 15:51:15,,unknown,,0,0,general,informational,User admin logged in via CLI from 192.168.28.21
+	   -->
+
+  <eventFormatRecognizer><![CDATA[<:gPatTime>,\w+,<:patType>\b]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<14>May  6 15:51:04 1,2010/05/06 15:51:04,0006C101167,TRAFFIC,start,1,2010/05/06 15:50:58,192.168.28.21,172.16.255.78,::172.16.255.78,172.16.255.78,rule3,,,icmp,vsys1,untrust,untrust,ethernet1/1,ethernet1/1,syslog-172.16.20.152,2010/05/06 15:51:04,600,2,0,0,0,0,0x40,icmp,allow,196,196,196,2,2010/05/06 15:50:58,0,any,0]]></testEvent>
+    <testEvent><![CDATA[<14>May  6 15:51:15 1,2010/05/06 15:51:15,0006C101167,SYSTEM,general,0,2010/05/06 15:51:15,,unknown,,0,0,general,informational,User admin logged in via CLI from 192.168.28.21]]></testEvent>
+    <testEvent><![CDATA[<14>May  9 17:55:21 1,2010/05/09 17:55:21,0006C101167,THREAT,url,6,2010/05/09 17:55:20,172.16.2.2,2.2.2.2,::172.16.255.78,2.2.2.2,DynamicDefault,,,web-browsing,vsys1,trust,untrust,ethernet1/2,ethernet1/1,syslog-172.16.20.152,2010/05/09 17:55:21,976,1,1126,80,38931,80,0x40,tcp,block-url,"www.abc.com/favicon.ico",(9999),adult-and-pornography,informational,0]]></testEvent>
+    <testEvent><![CDATA[Msg: 1 2016-05-18T16:31:39+00:00 server.com 1,2016/05/18 - - - 16:31:39,0011C103902,THREAT,url,0,2016/05/18 16:31:39,172.27.248.83,1.1.1.1,1.1.1.2,1.1.1.3,ftp_ssl_webbrowse,,,web-browsing,vsys1,trusted,untrusted,ethernet1/3.1101,ae1,SOCBOX,2016/05/18 16:31:39,34064877,1,58901,80,61861,80,0x40c000,tcp,alert,"example.com/a/h/KXTWGX4WxNfNy4c9zE6zvKl0rVkWzj0NVQnqCdcidNMUTBHtgUmB36eaeAwKO8rI?cb=747576172&pageUrl=http://example.com/news/injured-10news-reporter-thanks-first-responders&description=&duration=[VIDEO_DURATION]&id=&keywords=[VIDEO_KEYWORDS]&title=&url=&eov=eov",(9999),web-advertisements,informational,client-to-server,4476248823,0x0,172.16.0.0-172.31.255.255,US,0,text/xml,0,, \0x0a]]></testEvent>
+    <testEvent><![CDATA[May 15 14:27:31 example.com 1,2018/05/15 14:27:31,013201000810,THREAT,spyware,0,2018/05/15 14:27:27,1.1.1.1,1.1.1.2,0.0.0.0,0.0.0.0,Internet-LB,,,web-browsing,vsys1,WWW-PUB,PUB-WWW,ethernet1/8.374,ethernet1/6.374,Local Forward to Pan,2018/05/15 14:27:27,1131472,1,60232,80,0,0,0x2000,tcp,reset-server,"example.com/Templates/test.asp",ChinaChopper.Gen Command and Control Traffic(12017),society,critical,client-to-server,6519697753304500442,0x8000000000000000,China,United States,0,,0,,,1,,,,,,,,0,21,0,0,0,,F222NY15C01-5220,,,,,0,,0,,N/A,spyware,AppThreat-8019-4720,0x0]]></testEvent>
+    <testEvent><![CDATA[<14>Jun 25 18:41:36 PA-4939570-789677.example.com 1,2019/06/25 18:41:26,007901002932,CORRELATION,,,2019/06/25 18:41:26,10.66.48.169,example\mari3005,,compromised-host,medium,48,50,0,0,,PA-4939570-789677,875380992,Beacon Detection,6005,Host repeatedly visited a dynamic DNS domain (6 times).]]></testEvent>
+    <testEvent><![CDATA[<14>Jan 2 08:55:40 PA-LABFW 1,2024/01/02 08:55:39,016401010111,DECRYPTION,0,2562,2024/01/02 08:55:39,1.1.1.1,2.2.2.2,1.1.1.1,192.168.1.25,Outbound-Mail,,,incomplete,vsys1,Outside,CloudApp,ethernet1/1,ae2,FortiSIEM,2024/01/02 08:55:39,1253577,1,63907,443,63907,443,0x1400800,tcp,allow,N/A,,,,,424bdea7-d0a2-4b22-abf6-b6154031234,Finished,Finished,TLS1.2,ECDHE,AES_256_GCM,SHA384,example,secp256r1,None,trusted,Trusted,Inbound,0aae13d553e04781234,b8690484805a875b9ec4b7d9e1024e55e47d5469fd6d42f6bd445f916c1c9999,2023/08/12 03:00:00,2024/08/13 02:59:59,V3,2048,15,47,0,0,:::::RSA,*.email.example.com,Sectigo RSA Domain Validation Secure Server CA,,,,,,,,,,,2024-01-02T08:55:40.232+02:00,,,,,,,,,,,,,,,,,7316566772607231234,0x8000000000000000,0,0,0,0,,PA-LABFW,1,unknown,unknown,unknown,1,,,incomplete,no,no]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <!-- parsing common fields -->
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>?<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[<:gPatTime>,<:gPatWord>,<_type:gPatWord>,<_body:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <collectAndSetAttrByRegex src="$_body">
+          <regex><![CDATA[\d+,<_year:gPatYear>/<_mon:gPatMonNum>/<_day:gPatDay>\s+<_time:gPatTime>,<:gPatWord>,<_type:gPatWord>,<_body:gPatMesgBody>]]></regex>
+        </collectAndSetAttrByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[\d+,<_year:gPatYear>/<_mon:gPatMonNum>/<_day:gPatDay>\s+-\s+-\s+-\s+<_time:gPatTime>,<:gPatWord>,<_type:patType>,<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[\d+\s+<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime><_tz:gPatTimeZone>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatStr>)\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[\d+,<_year2:gPatYear>/<_mon2:gPatMonNum>/<_day2:gPatDay>\s+<_time2:gPatTime>,<:gPatWord>,<_type:patType>,<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+      </case>
+    </switch>
+
+    <setEventAttribute attr="eventType">PAN-OS-</setEventAttribute>
+    <setEventAttribute attr="totFlows">1</setEventAttribute>
+
+    <choose>
+      <when test="$_type = 'TRAFFIC'">
+        <switch>
+          <case>
+            <collectAndSetAttrByPos src="$_body" sep=",">
+              <attrPosMap attr="_subtype" pos="1"/>
+              <attrPosMap attr="_srcIpAddr" pos="4"/>
+              <attrPosMap attr="_destIpAddr" pos="5"/>
+              <attrPosMap attr="_postNATSrcIpAddr" pos="6"/>
+              <attrPosMap attr="_preNATDestIpAddr" pos="7"/>
+              <attrPosMap attr="fwRule" pos="8"/>
+              <attrPosMap attr="user" pos="9"/>
+              <attrPosMap attr="targetUser" pos="10"/>
+              <attrPosMap attr="appTransportProto" pos="11"/>
+              <attrPosMap attr="virtualHostName" pos="12"/>
+              <attrPosMap attr="srcFwZone" pos="13"/>
+              <attrPosMap attr="destFwZone" pos="14"/>
+              <attrPosMap attr="srcIntfName" pos="15"/>
+              <attrPosMap attr="destIntfName" pos="16"/>
+              <attrPosMap attr="logLevelnnn" pos="17"/>
+              <attrPosMap attr="ipConnId" pos="19"/>
+              <attrPosMap attr="count" pos="20"/>
+              <attrPosMap attr="srcIpPort" pos="21"/>
+              <attrPosMap attr="destIpPort" pos="22"/>
+              <attrPosMap attr="postNATSrcIpPort" pos="23"/>
+              <attrPosMap attr="preNATDestIpPort" pos="24"/>
+              <attrPosMap attr="tcpFlags" pos="25"/>
+              <attrPosMap attr="_ipProto" pos="26"/>
+              <attrPosMap attr="fwAction" pos="27"/>
+              <attrPosMap attr="totBytes64" pos="28"/>
+              <attrPosMap attr="sentBytes" pos="29"/>
+              <attrPosMap attr="recvBytes" pos="30"/>
+              <attrPosMap attr="totPkts64" pos="31"/>
+              <attrPosMap attr="_deviceTime" pos="32"/>
+              <attrPosMap attr="durationMSec" pos="33"/>
+              <attrPosMap attr="webCategory" pos="34"/>
+              <attrPosMap attr="reason" pos="43"/>
+              <attrPosMap attr="srcAction" pos="50"/>
+              <attrPosMap attr="imsiNum" pos="53"/>
+              <attrPosMap attr="imeiNum" pos="54"/>
+              <attrPosMap attr="sessionId" pos="55"/>
+              <attrPosMap attr="tunnelProtocol" pos="57"/>
+              <attrPosMap attr="httpConnStatus" pos="63"/>
+            </collectAndSetAttrByPos>
+          </case>
+          <default/>
+        </switch>
+
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        <setEventAttribute attr="phEventCategory">4</setEventAttribute>
+
+        <switch>
+          <case>
+            <collectAndSetAttrByRegex src="$_deviceTime">
+              <regex><![CDATA[<_year:gPatYear>/<_mon:gPatMonNum>/<_day:gPatDay>\s+<_time:gPatTime>]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+          </case>
+        </switch>
+
+
+        <choose>
+          <when test="$fwAction = 'allow'">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-", $_subtype, "-", $fwAction)</setEventAttribute>
+            <setEventAttribute attr="eventAction">0</setEventAttribute>
+          </when>
+          <when test="$fwAction = 'drop'">
+            <when test="$_subtype = 'start'">
+              <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-", $_subtype, "-", $fwAction)</setEventAttribute>
+              <setEventAttribute attr="eventAction">1</setEventAttribute>
+            </when>
+            <otherwise>
+              <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-", "deny")</setEventAttribute>
+              <setEventAttribute attr="eventAction">1</setEventAttribute>
+            </otherwise>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-", "deny")</setEventAttribute>
+          </otherwise>
+        </choose>
+
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_srcIpAddr">
+              <regex><![CDATA[::<srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default>
+            <setEventAttribute attr="srcIpAddr">$_srcIpAddr</setEventAttribute>
+          </default>
+        </switch>
+
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_preNATDestIpAddr">
+              <regex><![CDATA[::<preNATDestIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default>
+            <setEventAttribute attr="preNATDestIpAddr">$_preNATDestIpAddr</setEventAttribute>
+          </default>
+        </switch>
+
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_destIpAddr">
+              <regex><![CDATA[::<destIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default>
+            <setEventAttribute attr="destIpAddr">$_destIpAddr</setEventAttribute>
+          </default>
+        </switch>
+
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_postNATSrcIpAddr">
+              <regex><![CDATA[::<postNATSrcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default>
+            <setEventAttribute attr="postNATSrcIpAddr">$_postNATSrcIpAddr</setEventAttribute>
+          </default>
+        </switch>
+      </when>
+      <when test="$_type = 'CORRELATION'">
+        <!-- <14>Jun 25 18:41:36 PA-4939570-789677.example.com 1,2019/06/25 18:41:26,007901002932,CORRELATION,,,2019/06/25 18:41:26,10.66.48.169,example\mari3005,,compromised-host,medium,48,50,0,0,,PA-4939570-789677,875380992,Beacon Detection,6005,Host repeatedly visited a dynamic DNS domain (6 times). -->
+        <collectAndSetAttrByPos sep="," src="$_body">
+          <attrPosMap attr="_srcIpAddr" pos="4"/>
+          <attrPosMap attr="user" pos="5"/>
+          <attrPosMap attr="virtualHostName" pos="6"/>
+          <attrPosMap attr="_subtype" pos="7"/>
+          <attrPosMap attr="_severity" pos="8"/>
+          <attrPosMap attr="hostName" pos="14"/>
+          <attrPosMap attr="fwRule" pos="16"/>
+          <attrPosMap attr="errReason" pos="18"/>
+        </collectAndSetAttrByPos>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-", $_subtype)</setEventAttribute>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_srcIpAddr">
+              <regex><![CDATA[::<srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default>
+            <setEventAttribute attr="srcIpAddr">$_srcIpAddr</setEventAttribute>
+          </default>
+        </switch>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$user">
+              <regex><![CDATA[<domain:gPatStr>[\\]<user:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+        <choose>
+          <when test="$_severity = 'informational'">
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+          </when>
+          <when test="$_severity = 'low'">
+            <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+          </when>
+          <when test="$_severity = 'medium'">
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+          </when>
+          <when test="$_severity = 'high'">
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+          </when>
+          <when test="$_severity = 'critical'">
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+      <when test="$_type = 'THREAT'">
+        <switch>
+          <case>
+            <!-- Handle nested unescaped double quoted JSON in misc field position 28 -->
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[<_body1:gPatStrDQ>"<_misc:patExceptEndJSON>}",<_body2:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="_misc">replaceStringByRegex($_misc, ",", ":COMMASEP:")</setEventAttribute>
+            <setEventAttribute attr="_misc">replaceStringByRegex($_misc, "\"", ":QUOTESEP:")</setEventAttribute>
+            <setEventAttribute attr="_body">combineMsgId($_body1, '"',$_misc,'}",', $_body2)</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+
+        <switch>
+          <case>
+            <!-- FSM 7.1.1 and above should only match this case -->
+            <collectAndSetAttrByCsvRow src="$_body">
+              <attrPosMap attr="_subtype" pos="1"/>
+              <attrPosMap attr="_srcIpAddr" pos="4"/>
+              <attrPosMap attr="_destIpAddr" pos="5"/>
+              <attrPosMap attr="_postNATSrcIpAddr" pos="6"/>
+              <attrPosMap attr="_preNATDestIpAddr" pos="7"/>
+              <attrPosMap attr="fwRule" pos="8"/>
+              <attrPosMap attr="user" pos="9"/>
+              <attrPosMap attr="targetUser" pos="10"/>
+              <attrPosMap attr="appTransportProto" pos="11"/>
+              <attrPosMap attr="srcFwZone" pos="13"/>
+              <attrPosMap attr="destFwZone" pos="14"/>
+              <attrPosMap attr="srcIntfName" pos="15"/>
+              <attrPosMap attr="destIntfName" pos="16"/>
+              <attrPosMap attr="ipConnId" pos="19"/>
+              <attrPosMap attr="count" pos="20"/>
+              <attrPosMap attr="srcIpPort" pos="21"/>
+              <attrPosMap attr="destIpPort" pos="22"/>
+              <attrPosMap attr="postNATSrcIpPort" pos="23"/>
+              <attrPosMap attr="preNATDestIpPort" pos="24"/>
+              <attrPosMap attr="_ipProto" pos="26"/>
+              <attrPosMap attr="fwAction" pos="27"/>
+              <attrPosMap attr="_misc" pos="28"/>
+              <attrPosMap attr="ipsEventName" pos="29"/>
+              <attrPosMap attr="webCategory" pos="30"/>
+              <attrPosMap attr="_severity" pos="31"/>
+              <attrPosMap attr="origVmName" pos="56"/>
+            </collectAndSetAttrByCsvRow>
+          </case>
+          <default/>
+        </switch>
+        <when test="exist _misc">
+          <setEventAttribute attr="_misc">replaceStringByRegex($_misc, ":COMMASEP:", ",")</setEventAttribute>
+          <setEventAttribute attr="_misc">replaceStringByRegex($_misc, ":QUOTESEP:", '"')</setEventAttribute>
+        </when>
+
+        <when test="exist ipsEventName">
+          <collectAndSetAttrByRegex src="$ipsEventName">
+            <regex><![CDATA[\(<ipsSignatureId:gPatWord>\)]]></regex>
+          </collectAndSetAttrByRegex>
+        </when>
+
+        <choose>
+          <when test="not_exist fwAction">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-generic")</setEventAttribute>
+          </when>
+          <when test="$fwAction = 'allow'">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-", $_subtype, "-", $ipsSignatureId, "-alert")</setEventAttribute>
+            <setEventAttribute attr="eventAction">0</setEventAttribute>
+          </when>
+          <when test="$fwAction = 'alert'">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-", $_subtype, "-", $ipsSignatureId, "-alert")</setEventAttribute>
+            <setEventAttribute attr="eventAction">0</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-", $_subtype, "-", $ipsSignatureId, "-deny")</setEventAttribute>
+            <setEventAttribute attr="eventAction">1</setEventAttribute>
+          </otherwise>
+        </choose>
+
+        <choose>
+          <when test="not_exist _subtype"/>
+          <when test="$_subtype = 'vulnerability'">
+            <collectAndSetAttrByRegex src="$ipsEventName">
+              <regex><![CDATA[.*\(<_idpthreatID:gPatInt>\)]]></regex>
+            </collectAndSetAttrByRegex>
+            <setEventAttribute attr="eventType">combineMsgId("PAN-IDP-", $_idpthreatID)</setEventAttribute>
+          </when>
+
+          <when test="$_subtype = 'url'">
+            <when test="exist _misc">
+              <switch>
+                <case>
+                  <collectAndSetAttrByRegex src="$_misc">
+                    <regex><![CDATA[<destName:patExceptSlash>\/<uriStem:gPatStr>]]></regex>
+                  </collectAndSetAttrByRegex>
+                </case>
+                <default>
+                  <setEventAttribute attr="destName">$_misc</setEventAttribute>
+                </default>
+              </switch>
+
+              <when test="not_matches($_misc, '^\w+://')">
+                <setEventAttribute attr="infoURL">combineMsgId("http://", $_misc)</setEventAttribute>
+              </when>
+            </when>
+          </when>
+          <when test="$_subtype = 'virus'">
+            <when test="exist _misc">
+              <setEventAttribute attr="virusName">$_misc</setEventAttribute>
+            </when>
+          </when>
+        </choose>
+
+        <when test="exist _srcIpAddr">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_srcIpAddr">
+                <regex><![CDATA[::<srcIpAddr:gPatIpAddr>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default>
+              <setEventAttribute attr="srcIpAddr">$_srcIpAddr</setEventAttribute>
+            </default>
+          </switch>
+        </when>
+
+        <when test="exist _preNATDestIpAddr">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_preNATDestIpAddr">
+                <regex><![CDATA[::<preNATDestIpAddr:gPatIpAddr>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default>
+              <setEventAttribute attr="preNATDestIpAddr">$_preNATDestIpAddr</setEventAttribute>
+            </default>
+          </switch>
+        </when>
+
+        <when test="exist _destIpAddr">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_destIpAddr">
+                <regex><![CDATA[::<destIpAddr:gPatIpAddr>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default>
+              <setEventAttribute attr="destIpAddr">$_destIpAddr</setEventAttribute>
+            </default>
+          </switch>
+        </when>
+
+        <when test="exist _postNATSrcIpAddr">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_postNATSrcIpAddr">
+                <regex><![CDATA[::<postNATSrcIpAddr:gPatIpAddr>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default>
+              <setEventAttribute attr="postNATSrcIpAddr">$_postNATSrcIpAddr</setEventAttribute>
+            </default>
+          </switch>
+        </when>
+
+        <choose>
+          <when test="not_exist _severity"/>
+          <when test="$_severity = 'informational'">
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+          </when>
+
+          <when test="$_severity = 'low'">
+            <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+          </when>
+
+          <when test="$_severity = 'medium'">
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+          </when>
+
+          <when test="$_severity = 'high'">
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+          </when>
+
+          <when test="$_severity = 'critical'">
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <when test="$_type = 'CONFIG'">
+        <collectAndSetAttrByPos src="$_body" sep=",">
+          <!-- subtype is unused in config events -->
+          <attrPosMap attr="_srcHost" pos="4"/>
+          <attrPosMap attr="virtContext" pos="5"/>
+          <attrPosMap attr="command" pos="6"/>
+          <attrPosMap attr="user" pos="7"/>
+          <!-- authenMethod is Web or CLI -->
+          <attrPosMap attr="authenMethod" pos="8"/>
+          <attrPosMap attr="action" pos="9"/>
+          <attrPosMap attr="objectPath" pos="10"/>
+        </collectAndSetAttrByPos>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, $_type)</setEventAttribute>
+
+        <when test="exist _srcHost">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_srcHost">
+                <regex><![CDATA[^\s*(?:<srcIpAddr:gPatIpAddr>|<srcName:gPatHostName>)\s*$]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+        </when>
+
+        <when test="exist action">
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $action)</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$_type = 'USERID'">
+        <collectAndSetAttrByPos src="$_body" sep=",">
+          <attrPosMap attr="_subtype" pos="1"/>
+          <attrPosMap attr="virtualHostName" pos="4"/>
+          <attrPosMap attr="_srcIpAddr" pos="5"/>
+          <attrPosMap attr="user" pos="6"/>
+          <attrPosMap attr="extEventId" pos="8"/>
+          <attrPosMap attr="icmpFwConnCount" pos="9"/>
+          <attrPosMap attr="srcIpPort" pos="11"/>
+          <attrPosMap attr="destIpPort" pos="12"/>
+          <attrPosMap attr="dataSource" pos="13"/>
+          <attrPosMap attr="resourceType" pos="14"/>
+          <attrPosMap attr="seqNum" pos="15"/>
+          <attrPosMap attr="hostName" pos="22"/>
+        </collectAndSetAttrByPos>
+
+        <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-", $_subtype)</setEventAttribute>
+
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_srcIpAddr">
+              <regex><![CDATA[::<srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default>
+            <setEventAttribute attr="srcIpAddr">$_srcIpAddr</setEventAttribute>
+          </default>
+        </switch>
+
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$user">
+              <regex><![CDATA[<domain:gPatStr>[\\]<user:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$_type = 'HIPMATCH'">
+        <collectAndSetAttrByPos src="$_body" sep=",">
+          <attrPosMap attr="user" pos="4"/>
+          <attrPosMap attr="virtualHostName" pos="5"/>
+          <attrPosMap attr="srcName" pos="6"/>
+          <attrPosMap attr="osName" pos="7"/>
+          <attrPosMap attr="_srcIpAddr" pos="8"/>
+          <attrPosMap attr="profileName" pos="9"/>
+          <attrPosMap attr="count" pos="10"/>
+          <attrPosMap attr="objType" pos="11"/>
+          <attrPosMap attr="seqNum" pos="14"/>
+          <attrPosMap attr="hostName" pos="21"/>
+          <attrPosMap attr="uuid" pos="24"/>
+        </collectAndSetAttrByPos>
+
+        <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-generic")</setEventAttribute>
+
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_srcIpAddr">
+              <regex><![CDATA[::<srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default>
+            <setEventAttribute attr="srcIpAddr">$_srcIpAddr</setEventAttribute>
+          </default>
+        </switch>
+
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$user">
+              <regex><![CDATA[<domain:gPatStr>[\\]<user:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+      </when>
+
+      <when test="$_type = 'SYSTEM'">
+        <collectAndSetAttrByPosWithQuotes src="$_body" sep="," quo="&quot;">
+          <attrPosMap attr="_subtype" pos="1"/>
+          <attrPosMap attr="_eventID" pos="5"/>
+          <attrPosMap attr="_severity" pos="10"/>
+          <attrPosMap attr="_description" pos="11"/>
+        </collectAndSetAttrByPosWithQuotes>
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_description">
+              <regex><![CDATA[User <user:gPatStr> logged in via <appPort:gPatStr> from <srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-login-success")</setEventAttribute>
+            <setEventAttribute attr="destIpAddr">$reptDevIpAddr</setEventAttribute>
+          </case>
+          <!--
+            GlobalProtect catchall event, specific _descriptEvent is handled later and body parsed
+	  -->
+          <case>
+            <collectFieldsByRegex src="$_description">
+              <regex><![CDATA[^GlobalProtect <_descriptEvent:gPatMesgBodyMin>\. <_descriptBody:gPatMesgBodyMin>\.$]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="msg">$_description</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_description">
+              <regex><![CDATA[User <user:gPatStr> failed authentication\.\s+Reason:\s+<errReason:gPatMesgBodyMin>\s+From:\s+<srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-login-failed")</setEventAttribute>
+            <setEventAttribute attr="destIpAddr">$reptDevIpAddr</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_description">
+              <regex><![CDATA[failed authentication for user '<user:patExceptQuote>'\.\s+Reason:\s+<errReason:gPatMesgBodyMin>\s+From:\s+<srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-login-failed")</setEventAttribute>
+            <setEventAttribute attr="destIpAddr">$reptDevIpAddr</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_description">
+              <regex><![CDATA[Failed password for invalid user <user:gPatStr> from <srcIpAddr:gPatIpAddr> <:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-login-failed")</setEventAttribute>
+            <setEventAttribute attr="destIpAddr">$reptDevIpAddr</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_description">
+              <regex><![CDATA[Accepted password for <user:gPatStr> from <srcIpAddr:gPatIpAddr> port <srcIpPort:gPatStr> <appPort:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-login-success")</setEventAttribute>
+            <setEventAttribute attr="destIpAddr">$reptDevIpAddr</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_description">
+              <regex><![CDATA[Authentication failed for user <user:gPatStr> via <appPort:gPatStr> from <srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-login-failed")</setEventAttribute>
+            <setEventAttribute attr="destIpAddr">$reptDevIpAddr</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_description">
+              <regex><![CDATA[User <user:gPatStr> failed authentication from <srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-login-failed")</setEventAttribute>
+            <setEventAttribute attr="destIpAddr">$reptDevIpAddr</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_description">
+              <regex><![CDATA[User <user:gPatStr> failed authentication]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-login-failed")</setEventAttribute>
+            <setEventAttribute attr="destIpAddr">$reptDevIpAddr</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_description">
+              <regex><![CDATA[Commit job succeeded for user <user:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-commit-success")</setEventAttribute>
+            <setEventAttribute attr="destIpAddr">$reptDevIpAddr</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_description">
+              <regex><![CDATA[authenticated for user '<user:gPatStrSQ>'\.\s*From:\s*(?:<srcIpAddr:gPatIpAddr>|<hostName:gPatHostName>)\.]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-login-success")</setEventAttribute>
+            <setEventAttribute attr="destIpAddr">$reptDevIpAddr</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_description">
+              <regex><![CDATA[failed authentication for user '<user:gPatStrSQ>'\.\s*Reason: <errReason:gPatMesgBodyMin>\.\s*From:\s*<srcIpAddr:gPatIpAddr>\.]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-login-failed")</setEventAttribute>
+            <setEventAttribute attr="destIpAddr">$reptDevIpAddr</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_description">
+              <regex><![CDATA[authenticated for user '<user:gPatStr>'\.\s+auth profile '<userGrp:gPatSentence>', vsys '<:gPatStr>', server profile '<:gPatSentence>', server address '<destIpAddr:gPatIpAddr>', From: <srcIpAddr:gPatIpAddr>\.]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-login-success")</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_description">
+              <regex><![CDATA[authenticated for user '<user:gPatStrSQ>'\.\s+auth profile '<userGrp:gPatStrSQ>', vsys '<:gPatStrSQ>', server profile '<:gPatStrSQ>', server address '<destIpAddr:gPatIpAddr>', auth protocol '<authenMethod:gPatStrSQ>', From: <srcIpAddr:gPatIpAddr>\.]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-login-success")</setEventAttribute>
+          </case>
+          <case>
+            <!-- note source region not gauranteed to be geo country, can be user input string -->
+            <collectFieldsByRegex src="$_description">
+              <regex><![CDATA[user authentication succeeded. Login from: <srcIpAddr:gPatIpAddr>, Source region: <hostLocation:gPatStr>, User name: <user:gPatStr>, Auth type: <authenMethod:gPatStr>,\sClient OS version: <osVersion:gPatMesgBody>\.]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-VPN-Login-Success")</setEventAttribute>
+          </case>
+          <!-- WildFire job enqueued.
+	    <190>Dec 16 15:45:23 PaloFW1.s2.example.com 1,2020/12/16 15:45:23,016401006584,SYSTEM,general,0,2020/12/16 15:45:23,,general,,0,0,general,informational,"WildFire job enqueued. Enqueue time=2020/12/16 15:45:23. JobId=40041.  . Type: Full",7039230,0x8000000000000000,0,0,0,0,,PaloFW1
+	  -->
+          <case>
+            <collectFieldsByRegex src="$_description">
+              <regex><![CDATA[WildFire job enqueued\.]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="msg">$_description</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-", "WildFire-Job-Enqueued")</setEventAttribute>
+          </case>
+          <!-- WildFire job started processing.
+	    <190>Dec 16 15:45:23 PaloFW1.s2.example.com 1,2020/12/16 15:45:23,016401006584,SYSTEM,general,0,2020/12/16 15:45:23,,general,,0,0,general,informational,"WildFire job started processing. Dequeue time=2020/12/16 15:45:23. Job Id=40041.   ",7039231,0x8000000000000000,0,0,0,0,,PaloFW1
+	  -->
+          <case>
+            <collectFieldsByRegex src="$_description">
+              <regex><![CDATA[WildFire job started processing\.]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="msg">$_description</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-", "WildFire-Job-Started-Processing")</setEventAttribute>
+          </case>
+
+          <!-- WildFire package upgraded
+	    <190>Dec 16 15:45:37 PaloFW1.s2.example.com 1,2020/12/16 15:45:37,016401006584,SYSTEM,general,0,2020/12/16 15:45:37,,general,,0,0,general,informational,"WildFire package upgraded from version 515971-518971 to 515974-518974 by Auto update agent",7039233,0x8000000000000000,0,0,0,0,,PaloFW1
+	  -->
+          <case>
+            <collectFieldsByRegex src="$_description">
+              <regex><![CDATA[WildFire package upgraded from version]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="msg">$_description</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-", "WildFire-Package-Upgraded")</setEventAttribute>
+          </case>
+
+          <!-- WildFire update job succeeded
+	    <190>Dec 16 15:45:40 PaloFW1.s2.example.com 1,2020/12/16 15:45:40,016401006584,SYSTEM,general,0,2020/12/16 15:45:40,,general,,0,0,general,informational,"WildFire update job succeeded  for user Auto update agent",7039234,0x8000000000000000,0,0,0,0,,PaloFW1
+	  -->
+          <case>
+            <collectFieldsByRegex src="$_description">
+              <regex><![CDATA[WildFire update job succeeded]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="msg">$_description</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-", "WildFire-Update-Job-Succeeded")</setEventAttribute>
+          </case>
+
+          <!-- Installed WildFire Package
+	    <190>Dec 16 16:30:27 PaloFW1.s2.example.com 1,2020/12/16 16:30:27,016401006584,SYSTEM,general,0,2020/12/16 16:30:27,,general,,0,0,general,informational,"Installed WildFire package: panupv2-all-wildfire-515983-518983.tgz",7039913,0x8000000000000000,0,0,0,0,,PaloFW1
+	  -->
+          <case>
+            <collectFieldsByRegex src="$_description">
+              <regex><![CDATA[Installed WildFire package: <fileName:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="msg">$_description</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-", "WildFire-Package-Installed")</setEventAttribute>
+
+          </case>
+
+          <!-- Monitor Tab Access
+	    <190>Dec 16 16:24:19 PaloFW1.s2.example.com 1,2020/12/16 16:24:19,016401006584,SYSTEM,general,0,2020/12/16 16:24:19,,general,,0,0,general,informational,"User rob-test accessed Monitor tab",7039828,0x8000000000000000,0,0,0,0,,PaloFW1
+	  -->
+          <case>
+            <collectFieldsByRegex src="$_description">
+              <regex><![CDATA[User <user:gPatMesgBodyMin> accessed Monitor tab]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-", "Monitor-Tab-Access")</setEventAttribute>
+          </case>
+
+          <!-- CLI Logout
+	    <190>Dec 16 16:08:17 PaloFW1.s2.example.com 1,2020/12/16 16:08:17,016401006584,SYSTEM,general,0,2020/12/16 16:08:17,,general,,0,0,general,informational,"User rob-test logged out via CLI from 1.1.1.1",7039542,0x8000000000000000,0,0,0,0,,PaloFW1
+	  -->
+          <case>
+            <collectFieldsByRegex src="$_description">
+              <regex><![CDATA[User <user:gPatMesgBodyMin> logged out via CLI from <srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-", "CLI-Logout")</setEventAttribute>
+          </case>
+
+          <!-- Connection to Update Server
+	    <190>Dec 16 15:50:26 PaloFW1.s2.example.com 1,2020/12/16 15:50:26,016401006584,SYSTEM,general,0,2020/12/16 15:50:26,,general,,0,0,general,informational,"Connection to Update server: updates.paloaltonetworks.com completed successfully, initiated by 1.1.1.1",7039276,0x8000000000000000,0,0,0,0,,PaloFW1
+	  -->
+          <case>
+            <collectFieldsByRegex src="$_description">
+              <regex><![CDATA[Connection to Update server: <destName:gPatStr> completed successfully, initiated by <srcIpAddr:gPatIpAddr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="msg">$_description</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-", "Update-Server-Success")</setEventAttribute>
+          </case>
+
+          <!-- PAN-DB was upgraded to version 20201216.
+	    <190>Dec 16 15:48:01 PaloFW1.s2.example.com 1,2020/12/16 15:48:01,016401006584,SYSTEM,url-filtering,0,2020/12/16 15:48:01,,upgrade-url-database-success,,0,0,general,informational,"PAN-DB was upgraded to version 20201216.20358.",7039261,0x8000000000000000,0,0,0,0,,PaloFW1
+	  -->
+          <case>
+            <collectFieldsByRegex src="$_description">
+              <regex><![CDATA[PAN-DB was upgraded to version <version:gPatStr>\.?]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="msg">$_description</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-", "DB-Upgrade")</setEventAttribute>
+          </case>
+
+          <!-- LDAP authenticated for user 'xxx'.
+	    <190>Dec 16 15:59:41 PaloFW1.s2.example.com 1,2020/12/16 15:59:41,016401006584,SYSTEM,auth,0,2020/12/16 15:59:41,,auth-success,Auth-Profile-LDAP-GP,0,0,general,informational,"authenticated for user 'rob-test'.   auth profile 'Auth-Profile-LDAP-GP', vsys 'vsys1', server profile 'test-LDAP-GP', server address '192.168.25.38', From: 1.1.1.1.",7039418,0x8000000000000000,0,0,0,0,,PaloFW1
+	  -->
+          <case>
+            <collectFieldsByRegex src="$_description">
+              <regex><![CDATA[authenticated for user '<user:gPatStrSQ>'\.\s+auth profile '<userGrp:gPatStrSQ>', vsys '<:gPatStrSQ>', server profile '<profileName:gPatStrSQ>', server address '<destIpAddr:gPatIpAddr>', From: <srcIpAddr:gPatIpAddr>\.]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-VPN-login-success")</setEventAttribute>
+            <setEventAttribute attr="destIpAddr">$reptDevIpAddr</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[authenticated for user '<user:gPatStrSQ>'\.\s*auth profile '<userGrp:gPatStrSQ>', vsys '<:gPatStrSQ>',\s*From:\s*<srcIpAddr:gPatIpAddr>\.]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-VPN-Login-success")</setEventAttribute>
+            <setEventAttribute attr="destIpAddr">$reptDevIpAddr</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[user authentication failed. Login from: <srcIpAddr:gPatStr>, Source region: <hostLocation:gPatStr>, User name: <user:gPatMesgBodyMin>, Client OS version: <osVersion:gPatSentence>, <osType:gPatMesgBody>, Reason: <errReason:gPatMesgBody>, Auth type: <authenMethod:gPatStr>\.]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-VPN-Login-Failed")</setEventAttribute>
+            <setEventAttribute attr="destIpAddr">$reptDevIpAddr</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[failed authentication for user '<user:gPatStrSQ>'\.\s*auth profile '<userGrp:gPatStrSQ>', vsys '<:gPatStrSQ>',\s*From:\s*<srcIpAddr:gPatIpAddr>\.]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-VPN-Login-failed")</setEventAttribute>
+            <setEventAttribute attr="destIpAddr">$reptDevIpAddr</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[user authentication succeeded. Login from: <srcIpAddr:gPatStr>, User name: <user:gPatStr>, Auth type: <authenMethod:gPatStr>\.]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-VPN-Login-Success")</setEventAttribute>
+            <setEventAttribute attr="destIpAddr">$reptDevIpAddr</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[user authentication succeeded. Login from: <srcIpAddr:gPatStr>, Source region: <hostLocation:gPatStr>, User name: <user:gPatStr>, Auth type: <authenMethod:gPatStr>\.]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-VPN-Login-Success")</setEventAttribute>
+            <setEventAttribute attr="destIpAddr">$reptDevIpAddr</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[user authentication failed. Login from: <srcIpAddr:gPatStr>, Source region: <hostLocation:gPatStr>, User name: <user:gPatStr>, Reason: <errReason:gPatSentence>, Auth type: <authenMethod:gPatStr>\.]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-VPN-Login-Failed")</setEventAttribute>
+            <setEventAttribute attr="destIpAddr">$reptDevIpAddr</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[user login failed. Login from: <srcIpAddr:gPatStr>, User name: <user:gPatStr>, error: <errReason:gPatSentence>\.]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-VPN-Login-Failed")</setEventAttribute>
+            <setEventAttribute attr="destIpAddr">$reptDevIpAddr</setEventAttribute>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[client configuration generated. Login from: <srcIpAddr:gPatIpAddr>, Source region: <hostLocation:gPatStr>, User name: <user:gPatStr>, Config name: <configName:gPatStr>\.]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-Client-Configuration-Generated")</setEventAttribute>
+            <setEventAttribute attr="destIpAddr">$reptDevIpAddr</setEventAttribute>
+          </case>
+
+          <default>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-generic")</setEventAttribute>
+          </default>
+        </switch>
+
+
+        <when test="exist _descriptEvent">
+          <choose>
+            <when test="$_descriptEvent = 'gateway user authentication succeeded'">
+              <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-VPN-Login-Success")</setEventAttribute>
+            </when>
+            <when test="$_descriptEvent = 'gateway user login succeeded'">
+              <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-VPN-Login-Success")</setEventAttribute>
+            </when>
+            <when test="$_descriptEvent = 'gateway user login failed'">
+              <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-VPN-Login-Failed")</setEventAttribute>
+            </when>
+            <when test="$_descriptEvent = 'gateway client configuration released'">
+              <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-VPN-Logoff")</setEventAttribute>
+            </when>
+            <when test="$_descriptEvent = 'gateway client switch to SSL tunnel mode succeeded'">
+              <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-SwitchTo-SSL-Success")</setEventAttribute>
+            </when>
+            <when test="$_descriptEvent = 'gateway user logout succeeded'">
+              <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-VPN-Logoff")</setEventAttribute>
+            </when>
+            <when test="$_descriptEvent = 'portal client configuration generated'">
+              <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-", $_eventID)</setEventAttribute>
+            </when>
+            <when test="$_descriptEvent = 'portal user authentication failed'">
+              <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-login-failed")</setEventAttribute>
+            </when>
+            <when test="$_descriptEvent = 'gateway client configuration generated'">
+              <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-", $_eventID)</setEventAttribute>
+            </when>
+            <otherwise>
+              <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-generic")</setEventAttribute>
+            </otherwise>
+          </choose>
+        </when>
+        <when test="exist _descriptBody">
+          <collectFieldsByKeyValuePair kvsep=": " sep=", " src="$_descriptBody">
+            <attrKeyMap attr="authenMethod" key="Auth type"/>
+            <attrKeyMap attr="osVersion" key="Client OS version"/>
+            <attrKeyMap attr="appClientVersion" key="Client version"/>
+            <attrKeyMap attr="configName" key="Config name"/>
+            <attrKeyMap attr="srcName" key="Device name"/>
+            <attrKeyMap attr="errReason" key="error"/>
+            <attrKeyMap attr="srcIpAddr" key="Login from"/>
+            <attrKeyMap attr="srcIpAddr" key="Private IP"/>
+            <attrKeyMap attr="reason" key="Reason"/>
+            <attrKeyMap attr="hostLocation" key="Source region"/>
+            <attrKeyMap attr="user" key="User name"/>
+            <attrKeyMap attr="vpnConnType" key="VPN type"/>
+          </collectFieldsByKeyValuePair>
+        </when>
+
+        <choose>
+          <when test="$_severity = 'informational'">
+            <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+          </when>
+
+          <when test="$_severity = 'low'">
+            <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+          </when>
+
+          <when test="$_severity = 'medium'">
+            <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+          </when>
+
+          <when test="$_severity = 'high'">
+            <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+          </when>
+
+          <when test="$_severity = 'critical'">
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+      <when test="$_type = 'GLOBALPROTECT'">
+        <!-- New version 9.1.3+ logs -->
+        <!-- <14>Apr 13 15:45:09 fw.example.net 1,2021/04/13 15:45:08,011901040055,GLOBALPROTECT,0,2305,2021/04/13 15:45:08,vsys1,gateway-auth,login,Other,,example.com\rob.test,TR,host-10,1.1.1.1,0.0.0.0,0.0.0.0,0.0.0.0,11111111-1111-1111-1111-111111111111,26D1W32,5.1.7,Windows,"Microsoft Windows 10 Pro , 64-bit",1,,,"",success,,0,on-demand,0,SSLVPN,23694,0x0 -->
+        <collectAndSetAttrByPosWithQuotes src="$_body" sep="," quo="&quot;">
+          <attrPosMap attr="_subtype" pos="1"/>
+          <attrPosMap attr="_eventID" pos="5"/>
+          <!-- check if domain present and strip -->
+          <attrPosMap attr="user" pos="9"/>
+          <attrPosMap attr="hostLocation" pos="10"/>
+          <attrPosMap attr="srcName" pos="11"/>
+          <attrPosMap attr="srcIpAddr" pos="12"/>
+          <attrPosMap attr="serialNumber" pos="16"/>
+          <attrPosMap attr="appClientVersion" pos="18"/>
+          <attrPosMap attr="osVersion" pos="20"/>
+          <attrPosMap attr="reason" pos="22"/>
+          <attrPosMap attr="errReason" pos="23"/>
+          <attrPosMap attr="msg" pos="24"/>
+          <!-- success | failure -->
+          <attrPosMap attr="status" pos="25"/>
+          <attrPosMap attr="_loginDurationSec" pos="27"/>
+        </collectAndSetAttrByPosWithQuotes>
+
+        <choose>
+          <when test="$_eventID = 'gateway-auth'">
+            <choose>
+              <when test="$status = 'success'">
+                <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-VPN-Login-Success")</setEventAttribute>
+              </when>
+              <when test="$status = 'failure'">
+                <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-VPN-Login-Failed")</setEventAttribute>
+              </when>
+            </choose>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-", $_eventID)</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+      <when test="$_type = 'DECRYPTION'">
+        <!-- https://docs.paloaltonetworks.com/pan-os/10-1/pan-os-admin/monitoring/use-syslog-for-monitoring/syslog-field-descriptions/decryption-log-fields -->
+        <setEventAttribute attr="eventType">combineMsgId($eventType, "DECRYPTION")</setEventAttribute>
+        <collectAndSetAttrByPosWithQuotes src="$_body" sep="," quo="&quot;">
+          <!-- subtype field unused in decryption -->
+          <attrPosMap attr="srcIpAddr" pos="4"/>
+          <attrPosMap attr="destIpAddr" pos="5"/>
+          <attrPosMap attr="postNATSrcIpAddr" pos="6"/>
+          <attrPosMap attr="postNATDestIpAddr" pos="7"/>
+          <attrPosMap attr="fwRule" pos="8"/>
+          <attrPosMap attr="srcUser" pos="9"/>
+          <attrPosMap attr="destUser" pos="10"/>
+          <attrPosMap attr="appName" pos="11"/>
+          <attrPosMap attr="vdom" pos="12"/>
+          <attrPosMap attr="srcZone" pos="13"/>
+          <attrPosMap attr="destZone" pos="14"/>
+          <attrPosMap attr="srcIntfName" pos="15"/>
+          <attrPosMap attr="destIntfName" pos="16"/>
+          <attrPosMap attr="sessionId" pos="19"/>
+          <!-- port info -->
+          <attrPosMap attr="srcIpPort" pos="21"/>
+          <attrPosMap attr="destIpPort" pos="22"/>
+          <attrPosMap attr="postNATSrcIpPort" pos="23"/>
+          <attrPosMap attr="postNATDestIpPort" pos="24"/>
+          <!-- session flag-->
+          <attrPosMap attr="flag" pos="25"/>
+          <attrPosMap attr="_ipProto" pos="26"/>
+          <!-- allow,deny,drop,drop icmp,reset both,reset client,reset server -->
+          <attrPosMap attr="fwAction" pos="27"/>
+          <attrPosMap attr="tlsVersion" pos="36"/>
+          <attrPosMap attr="tlsServerX509KeyAlgo" pos="37"/>
+          <attrPosMap attr="encryptAlgo" pos="38"/>
+          <attrPosMap attr="hashAlgo" pos="39"/>
+          <attrPosMap attr="policyName" pos="40"/>
+          <attrPosMap attr="tlsServerX509KeyCurve" pos="41"/>
+          <attrPosMap attr="tlsServerX509SerialNumber" pos="46"/>
+          <attrPosMap attr="certThumbprint" pos="47"/>
+          <attrPosMap attr="_certStartDate" pos="48"/>
+          <attrPosMap attr="_certEndDate" pos="49"/>
+          <attrPosMap attr="tlsServerSubject" pos="57"/>
+          <attrPosMap attr="tlsServerIssuer" pos="58"/>
+          <attrPosMap attr="tlsSni" pos="60"/>
+        </collectAndSetAttrByPosWithQuotes>
+
+        <when test="exist fwAction">
+          <!-- some fw action like reset client have space in name -->
+          <setEventAttribute attr="fwAction">replaceStringByRegex($fwAction, "\s+", "-")</setEventAttribute>
+          <setEventAttribute attr="eventType">combineMsgId($eventType, "-", $fwAction)</setEventAttribute>
+        </when>
+
+        <when test="exist _certStartDate">
+          <switch>
+            <case>
+              <!-- 2023/08/12 03:00:00 -->
+              <collectFieldsByRegex src="$_certStartDate">
+                <regex><![CDATA[<_certYear:gPatYear>/<_certMon:gPatMonNum>/<_certDay:gPatDay>\s+<_certTime:gPatTime><_certTz:gPatTimeZone>?]]></regex>
+              </collectFieldsByRegex>
+              <choose>
+                <when test="exist _certTz">
+                  <setEventAttribute attr="tlsServerNotBefore">toDateTime($_certMon, $_certDay, $_certYear, $_certTime, $_certTz)</setEventAttribute>
+                </when>
+                <otherwise>
+                  <setEventAttribute attr="tlsServerNotBefore">toDateTime($_certMon, $_certDay, $_certYear, $_certTime)</setEventAttribute>
+                </otherwise>
+              </choose>
+            </case>
+            <default/>
+          </switch>
+        </when>
+
+        <when test="exist _certEndDate">
+          <switch>
+            <case>
+              <!-- 2023/08/12 03:00:00 -->
+              <collectFieldsByRegex src="$_certEndDate">
+                <regex><![CDATA[<_certYear:gPatYear>/<_certMon:gPatMonNum>/<_certDay:gPatDay>\s+<_certTime:gPatTime><_certTz:gPatTimeZone>?]]></regex>
+              </collectFieldsByRegex>
+              <choose>
+                <when test="exist _certTz">
+                  <setEventAttribute attr="tlsServerNotAfter">toDateTime($_certMon, $_certDay, $_certYear, $_certTime, $_certTz)</setEventAttribute>
+                </when>
+                <otherwise>
+                  <setEventAttribute attr="tlsServerNotAfter">toDateTime($_certMon, $_certDay, $_certYear, $_certTime)</setEventAttribute>
+                </otherwise>
+              </choose>
+            </case>
+            <default/>
+          </switch>
+        </when>
+
+      </when>
+    </choose>
+
+    <when test="exist srcName">
+      <!-- also set hostName value to same when srcName seen -->
+      <setEventAttribute attr="hostName">$srcName</setEventAttribute>
+    </when>
+
+    <when test="exist _ipProto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_ipProto)</setEventAttribute>
+    </when>
+
+    <when test="exist appPort">
+      <when test="$appPort = 'Web'">
+        <setEventAttribute attr="ipProto">6</setEventAttribute>
+      </when>
+      <when test="$appPort = 'ssh2'">
+        <setEventAttribute attr="destIpPort">22</setEventAttribute>
+        <setEventAttribute attr="ipProto">6</setEventAttribute>
+      </when>
+      <when test="$appPort = 'telnet'">
+        <setEventAttribute attr="destIpPort">23</setEventAttribute>
+        <setEventAttribute attr="ipProto">6</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist appTransportProto">
+      <setEventAttribute attr="appName">$appTransportProto</setEventAttribute>
+    </when>
+
+    <when test="exist user">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$user">
+            <regex><![CDATA[<domain:gPatStr>[\\]<user:gPatMesgBody>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$user">
+            <regex><![CDATA['<user:gPatMesgBody>']]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+    <when test="not_private_ip destIpAddr">
+      <when test="exist destName">
+        <setEventAttribute attr="domainEntropy">calcDomainEntropy($destName)</setEventAttribute>
+      </when>
+    </when>
+  </parsingInstructions>
+</eventParser>

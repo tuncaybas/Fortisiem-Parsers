@@ -1,0 +1,57 @@
+<eventParser name="PHGenericLogParser">
+  <deviceType>
+    <Vendor>CentOS</Vendor>
+    <Model>Linux</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiSIEM</Model>
+    <Version>ANY</Version>
+    <Name>Fortinet FortiSIEM</Name>
+  </appType>
+
+  <testEvents>
+    <testEvent><![CDATA[2018-11-28T14:48:42.410426-08:00 SP85 phParser[28214]: &lt;config&gt;]]></testEvent>
+    <testEvent><![CDATA[2018-11-28T14:48:42.410444-08:00 SP85 phParser[28214]: &lt;category&gt;System&lt;/category&gt;]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patPHModule"><![CDATA[All|global|phAgentManager|phBeaconEventPackager|phCheckpoint|phClickHouseMonitor|phDataManager|phDataPurger|phDiscover|phEventForwarder|phEventPackager|phIpIdentityMaster|phIpIdentityWorker|phMonitor|phMonitorAgent|phMonitorGenericServer|phMonitorReportServer|phMonitorSupervisor|phMonitorWorker|phParser|phPerfMonitor|phQueryMaster|phQueryWorker|phReportLoader|phReportMaster|phReportWorker|phRuleMaster|phRuleWorker|phtools]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[(?:<:gPatYear>-<:gPatMon>-<:gPatDay>T<:gPatTime>\.\d+<:gPatTimeZone>|<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>)\s+<:gPatStr>\s+<:patPHModule>\[<:gPatStr>\]:\s+[^\[]]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[(?:<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>|<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>)\s+<hostName:gPatStr>\s+<module:patPHModule>\[<procId:gPatStr>\]:\s+<lineContent:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <choose>
+      <when test="exist _year">
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <setEventAttribute attr="eventType">PH_GENERIC_DEBUG</setEventAttribute>
+    <setEventAttribute attr="phEventCategory">3</setEventAttribute>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$lineContent">
+          <!--ACE_SSL (17240|17893) error code: 336462231 - error:140E0197:SSL routines:SSL_shutdown:shutdown while in init-->
+          <regex><![CDATA[ACE_SSL\s*\(\d+\|\d+\)\s*error\s+code:\s*<errorNoInt:gPatInt>\s*-\s*error:<errReason:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <when test="matches($errReason, 'SSL_shutdown')">
+          <setEventAttribute attr="eventType">PH_SSL_SHUTDOWN_ERROR</setEventAttribute>
+        </when>
+      </case>
+      <default/>
+    </switch>
+  </parsingInstructions>
+
+</eventParser>

@@ -1,0 +1,149 @@
+<eventParser name="PacketFenceParser">
+  <deviceType>
+    <Vendor>PacketFence</Vendor>
+    <Model>Network Access Control</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[Oct 9 11:29:34 10.2.204.81 1 2018-10-09T11:29:34.04189+01:00 example.com packetfence.log - - - Oct 11 15:42:00 httpd.aaa(4765) WARN: [mac:40:83:1d:12:2a:cb] Calling match with empty/invalid rule class. Defaulting to 'authentication' (pf::authentication::match)]]></testEvent>
+    <testEvent><![CDATA[<13>1 2018-10-09T11:29:34.04189+01:00 example.com packetfence.log - - - Oct 11 15:42:00 httpd.aaa(4765) WARN: [mac:40:83:1d:12:2a:cb] Calling match with empty/invalid rule class. Defaulting to 'authentication' (pf::authentication::match)]]></testEvent>
+    <testEvent><![CDATA[<13>1 t=2018-10-09T11:29:34.04189+01:00 example.com packetfence.log - - - Oct 11 15:42:00 httpd.aaa(4765) WARN: [mac:40:83:1d:12:2a:cb] Calling match with empty/invalid rule class. Defaulting to 'authentication' (pf::authentication::match)]]></testEvent>
+    <testEvent><![CDATA[<13>1 2019-06-25T15:04:26.869496+01:00 example.com packetfence.log - - - Jun 25 15:04:26 httpd.aaa(32491) INFO: [mac:bc:83:85:13:3b:f2] autoregister a node that is already registered, do nothing. (pf::node::node_register)]]></testEvent>
+    <testEvent><![CDATA[<13>1 2019-06-25T10:26:07.7-05:00 example.com pfdhcplistener.log - - - Jun 25 10:26:07 pfqueue(24226) INFO: [mac:unknown] The listener process is NOT on the same server as the DHCP server. (pf::dhcp::processor::pf_is_dhcp)]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patPacketFence"><![CDATA[(?:auth|packetfence|pfdhcplistener|pfstat|radius)\.log]]></pattern>
+    <pattern name="patStrEndParen"><![CDATA[[^) ]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\d+\s+(?:t=)?<:gPatYear>-<:gPatMonNum>-<:gPatDay>T<:gPatTime>\.\d+<:gPatTimeZone>\s+<:gPatHostName>\s+<:patPacketFence>\s]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+<fileName:patPacketFence>\s+\S+\s+\S+\s+\S+\s+(?:\w+\s+)?<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+(?:<:gPatYear>\s+:\s+)?<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[t=<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime><_tz:gPatTimeZone>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="fileName">NotFound</setEventAttribute>
+      </case>
+    </switch>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    <setEventAttribute attr="eventType">PacketFence-NAC-Generic</setEventAttribute>
+
+    <choose>
+      <when test="$fileName = 'radius.log'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^<procName:gPatStrEndColon>:.*\s+RESULT RESPONSE CODE:\s+\d+]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">PacketFence-NAC-Radius-ResponseCode</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^Auth:\s+\(<procId:gPatInt>\)\s+Login OK:\s+\[<user:gPatStrRightSB>\]]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">PacketFence-NAC-Login-OK</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^Auth:\s+\(<procId:gPatInt>\)\s+Login incorrect\s+\(.+?\):\s+\[<user:gPatStrRightSB>\]]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">PacketFence-NAC-Login-Incorrect</setEventAttribute>
+            <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^\[mac:<_srcMAC:gPatStr>\]\s+Accepted user: <user:gPatStr>]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="eventType">PacketFence-NAC-Accepted-User</setEventAttribute>
+          </case>
+          <default/>
+        </switch>
+
+        <when test="$eventType IN 'PacketFence-NAC-Login-OK, PacketFence-NAC-Login-Incorrect'">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$_msg">
+                <regex><![CDATA[ cli <_srcMAC:patStrEndParen>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+        </when>
+      </when>
+
+      <when test="$fileName = 'pfdhcplistener.log'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^pfqueue\(<procId:gPatInt>\)\s+<_sev:gPatStr>:\s+.*\(pf::dhcp::processor::<_eventType:gPatStrRightSB>\)]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="_eventType">replaceStrInStr($_eventType, "_", "-")</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId("PacketFence-NAC-", $_eventType)</setEventAttribute>
+          </case>
+        </switch>
+
+        <collectAndSetAttrByKeyValuePair sep="," src="$_body">
+          <attrKeyMap attr="computer" key="computername = "/>
+        </collectAndSetAttrByKeyValuePair>
+      </when>
+
+      <when test="$fileName = 'packetfence.log'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^httpd\.\S+\(<procId:gPatInt>\) <_sev:gPatStr>: \[mac:<_srcMAC:gPatStr>\].*\(pf::<_eventType:gPatStrRightSB>\)]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="_eventType">replaceStringByRegex($_eventType, "[:_]+", "-")</setEventAttribute>
+            <setEventAttribute attr="eventType">combineMsgId("PacketFence-NAC-", $_eventType)</setEventAttribute>
+          </case>
+        </switch>
+        <collectAndSetAttrByKeyValuePair sep="," src="$_body">
+          <attrKeyMap attr="user" key="username =&gt; "/>
+        </collectAndSetAttrByKeyValuePair>
+      </when>
+
+      <when test="$fileName = 'NotFound'">
+        <collectAndSetAttrByKeyValuePair sep=" " src="$_body">
+          <attrKeyMap attr="_sev" key="lvl="/>
+          <attrKeyMap attr="_msg" key="msg="/>
+        </collectAndSetAttrByKeyValuePair>
+        <when test="matches($_msg, 'Error connecting to LDAP')">
+          <setEventAttribute attr="eventType">PacketFence-NAC-LDAPFailure</setEventAttribute>
+        </when>
+        <when test="matches($_msg, 'API login for user system for tenant')">
+          <setEventAttribute attr="eventType">PacketFence-NAC-APILogon</setEventAttribute>
+        </when>
+      </when>
+    </choose>
+
+    <when test="exist _srcMAC">
+      <setEventAttribute attr="srcMACAddr">normalizeMAC($_srcMAC)</setEventAttribute>
+    </when>
+
+    <when test="exist _sev">
+      <choose>
+        <when test="$_sev = 'WARN'">
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </when>
+        <when test="$_sev = 'INFO'">
+          <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        </when>
+        <when test="$_sev = 'ERROR'">
+          <setEventAttribute attr="eventSeverity">8</setEventAttribute>
+        </when>
+        <when test="$_sev = 'CRIT'">
+          <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+        </when>
+      </choose>
+    </when>
+  </parsingInstructions>
+</eventParser>

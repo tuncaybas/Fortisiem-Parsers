@@ -1,0 +1,49 @@
+<eventParser name="PHCustomJsonParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[[PH_DEV_MON_CUSTOM_JSON]:[reptVendor]=Cisco,[reptModel]=ASA,[reptDevName]=host1,[reptDevIpAddr]=1.1.1.1,[json]={"Version":"20181030v154","Source IP":"192.168.1.1","Log ID":"302014"}]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\[PH_DEV_MON_CUSTOM_JSON\]:]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\[PH_DEV_MON_CUSTOM_JSON\]:<_body:gPatMesgBodyMin>,\[json\]=<_json:gPatMesgBodyMin>\s*$]]></regex>
+    </collectFieldsByRegex>
+
+    <collectAndSetAttrBySymbol src="$_body" sep=",[" symStart="[" symEnd="]="/>
+    <setEventAttribute attr="eventType">combineMsgId($reptVendor, "-", $reptModel, "-JSON")</setEventAttribute>
+
+    <!-- Test split one json into mutiple events. such as the following json string, it will be split into 2 events.
+     Json is {"alerts":[{"a":"v1"},{"b":"v2"}]
+     New Json: {"alerts": {"a":"v1"}} 
+               {"alerts": {"b":"v2"}}            
+    <when test="matches($_json, '.*alerts.\s*:\s*\[.*')">
+      <setEventAttribute attr="_header">combineMsgId("[PH_DEV_MON_CUSTOM_JSON]:", $_body,",[json]=")</setEventAttribute>
+      <setEventAttribute attr="_tail">""</setEventAttribute>
+      <setEventAttribute attr="_numOfNewEvents">splitJsonEvent($_json, "alerts", $_header, $_tail, "true")</setEventAttribute>
+    </when>
+    -->
+
+    <!-- attribute mapping -->
+    <collectAndSetAttrByJSON src="$_json">
+      <attrKeyMap attr="version" key="Version"/>
+      <attrKeyMap attr="srcIpAddr" key="Source IP"/>
+      <attrKeyMap attr="_logId" key="Log ID"/>
+    </collectAndSetAttrByJSON>
+
+    <!-- extra parsing -->
+    <when test="$reptVendor = 'Cisco'">
+      <when test="$reptModel = 'ASA'">
+        <when test="exist _logId">
+          <setEventAttribute attr="eventType">combineMsgId("ASA-JSON-", $_logId)</setEventAttribute>
+        </when>
+      </when>
+    </when>
+  </parsingInstructions>
+</eventParser>

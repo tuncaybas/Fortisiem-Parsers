@@ -1,0 +1,206 @@
+<eventParser name="PHBoxParser">
+
+  <deviceType>
+    <Vendor>CentOS</Vendor>
+    <Model>Linux</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiSIEM</Model>
+    <Version>ANY</Version>
+    <Name>Fortinet FortiSIEM</Name>
+  </appType>
+
+  <!-- pattern definitions -->
+  <patternDefinitions>
+    <pattern name="patStrEndWithLeftSquareBracket"><![CDATA[[^\[]*]]></pattern>
+    <pattern name="patStrEndWithRightSquareBracket"><![CDATA[[^\]]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\[PH_(?!BEACON_|DEV_MON_CUSTOM_JSON\])]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<174>Mar  5 14:25:54 example-linux monitor.supervisor[18209]: [PH_MODULE_ABORT_FOUND]:[eventSeverity]=PHL_CRITICAL,[processName]=monitor.supervisor,[fileName]=phBaseProcessInfo.cpp,[lineNumber]=590,[procName]=phQueryMaster,[eventTime]=Wed Mar  5 14:25:54 2008,[phLogDetail]=Module aborted found by watchdog]]></testEvent>
+    <testEvent><![CDATA[Feb  4 14:25:54 example-linux monitor.supervisor[18209]: [PH_DISCOV_HOST_LOCATION]:[eventSeverity]=PHL_INFO,[processName]=phDiscover,[fileName]=hostLoc.cpp,[lineNumber]=214,[hostIpAddr]=192.168.0.10,[hostMACAddr]=00:30:48:84:45:0b,[nepDevIpAddr]=192.168.19.100,[nepDevName]=SJ-Dev-A-Fdy-Big-01,[nepDevPort]=FastEthernet2/4,[phLogDetail]=Host IP: 192.168.0.10 MAC: 00:30:48:84:45:0b attached to switch IP: 192.168.19.100 Name: SJ-Dev-A-Fdy-Big-01 on port FastEthernet2/4]]></testEvent>
+    <testEvent><![CDATA[May 11 10:14:27 127.0.0.1 [PH_AUDIT_USER_LOGIN_SUCCEED][phEventCategory]=2,[srcIpAddr]=192.168.20.45,[phCustId]=1,[sessionId]=0ab028e5b665b36e5944ae48b2f5,[procName]=AppServer,[eventSeverity]=PHL_INFO,[user]=cust111,[phLogDetail]=User login successfully]]></testEvent>
+    <testEvent><![CDATA[May 11 01:10:25 127.0.0.1 [PH_AUDIT_DATA_PURGE][phEventCategory]=3,[phCustId]=1,[procName]=AppServer,[eventSeverity]=PHL_INFO,[phLogDetail]=Purged 0 schedules]]></testEvent>
+    <testEvent><![CDATA[May 11 10:15:25 127.0.0.1 [PH_AUDIT_OBJECT_UPDATED][phEventCategory]=2,[srcIpAddr]=192.168.20.45,[phCustId]=111,[sessionId]=0ab028e5b665b36e5944ae48b2f5,[procName]=AppServer,[osObjType]=Dashboard widget,[eventSeverity]=PHL_INFO,[osObjName]=Total Event Rate (Per Sec),[user]=cust111,[phLogDetail]=Dashboard widget has been updated]]></testEvent>
+    <testEvent><![CDATA[[PH_WS_COMM][eventSeverity]=PHL_INFO,[procName]=AppServer,[phCustId]=111,[phEventCategory]=3,[phLogDetail]=Write to existing entity (UserConnectivity@0) using MERGE]]></testEvent>
+    <testEvent><![CDATA[<174>Jan 25 14:04:15 [PH_INCIDENT_ACTION_STATUS]:[incidentId]=59,[incidentSrc]=,[phEventCategory]=3,[phCustId]=1,[actionName]=Email:user@example.com,[customer]=O-eng,[actionTime]=Wed Jan 25 14:04:15 PST 2012,[incidentTarget]=hostIpAddr:192.168.1.14; hostName:cpMultiServer,[actionResult]=Successful,[policyId]=667100,[procName]=AppServer,[ruleName]=PH_RULE_SWAP_MEM_CRIT,[ruleId]=652660,[incidentDetail]=swapMemUtil:100.00,[eventSeverity]=PHL_INFO,[actionId]=667150,[phLogDetail]=Record incident notification action result]]></testEvent>
+    <testEvent><![CDATA[<14>May 7 18:39:36 supervisor-001 phDataPurger[2360]: [PH_ES_HOT_STORAGE_USAGE]:[eventSeverity]=PHL_INFO,[procName]=phDataPurger,[fileName]=ElasticsearchCluster.cpp,[lineNumber]=216,[totalDiskMB]=585563520,[freeDiskMB]=580233614,[phLogDetail]=Hot Storage Usage : 99.09 percent available]]></testEvent>
+    <testEvent><![CDATA[2024-03-08T09:33:39.672153+00:00 fsmhost01 phAgentManager[5830]: [PH_AGENTMGR_API_PERMISSION_MISSING]:[eventSeverity]=PHL_WARNING,[procName]=phAgentManager,[fileName]=phOffice365Agent.cpp,[lineNumber]=271,[errorString]=Invalid Authentication: Make sure there are API permissions (Microsoft Graph: Reports.Read.All, Office 365 Exchange Online: ReportingWebService.Read.All),[phLogDetail]=There is no permission]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+<procName:patStrEndWithLeftSquareBracket>\[<:gPatInt>\]:\s+\[<eventType:patStrEndWithRightSquareBracket>\]:<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_tz:gPatTimeZone>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+<procName:patStrEndWithLeftSquareBracket>\[<:gPatInt>\]:\s+\[<eventType:patStrEndWithRightSquareBracket>\]:<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay> <_time:gPatTime> <:gPatStr> \[<eventType:patStrEndWithRightSquareBracket>\]:?<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay> <_time:gPatTime> <:gPatStr>\s+java:\s+\[<eventType:patStrEndWithRightSquareBracket>\]:?<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <!-- 2024-03-08T09:33:39.672153+00:00 fsmhost01 phAgentManager[5830]: -->
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>(?:\.\d+<_tz:gPatTimeZone>)?\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+<procName:patStrEndWithLeftSquareBracket>\[<:gPatInt>\]:\s+\[<eventType:patStrEndWithRightSquareBracket>\]:?<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[\[<eventType:patStrEndWithRightSquareBracket>\]:?<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <choose>
+      <when test="not_exist _mon"/>
+      <when test="not_exist _day"/>
+      <when test="not_exist _time"/>
+      <when test="exist _tz">
+        <choose>
+          <when test="not_exist _year">
+            <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time, $_tz)</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+      <otherwise>
+        <choose>
+          <when test="not_exist _year">
+            <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+          </otherwise>
+        </choose>
+      </otherwise>
+    </choose>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[^<_body:gPatMesgBody>,\[phLogDetail\]=]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+
+    <choose>
+      <when test="matches($eventType, 'DEV_MON|_JDBC_|PH_ML_ANOMALY_')">
+        <setEventAttribute attr="phEventCategory">6</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="phEventCategory">3</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <!--  replace ,\s+[ to ,[  -->
+    <setEventAttribute attr="_body">replaceStringByRegex($_body, ",\s+\[(\w+)\]=", ",[\1]=")</setEventAttribute>
+
+    <collectAndSetAttrBySymbol src="$_body" sep=",[" symStart="[" symEnd="]=">
+      <excludeAttr>phLogDetail</excludeAttr>
+    </collectAndSetAttrBySymbol>
+
+    <!-- special case, parse time in event attribute  -->
+    <when test="matches($eventType, '_ACTION_STATUS')">
+      <collectFieldsByRegex src="$_body">
+        <regex><![CDATA[.*\[actionTime\]=<:gPatStr> <_mon:gPatMon> <_day:gPatDay> <_time:gPatTime> <:gPatStr> <_year:gPatYear>.*]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="actionTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+
+    <when test="exist infoURL">
+      <setEventAttribute attr="_dest">extractHostFromURL($infoURL)</setEventAttribute>
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_dest">
+            <regex><![CDATA[^<destIpAddr:gPatIpAddr>$]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="destName">$_dest</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+
+    <!-- event severity -->
+    <when test="matches($eventSeverity, '^PHL_')">
+      <setEventAttribute attr="logLevel">$eventSeverity</setEventAttribute>
+    </when>
+    <choose>
+      <when test="$eventSeverity = 'PHL_ALERT'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+
+      <when test="$eventSeverity = 'PHL_CRITICAL'">
+        <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+      </when>
+
+      <when test="$eventSeverity IN 'PHL_ERROR, PHL_WARNING'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+
+      <when test="$eventSeverity = 'PHL_INFO'">
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="$phEventCategory = '6'">
+      <choose>
+        <!-- These FortiGate generated event types must preserve reporting IP, and not set hostIpAddr as reporting IP. -->
+        <when test="$eventType IN 'PH_DEV_MON_FGT_USER_INFO, PH_DEV_MON_ARMIS_DEV_INFO'"/>
+        <otherwise>
+          <when test="exist hostIpAddr">
+            <setEventAttribute attr="reptDevIpAddr">$hostIpAddr</setEventAttribute>
+          </when>
+          <when test="exist hostName">
+            <setEventAttribute attr="reptDevName">$hostName</setEventAttribute>
+          </when>
+        </otherwise>
+      </choose>
+    </when>
+
+    <when test="$phEventCategory = '3'">
+      <!-- For PH_SYSTEM_ and PH_GENERIC_POLLER_(HTTPS_ADVANCED)  events with reptDevIpAddr, we need keep such ip for them.
+           These events can be found in PHLogDef.csv, include:
+           PH_SYSTEM_IP_EVENTS_PER_SEC,
+           PH_SYSTEM_DEVAPP_EVENTS_PER_SEC,
+           PH_SYSTEM_DEVAPP_NO_EVENTS,
+           PH_SYSTEM_DEVICE_NO_EVENTS
+           Other category 3 events should be treated as internal events, and use relayDevIp(AO's Ip) as reptDevIp
+      -->
+      <when test="not_matches($eventType, 'PH_SYSTEM_|PH_GENERIC_POLLER_')">
+        <when test="exist relayDevIpAddr">
+          <setEventAttribute attr="reptDevIpAddr">$relayDevIpAddr</setEventAttribute>
+        </when>
+      </when>
+    </when>
+    <when test="matches($eventType, 'PH_ES_(?:HOT|WARM)_STORAGE_USAGE')">
+      <setEventAttribute attr="_freeDiskMB">combineMsgId($freeDiskMB, 00)</setEventAttribute>
+      <setEventAttribute attr="diskUtil">divide($_freeDiskMB, $totalDiskMB)</setEventAttribute>
+    </when>
+  </parsingInstructions>
+</eventParser>

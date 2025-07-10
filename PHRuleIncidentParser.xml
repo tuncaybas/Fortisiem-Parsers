@@ -1,0 +1,62 @@
+<eventParser name="PHRuleIncidentParser">
+
+  <deviceType>
+    <Vendor>CentOS</Vendor>
+    <Model>Linux</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiSIEM</Model>
+    <Version>ANY</Version>
+    <Name>Fortinet FortiSIEM</Name>
+  </appType>
+
+  <eventFormatRecognizer><![CDATA[^\s*(?:<:gPatSyslogPRI>?<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+)?\<!-- PHBOX RULE ENGINE --\>\<event ]]></eventFormatRecognizer>
+  <testEvents>
+    <testEvent><![CDATA[<!-- PHBOX RULE ENGINE --><event name="phRuleIncident"><deviceTime>1409271060</deviceTime><firstSeenTime>1409271060</firstSeenTime><count>1</count><durationMSec>900000</durationMSec><ruleId>1491921</ruleId><ruleName>Server Hardware Critical</ruleName><ruleDescription>Detects a critical server hardware alert.</ruleDescription><eventType>PH_RULE_SERVER_HW_CRITICAL</eventType><eventSeverity>9</eventSeverity><eventSeverityCat>HIGH</eventSeverityCat><phEventCategory>1</phEventCategory><phCustId>1</phCustId><incidentSrc></incidentSrc><incidentTarget>hostName:Host-172.16.22.120, hostIpAddr:172.16.22.120, </incidentTarget><hostIpAddr>172.16.22.120</hostIpAddr><hostName>Host-172.16.22.120</hostName><hwComponentName>RAID 0 vol2 Logical Volume 1 on controller 0- Drives(1e32-?)  - OFFLINE</hwComponentName><hwComponentStatus></hwComponentStatus><incidentDetail>hwComponentName:RAID 0 vol2 Logical Volume 1 on controller 0- Drives(1e32-?)  - OFFLINE, hwComponentStatus:, </incidentDetail><incidentRptIp>172.16.22.120</incidentRptIp><triggerEventLists><triggerEvents subpatName="HwIssueCrit">8264949741156592346</triggerEvents></triggerEventLists><incidentId>14</incidentId></event>]]></testEvent>
+    <testEvent><![CDATA[<13>Nov 09 00:55:09 172.30.58.88 <!-- PHBOX RULE ENGINE --><event name="phRuleIncident"><deviceTime>1409271060</deviceTime><firstSeenTime>1409271060</firstSeenTime><count>1</count><durationMSec>900000</durationMSec><ruleId>1491921</ruleId><ruleName>Server Hardware Critical</ruleName><ruleDescription>Detects a critical server hardware alert.</ruleDescription><eventType>PH_RULE_SERVER_HW_CRITICAL</eventType><eventSeverity>9</eventSeverity><eventSeverityCat>HIGH</eventSeverityCat><phEventCategory>1</phEventCategory><phCustId>1</phCustId><incidentSrc></incidentSrc><incidentTarget>hostName:Host-172.16.22.120, hostIpAddr:172.16.22.120, </incidentTarget><hostIpAddr>172.16.22.120</hostIpAddr><hostName>Host-172.16.22.120</hostName><hwComponentName>RAID 0 vol2 Logical Volume 1 on controller 0- Drives(1e32-?)  - OFFLINE</hwComponentName><hwComponentStatus></hwComponentStatus><incidentDetail>hwComponentName:RAID 0 vol2 Logical Volume 1 on controller 0- Drives(1e32-?)  - OFFLINE, hwComponentStatus:, </incidentDetail><incidentRptIp>172.16.22.120</incidentRptIp><triggerEventLists><triggerEvents subpatName="HwIssueCrit">8264949741156592346</triggerEvents></triggerEventLists><incidentId>14</incidentId></event>]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[^\s*<:gPatSyslogPRI>?<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+\<!-- PHBOX RULE ENGINE --\><_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </case>
+      <default>
+        <setEventAttribute attr="_body">$_rawmsg</setEventAttribute>
+      </default>
+    </switch>
+
+    <collectAndSetAttrByXPath src="$_body" xpath="/event/*"/>
+
+    <when test="exist incidentSource">
+      <collectAndSetAttrByKeyValuePair sep=", " src="$incidentSource">
+        <attrKeyMap attr="srcIpAddr" key="hostIpAddr:"/>
+        <attrKeyMap attr="srcIpAddr" key="srcIpAddr:"/>
+        <attrKeyMap attr="srcName" key="hostName:"/>
+        <attrKeyMap attr="srcName" key="srcName:"/>
+        <attrKeyMap attr="srcUser" key="srcUser:"/>
+      </collectAndSetAttrByKeyValuePair>
+    </when>
+
+    <when test="exist incidentTarget">
+      <collectAndSetAttrByKeyValuePair sep=", " src="$incidentTarget">
+        <attrKeyMap attr="destIpAddr" key="destIpAddr:"/>
+        <attrKeyMap attr="destIpAddr" key="hostIpAddr:"/>
+        <attrKeyMap attr="destName" key="destName:"/>
+        <attrKeyMap attr="destName" key="hostName:"/>
+        <attrKeyMap attr="user" key="user:"/>
+      </collectAndSetAttrByKeyValuePair>
+    </when>
+
+    <setEventAttributeFromXPathArray attr="inIncidentEventIdList" sep=", "><![CDATA[/event/triggerEventLists/triggerEvents]]></setEventAttributeFromXPathArray>
+  </parsingInstructions>
+</eventParser>
+<!--setEventAttributeFromXPathNode><![CDATA[event/node()]]></setEventAttributeFromXPathNode-->
+<!--setEventAttribute attr="deviceTime">toDateTimeFromTimeT($mesgDevTimeT)</setEventAttribute-->
+<!--setEventAttribute attr="eventSeverity">$mesgIdSev</setEventAttribute-->

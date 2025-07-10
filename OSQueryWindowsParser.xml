@@ -1,0 +1,113 @@
+<eventParser name="OSQueryWindowsParser">
+
+  <deviceType>
+    <Vendor>Microsoft</Vendor>
+    <Model>Windows</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[2023-05-26T00:55:36Z lab01.example.com 192.168.1.162 PH_OSQUERY_WIN_scheduled_tasks [phCustId]="1" [customer]="super" [monitorStatus]="Success" [Locale]="en-US" [MachineGuid]="11111111-1111-1111-1111-111111111111" [timeZone]="-0800" [CorrelationId]="11111111-1111-1111-1111-111111111111" [Severity]="1" [RunTimestamp]=2023-05-25T17:55:32.586-07:00" [RunTimeInSeconds]=4" [Status]="success" [Error]="" [Result]={"actionReturnCode":"267011","enabledState":"1","filePath":"\\Microsoft\\Windows\\Bluetooth\\UninstallDeviceTask","msg":"The task has not yet run.","operationState":"ready","programName":" BthUdTask.exe $(Arg0)","task":"UninstallDeviceTask","updateTime":"1999-11-30 07:00:00"}]]></testEvent>
+    <testEvent><![CDATA[2023-06-16T15:10:42Z lab01.example.com 192.168.1.25 PH_OSQUERY_WIN_logged_in_users_now_clone [phCustId]="1" [customer]="super" [monitorStatus]="Success" [Locale]="en-US" [MachineGuid]="21a17c3b-b504-4628-86a5-8xxxxxxxxxx" [timeZone]="-0800" [CorrelationId]="11111111-1111-1111-1111-111111111111" [Severity]="5" [RunTimestamp]="2023-06-16T08:10:42.349-07:00" [RunTimeInSeconds]="0" [Status]="success" [Error]="" [Result]={"dirName":"C:\\Users\\admin1","domain":"example.com","eventTime":"2023-06-16 09:20:59","isLocalUser":"no","loginType":"Interactive","user":"admin1","userId":"S-1-5-21-1960408961-12345698-12345488-1111435"}]]></testEvent>
+    <testEvent><![CDATA[2023-06-16T15:07:56Z lab01.example.com 192.168.1.25 PH_OSQUERY_WIN_routes [phCustId]="1" [customer]="super" [monitorStatus]="Success" [Locale]="en-US" [MachineGuid]="21a17c3b-b504-4628-86a5-8xxxxxxxxxx" [timeZone]="-0800" [CorrelationId]="11111111-1111-1111-1111-111111111111" [Severity]="9" [RunTimestamp]="2023-06-16T08:07:56.345-07:00" [RunTimeInSeconds]="0" [Status]="success" [Error]="" [Result]={"destination":"fe80::d536:66ac:3fdb:18c2","flags":"-1","gateway":"::","interface":"","metric":"321","mtu":"1500","netmask":"128","source":"","type":"local"}]]></testEvent>
+  </testEvents>
+
+  <!-- pattern definitions -->
+  <patternDefinitions>
+    <pattern name="patEventType"><![CDATA[[\w_-]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\s+PH_OSQUERY_WIN_]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime><_tz:gPatTimeZone>\s+<reptDevName:gPatHostName>\s+<reptDevIpAddr:gPatIpAddr>\s+<_et:patEventType>\s+<_body:gPatMesgBody>\s+\[Result\]=<jsonBody:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+
+    <!-- set event type, normalize all versions mac/win/li -->
+    <choose>
+      <when test="exist _et">
+        <setEventAttribute attr="eventType">$_et</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">PH_OSQUERY_WIN_Generic</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <!-- set time from event -->
+    <choose>
+      <when test="not_exist _mon"/>
+      <when test="not_exist _day"/>
+      <when test="not_exist _year"/>
+      <when test="not_exist _time"/>
+      <when test="exist _tz">
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <switch>
+      <case>
+        <collectFieldsByKeyValuePair sep=" [" kvsep="]=" src="$_body">
+          <attrKeyMap attr="phCustId" key="phCustId"/>
+          <attrKeyMap attr="customer" key="customer"/>
+          <attrKeyMap attr="monitorStatus" key="monitorStatus"/>
+          <attrKeyMap attr="machineGUID" key="MachineGuid"/>
+          <attrKeyMap attr="machineGUID" key="machineGUID"/>
+          <attrKeyMap attr="correlationId" key="CorrelationId"/>
+          <attrKeyMap attr="task" key="taskId"/>
+          <attrKeyMap attr="totalNum" key="totalNum"/>
+          <attrKeyMap attr="eventSeverity" key="Severity"/>
+          <attrKeyMap attr="_runTimeStart" key="RunTimestamp"/>
+          <attrKeyMap attr="_runTimeSec" key="RunTimeInSeconds"/>
+          <attrKeyMap attr="seqNum" key="seqNum"/>
+          <attrKeyMap attr="status" key="Status"/>
+          <attrKeyMap attr="errorString" key="Error"/>
+        </collectFieldsByKeyValuePair>
+      </case>
+      <default/>
+    </switch>
+
+    <when test="exist _runTimeSec">
+      <setEventAttribute attr="runTime">scale($_runTimeSec, 1000)</setEventAttribute>
+    </when>
+
+    <when test="exist _runTimeStart">
+      <switch>
+        <case>
+          <!-- 2023-06-16T08:07:56.345-07:00 -->
+          <collectFieldsByRegex src="$_runTimeStart">
+            <regex><![CDATA[<_runYear:gPatYear>-<_runMon:gPatMonNum>-<_runDay:gPatDay>T<_runTime:gPatTime>\.\d+<_runTz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="startTime">toDateTime($_runMon, $_runDay, $_runYear, $_runTime, $_runTz)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <setEventAttribute attr="extEventRecvProto">Windows Agent</setEventAttribute>
+    <!-- will only parse properly if JSON key in log is exact match to a FortiSIEM event attribute of valid type -->
+    <!-- e.g. the field eventSeverity will only map if the key matches eventSeverity and the value is within integer range 1-10 -->
+    <when test="exist jsonBody">
+      <collectAndSetAttrByJsonSymbol src="$jsonBody"/>
+    </when>
+
+    <!-- Several OSQuery reports look at host IP rather than reporting ip, we normalize if it isn't explicitly set in parser -->
+    <choose>
+      <when test="exist hostIpAddr"/>
+      <when test="exist hostName"/>
+      <otherwise>
+        <setEventAttribute attr="hostIpAddr">$reptDevIpAddr</setEventAttribute>
+        <setEventAttribute attr="hostName">$reptDevName</setEventAttribute>
+      </otherwise>
+    </choose>
+
+  </parsingInstructions>
+</eventParser>

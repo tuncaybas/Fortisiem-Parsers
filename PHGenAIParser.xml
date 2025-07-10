@@ -1,0 +1,32 @@
+<eventParser name="PHGenAIParser">
+  <deviceType>
+    <Vendor>CentOS</Vendor>
+    <Model>Linux</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Fortinet</Vendor>
+    <Model>FortiSIEM</Model>
+    <Version>ANY</Version>
+    <Name>Fortinet FortiSIEM</Name>
+  </appType>
+
+  <testEvents>
+    <testEvent><![CDATA[<14>Oct 26 12:18:57 sp2078 phGenerativeAI: [PH_AUDIT_GENAI_USER_QUERY]:[eventSeverity]=INFO,[phEventCategory]=2,[tokenCount]=588,[price]=0.0011090000000000002,[queryData]={Can you analyze this log and tell me what action should I take? "<132>Jul 11 2008 03:59:15: %ASA-4-106023: Deny udp src inside:FSM_9416876938/123 dst outside:FSM_6279168856/123 by access-group "inside_to_outside" \[0x0, 0x0\]"}]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[^\s*<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+phGenerativeAI:\s+\[PH_AUDIT_GENAI_USER_QUERY\]:]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+phGenerativeAI:\s+\[<eventType:gPatWord>\]:<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+    <setEventAttribute attr="phEventCategory">2</setEventAttribute>
+
+    <collectAndSetAttrBySymbol src="$_body" sep=",[" symStart="[" symEnd="]="/>
+
+  </parsingInstructions>
+</eventParser>

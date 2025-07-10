@@ -1,0 +1,96 @@
+<eventParser name="OracleAuditParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Oracle</Vendor>
+    <Model>Database Server</Model>
+    <Version>ANY</Version>
+    <Name>Oracle Database Server</Name>
+  </appType>
+
+  <patternDefinitions>
+    <pattern name="patQuote"><![CDATA[[^']*]]></pattern>
+    <pattern name="patStrSemicolon"><![CDATA[[^ ;]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>Oracle Audit\[\d+\]: LENGTH]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<172>Oracle Audit[25487]: LENGTH : '153' ACTION :[004] 'bjn' DATABASE USER:[9] 'user' PRIVILEGE :[4] 'NONE' CLIENT USER:[9] 'user' CLIENT TERMINAL:[14] 'terminal' STATUS:[1] '0']]></testEvent>
+    <testEvent><![CDATA[<172>Oracle Audit[6561]: LENGTH : '158' ACTION :[6] 'COMMIT' DATABASE USER:[8] 'user' PRIVILEGE :[6] 'SYSDBA' CLIENT USER:[6] 'user' CLIENT TERMINAL:[0] '' STATUS:[1] '0' DBID:[9] '200958341']]></testEvent>
+    <testEvent><![CDATA[<172>Oracle Audit[27581]: LENGTH : '187' ACTION :[34] 'select distinct sid from v$mystat]]></testEvent>
+    <testEvent><![CDATA[<172>Oracle Audit[6608]: LENGTH : '208' ACTION :[55] 'alter session set remote_dependencies_mode = signature]]></testEvent>
+    <testEvent><![CDATA[<172>Oracle Audit[29336]: LENGTH: 180 SESSIONID:[6] 919778 ENTRYID:[1] 1 ACTION:[3] 101 RETURNCODE:[1] 0 LOGOFF$PREAD:[1] 0 LOGOFF$LREAD:[2] 37 LOGOFF$LWRITE:[1] 0 LOGOFF$DEAD:[1] 0 SESSIONCPU:[1] 0]]></testEvent>
+    <testEvent><![CDATA[<172>Oracle Audit[26609]: LENGTH: 212 SESSIONID:[8] 81378312 ENTRYID:[1] 2 STATEMENT:[1] 7 USERID:[8] SCSFMLDR USERHOST:[14] z1t1brpavla126 ACTION:[2] 55 RETURNCODE:[1] 0 OBJ$NAME:[3] ALL OS$USERID:[6] oracle DBID:[9] 866609593]]></testEvent>
+    <testEvent><![CDATA[<172>Oracle Audit[16954]: LENGTH: 248 SESSIONID:[8] 44623409 ENTRYID:[1] 2 STATEMENT:[2] 13 USERID:[8] ROSALESE USERHOST:[15] ab\cd TERMINAL:[12] terminal ACTION:[2] 43 RETURNCODE:[1] 0 OBJ$NAME:[9] U76005159 OS$USERID:[8] user PRIV$USED:[2] 22]]></testEvent>
+    <testEvent><![CDATA[<172>Oracle Audit[22459]: LENGTH: 334 SESSIONID:[8] 81386919 ENTRYID:[1] 1 STATEMENT:[1] 1 USERID:[12] ORA$user USERHOST:[14] host ACTION:[3] 100 RETURNCODE:[1] 0 COMMENT$TEXT:[95] Authenticated by: OS; Client address: (ADDRESS=(PROTOCOL=tcp)(HOST=192.168.217.88)(PORT=28175)) OS$USERID:[8] user DBID:[9] 866609593 PRIV$USED:[1] 5]]></testEvent>
+    <testEvent><![CDATA[<172>Oracle Audit[28061]: LENGTH: 265 SESSIONID:[9] 118110747 ENTRYID:[5] 14188 STATEMENT:[5] 28375 USERID:[8] user ACTION:[3] 100 RETURNCODE:[1] 0 COMMENT$TEXT:[99] Authenticated by: DATABASE; Client address: (ADDRESS=(PROTOCOL=tcp)(HOST=10.90.217.247)(PORT=4566)) PRIV$USED:[1] 5]]></testEvent>
+    <testEvent><![CDATA[<172>Oracle Audit[29833]: LENGTH: 292 SESSIONID:[10] 1163576557 ENTRYID:[1] 1 STATEMENT:[1] 1 USERID:[7] SISTB2B USERHOST:[8] host ACTION:[3] 100 RETURNCODE:[4] 1017 COMMENT$TEXT:[101] Authenticated by: DATABASE; Client address: (ADDRESS=(PROTOCOL=tcp)(HOST=192.168.212.156)(PORT=3496)) DBID:[9] 200958341]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">ORADB-Audit-Generic</setEventAttribute>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>Oracle Audit\[\d+\]:\s+LENGTH\s+:\s+'\d+'\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+
+        <setEventAttribute attr="_body">replaceStringByRegex($_body, "\[\d+\]\s*", "")</setEventAttribute>
+
+        <collectAndSetAttrByKeyValuePair sep="' " src="$_body">
+          <attrKeyMap attr="oraAuditAction" key="ACTION :'"/>
+          <attrKeyMap attr="dbUser" key="DATABASE USER:'"/>
+          <attrKeyMap attr="user" key="CLIENT USER:'"/>
+          <attrKeyMap attr="srcName" key="CLIENT TERMINAL:'"/>
+        </collectAndSetAttrByKeyValuePair>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>Oracle Audit\[\d+\]:\s+LENGTH:\s+\d+\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+
+        <setEventAttribute attr="_body">replaceStringByRegex($_body, "\[\d+\]\s*", "")</setEventAttribute>
+
+        <collectAndSetAttrByKeyValuePair sep=" " src="$_body">
+          <attrKeyMap attr="sessionId" key="SESSIONID:"/>
+          <attrKeyMap attr="user" key="USERID:"/>
+          <attrKeyMap attr="hostName" key="USERHOST:"/>
+          <attrKeyMap attr="oraAuditAction" key="ACTION:"/>
+          <attrKeyMap attr="dbId" key="DBID:"/>
+        </collectAndSetAttrByKeyValuePair>
+
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[COMMENT\$TEXT:Authenticated by:\s+<_obj:patStrSemicolon>;\s+Client address:\s+\(ADDRESS=\(PROTOCOL=<_proto:gPatWord>\)\(HOST=<srcIpAddr:gPatIpAddr>\)\(PORT=<srcIpPort:gPatInt>\)\)]]></regex>
+            </collectFieldsByRegex>
+            <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+          </case>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[COMMENT\$TEXT:Authenticated by:\s+<_obj:patStrSemicolon>]]></regex>
+            </collectFieldsByRegex>
+          </case>
+          <default/>
+        </switch>
+
+        <when test="exist _obj">
+          <choose>
+            <when test="$_obj = 'DATABASE'">
+              <setEventAttribute attr="eventType">ORADB-Audit-AuthenticatedByDB</setEventAttribute>
+            </when>
+            <otherwise>
+              <setEventAttribute attr="eventType">combineMsgId("ORADB-Audit-AuthenticatedBy", $_obj)</setEventAttribute>
+            </otherwise>
+          </choose>
+        </when>
+      </case>
+    </switch>
+  </parsingInstructions>
+</eventParser>

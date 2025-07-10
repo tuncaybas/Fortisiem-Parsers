@@ -1,0 +1,236 @@
+<eventParser name="OneIdentityParser">
+  <deviceType>
+    <Vendor>One Identity</Vendor>
+    <Model>Safeguard</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<123>2018-10-08T22:59:49+08:00 hostname.company zorp/scb_rdp[31769]: core.debug(4): (svc/i9CTbTzV2wrRur3quVRzF4/GET_gateway_rdp:498:2): After NAT mapping; nat_type='0', src_addr='AF_INET(1.1.1.1:0)', dst_addr='AF_INET(1.1.1.2:3389)', new_addr='AF_INET(1.1.1.3:0)']]></testEvent>
+    <testEvent><![CDATA[<123>2018-10-08T22:59:49+08:00 hostname.company zorp/scb_rdp[31769]: core.debug(4): (svc/i9CTbTzV2wrRur3quVRzF4/GET_gateway_rdp:498:2): After NAT mapping; nat_type='0', src_addr='AF_INET(1.1.1.1:0)', dst_addr='AF_INET(1.1.1.2:3389)', new_addr='AF_INET(1.1.1.3:0)']]></testEvent>
+    <testEvent><![CDATA[<6>Jun 5 03:12:10 hostname.company.com paa pam/pipeline[1805@scb2]: INFO c.b.pam.pipeline.EventStatistics event processing statistics (avg/sec); AvgSessionCreated=0.03332777870884583; AvgSessionTimeout=0.016663889354422916; AvgSessionSwappedOut=0.0; EPS=0.16663889354422917; MeasurementDuration=60.00999999046326; MemoryUsage=6650/2560000(0.259765625%); SessionsWithoutMemoryUsageEstimate=0; CurrentSessionCount=9]]></testEvent>
+    <testEvent><![CDATA[<134>Jun  5 03:20:02 hostname.company.com scb/sphinx-managedirs[21667]: INFO (root@localhost) Sphinx index is not yet initialized, skipping check; connection='MBU_gateway_rdp']]></testEvent>
+    <testEvent><![CDATA[<182>Jun  4 11:35:09 hostname.company.com zorp/scb_rdp[9670]: tsg.error(3): (svc/rbxPyc6JkgqhAHzFEgroBi/GET_gateway_rdp:20802/tsg): Unknown HTTP method received; method='POST']]></testEvent>
+    <testEvent><![CDATA[<134>Jun  5 01:00:02 hostname.company.com scb/archive[4889]: INFO (root@localhost) Sending mail; to='someuser@company.com']]></testEvent>
+    <testEvent><![CDATA[<14>Jun 5 13:13:41 hostname.company.com indexerservice[342]: LogID:8388612 scheduler(3): Clean up old jobs from queues]]></testEvent>
+    <testEvent><![CDATA[<132>Jun 6 02:33:52 hostname.company.com restserver[269]: Trying to access resources without authorization; path='', username=None]]></testEvent>
+    <testEvent><![CDATA[<134>Jun 5 11:36:24 hostname.company.com scb/web: INFO (joeuser@1.1.1.1) Authentication succeeded; username='user1', groups='group1, dl_globalGroup1, group2']]></testEvent>
+    <testEvent><![CDATA[<6>Jun 26 01:54:37 hostname.company.com paa-pipeline[1813]: INFO c.b.pam.pipeline.StatisticsActor Statistics; MeasurementDuration=60.0; AckRate=0.07/sec; PublishFailure=0.0/sec; AvgSessionTimeout=0.02/sec; PublishSuccess=0.03/sec; AvgSessionCreated=0.02/sec; EPS=0.07/sec; PublishRate=0.03/sec; PublishedDocumentsPerBulkRequest=mean: 1.0, percentiles 10: 1.0, 50: 1.0, 90: 1.0; SessionActorCount=1]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patBalabit"><![CDATA[paa|zorp\/\S+|pam\/\S+|xcb/traptotrap|scb/\S+|paa-pipeline|restserver|indexerservice|dynamic-report-generator.py]]></pattern>
+    <pattern name="patStrRightParen"><![CDATA[[^)]*]]></pattern>
+    <pattern name="patStrAction"><![CDATA[[^,;.]*]]></pattern>
+    <pattern name="patFloat"><![CDATA[\d+\.\d+]]></pattern>
+    <pattern name="patSeverity"><![CDATA[INFO|DEBUG|WARN|ERROR]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\s+(?:<:patBalabit>\[<:gPatStr>\]|<:patBalabit>\s+<:patBalabit>\[<:gPatStr>\]|<:patBalabit>:\s+<:patSeverity>)]]></eventFormatRecognizer>
+  <parsingInstructions>
+    <!-- Parse date and hostname from message header -->
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<reptDevName:gPatHostName>\s+<_preParse:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime><_tz:gPatTimeZone>\s+<reptDevName:gPatHostName>\s+<_preParse:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+    <switch>
+      <case>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+      </case>
+      <case>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+      </case>
+    </switch>
+    <switch>
+      <!-- Parse severity, event type, and body -->
+      <case>
+        <!-- [1805@scb2]: INFO c.b.pam.pipeline.EventStatistics event processing statistics -->
+        <collectFieldsByRegex src="$_preParse">
+          <regex><![CDATA[\[<procId:gPatInt>\S+?\]:\s+<_sev:gPatStr>\s+(?:\S+\.){4}<_eventType:gPatStr><_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <!--
+  [4889]: INFO (root@localhost) Archive (cbast_routing_ssh)
+  [4894]: INFO (root@localhost) Archive (BTS_routing_rdp): No files/directories to be cleaned up
+  -->
+        <collectFieldsByRegex src="$_preParse">
+          <regex><![CDATA[\[<procId:gPatInt>\S*\]:\s+<_sev:gPatStr>\s+\(<user:patStrRightParen>\)\s+<_eventType:gPatStr>\s+\(<_connMode:patStrRightParen>\):<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <!-- [4883]: INFO (root@localhost) Sending mail; to='billgates@microsoft.com' -->
+        <collectFieldsByRegex src="$_preParse">
+          <regex><![CDATA[\[<procId:gPatInt>\S*\]:\s+<_sev:gPatStr>\s+\(<user:patStrRightParen>\)\s+<_eventType:patStrAction><_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <!-- [17963]: INFO (root@localhost) Sphinx index is not yet initialized, skipping check -->
+        <collectFieldsByRegex src="$_preParse">
+          <regex><![CDATA[\[<procId:gPatInt>\S*\]:\s+<_sev:gPatStr>\s+\(<_connMode:patStrRightParen>\):?\s*<_eventType:patStrAction><_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <!-- [424]: LogID:82 scheduler(3): Deleting jobs; jobs='()' -->
+        <collectFieldsByRegex src="$_preParse">
+          <regex><![CDATA[\[<procId:gPatInt>\S*\]:\s+LogID:<logID:gPatInt>\s+<:gPatStr>\(\d+\):\s*<_eventType:patStrAction><_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <!-- [1895]: (dynamicreportgen) INFO Report already generated -->
+        <collectFieldsByRegex src="$_preParse">
+          <regex><![CDATA[\[<procId:gPatInt>\S*\]:\s+\(<:gPatStr>\)\s+<_sev:gPatStr>\s+<_eventType:patStrAction>\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <!-- [269]: Trying to access resources without authorization -->
+        <collectFieldsByRegex src="$_preParse">
+          <regex><![CDATA[\[<procId:gPatInt>\S*\]:\s+<_eventType:patStrAction>;\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <!-- : INFO (joeuser@10.10.10.10) User is logged out -->
+        <collectFieldsByRegex src="$_preParse">
+          <regex><![CDATA[:\s+<_sev:gPatStr>\s+\(<user:gPatStr>@<srcIpAddr:gPatIpAddr>\)\s+<_eventType:patStrAction>;\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+    <switch>
+      <case>
+        <setEventAttribute attr="_connMode">replaceStringByRegex($_connMode, ":", "/")</setEventAttribute>
+        <collectAndSetAttrByPos src="$_connMode" sep="/">
+          <attrPosMap attr="connMode" pos="3"/>
+        </collectAndSetAttrByPos>
+      </case>
+      <case>
+        <setEventAttribute attr="connMode">$_connMode</setEventAttribute>
+      </case>
+      <default/>
+    </switch>
+    <setEventAttribute attr="eventType">OneIdentity-Safeguard-Generic</setEventAttribute>
+    <switch>
+      <case>
+        <!-- Some message are delimited with all semi-colons, need to be commas -->
+        <setEventAttribute attr="_body">replaceStringByRegex($_body, ";", ",")</setEventAttribute>
+      </case>
+      <default/>
+    </switch>
+    <switch>
+      <case>
+        <collectAndSetAttrByKeyValuePair sep="," src="$_body">
+          <attrKeyMap attr="_clientAddr" key="client_address="/>
+          <attrKeyMap attr="_clientLocal" key="client_local="/>
+          <attrKeyMap attr="_networkid" key="network_id="/>
+          <attrKeyMap attr="_proto" key="protocol="/>
+          <attrKeyMap attr="appTransportProto" key="client_protocol="/>
+          <attrKeyMap attr="authResult" key="verdict="/>
+          <attrKeyMap attr="command" key="cmd="/>
+          <attrKeyMap attr="connMode" key="connection_name="/>
+          <attrKeyMap attr="connMode" key="connection="/>
+          <attrKeyMap attr="_destIpAddr" key="dst_addr="/>
+          <attrKeyMap attr="hostIpAddr" key="server_ip="/>
+          <attrKeyMap attr="hostIpPort" key="server_port="/>
+          <attrKeyMap attr="ipConnId" key="connection_id="/>
+          <attrKeyMap attr="sessionId" key="session_id="/>
+          <attrKeyMap attr="srcIpAddr" key="client_ip="/>
+          <attrKeyMap attr="_srcIpAddr" key="src_addr="/>
+          <attrKeyMap attr="srcIpAddr" key="src_ip="/>
+          <attrKeyMap attr="_postNATSrcIpAddr" key="new_addr="/>
+          <attrKeyMap attr="srcIpPort" key="client_port="/>
+          <attrKeyMap attr="srcIpPort" key="src_port="/>
+          <attrKeyMap attr="type" key="type="/>
+          <attrKeyMap attr="httpMethod" key="method="/>
+          <attrKeyMap attr="_user" key="username="/>
+          <attrKeyMap attr="sessionCreateRate" key="AvgSessionCreated="/>
+          <attrKeyMap attr="sessionTimeoutSec" key="AvgSessionTimeout="/>
+          <attrKeyMap attr="sessionsSwapped" key="AvgSessionSwappedOut="/>
+          <attrKeyMap attr="sdevEventsPerSec" key="EPS="/>
+          <attrKeyMap attr="sysMemMonDuration" key="MeasurementDuration="/>
+          <attrKeyMap attr="durationHostWarn" key="SessionsWithoutMemoryUsageEstimate="/>
+          <attrKeyMap attr="activeSessions" key="CurrentSessionCount="/>
+          <attrKeyMap attr="receiverMailAddr" key="to="/>
+          <attrKeyMap attr="_jobId" key="jobs="/>
+          <attrKeyMap attr="reportName" key="report_id="/>
+          <attrKeyMap attr="resourceName" key="path="/>
+          <attrKeyMap attr="hwSlot" key="slot="/>
+          <attrKeyMap attr="version" key="version="/>
+          <attrKeyMap attr="userGrp" key="groups="/>
+        </collectAndSetAttrByKeyValuePair>
+      </case>
+      <case>
+        <setEventAttribute attr="msg">$_body</setEventAttribute>
+      </case>
+      <default/>
+    </switch>
+    <when test="exist _eventType">
+      <collectFieldsByRegex src="$_eventType">
+        <regex><![CDATA[<_eventType:gPatStrEndColon>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="_eventType">replaceStringByRegex($_eventType, "\s+", "-")</setEventAttribute>
+      <setEventAttribute attr="eventType">combineMsgId("OneIdentity-Safeguard-", $_eventType)</setEventAttribute>
+    </when>
+    <when test="exist _jobId">
+      <collectFieldsByRegex src="$_jobId">
+        <regex><![CDATA[\(<jobId:gPatMesgBodyMin>\)]]></regex>
+      </collectFieldsByRegex>
+    </when>
+    <when test="exist _clientAddr">
+      <collectFieldsByRegex src="$_clientAddr">
+        <regex><![CDATA[\(<srcIpAddr:gPatIpV4Dot>:<srcIpPort:gPatInt>\)]]></regex>
+      </collectFieldsByRegex>
+    </when>
+    <when test="exist _destIpAddr">
+      <collectFieldsByRegex src="$_destIpAddr">
+        <regex><![CDATA[\(<destIpAddr:gPatIpV4Dot>:<destIpPort:gPatInt>\)]]></regex>
+      </collectFieldsByRegex>
+    </when>
+    <when test="exist _srcIpAddr">
+      <collectFieldsByRegex src="$_srcIpAddr">
+        <regex><![CDATA[\(<srcIpAddr:gPatIpV4Dot>:<srcIpPort:gPatInt>\)]]></regex>
+      </collectFieldsByRegex>
+    </when>
+    <when test="exist _clientLocal">
+      <collectFieldsByRegex src="$_clientLocal">
+        <regex><![CDATA[\(<hostIpAddr:gPatIpV4Dot>:<destIpPort:gPatInt>\)]]></regex>
+      </collectFieldsByRegex>
+    </when>
+    <when test="exist _user and not(user='None')">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+    <when test="exist _postNATSrcIpAddr">
+      <collectFieldsByRegex src="$_postNATSrcIpAddr">
+        <regex><![CDATA[\(<postNATSrcIpAddr:gPatIpV4Dot>:<postNATSrcIpPort:gPatInt>\)]]></regex>
+      </collectFieldsByRegex>
+    </when>
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+    <when test="exist _sev">
+      <choose>
+        <when test="matches($_sev, '[Vv]iolation|VIOLATION|ALERT|[Cc]ritical|CRIT|CRITICAL')">
+          <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        </when>
+        <when test="matches($_sev, '[Ee]rror|ERROR|ERR|[Ww]arn|WARN')">
+          <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+        </when>
+        <when test="matches($_sev, '[Aa]udit|AUDIT|[Ii]nfo|INFO')">
+          <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+        </when>
+        <when test="matches($_sev, '[Dd]ebug|DEBUG|[Ii]nfo|INFO')">
+          <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        </when>
+        <otherwise>
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </otherwise>
+      </choose>
+    </when>
+  </parsingInstructions>
+</eventParser>

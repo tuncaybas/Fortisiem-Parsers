@@ -1,0 +1,249 @@
+<eventParser name="PostfixParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Generic</Vendor>
+    <Model>Postfix</Model>
+    <Version>ANY</Version>
+    <Name>Postfix SMTP Gateway</Name>
+  </appType>
+
+  <patternDefinitions>
+    <pattern name="patPostfixMod"><![CDATA[bounce|cleanup|local|master|pickup|postfix-script|qmgr|scache|smtp|smtpd|smtps/smtpd|trivial-rewrite|submission/smtpd|anvil|error|lmtp|pipe|postsuper]]></pattern>
+    <pattern name="patConnect"><![CDATA[(?:dis)?connect]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI>(?:<:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:gPatHostName>\s+)?postfix/<:patPostfixMod>\[\d+\]:\s]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<22>postfix/smtpd[16022]: connect from example.com[1.1.1.1]]]></testEvent>
+    <testEvent><![CDATA[<22>postfix/smtp[16098]: connect to example.com[1.1.1.1]: Connection refused (port 25)]]></testEvent>
+    <testEvent><![CDATA[<22>postfix/smtpd[16021]: lost connection after CONNECT from localhost.localdomain[1.0.0.1]]]></testEvent>
+    <testEvent><![CDATA[<22>postfix/qmgr[3113]: 28484338014: from=<user@example.net>, size=36041, nrcpt=1 (queue active)]]></testEvent>
+    <testEvent><![CDATA[<22>postfix/qmgr[3113]: 41A97338409: from=<>, status=expired, returned to sender]]></testEvent>
+    <testEvent><![CDATA[<22>postfix/smtp[16100]: 50076338C12: host example.com[1.1.9.1] said: 450 4.1.1 <user@myComp.com>: Recipient address rejected: unverified address: host 1.1.1.1[1.10.1.1] said: 550 5.1.1 User unknown (in reply to RCPT TO command) (in reply to RCPT TO command)]]></testEvent>
+    <testEvent><![CDATA[<22>postfix/cleanup[16049]: 2A272338014: message-id=<user@example.com>]]></testEvent>
+    <testEvent><![CDATA[<22>postfix/bounce[15891]: 0FD6F3382FB: sender non-delivery notification: 1C437338653]]></testEvent>
+    <testEvent><![CDATA[<22>postfix/smtp[16028]: 0A932338014: to=<ab@example.com>, orig_to=<xyz@example.com>, relay=relay.example.com[1.1.1.1]:25, delay=5.1, delays=0.19/0/0.05/4.8, dsn=2.6.0, status=sent (250 2.6.0 <WWW02-23ZH2uXuJil67000060e1@WWW02-22> [InternalId=80640015] Queued mail for delivery)]]></testEvent>
+    <testEvent><![CDATA[<22>Jun 5 01:00:07 example.corp postfix/trivial-rewrite[21043]: using backwards-compatible default setting append_dot_mydomain=yes to rewrite "localhost" to "example.corp"; please add "localhost" to mydestination or other address class]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">Postfix-Generic</setEventAttribute>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+postfix/<procName:patPostfixMod>\[\d+\]:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+        <setEventAttribute attr="msg">$_body</setEventAttribute>
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatSyslogPRI>postfix/<procName:patPostfixMod>\[\d+\]:\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="msg">here2</setEventAttribute>
+      </case>
+    </switch>
+
+    <switch>
+      <!-- DH edits -->
+      <case>
+        <!-- 0A7061037E9B8: client=apn-31-0-36-168.dynamic.gprs.plus.pl[31.0.36.168], sasl_method=LOGIN, sasl_username=dan -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<smtpMsgId:gPatWord>:\s+client=<srcName:gPatStr>\[<srcIpAddr:gPatIpAddr>\],\s+sasl_method=<loginType:gPatWord>, sasl_username=<user:gPatWord>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Postfix-Authentication-From</setEventAttribute>
+      </case>
+      <case>
+        <!-- warning: hostname ip-36-34.bphost does not resolve to address 45.13.36.34 -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[warning: hostname\s+<destName:gPatStr>\s+does not resolve to address\s+<destIpAddr:gPatIpAddr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Postfix-Authentication-From</setEventAttribute>
+      </case>
+      <case>
+        <!-- NOQUEUE: reject: RCPT from unknown[41.228.34.227]: 450 4.2.0 <mbujko@amwaw.edu.pl>: Recipient address rejected: Greylisted for 60 seconds; -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[NOQUEUE: reject: RCPT from\s+<srcName:gPatStr>\[<srcIpAddr:gPatIpAddr>\].*\<<senderMailAddr:gPatStr>\>:]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Postfix-Mail-Reject</setEventAttribute>
+      </case>
+      <case>
+        <!-- Anonymous TLS connection established from 5171.niebieski.net[94.152.193.71]: TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits) -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[Anonymous TLS connection established from\s+<srcName:gPatStr>\[<srcIpAddr:gPatIpAddr>\]:\s+<version:gPatStr>\s+with cipher\s+<encryptAlgo:gPatStr>.*]]></regex>
+          <setEventAttribute attr="msg">here3</setEventAttribute>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Postfix-Anonymous-TLS</setEventAttribute>
+      </case>
+      <case>
+        <!--
+                     717E510435069: from=<bounceback@info.fda.gov>, size=16427, nrcpt=1 (queue active)
+        -->
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[smtpMsgId:gPatWord>:\s+from=\<<senderMailAddr:gPatStr>\>,]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <!-- end DH edits -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <!-- DH edits -->
+          <!-- original <regex><![CDATA[<_action:patConnect> from <desName:gPatStr>\[<destIpAddr:gPatIpAddr>\]]]></regex> -->
+          <regex><![CDATA[<_action:patConnect> from <srcName:gPatStr>\[<srcIpAddr:gPatIpAddr>\]]]></regex>
+          <!-- end DH edits -->
+        </collectFieldsByRegex>
+        <choose>
+          <when test="$_action = 'connect'">
+            <setEventAttribute attr="eventType">Postfix-Connect-From</setEventAttribute>
+          </when>
+          <when test="$_action = 'disconnect'">
+            <setEventAttribute attr="eventType">Postfix-Disconnect-From</setEventAttribute>
+          </when>
+        </choose>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[connect to <destName:gPatStr>\[<destIpAddr:gPatIpAddr>\]:\s+<_body1:gPatMesgBodyMin>\s+\(port <destIpPort:gPatInt>\)]]></regex>
+        </collectFieldsByRegex>
+
+        <choose>
+          <when test="$_body1 = 'Connection refused'">
+            <setEventAttribute attr="eventType">Postfix-Connect-To-refused</setEventAttribute>
+          </when>
+          <when test="$_body1 = 'Connection timed out'">
+            <setEventAttribute attr="eventType">Postfix-Connect-To-timeout</setEventAttribute>
+          </when>
+          <when test="$_body1 = 'No route to host'">
+            <setEventAttribute attr="eventType">Postfix-Connect-To-failure</setEventAttribute>
+          </when>
+        </choose>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[lost connection after CONNECT from <srcName:gPatStr>\[<srcIpAddr:gPatIpAddr>\]]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Postfix-Connect-From-failure</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[host <mailGatewayName:gPatStr>\[<destIpAddr:gPatIpAddr>\] said:\s+<smtpFailCode:gPatInt>\s+<:gPatStr>\s+\<<receiverMailAddr:gPatStr>\>: Recipient address rejected]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Postfix-Mail-Send-Error</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[to=\<<receiverMailAddr:gPatStr>\>, relay=<_relay:gPatStrComma>, delay=<_latency:gPatStr>,]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Postfix-Mail-Accept-Stat</setEventAttribute>
+        <setEventAttribute attr="latency">scale($_latency, 1000)</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[to=\<<:gPatStr>\>, orig_to=\<<receiverMailAddr:gPatStr>\>, relay=<mailGatewayName:gPatStr>\[<destIpAddr:gPatIpAddr>\]:<destIpPort:gPatInt>, delay=<_latency:gPatStr>, .* Queued mail for delivery]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Postfix-Mail-Queued-Stat</setEventAttribute>
+        <setEventAttribute attr="latency">scale($_latency, 1000)</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[daemon started]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Postfix-Daemon-Started</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[starting the Postfix mail system]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Postfix-Mail-Start</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[stopping the Postfix mail system]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Postfix-Mail-Stop</setEventAttribute>
+      </case>
+
+      <!-- DH edits -->
+      <!--
+         <22>Jun  7 11:15:08 mx01 postfix/anvil[7429]: statistics: max connection rate 12/60s for (submission:45.13.36.34) at Jun  7 11:10:14
+        <22>Jun  7 11:15:08 mx01 postfix/anvil[7429]: statistics: max connection count 5 for (submission:45.13.36.34) at Jun  7 11:09:36
+        -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[statistics: max connection \w+\s+<peakConns:gPatInt>(?:\/\d+\w+)?\s+for \(submission:<srcIpAddr:gPatIpAddr>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Postfix-Statistics-Max-Connection</setEventAttribute>
+        <!--
+                     <22>Jun  7 11:15:08 mx01 postfix/anvil[7429]: statistics: max cache size 55 at Jun  7 11:11:19
+        -->
+      </case>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[statistics: max cache size <cacheMaxSize:gPatInt>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Postfix-Statistics-Max-Cache</setEventAttribute>
+      </case>
+      <!-- end DH edits -->
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[statistics: ]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Postfix-Statistics</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[client=<hostName:gPatHostName>\[<hostIpAddr:gPatIpAddr>\]]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[reject: RCPT from <destName:gPatHostName>\[<destIpAddr:gPatIpAddr>\]:.*;\s+from=\<<senderMailAddr:gPatStr>\>\s+to=\<<receiverMailAddr:gPatStr>\>\s+proto=<:gPatStr>\s+helo=\<<mailGatewayName:gPatStr>\>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Postfix-Mail-Reject</setEventAttribute>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[from=\<<senderMailAddr:gPatStr>\>, ]]></regex>
+        </collectFieldsByRegex>
+      </case>
+
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[using backwards-compatible default setting append_dot_mydomain=yes to rewrite "<:gPatStr>" to "<mailDomain:gPatHostName>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="eventType">Postfix-Mail-Address-Rewrite</setEventAttribute>
+      </case>
+      <default/>
+    </switch>
+
+    <when test="exist _relay">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_relay">
+            <regex><![CDATA[<mailGatewayName:gPatStr>\[<destIpAddr:gPatIpAddr>\]:<destIpPort:gPatInt>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default>
+          <setEventAttribute attr="mailGatewayName">$_relay</setEventAttribute>
+        </default>
+      </switch>
+    </when>
+  </parsingInstructions>
+</eventParser>

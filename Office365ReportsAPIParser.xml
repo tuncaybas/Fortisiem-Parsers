@@ -1,0 +1,163 @@
+<eventParser name="Office365ReportsAPIParser">
+
+  <deviceType>
+    <Vendor>Microsoft</Vendor>
+    <Model>Office365</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patStrDoubleQuoted"><![CDATA[[^"]*]]></pattern>
+    <pattern name="patExceptSlash"><![CDATA[[^/]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\[MS_OFFICE365_(?:MessageTrace|MailTraffic.*)\] = \s*]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[[MS_OFFICE365_MessageTrace] = {"EndDate":"/Date(1694294532249)/","FromIP":"10.10.10.19","Index":3,"MessageId":"<11111111-1111-1111-1111-111111111111@example.com>","MessageTraceId":"11111111-1111-1111-1111-111111111111","Organization":"example.onmicrosoft.com","Received":"/Date(1694187970214)/","RecipientAddress":"example@azurestorefortinet.onmicrosoft.com","SenderAddress":"example@microsoft.com","ServerHostName":"reports.office365.com","Size":193926,"StartDate":"/Date(1694121732249)/","Status":"Resolved","Subject":"We detected synchronization errors in your directory","TenantId":"11111111-1111-1111-1111-111111111111","ToIP":null,"__metadata":{"id":"https://reports.office365.com/ecp/ReportingWebService/Reporting.svc/MessageTrace(3)","type":"TenantReporting.MessageTrace","uri":"https://reports.office365.com/ecp/ReportingWebService/Reporting.svc/MessageTrace(3)"},"phCustId":1}]]></testEvent>
+    <testEvent><![CDATA[[MS_OFFICE365_MailTrafficSummary_TopMalwareRecipient] = {"ServerHostName":"reports.office365.com","ServerIpAddr":"10.10.10.10","TenantId":"0000-0000-00000-0000-00000","TopMalwareRecipient":"","count":"0","phCustId":1}]]></testEvent>
+    <testEvent><![CDATA[[MS_OFFICE365_MailTrafficSummary_TopMailRecipient] = {"ServerHostName":"reports.office365.com","ServerIpAddr":"10.10.10.10","TenantId":"0000-0000-00000-0000-00000","TopMailRecipient":"","count":"0","phCustId":1}]]></testEvent>
+    <testEvent><![CDATA[[MS_OFFICE365_MailTrafficSummary_TopMailSender] = {"ServerHostName":"reports.office365.com","ServerIpAddr":"10.10.10.10","TenantId":"0000-0000-00000-0000-00000","TopMailSender":"example@a.com","count":"2","phCustId":1}]]></testEvent>
+    <testEvent><![CDATA[[MS_OFFICE365_MailTrafficSummary_Count] = {"Meeting Created":"41","Meeting Interacted":"57","Read":"12458","Report Date":"2023-08-25","Report Period":"30","ServerHostName":"reports.office365.com","ServerIpAddr":"10.10.10.10","TenantId":"0000-0000-00000-0000-00000","count":"1911","direction":"outbound","phCustId":1,"\ufeffReport Refresh Date":"2023-09-23"}]]></testEvent>
+    <testEvent><![CDATA[[MS_OFFICE365_MessageTrace] = {"Action":"Hosted Mailbox: Inbox","BulkComplaintLevel":null,"Date":"/Date(1695940243000)/","Direction":"Inbound","Domain":"example1.com","EndDate":"/Date(-62135596800000)/","EventType":"Message passed","FileHash":null,"FileName":null,"Index":4,"MalwareName":null,"MessageId":"<9DB1A48827764D1783C1CD22F9BC8D5B@MUMTILLPCMS>","MessageTraceId":"11111111-1111-1111-1111-111111111111","Organization":".com","RecipientAddress":"user@example.com","SenderAddress":"user1@example1.com","ServerHostName":"reports.office365.com","ServerIpAddr":"10.10.10.10","StartDate":"/Date(-62135596800000)/","Subject":"Compliance under Maharashtra State Tax On Professions, Trades, Callings And Employments Act,1975 - ","TenantId":"0000-0000-00000-0000-00000","VerdictSource":"NotSpam","__metadata":{"id":"https://reports.office365.com/ecp/ReportingWebService/Reporting.svc/MailDetailATP(4)","type":"TenantReporting.MailDetailATPReport","uri":"https://reports.office365.com/ecp/ReportingWebService/Reporting.svc/MailDetailATP(4)"},"phCustId":1}]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\[<eventType:gPatStrRightSB>\] = <_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <choose>
+      <!-- Note, this is actually the MailDetailATP report using the office365 reports api, which contains message trace + additional data -->
+      <when test="$eventType = 'MS_OFFICE365_MessageTrace'">
+        <!-- API Used: /ecp/ReportingWebService/Reporting.svc/MailDetailATP -->
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="phCustId" key="phCustId"/>
+          <attrKeyMap attr="tenantId" key="TenantId"/>
+          <attrKeyMap attr="uuid" key="MessageTraceId"/>
+          <attrKeyMap attr="_org" key="Organization"/>
+          <attrKeyMap attr="_date" key="Date"/>
+          <attrKeyMap attr="receiverMailAddr" key="RecipientAddress"/>
+          <attrKeyMap attr="senderMailAddr" key="SenderAddress"/>
+          <attrKeyMap attr="msgId" key="MessageId"/>
+          <attrKeyMap attr="domain" key="Domain"/>
+          <attrKeyMap attr="direction" key="Direction"/>
+          <attrKeyMap attr="virusName" key="MalwareName"/>
+          <attrKeyMap attr="type" key="EventType"/>
+          <attrKeyMap attr="action" key="Action"/>
+          <attrKeyMap attr="hashCode" key="FileHash"/>
+          <attrKeyMap attr="fileName" key="FileName"/>
+          <attrKeyMap attr="status" key="Status"/>
+          <attrKeyMap attr="mailSubject" key="Subject"/>
+          <attrKeyMap attr="resourceType" key="__metadata.type"/>
+          <attrKeyMap attr="mailAction" key="VerdictSource"/>
+        </collectAndSetAttrByJSON>
+        <!-- extract sender and receiver domains -->
+        <when test="exist receiverMailAddr">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$receiverMailAddr">
+                <regex><![CDATA[<:gPatStr>@<destDomain:gPatStr>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+        </when>
+        <when test="exist senderMailAddr">
+          <switch>
+            <case>
+              <collectFieldsByRegex src="$senderMailAddr">
+                <regex><![CDATA[<:gPatStr>@<srcDomain:gPatStr>]]></regex>
+              </collectFieldsByRegex>
+            </case>
+            <default/>
+          </switch>
+        </when>
+
+      </when>
+      <when test="$eventType IN 'MS_OFFICE365_MailTrafficSummary_TopMalwareRecipient,MS_OFFICE365_MailTrafficSummary_TopMailRecipient'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="phCustId" key="phCustId"/>
+          <attrKeyMap attr="tenantId" key="TenantId"/>
+          <attrKeyMap attr="receiverMailAddr" key="TopMalwareRecipient"/>
+          <attrKeyMap attr="receiverMailAddr" key="TopMailRecipient"/>
+          <attrKeyMap attr="count" key="count"/>
+        </collectAndSetAttrByJSON>
+      </when>
+      <when test="$eventType = 'MS_OFFICE365_MailTrafficSummary_TopMailSender'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="phCustId" key="phCustId"/>
+          <attrKeyMap attr="tenantId" key="TenantId"/>
+          <attrKeyMap attr="senderMailAddr" key="TopMailSender"/>
+          <attrKeyMap attr="count" key="count"/>
+        </collectAndSetAttrByJSON>
+      </when>
+      <when test="$eventType = 'MS_OFFICE365_MailTrafficSummary_Count'">
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="phCustId" key="phCustId"/>
+          <attrKeyMap attr="tenantId" key="TenantId"/>
+          <attrKeyMap attr="direction" key="direction"/>
+          <attrKeyMap attr="_meetingCreate" key="Meeting Created"/>
+          <attrKeyMap attr="_meetingInteract" key="Meeting Interacted"/>
+          <attrKeyMap attr="_read" key="Read"/>
+          <attrKeyMap attr="count" key="count"/>
+          <attrKeyMap attr="_endTime" key="Report Date"/>
+          <attrKeyMap attr="_durationMSec" key="Report Period"/>
+        </collectAndSetAttrByJSON>
+      </when>
+      <otherwise>
+        <collectAndSetAttrByJSON src="$_body">
+          <attrKeyMap attr="srcIpAddr" key="FromIP"/>
+          <attrKeyMap attr="phCustId" key="phCustId"/>
+          <attrKeyMap attr="accountId" key="TenantId"/>
+          <attrKeyMap attr="uuid" key="MessageTraceId"/>
+          <attrKeyMap attr="_org" key="Organization"/>
+          <attrKeyMap attr="_date" key="Date"/>
+          <attrKeyMap attr="receiverMailAddr" key="RecipientAddress"/>
+          <attrKeyMap attr="senderMailAddr" key="SenderAddress"/>
+          <attrKeyMap attr="msgId" key="MessageId"/>
+          <attrKeyMap attr="domain" key="Domain"/>
+          <attrKeyMap attr="direction" key="Direction"/>
+          <attrKeyMap attr="fileName" key="FileName"/>
+          <attrKeyMap attr="virusName" key="MalwareName"/>
+          <attrKeyMap attr="type" key="EventType"/>
+          <attrKeyMap attr="action" key="Action"/>
+          <attrKeyMap attr="hashCode" key="FileHash"/>
+          <attrKeyMap attr="size" key="Size"/>
+          <attrKeyMap attr="status" key="Status"/>
+          <attrKeyMap attr="mailSubject" key="Subject"/>
+          <attrKeyMap attr="resourceType" key="__metadata.type"/>
+          <attrKeyMap attr="senderMailAddr" key="TopMailSender"/>
+          <attrKeyMap attr="receiverMailAddr" key="TopMailRecipient"/>
+          <attrKeyMap attr="receiverMailAddr" key="TopMalwareRecipient"/>
+          <attrKeyMap attr="direction" key="direction"/>
+          <attrKeyMap attr="count" key="count"/>
+          <attrKeyMap attr="_durationMSec" key="Report Period"/>
+          <attrKeyMap attr="_endTime" key="Report Date"/>
+        </collectAndSetAttrByJSON>
+      </otherwise>
+    </choose>
+
+    <when test="exist _date">
+      <collectFieldsByRegex src="$_date">
+        <regex><![CDATA[/Date\(<actionTime:gPatInt>\)/]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="actionTime">divide($actionTime, 1000)</setEventAttribute>
+    </when>
+
+    <when test="exist _durationMSec">
+      <!--86400000 = one day-->
+      <setEventAttribute attr="durationMSec">scale($_durationMSec, 86400000)</setEventAttribute>
+    </when>
+
+    <when test="exist _endTime">
+      <!-- 2023-08-28 -->
+      <collectFieldsByRegex src="$_endTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="_time">00:00:00</setEventAttribute>
+      <setEventAttribute attr="endTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

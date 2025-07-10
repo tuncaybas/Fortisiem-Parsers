@@ -1,0 +1,101 @@
+<eventParser name="PCAPPacketsDataParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[PCAP_DATA_FROM_FILE: [relayDevIpAddr]=10.30.30.30, [packageData]={"_index":"packets-2018-09-12","_type":"pcap_file","_score":null,"_source":{"layers":{"frame":{"frame.encap_type":"1","frame.time":"Aug9,201715:03:06.960781000CST","frame.offset_shift":"0.000000000","frame.time_epoch":"1502262186.960781000","frame.time_delta":"0.284393000","frame.time_delta_displayed":"0.284393000","frame.time_relative":"1.625549000","frame.number":"12","frame.len":"997","frame.cap_len":"997","frame.marked":"0","frame.ignored":"0","frame.protocols":"eth:ethertype:ip:tcp:ssl"},"eth":{"eth.dst":"00:50:56:a3:88:a8","eth.dst_tree":{"eth.dst_resolved":"00:50:56:a3:88:a8","eth.addr":"00:50:56:a3:88:a8","eth.addr_resolved":"00:50:56:a3:88:a8","eth.lg":"0","eth.ig":"0"},"eth.src":"c4:34:6b:67:ec:ad","eth.src_tree":{"eth.src_resolved":"c4:34:6b:67:ec:ad","eth.addr":"c4:34:6b:67:ec:ad","eth.addr_resolved":"c4:34:6b:67:ec:ad","eth.lg":"0","eth.ig":"0"},"eth.type":"0x00000800"},"ip":{"ip.version":"4","ip.hdr_len":"20","ip.dsfield":"0x00000000","ip.dsfield_tree":{"ip.dsfield.dscp":"0","ip.dsfield.ecn":"0"},"ip.len":"983","ip.id":"0x000070b1","ip.flags":"0x00000002","ip.flags_tree":{"ip.flags.rb":"0","ip.flags.df":"1","ip.flags.mf":"0"},"ip.frag_offset":"0","ip.ttl":"128","ip.proto":"6","ip.checksum":"0x00000000","ip.checksum.status":"2","ip.src":"10.30.23.75","ip.addr":"10.30.23.75","ip.src_host":"10.30.23.75","ip.host":"10.30.23.75","ip.dst":"10.30.20.31","ip.addr":"10.30.20.31","ip.dst_host":"10.30.20.31","ip.host":"10.30.20.31"},"tcp":{"tcp.srcport":"51763","tcp.dstport":"443","tcp.port":"51763","tcp.port":"443","tcp.stream":"5","tcp.len":"943","tcp.seq":"1","tcp.nxtseq":"944","tcp.ack":"1","tcp.hdr_len":"20","tcp.flags":"0x00000018","tcp.flags_tree":{"tcp.flags.res":"0","tcp.flags.ns":"0","tcp.flags.cwr":"0","tcp.flags.ecn":"0","tcp.flags.urg":"0","tcp.flags.ack":"1","tcp.flags.push":"1","tcp.flags.reset":"0","tcp.flags.syn":"0","tcp.flags.fin":"0","tcp.flags.str":"\u00c2\u00b7\u00c2\u00b7\u00c2\u00b7\u00c2\u00b7\u00c2\u00b7\u00c2\u00b7\u00c2\u00b7AP\u00c2\u00b7\u00c2\u00b7\u00c2\u00b7"},"tcp.window_size_value":"65520","tcp.window_size":"65520","tcp.window_size_scalefactor":"-1","tcp.checksum":"0x0000436f","tcp.checksum.status":"2","tcp.urgent_pointer":"0","tcp.analysis":{"tcp.analysis.bytes_in_flight":"943","tcp.analysis.push_bytes_sent":"943"}},"ssl":{"ssl.record":{"ssl.record.content_type":"23","ssl.record.version":"0x00000303","ssl.record.length":"938","ssl.app_data":"00:00:00:00:00:00:00:60:5e:6e:e3:3a:35:7c:15:b7:80:e4:14:d0:40:eb:8f:92:85:28:35:9d:8e:0f:30:d1:13:69:b9:d2:f1:2a:3b:96:2b:67:e6:bb:eb:15:d5:32:be:6f:3a:78:4c:09:c8:b1:6a:44:1f:c7:59:f2:fb:59:4b:a0:1d:fa:51:81:59:4a:59:6d:7c:a1:74:c8:9f:fe:ae:ad:be:3b:54:73:67:2f:84:24:57:bd:f5:c0:90:b3:ee:af:20:22:07:0c:fb:a1:8e:50:40:b9:70:4b:6a:c1:84:4c:ea:36:ec:09:f6:e2:b0:b9:7a:ae:ec:0e:97:9d:17:9b:cf:6a:15:f3:4d:9c:74:de:39:74:87:96:db:08:eb:2a:0c:ec:aa:28:b6:08:a3:30:d7:2e:00:d0:f0:90:c6:01:32:1b:be:4f:09:d0:5a:01:d0:9f:ce:64:6b:56:bf:58:42:93:64:55:13:c2:19:50:d9:21:8b:cd:43:a9:fe:ca:7e:f5:78:7a:0e:f7:53:de:75:01:0f:04:56:47:8b:93:c8:2f:b9:46:42:da:16:57:16:bf:f1:91:a6:d0:7a:a5:ca:fe:2d:32:97:4e:3e:c1:2a:c6:bf:b0:ad:d1:e6:4d:cc:9a:3d:0d:35:a0:27:9f:ba:4b:c4:05:92:9a:b3:3a:3f:76:6d:78:35:69:a3:58:1f:df:78:ea:00:27:af:75:31:39:16:49:d2:01:5c:98:16:8f:ba:16:0e:6a:1c:5f:09:f6:86:ca:c0:84:04:85:39:20:f2:77:09:8a:c7:b9:01:d0:d8:80:0d:f9:bb:15:0b:df:26:e4:86:a3:a4:7f:24:8b:9b:b2:49:33:b3:6e:07:a4:a3:c3:6a:a3:0b:9d:74:3d:e6:68:4e:87:47:77:2b:4e:72:61:4b:73:ed:b5:b4:dc:0b:4a:bb:82:4a:43:e8:78:fd:65:e7:76:11:62:8e:ea:ca:36:46:80:26:4e:85:82:ac:f1:c0:b7:c7:1f:73:ad:1e:b0:73:d9:e6:c5:77:3c:5f:8e:73:e6:b3:bd:8e:34:1a:30:a7:f8:b6:5b:73:6a:9e:58:b7:46:07:7f:24:a8:1d:d2:7c:e5:6a:c7:35:c7:b1:3b:d1:79:ca:be:c2:07:a6:df:78:bf:61:85:65:8d:0f:7c:86:fa:c1:19:96:cf:1c:30:a8:b1:e9:a2:88:c6:97:05:04:32:a0:b7:84:60:48:d5:5d:a6:4f:c8:ce:43:8a:3d:95:4c:ce:60:58:ec:e7:c7:77:4b:a8:02:3b:2f:a5:7e:49:51:4a:2f:a2:ea:32:a0:e8:dc:47:f9:b6:26:bb:64:09:54:18:ff:66:f0:f6:c3:94:fe:a1:fa:40:89:56:d6:72:f2:25:3c:70:2b:22:a5:8b:41:da:5a:8e:b2:30:a0:0a:24:4a:ab:f2:f8:15:03:31:78:24:a1:e1:d7:19:db:51:5c:25:1d:54:7a:5e:58:ff:a8:3d:69:90:6e:3f:4d:46:cc:93:f3:46:b9:df:7b:29:b9:a7:2a:9a:fe:c9:91:62:99:ff:8b:f9:d6:46:00:0b:3f:a3:df:6d:f3:a5:b7:40:e3:47:71:90:ad:bf:eb:66:dd:64:93:fa:d0:e0:a5:6b:b7:50:de:63:44:12:20:68:15:c1:c0:97:10:15:b6:36:5a:d9:98:dc:7d:f1:c4:5a:bd:40:a9:cd:c8:2e:1f:7d:5d:2c:d7:e9:c4:e1:63:c5:dd:6f:84:a1:8c:6a:18:af:9c:94:00:3b:e3:0a:d3:c2:c6:e2:5f:b8:5e:e0:2c:83:2c:41:17:fb:2a:cf:b3:19:1c:4a:fd:83:41:53:bb:1c:ed:54:35:25:87:a3:f0:11:58:63:26:50:f8:85:6b:6f:57:0a:b3:29:24:03:7b:bc:66:24:10:c3:10:8b:4d:87:52:1b:6d:95:cb:e6:d4:bb:6d:b4:cf:f0:52:20:4d:47:22:d2:a5:86:3d:8a:14:5c:ff:71:c7:09:18:cc:9f:58:b3:28:10:75:9d:8e:9b:0c:4a:84:b0:f5:da:f7:aa:ef:87:74:1c:ed:de:e7:9e:91:bf:f3:c4:a4:47:c0:7f:3f:be:fe:1a:15:a0:b4:8d:99:4e:1a:2c:6b:1b:5a:0b:fc:06:8f:8b:94:ae:f7:9f:02:a0:16:01:35:16:c1:c3:5f:74:d7:81:a4:8d:d4:55:bc:77:9f:89:b6:4f:09:b2:5f:85:49:17:99:49:f4:28:ad:3d:bd:cf:65:bc:d8:4d:81:f0:c2:aa:a0:b8:cc:2b:75:3d:c6:c2:d2:3e:e3:c8:40:0a:fb:8f:fa:5b:19:3d:df:14:ac:d4:35:c1:30:3d:d3:24:60:b1:9c:4d:35:7d:43:af:42:44:10:cd:e2:55:93:26:87:33:a8:77:6c:82:e4:a4:f2:ac:0d:5e:5b:0f:98:04:3b:02:2c:28:78:0b:0d:ad:9b:cb"}}}}}]]></testEvent>
+  </testEvents>
+  <eventFormatRecognizer><![CDATA[^PCAP_DATA_FROM_FILE:]]></eventFormatRecognizer>
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[PCAP_DATA_FROM_FILE:\s*\[relayDevIpAddr\]=<reptDevIpAddr:gPatIpAddr>,\s*\[packageData\]=<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="eventType">PH_DEV_MON_PCAP_DATA</setEventAttribute>
+    <collectAndSetAttrByJSON src="$_body">
+      <attrKeyMap attr="resourceName" key="_index"/>
+      <attrKeyMap attr="type" key="_type"/>
+      <attrKeyMap attr="_frameMsg" key="_source.layers.frame"/>
+      <attrKeyMap attr="_ethMsg" key="_source.layers.eth"/>
+      <attrKeyMap attr="_ipMsg" key="_source.layers.ip"/>
+      <attrKeyMap attr="_ipv6Msg" key="_source.layers.ipv6"/>
+      <attrKeyMap attr="_tcpMsg" key="_source.layers.tcp"/>
+      <attrKeyMap attr="_udpMsg" key="_source.layers.udp"/>
+      <attrKeyMap attr="_httpMsg" key="_source.layers.http"/>
+    </collectAndSetAttrByJSON>
+
+    <when test="exist _frameMsg">
+      <collectAndSetAttrByJSON src="$_frameMsg">
+        <!--Aug9,201715:03:06.960-->
+        <attrKeyMap attr="_time" key="&quot;frame.time&quot;"/>
+        <attrKeyMap attr="exchMsgId" key="&quot;frame.number&quot;"/>
+        <attrKeyMap attr="msgLen" key="&quot;frame.len&quot;"/>
+        <attrKeyMap attr="protoPath" key="&quot;frame.protocols&quot;"/>
+      </collectAndSetAttrByJSON>
+      <collectFieldsByRegex src="$_time">
+        <regex><![CDATA[<_mon:gPatMon><_day:gPatDay>,<_year:gPatYear><_time:gPatTimeMSec>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+    </when>
+
+    <when test="exist _ethMsg">
+      <collectAndSetAttrByJSON src="$_ethMsg">
+        <attrKeyMap attr="srcMACAddr" key="&quot;eth.src&quot;"/>
+        <attrKeyMap attr="destMACAddr" key="&quot;eth.dst&quot;"/>
+      </collectAndSetAttrByJSON>
+    </when>
+
+    <when test="exist _ipMsg">
+      <collectAndSetAttrByJSON src="$_ipMsg">
+        <attrKeyMap attr="srcIpAddr" key="&quot;ip.src&quot;"/>
+        <attrKeyMap attr="destIpAddr" key="&quot;ip.dst&quot;"/>
+      </collectAndSetAttrByJSON>
+    </when>
+
+    <when test="exist _ipv6Msg">
+      <collectAndSetAttrByJSON src="$_ipv6Msg">
+        <attrKeyMap attr="srcIpAddr" key="&quot;ipv6.src&quot;"/>
+        <attrKeyMap attr="destIpAddr" key="&quot;ipv6.dst&quot;"/>
+      </collectAndSetAttrByJSON>
+    </when>
+
+    <when test="exist _tcpMsg">
+      <collectAndSetAttrByJSON src="$_tcpMsg">
+        <attrKeyMap attr="srcIpPort" key="&quot;tcp.srcport&quot;"/>
+        <attrKeyMap attr="destIpPort" key="&quot;tcp.dstport&quot;"/>
+        <attrKeyMap attr="dataPayload" key="&quot;tcp.segment_data&quot;"/>
+      </collectAndSetAttrByJSON>
+    </when>
+
+    <when test="exist _udpMsg">
+      <collectAndSetAttrByJSON src="$_udpMsg">
+        <attrKeyMap attr="srcIpPort" key="&quot;udp.srcport&quot;"/>
+        <attrKeyMap attr="destIpPort" key="&quot;udp.dstport&quot;"/>
+        <attrKeyMap attr="dataPayload" key="&quot;udp.segment_data&quot;"/>
+      </collectAndSetAttrByJSON>
+    </when>
+    <when test="exist _httpMsg">
+      <collectFieldsByRegex src="$_httpMsg">
+        <regex><![CDATA[\{[^\{]+<_subMsg:gPatMesgBody>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="_httpMsg">combineMsgId('{"httpContent":',$_subMsg)</setEventAttribute>
+      <collectAndSetAttrByJSON src="$_httpMsg">
+        <attrKeyMap attr="httpUserAgent" key="&quot;http.user_agent&quot;"/>
+        <attrKeyMap attr="infoURL" key="&quot;http.request.full_uri&quot;"/>
+        <attrKeyMap attr="httpMethod" key="&quot;httpContent.http.request.method&quot;"/>
+        <attrKeyMap attr="httpEndUri" key="&quot;httpContent.http.request.uri&quot;"/>
+        <attrKeyMap attr="webContextPath" key="&quot;httpContent.http.request.uri_tree.http.request.uri.path&quot;"/>
+        <attrKeyMap attr="uriQuery" key="&quot;httpContent.http.request.uri_tree.http.request.uri.query&quot;"/>
+        <attrKeyMap attr="httpVersion" key="&quot;httpContent.http.request.version&quot;"/>
+        <attrKeyMap attr="httpStatusCode" key="&quot;httpContent.http.response.code&quot;"/>
+        <attrKeyMap attr="httpContentType" key="&quot;http.content_type&quot;"/>
+        <attrKeyMap attr="durationMSec" key="&quot;http.time&quot;"/>
+        <attrKeyMap attr="httpReferrer" key="&quot;http.referer&quot;"/>
+        <attrKeyMap attr="encryptAlgo" key="&quot;http.transfer_encoding&quot;"/>
+        <attrKeyMap attr="encoding" key="&quot;http.content_encoding&quot;"/>
+      </collectAndSetAttrByJSON>
+    </when>
+  </parsingInstructions>
+</eventParser>

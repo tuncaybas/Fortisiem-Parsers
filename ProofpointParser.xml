@@ -1,0 +1,180 @@
+<eventParser name="ProofpointParser">
+  <deviceType>
+    <Vendor>Proofpoint</Vendor>
+    <Model>Proofpoint</Model>
+    <Version>ANY</Version>
+  </deviceType>
+  <testEvents>
+    <testEvent><![CDATA[2018-09-29 17:56:00 [PROOFPOINT-SIEM-API] [1][a.com][10.10.10.10] [clicksPermitted]:{"campaignId":"11111111-1111-1111-1111-111111111111","classification":"MALWARE","clickIP":"192.0.2.1","clickTime":"2016-06-24T19:17:44.000Z","messageID":"11111111-1111-1111-1111-111111111111","recipient":"bruce.wayne@pharmtech.zz","sender":"9facbf452def2d7efc5b5c48cdb837fa@badguy.zz","senderIP":"192.0.2.255","threatID":"61f7622167144dba5e3ae4480eeee78b23d66f7dfed970cfc3d086cc0dabdf50","threatTime":"2016-06-24T19:17:46.000Z","threatURL":"https://threatinsight.proofpoint.com/#/11111111-1111-1111-1111-111111111111/threat/u/61f7622167144dba5e3ae4480eeee78b23d66f7dfed970cfc3d086cc0dabdf50","url":"http://badguy.zz/","userAgent":"Mozilla/5.0(WindowsNT6.1;WOW64;rv:27.0)Gecko/20100101Firefox/27.0"}]]></testEvent>
+    <testEvent><![CDATA[2021-11-12 22:13:59 [PROOFPOINT-SIEM-API] [1][a.com][10.10.10.10] [messagesBlocked]:{"GUID":"05q-IRIPd3mOA71T6Gm3yuB692HBe5iE","QID":"3c9eh5gcc8-1","ccAddresses":[],"cluster":"cluster1_production-vm","completelyRewritten":false,"fromAddress":["Bob.E@example.com"],"headerFrom":"Bob E <Bob.E@example.com>","headerReplyTo":null,"id":"11111111-1111-1111-1111-111111111111","impostorScore":0.0,"malwareScore":0,"messageID":"<12341112215433.F58EE29CFA20CA3F@example.com>","messageParts":[{"contentType":"application/x-ms-dos-executable","disposition":"attached","filename":"untitled01.exe","md5":"0c8ca8bd5cef7fe117c2b20f9c724818","oContentType":"application/x-ms-dos-executable","sandboxStatus":"NOT_SUPPORTED","sha256":"f36334ed1b8ca15c324b672693d8f3445befe0c3cf1d397c2f18a2c665ce7aae"},{"contentType":"application/rar","disposition":"attached","filename":"untitled01.rar","md5":"0c905c6c67561dc20c146e7d9b377847","oContentType":"application/rar","sandboxStatus":"THREAT","sha256":"b64be40a4da7c115b5625ece391d79d5724801fc0b23cc501534385a8fcea043"},{"contentType":"text/html","disposition":"inline","filename":"text.html","md5":"28aaf10201628eed42590d8cf125952c","oContentType":"text/html","sandboxStatus":"NOT_SUPPORTED","sha256":"9c93716e99d64e7e66837c6e76424fbf7fc51f470d3b272b802070ffd42a938f"}],"messageSize":26024,"messageTime":"2021-11-12T21:55:09.000Z","modulesRun":["access","smtpsrv","av","spf","dkimv","sandbox","spam","dmarc","pdr","urldefense"],"phishScore":0,"policyRoutes":["default_inbound"],"quarantineFolder":"Attachment Defense","quarantineRule":"module.sandbox.rule.threat","recipient":["user1@example.com"],"replyToAddress":[],"sender":"Bob.E@example.com","senderIP":"1.1.1.1","spamScore":0,"subject":"Re: Outstanding Payment Invoice","threatsInfoMap":[{"campaignID":null,"classification":"malware","threat":"b64be40a4da7c115b5625ece391d79d5724801fc0b23cc501534385a8fcea043","threatID":"b64be40a4da7c115b5625ece391d79d5724801fc0b23cc501534385a8fcea043","threatStatus":"active","threatTime":"2021-11-12T17:38:00.000Z","threatType":"attachment","threatUrl":"https://threatinsight.proofpoint.com/11111111-1111-1111-1111-111111111111/threat/email/b64be40a4da7c115b5625ece391d79d5724801fc0b23cc501534385a8fcea043"}],"toAddresses":["user1@example.com"],"xmailer":null}]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[\[PROOFPOINT-SIEM-API\]]]></eventFormatRecognizer>
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">Proofpoint-Generic</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">PROOFPOINT_SIEM_API</setEventAttribute>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[\[PROOFPOINT-SIEM-API\]\s+\[<phCustId:gPatInt>\](?:\[<reptDevName:gPatStrRightSB>\]\[<reptDevIpAddr:gPatStrRightSB>\])?\s+\[<_evtType:gPatMesgBodyMin>\]:<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <collectAndSetAttrByJSON src="$_body">
+      <!-- Message Events -->
+      <attrKeyMap attr="ccMailAddr" key="ccAddresses"/>
+      <attrKeyMap attr="clusterId" key="clusterId"/>
+      <!-- true, false, or na: na implies no url threats -->
+      <attrKeyMap attr="_completelyRewritten" key="completelyRewritten"/>
+      <attrKeyMap attr="senderMailAddr" key="fromAddress"/>
+      <attrKeyMap attr="_headerFrom" key="headerFrom"/>
+      <attrKeyMap attr="_headerReplyTo" key="headerReplyTo"/>
+      <!-- 0-100 , higher indicates higher certainty -->
+      <attrKeyMap attr="spamScore" key="impostorScore"/>
+      <attrKeyMap attr="threatScore" key="malwareScore"/>
+      <attrKeyMap attr="transactionId" key="GUID"/>
+      <!-- Can be more than one object in messageParts, parse into details -->
+      <attrKeyMap attr="details" key="messageParts"/>
+      <!-- parse first object in array for now -->
+      <attrKeyMap attr="httpContentType" key="messageParts[0].contentType"/>
+      <!-- inline or attached: indicates message is part of body or a file attachment -->
+      <attrKeyMap attr="fileDisposition" key="messageParts[0].disposition"/>
+      <attrKeyMap attr="fileName" key="messageParts[0].filename"/>
+      <attrKeyMap attr="hashMD5" key="messageParts[0].md5"/>
+      <!-- If there are multiple, check verdicts for each in first 5 -->
+      <attrKeyMap attr="_sandboxStatus1" key="messageParts[0].sandboxStatus"/>
+      <attrKeyMap attr="_sandboxStatus2" key="messageParts[1].sandboxStatus"/>
+      <attrKeyMap attr="_sandboxStatus3" key="messageParts[2].sandboxStatus"/>
+      <attrKeyMap attr="_sandboxStatus4" key="messageParts[3].sandboxStatus"/>
+      <attrKeyMap attr="_sandboxStatus5" key="messageParts[4].sandboxStatus"/>
+      <attrKeyMap attr="hashSHA256" key="messageParts[0].sha256"/>
+      <attrKeyMap attr="size" key="messageSize"/>
+      <attrKeyMap attr="_eventTime" key="messageTime"/>
+      <attrKeyMap attr="scanEngine" key="modulesRun"/>
+      <attrKeyMap attr="riskScore" key="phishScore"/>
+      <attrKeyMap attr="policyName" key="policyRoutes"/>
+      <attrKeyMap attr="moveToFolder" key="quarantineFolder"/>
+      <attrKeyMap attr="fwRule" key="quarantineRule"/>
+      <attrKeyMap attr="_replyToAddress" key="replyToAddress"/>
+      <attrKeyMap attr="spamScore" key="spamScore"/>
+      <attrKeyMap attr="mailSubject" key="subject"/>
+      <attrKeyMap attr="_threatsInfoMap" key="threatsInfoMap"/>
+      <attrKeyMap attr="threatType" key="threatsInfoMap[0].classification"/>
+      <!-- could be sha256 hash, url, or email addr -->
+      <attrKeyMap attr="_threat" key="threatsInfoMap[0].threat"/>
+      <attrKeyMap attr="downloadURL" key="threatsInfoMap[0].threatUrl"/>
+      <attrKeyMap attr="_toAddresses" key="toAddresses"/>
+      <!-- Click Events -->
+      <attrKeyMap attr="actorId" key="campaignId"/>
+      <attrKeyMap attr="threatType" key="classification"/>
+      <attrKeyMap attr="destIpAddr" key="clickIP"/>
+      <attrKeyMap attr="_clickTime" key="clickTime"/>
+      <!-- ID of the message within PPS -->
+      <attrKeyMap attr="msgId" key="messageID"/>
+      <!-- unique id of the click -->
+      <attrKeyMap attr="sessionId" key="id"/>
+      <attrKeyMap attr="receiverMailAddr" key="recipient"/>
+      <attrKeyMap attr="senderMailAddr" key="sender"/>
+      <attrKeyMap attr="srcIpAddr" key="senderIP"/>
+      <attrKeyMap attr="virusId" key="threatID"/>
+      <attrKeyMap attr="_eventTime" key="threatTime"/>
+      <!-- threatURL is information of the threat -->
+      <attrKeyMap attr="downloadURL" key="threatURL"/>
+      <attrKeyMap attr="status" key="threatStatus"/>
+      <!-- url is the malicious url, which is referred in the rule -->
+      <attrKeyMap attr="infoURL" key="url"/>
+      <attrKeyMap attr="httpUserAgent" key="userAgent"/>
+    </collectAndSetAttrByJSON>
+
+    <setEventAttribute attr="eventType">combineMsgId("Proofpoint-", $_evtType)</setEventAttribute>
+    <when test="exist _eventTime">
+      <collectFieldsByRegex src="$_eventTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <!-- If any of the first 5 message part objects contain a sandbox result of threat or clean, mark status with it-->
+    <!-- skip if status values are already defined -->
+    <when test="$_evtType IN 'messagesDelivered, messagesBlocked'">
+      <choose>
+        <when test="exist _statusMalicious"/>
+        <when test="exist _statusClean"/>
+        <when test="not_exist _sandboxStatus1"/>
+        <when test="$_sandboxStatus1 = 'threat'">
+          <setEventAttribute attr="_statusMalicious">malicious</setEventAttribute>
+        </when>
+        <when test="$_sandboxStatus1 = 'clean'">
+          <setEventAttribute attr="_statusClean">clean</setEventAttribute>
+        </when>
+        <otherwise/>
+      </choose>
+      <choose>
+        <when test="exist _statusMalicious"/>
+        <when test="exist _statusClean"/>
+        <when test="not_exist _sandboxStatus2"/>
+        <when test="$_sandboxStatus2 = 'threat'">
+          <setEventAttribute attr="_statusMalicious">malicious</setEventAttribute>
+        </when>
+        <when test="$_sandboxStatus2 = 'clean'">
+          <setEventAttribute attr="_statusClean">clean</setEventAttribute>
+        </when>
+        <otherwise/>
+      </choose>
+      <choose>
+        <when test="exist _statusMalicious"/>
+        <when test="exist _statusClean"/>
+        <when test="not_exist _sandboxStatus3"/>
+        <when test="$_sandboxStatus3 = 'threat'">
+          <setEventAttribute attr="_statusMalicious">malicious</setEventAttribute>
+        </when>
+        <when test="$_sandboxStatus3 = 'clean'">
+          <setEventAttribute attr="_statusClean">clean</setEventAttribute>
+        </when>
+        <otherwise/>
+      </choose>
+      <choose>
+        <when test="exist _statusMalicious"/>
+        <when test="exist _statusClean"/>
+        <when test="not_exist _sandboxStatus4"/>
+        <when test="$_sandboxStatus4 = 'threat'">
+          <setEventAttribute attr="_statusMalicious">malicious</setEventAttribute>
+        </when>
+        <when test="$_sandboxStatus4 = 'clean'">
+          <setEventAttribute attr="_statusClean">clean</setEventAttribute>
+        </when>
+        <otherwise/>
+      </choose>
+      <choose>
+        <when test="exist _statusMalicious"/>
+        <when test="exist _statusClean"/>
+        <when test="not_exist _sandboxStatus5"/>
+        <when test="$_sandboxStatus5 = 'threat'">
+          <setEventAttribute attr="_statusMalicious">malicious</setEventAttribute>
+        </when>
+        <when test="$_sandboxStatus5 = 'clean'">
+          <setEventAttribute attr="_statusClean">clean</setEventAttribute>
+        </when>
+        <otherwise/>
+      </choose>
+
+      <!-- If statusMalicious or statusClean defined override status, otherwise dont define -->
+      <choose>
+        <when test="exist _statusMalicious">
+          <setEventAttribute attr="status">$_statusMalicious</setEventAttribute>
+        </when>
+        <when test="exist _statusClean">
+          <setEventAttribute attr="status">$_statusClean</setEventAttribute>
+        </when>
+        <otherwise/>
+      </choose>
+
+      <!-- We only append status to Event Type for messages events not clicks -->
+      <when test="exist status">
+        <setEventAttribute attr="eventType">combineMsgId($eventType,"-", $status)</setEventAttribute>
+      </when>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

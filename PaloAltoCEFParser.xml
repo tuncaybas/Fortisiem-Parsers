@@ -1,0 +1,294 @@
+<eventParser name="PaloAltoCEFParser">
+  <deviceType>
+    <Vendor>Palo Alto</Vendor>
+    <Model>PAN-OS</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<13>Feb 18 15:01:08 10.0.0.25 1763 <14>1 2022-02-18T09:05:18-06:00 lab1.example.com - - - - CEF:0|Palo Alto Networks|PAN-OS|10.0.8|url|THREAT|1|rt=Feb 18 2022 15:05:18 GMT deviceExternalId=011901038910 src=10.1.1.218 dst=1.1.1.1 sourceTranslatedAddress=10.0.0.25 destinationTranslatedAddress=1.1.1.1 cs1Label=Rule cs1=Catch Malicious Apps suser=testuser duser= app=ssl cs3Label=Virtual System cs3=vsys1 cs4Label=Source Zone cs4=lan-zone cs5Label=Destination Zone cs5=WAN-ZONE deviceInboundInterface=ethernet1/11.100 deviceOutboundInterface=ethernet1/2 cs6Label=LogProfile cs6=LogProf1 cn1Label=SessionID cn1=176111 cnt=1 spt=58655 dpt=443 sourceTranslatedPort=37033 destinationTranslatedPort=443 flexString1Label=Flags flexString1=0x40f400 proto=tcp act=alert request="nf.smartscreen.microsoft.com/" cs2Label=URL Category cs2=low-risk flexString2Label=Direction flexString2=client-to-server PanOSActionFlags=0xa000000000000000 externalId=87811111 requestContext= cat=(9999) fileId=0 requestMethod= requestClientApplication= PanOSXForwarderfor= PanOSReferer= PanOSDGl1=38 PanOSDGl2=41 PanOSDGl3=43 PanOSDGl4=0 PanOSVsysName= dvchost=host1 PanOSSrcUUID= PanOSDstUUID= PanOSTunnelID=0 PanOSMonitorTag= PanOSParentSessionID=0 PanOSParentStartTime= PanOSTunnelType=N/A PanOSThreatCategory=unknown PanOSContentVer=AppThreat-0-0 PanOSAssocID=0 PanOSPPID=4294967295 PanOSHTTPHeader= PanOSRuleUUID=11111111-1111-1111-1111-111111111111 PanOSURLCatList="computer-and-internet-info,low-risk" PanOSHTTP2Con=0 PanDynamicUsrgrp= PanXFFIP=0.0.0.0 PanSrcDeviceCat= PanSrcDeviceProf= PanSrcDeviceModel= PanSrcDeviceVendor= PanSrcDeviceOS= PanSrcDeviceOSv= PanSrcHostname= PanSrcMac= PanDstDeviceCat= PanDstDeviceProf= PanDstDeviceModel= PanDstDeviceVendor= PanDstDeviceOS=]]></testEvent>
+  </testEvents>
+
+  <!-- pattern definitions -->
+  <patternDefinitions>
+    <pattern name="patExceptPipe"><![CDATA[[^\|]+]]></pattern>
+  </patternDefinitions>
+  <!-- Standard syslog format or CEF Format -->
+  <eventFormatRecognizer><![CDATA[CEF:\d+\|Palo Alto Networks\|PAN-OS\|]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+
+    <!-- parsing common fields -->
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+-\s+-\s+-\s+-\s+CEF:\d+\|Palo Alto Networks\|PAN-OS\|<version:patExceptPipe>\|<subtype:patExceptPipe>\|<type:patExceptPipe>\|<eventSeverity:patExceptPipe>\|<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <case>
+        <!-- If for some reason header varies, default catch all but lose reporting device name info -->
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[\s+CEF:\d+\|Palo Alto Networks\|PAN-OS\|<version:patExceptPipe>\|<subtype:patExceptPipe>\|<type:patExceptPipe>\|<_severity:patExceptPipe>\|<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+    </switch>
+
+    <!-- Base event type -->
+    <setEventAttribute attr="eventType">PAN-OS-</setEventAttribute>
+
+    <collectFieldsByKeyValuePair sep=" " kvsep="=" src="$_body">
+      <attrKeyMap attr="_rt" key="rt"/>
+      <attrKeyMap attr="deviceIdentification" key="deviceExternalId"/>
+      <attrKeyMap attr="srcIpAddr" key="src"/>
+      <attrKeyMap attr="destIpAddr" key="dst"/>
+      <attrKeyMap attr="postNATSrcIpAddr" key="sourceTranslatedAddress"/>
+      <attrKeyMap attr="postNATDestIpAddr" key="destinationTranslatedAddress"/>
+      <attrKeyMap attr="srcUser" key="suser"/>
+      <attrKeyMap attr="destUser" key="duser"/>
+      <attrKeyMap attr="appName" key="app"/>
+      <attrKeyMap attr="srcIntfName" key="deviceInboundInterface"/>
+      <attrKeyMap attr="destIntfName" key="deviceOutboundInterface"/>
+      <attrKeyMap attr="_count" key="cnt"/>
+      <attrKeyMap attr="srcIpPort" key="spt"/>
+      <attrKeyMap attr="destIpPort" key="dpt"/>
+      <attrKeyMap attr="postNATSrcIpPort" key="sourceTranslatedPort"/>
+      <attrKeyMap attr="postNATDestIpPort" key="destinationTranslatedPort"/>
+      <attrKeyMap attr="_proto" key="proto"/>
+      <attrKeyMap attr="fwAction" key="act"/>
+      <attrKeyMap attr="downloadURL" key="request"/>
+      <attrKeyMap attr="flag" key="PanOSActionFlags"/>
+      <attrKeyMap attr="_externalId" key="externalId"/>
+      <!-- cat is important for certain event type formations -->
+      <!-- for THREAT events this field is threatid-->
+      <attrKeyMap attr="_cat" key="cat"/>
+      <attrKeyMap attr="fileId" key="fileId"/>
+      <attrKeyMap attr="httpMethod" key="requestMethod"/>
+      <attrKeyMap attr="hostName" key="dvchost"/>
+      <attrKeyMap attr="threatCategory" key="PanOSThreatCategory"/>
+      <attrKeyMap attr="ruleIdStr" key="PanOSRuleUUID"/>
+      <attrKeyMap attr="webCategory" key="PanOSURLCatList"/>
+      <!-- cs labels -->
+      <attrKeyMap attr="_cs1" key="cs1"/>
+      <attrKeyMap attr="_cs2" key="cs2"/>
+      <attrKeyMap attr="_cs3" key="cs3"/>
+      <attrKeyMap attr="_cs4" key="cs4"/>
+      <attrKeyMap attr="_cs5" key="cs5"/>
+      <attrKeyMap attr="_cs6" key="cs6"/>
+      <attrKeyMap attr="_cs1Label" key="cs1Label"/>
+      <attrKeyMap attr="_cs2Label" key="cs2Label"/>
+      <attrKeyMap attr="_cs3Label" key="cs3Label"/>
+      <attrKeyMap attr="_cs4Label" key="cs4Label"/>
+      <attrKeyMap attr="_cs5Label" key="cs5Label"/>
+      <attrKeyMap attr="_cs6Label" key="cs6Label"/>
+      <!-- cn labels seen -->
+      <attrKeyMap attr="_cn1Label" key="cn1Label"/>
+      <attrKeyMap attr="_cn1" key="cn1"/>
+      <!-- flexString labels -->
+      <attrKeyMap attr="_flexString1Label" key="flexString1Label"/>
+      <attrKeyMap attr="_flexString1" key="flexString1"/>
+      <attrKeyMap attr="_flexString2Label" key="flexString2Label"/>
+      <attrKeyMap attr="_flexString2" key="flexString2"/>
+      <!-- Seen in Global Protect CEF for Event ID -->
+      <attrKeyMap attr="_eventId" key="PanOSEventID"/>
+      <attrKeyMap attr="status" key="PanOSEventStatus"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist _cat">
+      <!-- strip parenthesis from _cat field, contains threat id or other variable depending on log type -->
+      <setEventAttribute attr="_cat">replaceStrInStr($_cat, "(", "")</setEventAttribute>
+      <setEventAttribute attr="_cat">replaceStrInStr($_cat, ")", "")</setEventAttribute>
+    </when>
+
+    <!-- Set Event Types based on Type, Subtype, Cat values -->
+    <choose>
+      <when test="$type = 'TRAFFIC'">
+        <choose>
+          <when test="$fwAction = 'allow'">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $type, "-", $subtype, "-", $fwAction)</setEventAttribute>
+            <setEventAttribute attr="eventAction">0</setEventAttribute>
+          </when>
+          <when test="$fwAction = 'drop'">
+            <when test="$subtype = 'start'">
+              <setEventAttribute attr="eventType">combineMsgId($eventType, $type, "-", $subtype, "-", $fwAction)</setEventAttribute>
+              <setEventAttribute attr="eventAction">1</setEventAttribute>
+            </when>
+            <otherwise>
+              <setEventAttribute attr="eventType">combineMsgId($eventType, $type, "-", "deny")</setEventAttribute>
+              <setEventAttribute attr="eventAction">1</setEventAttribute>
+            </otherwise>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $type, "-", "deny")</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+      <when test="$type = 'CORRELATION'">
+        <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-", $_subtype)</setEventAttribute>
+      </when>
+      <when test="$type = 'THREAT'">
+        <choose>
+          <when test="$fwAction = 'allow'">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $type, "-", $subtype, "-", $_cat, "-alert")</setEventAttribute>
+            <setEventAttribute attr="eventAction">0</setEventAttribute>
+          </when>
+          <when test="$fwAction = 'alert'">
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $type, "-", $subtype, "-", $_cat, "-alert")</setEventAttribute>
+            <setEventAttribute attr="eventAction">0</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $type, "-", $subtype, "-", $_cat, "-deny")</setEventAttribute>
+            <setEventAttribute attr="eventAction">1</setEventAttribute>
+          </otherwise>
+        </choose>
+
+        <when test="$subtype = 'vulnerability'">
+          <setEventAttribute attr="eventType">combineMsgId("PAN-IDP-", $_cat)</setEventAttribute>
+        </when>
+      </when>
+      <when test="$type = 'CONFIG'">
+        <setEventAttribute attr="eventType">combineMsgId($eventType, $type)</setEventAttribute>
+      </when>
+      <when test="$type = 'SYSTEM'">
+        <!-- default event type -->
+        <setEventAttribute attr="eventType">combineMsgId($eventType, $type, "-", $subtype, "-", $_cat)</setEventAttribute>
+      </when>
+      <when test="$subtype = 'GLOBALPROTECT'">
+        <!-- PANOS 10 the ordering of subtype|type is now type|subtype for this log type -->
+        <setEventAttribute attr="subtype">$type</setEventAttribute>
+        <setEventAttribute attr="type">GLOBALPROTECT</setEventAttribute>
+        <choose>
+          <when test="exist  _eventId">
+            <choose>
+              <when test="$_eventId = 'gateway-auth'">
+                <choose>
+                  <when test="$status = 'success'">
+                    <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-VPN-Login-Success")</setEventAttribute>
+                  </when>
+                  <when test="$status = 'failure'">
+                    <setEventAttribute attr="eventType">combineMsgId($eventType, $_type, "-VPN-Login-Failed")</setEventAttribute>
+                  </when>
+                </choose>
+              </when>
+              <otherwise>
+                <setEventAttribute attr="eventType">combineMsgId($eventType, $type, "-", $_eventId)</setEventAttribute>
+              </otherwise>
+            </choose>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">combineMsgId($eventType, $type, "-", $subtype)</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">combineMsgId($eventType, $type, "-", $subtype)</setEventAttribute>
+      </otherwise>
+    </choose>
+
+
+    <!-- Feb 18 2022 15:05:18 GMT -->
+    <when test="exist _rt">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_rt">
+            <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>\s+<_tz:gPatTimeZone>]]></regex>
+          </collectFieldsByRegex>
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <choose>
+      <when test="not_exist _cs1Label"/>
+      <when test="not_exist _cs1"/>
+      <when test="$_cs1Label = 'Rule'">
+        <setEventAttribute attr="ruleName">$_cs1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs2Label"/>
+      <when test="not_exist _cs2"/>
+      <when test="$_cs2Label = 'URL Category'">
+        <!-- example seen was low-risk, meaning its app risk not webCategory -->
+        <setEventAttribute attr="appRisk">$_cs2</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs3Label"/>
+      <when test="not_exist _cs3"/>
+      <when test="$_cs3Label = 'Virtual System'">
+        <setEventAttribute attr="vdom">$_cs3</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs4Label"/>
+      <when test="not_exist _cs4"/>
+      <when test="$_cs4Label = 'Source Zone'">
+        <setEventAttribute attr="srcFwZone">$_cs4</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs5Label"/>
+      <when test="not_exist _cs5"/>
+      <when test="$_cs5Label = 'Destination Zone'">
+        <setEventAttribute attr="destFwZone">$_cs5</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cs6Label"/>
+      <when test="not_exist _cs6"/>
+      <when test="$_cs6Label = 'LogProfile'">
+        <setEventAttribute attr="profileName">$_cs6</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _cn1Label"/>
+      <when test="not_exist _cn1"/>
+      <when test="$_cn1Label = 'SessionID'">
+        <setEventAttribute attr="sessionId">$_cn1</setEventAttribute>
+      </when>
+    </choose>
+
+    <choose>
+      <when test="not_exist _flexString2Label"/>
+      <when test="not_exist _flexString2"/>
+      <when test="$_flexString2Label = 'Direction'">
+        <setEventAttribute attr="direction">$_flexString2</setEventAttribute>
+      </when>
+    </choose>
+
+    <when test="exist _proto">
+      <setEventAttribute attr="ipProto">convertStrToIntIpProto($_proto)</setEventAttribute>
+    </when>
+
+    <when test="exist user">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$user">
+            <regex><![CDATA[<domain:gPatStr>[\\]<user:gPatMesgBody>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <case>
+          <collectFieldsByRegex src="$user">
+            <regex><![CDATA['<user:gPatMesgBody>']]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="not_private_ip destIpAddr">
+      <when test="exist destName">
+        <setEventAttribute attr="domainEntropy">calcDomainEntropy($destName)</setEventAttribute>
+      </when>
+    </when>
+
+
+  </parsingInstructions>
+</eventParser>

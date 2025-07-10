@@ -1,0 +1,138 @@
+<eventParser name="OktaParser">
+  <deviceType>
+    <Vendor>OKTA.com</Vendor>
+    <Model>OKTA</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <eventFormatRecognizer><![CDATA[AccelOps-Okta]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[Wed Jul  9 15:10:24 2014 AccelOps-Okta [action/message]=Sign-in successful [action/objectType]=core.user_auth.login_success [action/requestUri]=/login/do-login [actors/0/displayName]=CHROME [actors/0/id]=Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36 [actors/0/ipAddress]=211.144.207.10 [actors/0/login]=user@example.com [actors/0/objectType]=Client [eventId]=tev7L-b54unTKGz3W_EsG9zLw1404889494000 [eventName]=.LOGIN_SUCCESS [published]=2014-07-09T07:04:54.000Z [requestId]=U7zplkD5KD8mA1t8p5qUXAAAA [sessionId]=s01l26aDOJnRPyw2JMvg4cZOQ [targets/0/displayName]=YaXin Hu [targets/0/id]=00uvdkhrxcPNGYWISAGK [targets/0/login]=user@example.com [targets/0/objectType]=User]]></testEvent>
+    <testEvent><![CDATA[Wed Nov 24 13:09:57 2021 AccelOps-Okta [action/objectType]= [actor/alternateId]=user1@sample.com [actor/detailEntry]=null [actor/displayName]=Test User [actor/id]=00abcd1234efgh01 [actor/type]=User [authenticationContext/authenticationProvider]=FACTOR_PROVIDER [authenticationContext/authenticationStep]=0 [authenticationContext/credentialProvider]=OKTA_CREDENTIAL_PROVIDER [authenticationContext/credentialType]=SMS [authenticationContext/externalSessionId]=102G9PatDb0TpmlhpUFDwl6PA [authenticationContext/interface]=null [authenticationContext/issuer]=null [client/device]=Computer [client/geographicalContext/city]=Somecity [client/geographicalContext/country]=United States [client/geographicalContext/geolocation/lat]=23.5 [client/geographicalContext/geolocation/lon]=-95.1 [client/geographicalContext/postalCode]=12345 [client/geographicalContext/state]=Somestate[client/id]=null [client/ipAddress]=192.168.1.25 [client/userAgent/browser]=CHROME [client/userAgent/os]=Windows 10 [client/userAgent/rawUserAgent]=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36 [client/zone]=null [debugContext/debugData/authnRequestId]=YZ5-a2GWXsI1OK79C7LbjwAAA94 [debugContext/debugData/behaviors]={New Geo-Location=POSITIVE, New Device=POSITIVE, New IP=POSITIVE, New State=POSITIVE, New Country=NEGATIVE, Velocity=NEGATIVE, New City=POSITIVE} [debugContext/debugData/deviceFingerprint]=844f8bd0912a97656eeae1f5a6c6f535 [debugContext/debugData/factor]=SMS_FACTOR [debugContext/debugData/requestId]=YZ5-jQjThrEeji@6s@UwGgAAC@M [debugContext/debugData/requestUri]=/api/v1/authn/factors/smsp0n0enmdJsOKaz0x7/verify [debugContext/debugData/risk]={reasons=Anomalous Location, Anomalous Device, level=MEDIUM} [debugContext/debugData/threatSuspected]=false [debugContext/debugData/url]=/api/v1/authn/factors/smsp0n0enmdJsOKaz0x7/verify?rememberDevice=false [device]=null [displayMessage]=Authentication of user via MFA [domain]=usi.okta.com [eventName]= [eventType]=user.authentication.auth_via_mfa [legacyEventType]=core.user.factor.attempt_success [outcome/reason]=null [outcome/result]=SUCCESS [published]=2021-11-24T18:08:13.428Z [request/ipChain/0/geographicalContext]=null [request/ipChain/0/geographicalContext/city]=Somecity [request/ipChain/0/geographicalContext/country]=United States [request/ipChain/0/geographicalContext/geolocation/lat]=23.5 [request/ipChain/0/geographicalContext/geolocation/lon]=-95.1 [request/ipChain/0/geographicalContext/postalCode]=12345 [request/ipChain/0/geographicalContext/state]=Somestate [request/ipChain/0/ip]=192.168.1.25 [request/ipChain/0/source]=null [request/ipChain/0/version]=V4 [securityContext/asNumber]=11222 [securityContext/asOrg]=google [securityContext/domain]=googleusercontent.com [securityContext/isProxy]=false [securityContext/isp]=google llc [severity]=INFO [target/0/alternateId]=user1@sample.com [target/0/detailEntry]=null [target/0/displayName]=Test User [target/0/id]=00uosfo56hkKh47rc0x7 [target/0/type]=User [transaction/id]=YZ5-jQjThrEeji@6s@UwGgAAC@M [transaction/type]=WEB [uuid]=11111111-1111-1111-1111-111111111111 [version]=0 [phCustId]=1]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <setEventAttribute attr="eventType">Okta_Generic</setEventAttribute>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<:gPatStr>\s+<_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_year:gPatYear>\s+AccelOps\-Okta\s+<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+      </case>
+    </switch>
+    <setEventAttribute attr="extEventRecvProto">OKTA_API</setEventAttribute>
+    <collectFieldsByKeyValuePair sep=" [" kvsep="]=" src="$_body">
+      <attrKeyMap attr="_eventName" key="eventName"/>
+      <attrKeyMap attr="_eventName" key="eventType"/>
+      <attrKeyMap attr="eventAction" key="legacyEventType"/>
+      <attrKeyMap attr="description" key="action/message"/>
+      <attrKeyMap attr="msg" key="action/objectType"/>
+      <attrKeyMap attr="browserName" key="actor/displayName"/>
+      <attrKeyMap attr="httpUserAgent" key="actors/0/id"/>
+      <attrKeyMap attr="srcIpAddr" key="actors/0/ipAddress"/>
+      <attrKeyMap attr="targetName" key="targets/0/displayName"/>
+      <attrKeyMap attr="targetType" key="targets/0/objectType"/>
+      <attrKeyMap attr="targetUser" key="targets/0/login"/>
+      <attrKeyMap attr="user" key="actors/0/login"/>
+      <attrKeyMap attr="userType" key="actors/0/objectType"/>
+      <attrKeyMap attr="_date" key="published"/>
+      <attrKeyMap attr="domain" key="domain"/>
+      <attrKeyMap attr="phCustId" key="phCustId"/>
+      <attrKeyMap attr="reptDevName" key="reptDevName"/>
+      <attrKeyMap attr="reptDevIpAddr" key="reptDevIpAddr"/>
+      <attrKeyMap attr="uuid" key="uuid"/>
+      <attrKeyMap attr="version" key="version"/>
+      <attrKeyMap attr="actorName" key="actor/displayName"/>
+      <attrKeyMap attr="actorId" key="actor/id"/>
+      <attrKeyMap attr="actorType" key="actor/type"/>
+      <attrKeyMap attr="targetName" key="targets/displayName"/>
+      <attrKeyMap attr="targetType" key="targets/type"/>
+      <attrKeyMap attr="targetUser" key="targets/login"/>
+      <attrKeyMap attr="_severity" key="severity"/>
+      <attrKeyMap attr="authServerName" key="authenticationContext/authenticationProvider"/>
+      <attrKeyMap attr="credentialProvider" key="authenticationContext/credentialProvider"/>
+      <attrKeyMap attr="credentialType" key="authenticationContext/credentialType"/>
+      <attrKeyMap attr="credentialIssuerId" key="authenticationContext/issuer/id"/>
+      <attrKeyMap attr="credentialIssuerType" key="authenticationContext/issuer/type"/>
+      <attrKeyMap attr="deviceType" key="client/device"/>
+      <attrKeyMap attr="srcGeoCity" key="client/geographicalContext/city"/>
+      <attrKeyMap attr="srcGeoCountry" key="client/geographicalContext/country"/>
+      <attrKeyMap attr="srcGeoLatitude" key="client/geographicalContext/geolocation/lat"/>
+      <attrKeyMap attr="srcGeoLongitude" key="client/geographicalContext/geolocation/lon"/>
+      <attrKeyMap attr="srcGeoCountryCode" key="client/geographicalContext/postalCode"/>
+      <attrKeyMap attr="srcGeoState" key="client/geographicalContext/state"/>
+      <attrKeyMap attr="srcIpAddr" key="client/ipAddress"/>
+      <attrKeyMap attr="browserName" key="client/userAgent/browser"/>
+      <attrKeyMap attr="osType" key="client/userAgent/os"/>
+      <attrKeyMap attr="httpUserAgent" key="client/userAgent/rawUserAgent"/>
+      <attrKeyMap attr="infoURL" key="debugContext/debugData/requestUri"/>
+      <attrKeyMap attr="msg" key="displayMessage"/>
+      <attrKeyMap attr="statusDetailedReason" key="outcome/reason"/>
+      <attrKeyMap attr="status" key="outcome/result"/>
+      <attrKeyMap attr="isProxy" key="securityContext/isProxy"/>
+      <attrKeyMap attr="sessionId" key="sessionId"/>
+      <attrKeyMap attr="transactionId" key="transaction/id"/>
+      <attrKeyMap attr="transactionType" key="transaction/type"/>
+
+      <!-- Additional parsing for request/ipchain events -->
+
+      <attrKeyMap attr="srcIpAddr" key="request/ipChain/0/ip"/>
+      <attrKeyMap attr="_proxy1" key="request/ipChain/1/ip"/>
+      <attrKeyMap attr="_proxy2" key="request/ipChain/2/ip"/>
+      <attrKeyMap attr="_proxy3" key="request/ipChain/3/ip"/>
+      <attrKeyMap attr="requestSource" key="request/ipChain/0/source"/>
+      <attrKeyMap attr="version" key="request/ipChain/0/version"/>
+      <attrKeyMap attr="emailId" key="actor/alternateId"/>
+      <attrKeyMap attr="sessionId" key="authenticationContext/externalSessionId"/>
+      <attrKeyMap attr="srcId" key="securityContext/asNumber"/>
+      <attrKeyMap attr="srcGeoOrg" key="securityContext/asOrg"/>
+      <attrKeyMap attr="srcDomain" key="securityContext/domain"/>
+    </collectFieldsByKeyValuePair>
+    <setEventAttribute attr="_eventName">trimAttribute($_eventName, ".")</setEventAttribute>
+    <setEventAttribute attr="_eventName">replaceStringByRegex($_eventName, "\.", "-")</setEventAttribute>
+
+    <when test="matches($_eventName, 'authentication-auth')">
+      <setEventAttribute attr="_eventName">replaceStrInStr($_eventName, "authentication-auth", "auth")</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="not_exist _severity"/>
+      <when test="$_severity = 'WARN'">
+        <setEventAttribute attr="eventSeverity">3</setEventAttribute>
+      </when>
+      <when test="$_severity IN 'ERROR'">
+        <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist _proxy1">
+      <setEventAttribute attr="srcIpAddrList">combineMsgId($srcIpAddr,",",$_proxy1)</setEventAttribute>
+      <when test="exist _proxy2">
+        <setEventAttribute attr="srcIpAddrList">combineMsgId($srcIpAddrList,",",$_proxy2)</setEventAttribute>
+        <when test="exist _proxy3">
+          <setEventAttribute attr="srcIpAddrList">combineMsgId($srcIpAddrList,",",$_proxy3)</setEventAttribute>
+        </when>
+      </when>
+    </when>
+
+    <collectFieldsByRegex src="$_date">
+      <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>.<:gPatStr>Z]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="eventTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+
+    <setEventAttribute attr="eventType">combineMsgId("OKTA-", $_eventName)</setEventAttribute>
+
+    <when test="matches($eventType,'user-auth_via')">
+      <when test="exist status">
+        <setEventAttribute attr="eventType">combineMsgId($eventType,"-",$status)</setEventAttribute>
+      </when>
+    </when>
+
+  </parsingInstructions>
+
+</eventParser>

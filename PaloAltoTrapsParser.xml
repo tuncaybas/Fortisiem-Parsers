@@ -1,0 +1,73 @@
+<eventParser name="PaloAltoTrapsParser">
+  <deviceType>
+    <Vendor>Palo Alto</Vendor>
+    <Model>Traps Endpoint Security Manager</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[Sep 28 2016 17:38:48 172.16.183.173 CEF:0|Palo Alto Networks|Traps Agent|3.4.1.16709|Traps Service Status Change|Agent|6|rt=Sep 28 2016 17:38:48 dhost=traps-win7x86 duser=Traps msg=Agent Service Status Changed: Stopped-> Running]]></testEvent>
+    <testEvent><![CDATA[Sep 28 2016 17:42:04 ESM CEF:0|Palo Alto Networks|Traps ESM|3.4.1.16709|Role Edited|Config|3|rt=Sep 28 2016 17:42:04 shost=ESM suser=administrator msg=Role TechWriter was added\changed]]></testEvent>
+    <testEvent><![CDATA[Sep 28 2016 17:34:56 172.16.183.173 CEF:0|Palo Alto Networks|Traps ESM|3.4.1.16709|New Hash Added|Policy|6|rt=Sep 28 2016 17:34:56 shost=ESM suser= fileHash=c97f276b4c70682c8f8d39b91e30f938bc6e86a42cd6b71e3ad08092dba528e9 cs5Label=NewVerdict cs5=Benign msg=New hash added]]></testEvent>
+    <testEvent><![CDATA[Sep 28 2016 17:34:50 172.16.183.173 CEF:0|Palo Alto Networks|Traps ESM|3.4.1.16709|Communications Check With Proxy|System|9|rt=Sep 28 2016 17:34:50 shost=ESM suser= dhost=ESM msg=Communications check with Proxy on host 'ESM'. Status: 'WildFire communication succeeded, proxy is disabled.']]></testEvent>
+    <testEvent><![CDATA[Aug 25 2016 12:52:45 10.200.0.216 CEF:0|Palo Alto Networks|Traps Agent|3.4.1.15591|Prevention Event|Threat|9|rt=Aug 25 2016 12:52:45 dhost=tmpltwe7stan duser=TMPLTWE7STAN\User cs2Label=Module cs2=DEP deviceProcessName=firefox.exe fileHash=CD3CF48E727B5904A211F9366A67695702893316C7A039554496E99D98173D3C cs3Label=ContentVersion cs3=5-353 dvc=10.200.0.30 msg=New prevention event. Prevention Key: 11111111-1111-1111-1111-111111111111]]></testEvent>
+  </testEvents>
+
+  <patternDefinitions>
+    <pattern name="patVBar"><![CDATA[[^|]+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[ CEF:\d+\|Palo Alto Networks\|Traps (?:Agent|ESM)\|[\d.]+\|\w]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<_mon:gPatMon>\s+<_day:gPatDay>\s+<_year:gPatYear>\s+<_time:gPatTime>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+CEF:\d+\|Palo Alto Networks\|Traps (?:Agent|ESM)\|[\d.]+\|<_eventType:patVBar>\|<:patVBar>\|<eventSeverity:gPatInt>\|<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">PAN-TrapsESM-Generic</setEventAttribute>
+    <setEventAttribute attr="_eventType">replaceStringByRegex($_eventType, "\s+", "")</setEventAttribute>
+    <setEventAttribute attr="eventType">combineMsgId("PAN-TrapsESM-", $_eventType)</setEventAttribute>
+
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+
+    <collectFieldsByKeyValuePair src="$_body" sep=" " kvsep="=">
+      <attrKeyMap attr="_cs3" key="cs3"/>
+      <attrKeyMap attr="_cs3Label" key="cs3Label"/>
+      <attrKeyMap attr="_cs5" key="cs5"/>
+      <attrKeyMap attr="_cs5Label" key="cs5Label"/>
+      <attrKeyMap attr="procName" key="deviceProcessName"/>
+      <attrKeyMap attr="destName" key="dhost"/>
+      <attrKeyMap attr="destUser" key="duser"/>
+      <attrKeyMap attr="destIpAddr" key="dvc"/>
+      <attrKeyMap attr="hashCode" key="fileHash"/>
+      <attrKeyMap attr="fileName" key="fname"/>
+      <attrKeyMap attr="msg" key="msg"/>
+      <attrKeyMap attr="srcName" key="shost"/>
+      <attrKeyMap attr="srcUser" key="suser"/>
+      <attrKeyMap attr="user" key="suser"/>
+    </collectFieldsByKeyValuePair>
+
+    <when test="exist destUser">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$destUser">
+            <regex><![CDATA[<destDomain:gPatStr>[\\]<destUser:gPatStr>]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+    <when test="exist _cs3Label">
+      <when test="$_cs3Label = 'ContentVersion'">
+        <setEventAttribute attr="fileVersion">$_cs3</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist _cs5Label">
+      <when test="$_cs5Label = 'NewVerdict'">
+        <setEventAttribute attr="configValue">$_cs5</setEventAttribute>
+      </when>
+    </when>
+  </parsingInstructions>
+</eventParser>

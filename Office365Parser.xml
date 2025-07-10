@@ -1,0 +1,1146 @@
+<eventParser name="Office365Parser">
+
+  <deviceType>
+    <Vendor>Microsoft</Vendor>
+    <Model>Office365</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patStrDoubleQuoted"><![CDATA[[^"]*]]></pattern>
+    <pattern name="patExceptSlash"><![CDATA[[^/]*]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[\[OFFICE365_EVENT_DATA\] = \s*]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[[OFFICE365_EVENT_DATA] = {"CreationTime": "2016-08-08T06:24:04UTC","Id": "11111111-1111-1111-1111-111111111111","Operation": "AddedToGroup","OrganizationId": "11111111-1111-1111-1111-111111111111","RecordType": "14","UserKey": "i:0h.f|membership|user@example.com","UserType": "0","Version": "1","Workload": "SharePoint","ClientIP": "211.144.207.10","ObjectId": "https://example.com/s","UserId": "user@example.com","EventSource": "SharePoint","ItemType": "Web","Site": "11111111-1111-1111-1111-111111111111","UserAgent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36","WebId": "11111111-1111-1111-1111-111111111111","EventData": "<Group>ssssss Members</Group>","TargetUserOrGroupType": "Member","TargetUserOrGroupName": "user@example.com"}]]></testEvent>
+    <testEvent><![CDATA[[OFFICE365_EVENT_DATA] = {"AppId":"","ClientAppId":"","ClientIP":"1.1.1.1:5375","CreationTime":"2019-10-22T10:05:47UTC","ExternalAccess":false,"Id":"11111111-1111-1111-1111-111111111111","ObjectId":"PROD.OUTLOOK.COM/Microsoft Exchange Hosted Organizations/onmicrosoft.com/secadmin\\Incomming","Operation":"New-InboxRule","OrganizationId":"11111111-1111-1111-1111-111111111111","OrganizationName":"onmicrosoft.com","OriginatingServer":"DB6 (15.20.2347.014)","Parameters":[{"Name":"AlwaysDeleteOutlookRulesBlob","Value":"False"},{"Name":"Force","Value":"False"},{"Name":"From","Value":"user@example.com"},{"Name":"MoveToFolder","Value":"Feeds RSS"},{"Name":"Name","Value":"Incomming"},{"Name":"StopProcessingRules","Value":"True"}],"RecordType":1,"ResultStatus":"True","SessionId":"11111111-1111-1111-1111-111111111111","TenantId":"11111111-1111-1111-1111-111111111111","UserId":"u1@d1","UserKey":"10032000669F951A","UserType":2,"Version":1,"Workload":"Exchange","phCustId":2007}]]></testEvent>
+    <testEvent><![CDATA[[OFFICE365_EVENT_DATA] = {"Actor":[{"ID":"11111111-1111-1111-1111-111111111111","Type":0},{"ID":"john.doe@example.com","Type":5}],"ActorContextId":"11111111-1111-1111-1111-111111111111","ActorIpAddress":"1.2.3.4","ApplicationId":"11111111-1111-1111-1111-111111111111","AzureActiveDirectoryEventType":1,"ClientIP":"1.2.3.4","CreationTime":"2025-02-21T09:29:24UTC","DeviceProperties":[{"Name":"Id","Value":"11111111-1111-1111-1111-111111111111"},{"Name":"DisplayName","Value":"WL-10261594"},{"Name":"OS","Value":"Windows10"},{"Name":"BrowserType","Value":"Edge"},{"Name":"TrustType","Value":"0"},{"Name":"SessionId","Value":"11111111-1111-1111-1111-111111111111"}],"ErrorNumber":"9002341","ExtendedProperties":[{"Name":"ResultStatusDetail","Value":"Redirect"},{"Name":"UserAgent","Value":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36dg/133.0.0.0 OneOutlook/1.2025.220.300"},{"Name":"RequestType","Value":"OAuth2:Authorize"}],"Id":"11111111-1111-1111-1111-111111111111","InterSystemsId":"11111111-1111-1111-1111-111111111111","IntraSystemId":"11111111-1111-1111-1111-111111111111","ModifiedProperties":[],"ObjectId":"11111111-1111-1111-1111-111111111111","Operation":"UserLoginFailed","OrganizationId":"11111111-1111-1111-1111-111111111111","RecordType":15,"ResultStatus":"Success","ServerHostName":"manage.office.com","SupportTicketId":"","Target":[{"ID":"11111111-1111-1111-1111-111111111111","Type":0}],"TargetContextId":"11111111-1111-1111-1111-111111111111","TenantId":"11111111-1111-1111-1111-111111111111","UserId":"john.doe@example.com","UserKey":"11111111-1111-1111-1111-111111111111","UserType":0,"Version":1,"Workload":"AzureActiveDirectory","phCustId":1}]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[\[OFFICE365_EVENT_DATA\] = <_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+
+    <setEventAttribute attr="eventType">MS_OFFICE365_Generic</setEventAttribute>
+    <setEventAttribute attr="extEventRecvProto">Office365_Mgmt_Activity_API</setEventAttribute>
+    <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+    <!--<setEventAttribute attr="_bodyTemp">replaceStringByRegex($_body, "\"", "")</setEventAttribute>-->
+    <collectAndSetAttrByJSON src="$_body">
+      <!-- Mandatory common schema fields -->
+      <attrKeyMap attr="office365RecordType" key="RecordType"/>
+      <attrKeyMap attr="opName" key="Operation"/>
+      <attrKeyMap attr="_actionTime" key="CreationTime"/>
+      <attrKeyMap attr="tenantId" key="OrganizationId"/>
+      <attrKeyMap attr="tenantName" key="OrganizationName"/>
+      <attrKeyMap attr="office365UserType" key="UserType"/>
+      <attrKeyMap attr="userKey" key="UserKey"/>
+      <attrKeyMap attr="_userId" key="UserId"/>
+      <attrKeyMap attr="_srcIp" key="ClientIP"/>
+      <!-- optional useful common schema -->
+      <attrKeyMap attr="eventSource" key="Workload"/>
+      <!-- for some ops like azure login, this does not indicate success -->
+      <attrKeyMap attr="_resultStatus" key="ResultStatus"/>
+      <!-- other record fields -->
+      <attrKeyMap attr="action" key="action"/>
+      <!-- Label Action used in MIP Email events -->
+      <attrKeyMap attr="action" key="LabelAction"/>
+      <attrKeyMap attr="sensitivityLabel" key="LabelName"/>
+      <!-- Certain Label Marking Audit logs for DLP -->
+      <attrKeyMap attr="ruleName" key="PolicyDetails[0].Rules[0].RuleName"/>
+      <attrKeyMap attr="action" key="PolicyDetails[0].Rules[0].Actions[0]"/>
+      <attrKeyMap attr="sensitivityLabel" key="PolicyDetails[0].Rules[0].ConditionsMatched.OtherConditions.find(Name='SensitivityLabels', Value)"/>
+      <attrKeyMap attr="senderMailAddr" key="ExchangeMetaData.From"/>
+      <attrKeyMap attr="receiverMailAddr" key="ExchangeMetaData.To[0]"/>
+      <attrKeyMap attr="ccMailAddr" key="ExchangeMetaData.CC[0]"/>
+      <attrKeyMap attr="mailSubject" key="ExchangeMetaData.Subject"/>
+      <attrKeyMap attr="_itemName" key="ItemName"/>
+      <attrKeyMap attr="phCustId" key="phCustId"/>
+      <attrKeyMap attr="reptDevName" key="ServerHostName"/>
+      <attrKeyMap attr="tenantId" key="TenantId"/>
+      <attrKeyMap attr="oid" key="ObjectId"/>
+      <attrKeyMap attr="srcFilePath" key="SourceRelativeUrl"/>
+      <attrKeyMap attr="srcFileName" key="SourceFileName"/>
+      <attrKeyMap attr="srcFileExt" key="SourceFileExtension"/>
+      <attrKeyMap attr="destFilePath" key="DestinationRelativeUrl"/>
+      <attrKeyMap attr="destFileName" key="DestinationFileName"/>
+      <attrKeyMap attr="destFileExt" key="DestinationFileExtension"/>
+      <!-- Logon Type is useful for mailbox audit operations -->
+      <attrKeyMap attr="_logonType" key="LogonType"/>
+      <attrKeyMap attr="userFullName" key="LogonUserDisplayName"/>
+      <attrKeyMap attr="user" key="username"/>
+      <attrKeyMap attr="userFullName" key="userDisplayName"/>
+      <attrKeyMap attr="userPrincipalName" key="userPrincipalName"/>
+      <attrKeyMap attr="folder" key="DestFolder"/>
+      <attrKeyMap attr="hostIpAddr" key="ActorIpAddress"/>
+      <attrKeyMap attr="httpUserAgent" key="BrowserName"/>
+      <attrKeyMap attr="deviceType" key="DeviceType"/>
+      <attrKeyMap attr="objType" key="ObjectType"/>
+      <attrKeyMap attr="osObjType" key="Endpoint"/>
+      <attrKeyMap attr="site" key="SiteUrl"/>
+      <attrKeyMap attr="targetOsObjType" key="ItemType"/>
+      <attrKeyMap attr="eventSource" key="EventSource"/>
+      <attrKeyMap attr="eventSource" key="source"/>
+      <attrKeyMap attr="resourceName" key="SourceName"/>
+      <attrKeyMap attr="httpUserAgent" key="UserAgent"/>
+      <attrKeyMap attr="httpUserAgent" key="useragent"/>
+      <attrKeyMap attr="srcDomain" key="MachineDomainInfo"/>
+      <attrKeyMap attr="targetUser" key="ExtendedProperties.find(Name='targetUPN', Value)"/>
+      <attrKeyMap attr="requestType" key="ExtendedProperties.find(Name='RequestType', Value)"/>
+      <attrKeyMap attr="targetOsObjName" key="TargetUserOrGroupName"/>
+      <!-- SendAs log - impersonated email -->
+      <attrKeyMap attr="targetUser" key="SendAsUserSmtp"/>
+      <attrKeyMap attr="targetOsObjType" key="TargetUserOrGroupType"/>
+      <attrKeyMap attr="details" key="ClientInfoString"/>
+      <attrKeyMap attr="srcIpAddr" key="ClientIPAddress"/>
+      <attrKeyMap attr="srcIpAddr" key="srcipv4"/>
+      <attrKeyMap attr="srcIpAddr" key="ipAddress"/>
+      <attrKeyMap attr="phyMachName" key="ClientMachineName"/>
+      <attrKeyMap attr="procName" key="ClientProcessName"/>
+      <attrKeyMap attr="srcAppVersion" key="ClientVersion"/>
+      <attrKeyMap attr="item" key="Item"/>
+      <attrKeyMap attr="smtpMsgId" key="Item.InternetMessageId"/>
+      <attrKeyMap attr="parentFolder" key="Item.ParentFolder.Path"/>
+      <attrKeyMap attr="totBytes" key="Item.SizeInBytes"/>
+      <attrKeyMap attr="mailSubject" key="Item.Subject"/>
+      <attrKeyMap attr="attachments" key="Item.Attachments"/>
+      <attrKeyMap attr="folder" key="Folder"/>
+      <attrKeyMap attr="_activityType" key="AzureActiveDirectoryEventType"/>
+      <attrKeyMap attr="activityType" key="EventType"/>
+      <attrKeyMap attr="appName" key="Application"/>
+      <attrKeyMap attr="threatType" key="riskType"/>
+      <attrKeyMap attr="riskName" key="riskEventType"/>
+      <attrKeyMap attr="status" key="riskState"/>
+      <attrKeyMap attr="detail" key="riskDetail"/>
+      <attrKeyMap attr="threatLevel" key="riskLevel"/>
+      <attrKeyMap attr="_activity" key="activity"/>
+      <!-- Certain logs will report application vs Application -->
+      <!-- There are some logs that do not seem to conform to schema but come in, this is used for those event types -->
+      <attrKeyMap attr="appName" key="application"/>
+      <!-- Sharepoint Base Schema -->
+      <attrKeyMap attr="_appDisplayName" key="ApplicationDisplayName"/>
+      <attrKeyMap attr="details" key="Client"/>
+      <attrKeyMap attr="srcDomain" key="UserDomain"/>
+      <attrKeyMap attr="applicationIdStr" key="ApplicationId"/>
+      <attrKeyMap attr="errReason" key="LogonError"/>
+      <attrKeyMap attr="errReason" key="ErrorCode"/>
+      <attrKeyMap attr="startTime" key="StartTime"/>
+      <attrKeyMap attr="comment" key="GenericInfo"/>
+      <!-- only used in azure AD events -->
+      <attrKeyMap attr="_loginStatus" key="LoginStatus"/>
+      <attrKeyMap attr="status" key="OperationResult"/>
+      <attrKeyMap attr="httpUserAgent" key="ExtendedProperties.find(Name='UserAgent', Value)"/>
+      <attrKeyMap attr="mailSubject" key="Subject"/>
+      <attrKeyMap attr="receiverMailAddr" key="Recipients"/>
+      <attrKeyMap attr="receiverMailAddr" key="Receivers[0]"/>
+      <attrKeyMap attr="srcIpAddr" key="SenderIp"/>
+      <attrKeyMap attr="status" key="Verdict"/>
+      <attrKeyMap attr="module" key="DetectionMethod"/>
+      <attrKeyMap attr="fileDesc" key="AttachmentData"/>
+      <attrKeyMap attr="_name" key="Name"/>
+      <attrKeyMap attr="_data" key="Data"/>
+      <attrKeyMap attr="options" key="Parameters"/>
+      <attrKeyMap attr="senderMailAddr" key="Parameters.find(Name='From', Value)"/>
+      <attrKeyMap attr="moveToFolder" key="Parameters.find(Name='MoveToFolder', Value)"/>
+      <attrKeyMap attr="ruleName" key="Parameters.find(Name='Name', Value)"/>
+      <attrKeyMap attr="stopProcessingRules" key="Parameters.find(Name='StopProcessingRules', Value)"/>
+      <attrKeyMap attr="markAsRead" key="Parameters.find(Name='MarkAsRead', Value)"/>
+      <attrKeyMap attr="subjectContainsWords" key="Parameters.find(Name='SubjectContainsWords', Value)"/>
+      <attrKeyMap attr="_forwardTo" key="Parameters.find(Name='ForwardTo', Value)"/>
+      <attrKeyMap attr="_forwardTo" key="Parameters.find(Name='RedirectTo', Value)"/>
+      <attrKeyMap attr="_forwardTo" key="Parameters.find(Name='ForwardAsAttachmentTo', Value)"/>
+      <attrKeyMap attr="returnPathMailAddr" key="P1Sender"/>
+      <attrKeyMap attr="senderMailAddr" key="P2Sender"/>
+      <attrKeyMap attr="senderMailAddr" key="Sender"/>
+      <attrKeyMap attr="msg" key="description"/>
+      <attrKeyMap attr="details" key="explanation"/>
+      <attrKeyMap attr="mailboxGUID" key="MailboxGuid"/>
+      <attrKeyMap attr="securityId" key="MailboxOwnerSid"/>
+      <attrKeyMap attr="mailboxUPN" key="MailboxOwnerUPN"/>
+      <attrKeyMap attr="tenantName" key="OrganizationName"/>
+      <attrKeyMap attr="sessionId" key="DeviceProperties.find(Name='SessionId', Value)"/>
+      <attrKeyMap attr="isCompliant" key="DeviceProperties.find(Name='IsCompliant', Value)"/>
+      <attrKeyMap attr="trustType" key="DeviceProperties.find(Name='TrustType', Value)"/>
+      <attrKeyMap attr="hostName" key="DeviceProperties.find(Name='DisplayName', Value)"/>
+      <!-- Threat intel mail data -->
+      <attrKeyMap attr="details" key="AuthDetails"/>
+      <attrKeyMap attr="mailAction" key="DeliveryAction"/>
+      <attrKeyMap attr="direction" key="Directionality"/>
+      <attrKeyMap attr="infoURL" key="EventDeepLink"/>
+      <attrKeyMap attr="smtpMsgId" key="InternetMessageId"/>
+      <attrKeyMap attr="folder" key="LatestDeliveryLocation"/>
+      <attrKeyMap attr="ipsConfidence" key="PhishConfidenceLevel"/>
+      <attrKeyMap attr="policyName" key="Policy"/>
+      <attrKeyMap attr="action" key="PolicyAction"/>
+      <!-- Threat intel URL Click -->
+      <attrKeyMap attr="appName" key="AppName"/>
+      <attrKeyMap attr="osType" key="OS"/>
+      <attrKeyMap attr="downloadURL" key="Url"/>
+      <attrKeyMap attr="_urlClickAction" key="UrlClickAction"/>
+      <attrKeyMap attr="_sourceWorkload" key="SourceWorkload"/>
+      <!-- ATP File Inspection Data -->
+      <attrKeyMap attr="oid" key="FileData.DocumentId"/>
+      <attrKeyMap attr="fileName" key="FileData.FileName"/>
+      <attrKeyMap attr="filePath" key="FileData.FilePath"/>
+      <attrKeyMap attr="fileSize64" key="FileData.FileSize"/>
+      <attrKeyMap attr="_fileVerdict" key="FileData.FileVerdict"/>
+      <attrKeyMap attr="hashSHA256" key="FileData.SHA256"/>
+      <attrKeyMap attr="virusFamily" key="FileData.MalwareFamily"/>
+      <attrKeyMap attr="_sourceWorkload" key="SourceWorkload"/>
+      <!-- Air Investigation -->
+      <attrKeyMap attr="details" key="Data"/>
+      <attrKeyMap attr="infoURL" key="DeepLinkUrl"/>
+      <attrKeyMap attr="alertIdStr" key="InvestigationId"/>
+      <attrKeyMap attr="alertName" key="InvestigationName"/>
+      <attrKeyMap attr="alertCategory" key="InvestigationType"/>
+      <attrKeyMap attr="status" key="Status"/>
+      <!-- Dynamics 365 Schema -->
+      <attrKeyMap attr="infoURL" key="ItemUrl"/>
+      <attrKeyMap attr="msg" key="Message"/>
+      <attrKeyMap attr="httpUserAgent" key="UserAgent"/>
+      <attrKeyMap attr="changeSet" key="Fields"/>
+      <attrKeyMap attr="dbQuery" key="Query"/>
+    </collectAndSetAttrByJSON>
+
+    <when test="not_exist status">
+      <when test="exist _resultStatus">
+        <setEventAttribute attr="status">toLower($_resultStatus)</setEventAttribute>
+      </when>
+    </when>
+    <!-- Normalize user fields -->
+    <when test="exist _userId">
+      <choose>
+        <when test="not_exist user">
+          <setEventAttribute attr="user">$_userId</setEventAttribute>
+        </when>
+        <otherwise>
+          <!-- user already exists, so preserve userId if different -->
+          <setEventAttribute attr="userId">$_userId</setEventAttribute>
+        </otherwise>
+      </choose>
+    </when>
+
+    <when test="not_exist user">
+      <!-- Cut down on unnecssary parsed info, only set userKey if user not found -->
+      <when test="exist userKey">
+        <setEventAttribute attr="user">$userKey</setEventAttribute>
+      </when>
+    </when>
+
+    <when test="exist opName">
+      <!-- opName is mandatory for all logs -->
+      <setEventAttribute attr="opName">trimAttribute($opName, ".")</setEventAttribute>
+      <setEventAttribute attr="opName">replaceStringByRegex($opName, "[\s()]+", "_")</setEventAttribute>
+      <setEventAttribute attr="opName">trimAttribute($opName, "_")</setEventAttribute>
+      <!-- strip unicode literal from opName -->
+      <setEventAttribute attr="opName">replaceStrInStr($opName, "–", "")</setEventAttribute>
+      <setEventAttribute attr="opName">replaceStringByRegex($opName, "_{2,}", "_")</setEventAttribute>
+    </when>
+
+    <!-- Event Type Definitions by Audit Log Record Type -->
+    <choose>
+      <when test="not_exist office365RecordType">
+        <!-- Certain Events do not properly have record type or workload, so we use appName for those -->
+        <choose>
+          <when test="exist eventSource">
+            <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_", $eventSource)</setEventAttribute>
+            <when test="exist opName">
+              <setEventAttribute attr="eventType">combineMsgId($eventType, "_", $opName)</setEventAttribute>
+            </when>
+          </when>
+          <when test="exist appName">
+            <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_", $appName)</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">MS_OFFICE365_Generic</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+
+      <when test="$office365RecordType IN '1,2,3'">
+        <!-- 1 is exchange admin events, 2 is mail single item events -->
+        <!-- 3 is exchange item group -->
+        <!-- Exchange action on single item -->
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_Exchange_", $opName)</setEventAttribute>
+        <when test="exist _logonType">
+          <choose>
+            <when test="$_logonType = '0'">
+              <setEventAttribute attr="loginType">Owner</setEventAttribute>
+            </when>
+            <when test="$_logonType = '1'">
+              <setEventAttribute attr="loginType">Admin</setEventAttribute>
+            </when>
+            <when test="$_logonType = '2'">
+              <setEventAttribute attr="loginType">Delegated</setEventAttribute>
+            </when>
+            <when test="$_logonType = '3'">
+              <setEventAttribute attr="loginType">Transport</setEventAttribute>
+            </when>
+            <when test="$_logonType = '4'">
+              <setEventAttribute attr="loginType">SystemService</setEventAttribute>
+            </when>
+            <when test="$_logonType = '5'">
+              <setEventAttribute attr="loginType">BestAccess</setEventAttribute>
+            </when>
+            <when test="$_logonType = '6'">
+              <setEventAttribute attr="loginType">DelegatedAdmin</setEventAttribute>
+            </when>
+          </choose>
+        </when>
+
+        <when test="exist office365UserType">
+          <!-- User type who made the change 0 is regular user, 2 is admin -->
+          <when test="$office365UserType != '0'">
+            <when test="exist user">
+              <switch>
+                <!-- split on behalf into user/target user sections -->
+                <case>
+                  <collectFieldsByRegex src="$user">
+                    <regex><![CDATA[^"?<user:patStrDoubleQuoted>"? on behalf of "?<targetUser:patStrDoubleQuoted>"?$]]></regex>
+                  </collectFieldsByRegex>
+                  <when test="not_exist action">
+                    <!-- Some rules and reports use this to determine if action was on self or another mailbox -->
+                    <setEventAttribute attr="action">on_behalf_of</setEventAttribute>
+                  </when>
+                </case>
+                <default/>
+              </switch>
+
+              <!-- try to break user into hostname/domain/user portions if existing -->
+              <switch>
+                <case>
+                  <collectFieldsByRegex src="$user">
+                    <regex><![CDATA[^<hostName:patExceptSlash>/.*/<domain:patExceptSlash>/<user:gPatMesgBody>$]]></regex>
+                  </collectFieldsByRegex>
+                </case>
+                <default/>
+              </switch>
+            </when>
+            <when test="exist targetUser">
+              <switch>
+                <case>
+                  <!-- try to break targetUser into hostname/domain/user portions if existing -->
+                  <collectFieldsByRegex src="$targetUser">
+                    <regex><![CDATA[^<destName:patExceptSlash>/.*/<targetDomain:patExceptSlash>/<targetUser:gPatMesgBody>$]]></regex>
+                  </collectFieldsByRegex>
+                </case>
+                <default/>
+              </switch>
+            </when>
+          </when>
+
+          <choose>
+            <!-- Exchange operation parsing -->
+            <when test="$opName IN 'SendAs,SendOnBehalf'">
+              <setEventAttribute attr="senderMailAddr">$user</setEventAttribute>
+            </when>
+            <when test="$opName IN 'Set-Mailbox,New-InboxRule,UpdateInboxRules'">
+              <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+              <when test="exist _forwardTo">
+                <when test="not_exist receiverMailAddr">
+                  <setEventAttribute attr="receiverMailAddr">$_forwardTo</setEventAttribute>
+                </when>
+              </when>
+              <when test="not_exist targetUser">
+                <!-- User is adding mailbox rule to their own mailbox -->
+                <setEventAttribute attr="targetUser">$user</setEventAttribute>
+              </when>
+            </when>
+            <!-- E5 advanced audit event -->
+            <when test="$opName = 'Send'">
+              <when test="exist mailboxUPN">
+                <setEventAttribute attr="senderMailAddr">$mailboxUPN</setEventAttribute>
+              </when>
+            </when>
+            <otherwise/>
+          </choose>
+        </when>
+
+      </when>
+
+      <when test="$office365RecordType = '4'">
+        <!-- Sharepoint general events -->
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_SharePoint_", $opName)</setEventAttribute>
+        <!-- ApplicationDisplayName is a SharePoint base schema attribute -->
+        <when test="not_exist appName">
+          <when test="exist _appDisplayName">
+            <setEventAttribute attr="appName">$_appDisplayName</setEventAttribute>
+            <setEventAttribute attr="appName">replaceStringByRegex($appName, "[\s()]", "_")</setEventAttribute>
+          </when>
+        </when>
+      </when>
+
+      <when test="$office365RecordType = '6'">
+        <!-- Sharepoint File Operation -->
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_SharePoint_", $opName)</setEventAttribute>
+        <!-- ApplicationDisplayName is a SharePoint base schema attribute -->
+        <when test="not_exist appName">
+          <when test="exist _appDisplayName">
+            <setEventAttribute attr="appName">$_appDisplayName</setEventAttribute>
+            <setEventAttribute attr="appName">replaceStringByRegex($appName, "[\s()]", "_")</setEventAttribute>
+          </when>
+        </when>
+        <choose>
+          <when test="$opName = 'FileMalwareDetected'">
+            <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+          </when>
+          <otherwise/>
+        </choose>
+
+      </when>
+
+      <when test="$office365RecordType = '7'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_OneDrive_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '8'">
+        <!-- AzureActiveDirectory - Microsoft Entra ID events. -->
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_EntraID_", $opName)</setEventAttribute>
+        <!-- AzureActiveDirectoryEventType 0 is accountlogon, 1 is azure app audit event -->
+        <when test="$eventType = 'MS_OFFICE365_EntraID_Update_application_Certificates_and_secrets_management'">
+          <!-- some update to application occurred for secrets mgmt -->
+          <setEventAttribute attr="eventType">MS_OFFICE365_EntraID_Update_application_Certs_and_secrets_mgmt</setEventAttribute>
+        </when>
+        <when test="exist _activityType">
+          <choose>
+            <when test="$_activityType = '0'">
+              <setEventAttribute attr="activityType">Account Logon</setEventAttribute>
+            </when>
+            <otherwise>
+              <setEventAttribute attr="activityType">Azure application security</setEventAttribute>
+            </otherwise>
+          </choose>
+        </when>
+        <when test="exist _loginStatus">
+          <!-- sts login events this is the true success/fail field -->
+          <choose>
+            <when test="$_loginStatus = '0'">
+              <setEventAttribute attr="status">success</setEventAttribute>
+            </when>
+            <otherwise>
+              <setEventAttribute attr="status">failed</setEventAttribute>
+            </otherwise>
+          </choose>
+        </when>
+        <when test="exist status">
+          <!-- for backwards compatibility of ETs, if operation was succussful, no need to append status -->
+          <choose>
+            <when test="$status IN 'failure,failed,false'">
+              <setEventAttribute attr="eventType">combineMsgId($eventType,"_", $status)</setEventAttribute>
+            </when>
+          </choose>
+        </when>
+        <choose>
+          <when test="$opName = 'Disable_Strong_Authentication'">
+            <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+            <when test="exist oid">
+              <!-- In this event object id is the target user -->
+              <setEventAttribute attr="targetUser">$oid</setEventAttribute>
+            </when>
+          </when>
+          <when test="$opName = 'Add_user'">
+            <setEventAttribute attr="targetUser">$oid</setEventAttribute>
+          </when>
+          <otherwise/>
+        </choose>
+      </when>
+
+      <when test="$office365RecordType = '9'">
+        <!-- AzureActiveDirectoryAccountLogon_  keep name consistent for now -->
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_EntraID_", $opName)</setEventAttribute>
+        <choose>
+          <when test="exist errReason">
+            <!-- LogonError exists: STS Logon did not succeed -->
+            <setEventAttribute attr="eventType">MS_OFFICE365_EntraID_UserLoginFailed</setEventAttribute>
+          </when>
+          <when test="not_exist status"/>
+          <when test="$status IN 'failure,failed,false'">
+            <setEventAttribute attr="eventType">MS_OFFICE365_EntraID_UserLoginFailed</setEventAttribute>
+          </when>
+        </choose>
+      </when>
+
+      <when test="$office365RecordType = '10'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_DataCenterSecurityCmdlet_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '11'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_ComplianceDLPSharePoint_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '13'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_ComplianceDLPExchange_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '14'">
+        <!-- SharePoint sharing operations -->
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_SharePointSharingOperation_", $opName)</setEventAttribute>
+        <when test="$opName = 'AddedToGroup'">
+          <setEventAttribute attr="groupName">$targetOsObjName</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$office365RecordType = '15'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_EntraID_StsLogon_", $opName)</setEventAttribute>
+        <when test="exist errReason">
+          <!-- LogonError exists: STS Logon did not succeed -->
+          <setEventAttribute attr="eventType">MS_OFFICE365_EntraID_StsLogon_UserLoginFailed</setEventAttribute>
+        </when>
+        <when test="exist userKey">
+          <when test="$userKey = 'Not Available'">
+            <!-- UserKey is a mandatory attribute, if missing the login did not succeed -->
+            <setEventAttribute attr="eventType">MS_OFFICE365_EntraID_StsLogon_UserLoginFailed</setEventAttribute>
+          </when>
+        </when>
+      </when>
+
+      <when test="$office365RecordType = '16'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_SkypeForBusinessPSTNUsage_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '17'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_SkypeForBusinessUsersBlocked_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '18'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_SecurityComplianceCenterEOPCmdlet_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '19'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_ExchangeAggregatedOperation_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '20'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_PowerBIAudit_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '21'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_CRM_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '22'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_Yammer_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '23'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_SkypeForBusinessCmdlets_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '24'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_Discovery_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '25'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_MicrosoftTeams_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '28'">
+        <!-- Threat Intel for Mail -->
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_ThreatIntel_", $opName)</setEventAttribute>
+        <when test="$opName = 'TIMailData'">
+          <when test="exist mailAction">
+            <setEventAttribute attr="eventType">combineMsgId($eventType,"_",$mailAction)</setEventAttribute>
+          </when>
+        </when>
+
+      </when>
+
+      <when test="$office365RecordType = '29'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_MailSubmission_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '30'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_MicrosoftFlow_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '31'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_AeD_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '32'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_MicrosoftStream_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '33'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_ComplianceDLPSharePointClassification_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '34'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_ThreatFinder_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '35'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_Project_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '36'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_SharePointListOperation_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '37'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_SharePointCommentOperation_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '38'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_DataGovernance_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '39'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_Kaizala_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '40'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_SecurityComplianceAlerts_", $opName)</setEventAttribute>
+        <choose>
+          <when test="$opName IN 'AlertTriggered,AlertEntityGenerated,AlertUpdated'">
+            <when test="exist _name">
+              <setEventAttribute attr="ruleName">$_name</setEventAttribute>
+            </when>
+            <when test="exist _data">
+              <setEventAttribute attr="_data">replaceStrInStr($_data, "\\\"", "\"")</setEventAttribute>
+              <collectAndSetAttrByJSON src="$_data">
+                <attrKeyMap attr="user" key="f3u"/>
+                <attrKeyMap attr="opName" key="op"/>
+                <attrKeyMap attr="details" key="ad"/>
+                <attrKeyMap attr="ruleName" key="an"/>
+              </collectAndSetAttrByJSON>
+            </when>
+            <when test="exist _userId">
+              <setEventAttribute attr="serverName">$_userId</setEventAttribute>
+            </when>
+          </when>
+          <otherwise/>
+        </choose>
+      </when>
+
+      <when test="$office365RecordType = '41'">
+        <!-- Threat Intel for URLs -->
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_ThreatIntel_", $opName)</setEventAttribute>
+        <when test="$eventType = 'MS_OFFICE365_ThreatIntel_TIUrlClickData'">
+          <when test="exist _urlClickAction">
+            <choose>
+              <when test="$_urlClickAction = '2'">
+                <setEventAttribute attr="eventType">combineMsgId($eventType,"_BlockPage")</setEventAttribute>
+                <setEventAttribute attr="eventAction">1</setEventAttribute>
+              </when>
+              <when test="$_urlClickAction = '3'">
+                <setEventAttribute attr="eventType">combineMsgId($eventType,"_PendingDetonationPage")</setEventAttribute>
+                <setEventAttribute attr="eventAction">1</setEventAttribute>
+              </when>
+              <when test="$_urlClickAction = '4'">
+                <setEventAttribute attr="eventType">combineMsgId($eventType,"_BlockPageOverride")</setEventAttribute>
+                <setEventAttribute attr="eventAction">0</setEventAttribute>
+              </when>
+              <when test="$_urlClickAction = '5'">
+                <setEventAttribute attr="eventType">combineMsgId($eventType,"_PendingDetonationPageOverride")</setEventAttribute>
+                <setEventAttribute attr="eventAction">0</setEventAttribute>
+              </when>
+              <otherwise/>
+            </choose>
+          </when>
+        </when>
+      </when>
+
+      <when test="$office365RecordType = '42'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_SecurityComplianceInsights_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '43'">
+        <!-- Logged when  Emails sent with Sensitivity Labels assigned -->
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_MIPLabel_", $opName)</setEventAttribute>
+        <when test="exist _itemName">
+          <setEventAttribute attr="mailSubject">$_itemName</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$office365RecordType = '44'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_WorkplaceAnalytics_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '45'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_PowerAppsApp_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '46'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_PowerAppsPlan_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '47'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_ThreatIntel_", $opName)</setEventAttribute>
+        <when test="$eventType = 'MS_OFFICE365_ThreatIntel_AtpDetection'">
+          <!-- ATP File inspection events in sharepoint, onedrive, and teams -->
+          <when test="exist _sourceWorkload">
+            <choose>
+              <when test="$_sourceWorkload = '0'">
+                <setEventAttribute attr="eventType">combineMsgId($eventType,"_SharePoint")</setEventAttribute>
+              </when>
+              <when test="$_sourceWorkload = '1'">
+                <setEventAttribute attr="eventType">combineMsgId($eventType,"_OneDrive")</setEventAttribute>
+              </when>
+              <when test="$_sourceWorkload = '2'">
+                <setEventAttribute attr="eventType">combineMsgId($eventType,"_Teams")</setEventAttribute>
+              </when>
+              <otherwise/>
+            </choose>
+          </when>
+          <when test="exist _fileVerdict">
+            <choose>
+              <when test="$_fileVerdict = '0'">
+                <setEventAttribute attr="eventType">combineMsgId($eventType,"File_Good")</setEventAttribute>
+              </when>
+              <when test="$_fileVerdict = '1'">
+                <setEventAttribute attr="eventType">combineMsgId($eventType,"File_Bad")</setEventAttribute>
+              </when>
+              <when test="$_fileVerdict = '-1'">
+                <setEventAttribute attr="eventType">combineMsgId($eventType,"File_Error")</setEventAttribute>
+              </when>
+              <when test="$_fileVerdict = '-2'">
+                <setEventAttribute attr="eventType">combineMsgId($eventType,"File_Timeout")</setEventAttribute>
+              </when>
+              <when test="$_fileVerdict = '-3'">
+                <setEventAttribute attr="eventType">combineMsgId($eventType,"File_Pending")</setEventAttribute>
+              </when>
+              <otherwise/>
+            </choose>
+          </when>
+        </when>
+      </when>
+
+      <when test="$office365RecordType = '48'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_LabelContentExplorer_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '49'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_TeamsHealthcare_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '50'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_ExchangeItemAggregated_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '51'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_HygieneEvent_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '52'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_DataInsightsRestApiAudit_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '53'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_InformationBarrierPolicyApplication_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '54'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_SharePointListItemOperation_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '55'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_SharePointContentTypeOperation_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '56'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_SharePointFieldOperation_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '57'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_MicrosoftTeamsAdmin_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '58'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_HRSignal_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '59'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_MicrosoftTeamsDevice_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '60'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_MicrosoftTeamsAnalytics_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '61'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_InformationWorkerProtection_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '62'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_Campaign_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '63'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_DLPEndpoint_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '64'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_AirInvestigation_", $opName)</setEventAttribute>
+        <choose>
+          <when test="$opName = 'AirInvestigationData'">
+            <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_AirInvestigation")</setEventAttribute>
+            <when test="exist status">
+              <setEventAttribute attr="_statusET">replaceStrInStr($status, " ", "_")</setEventAttribute>
+              <setEventAttribute attr="eventType">combineMsgId($eventType,"_",$_statusET)</setEventAttribute>
+            </when>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_AirInvestigation_", $opName)</setEventAttribute>
+          </otherwise>
+        </choose>
+      </when>
+      <when test="$office365RecordType = '65'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_Quarantine_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '66'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_MicrosoftForms_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '67'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_ApplicationAudit_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '68'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_ComplianceSupervisionExchange_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '69'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_CustomerKeyServiceEncryption_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '70'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_OfficeNative_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '71'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_MipAutoLabelSharePointItem_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '72'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_MipAutoLabelSharePointPolicyLocation_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '73'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_MicrosoftTeamsShifts_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '75'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_MipAutoLabelExchangeItem_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '76'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_CortanaBriefing_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '78'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_WDATPAlerts_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '82'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_SensitivityLabelPolicyMatch_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '83'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_SensitivityLabelAction_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '84'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_SensitivityLabeledFileAction_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '85'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_AttackSim_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '86'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_AirManualInvestigation_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '87'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_SecurityComplianceRBAC_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '88'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_UserTraining_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '89'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_AirAdminActionInvestigation_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '90'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_MSTIC_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '91'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_PhysicalBadgingSignal_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '93'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_AipDiscover_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '94'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_AipSensitivityLabelAction_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '95'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_AipProtectionAction_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '96'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_AipFileDeleted_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '97'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_AipHeartBeat_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '98'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_MCASAlerts_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '99'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_OnPremisesFileShareScannerDlp_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '100'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_OnPremisesSharePointScannerDlp_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '101'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_ExchangeSearch_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '102'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_SharePointSearch_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '103'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_PrivacyInsights_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '105'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_MyAnalyticsSettings_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '106'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_SecurityComplianceUserChange_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '107'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_ComplianceDLPExchangeClassification_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '109'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_MipExactDataMatch_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '113'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_MS365DCustomDetection_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '147'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_CoreReportingSettings_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '148'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_ComplianceConnector_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '154'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_OMEPortal_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '174'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_DataShareOperation_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '181'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_EduDataLakeDownloadOperation_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '183'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_MicrosoftGraphDataConnectOperation_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '186'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_PowerPagesSite_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '188'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_PlannerPlan_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '189'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_PlannerCopyPlan_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '190'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_PlannerTask_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '191'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_PlannerRoster_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '192'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_PlannerPlanList_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '193'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_PlannerTaskList_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '194'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_PlannerTenantSettings_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '195'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_ProjectForTheWebProject_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '196'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_ProjectForTheWebTask_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '197'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_ProjectForTheWebRoadmap_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '198'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_ProjectForTheWebRoadmapItem_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '199'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_ProjectForTheWebProjectSettings_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '200'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_ProjectForTheWebRoadmapSettings_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '202'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_MicrosoftTodoAudit_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '216'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_Viva_Goals_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '217'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_MicrosoftGraphDataConnectConsent_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '230'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_TeamsUpdates_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '237'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_DefenderExpertsforXDRAdmin_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '231'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_PlannerRosterSensitivityLabel_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '251'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_VfamCreatePolicy_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '252'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_VfamUpdatePolicy_", $opName)</setEventAttribute>
+      </when>
+
+      <when test="$office365RecordType = '253'">
+        <setEventAttribute attr="eventType">combineMsgId("MS_OFFICE365_VfamDeletePolicy_", $opName)</setEventAttribute>
+      </when>
+      <otherwise>
+        <setEventAttribute attr="eventType">MS_OFFICE365_Generic</setEventAttribute>
+      </otherwise>
+    </choose>
+
+    <when test="exist receiverMailAddr">
+      <setEventAttribute attr="receiverMailAddr">replaceStringByRegex($receiverMailAddr, "[\n\r\"\s]*", "")</setEventAttribute>
+      <setEventAttribute attr="receiverMailAddr">trimAttribute($receiverMailAddr, "\[\] ")</setEventAttribute>
+    </when>
+
+    <when test="exist _actionTime">
+      <collectFieldsByRegex src="$_actionTime">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMonNum>-<_day:gPatDay>T<_time:gPatTime><_tz:gPatTimeZone>?]]></regex>
+      </collectFieldsByRegex>
+      <choose>
+        <when test="exist _tz">
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+        </when>
+        <otherwise>
+          <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time)</setEventAttribute>
+        </otherwise>
+      </choose>
+    </when>
+
+    <when test="exist infoURL">
+      <setEventAttribute attr="destName">extractHostFromURL($infoURL)</setEventAttribute>
+    </when>
+
+    <choose>
+      <when test="$eventType = 'MS_OFFICE365_Exchange_Export-Message'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS_OFFICE365_Exchange_Export-MigrationReport'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS_OFFICE365_Exchange_Get-OnPremisesOrganization'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS_OFFICE365_Exchange_Get-CalendarDiagnosticAnalysis'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS_OFFICE365_Exchange_Get-AuditLogSearch'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS_OFFICE365_Exchange_Get-ComplianceTagStorage'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS_OFFICE365_Exchange_Get-ServerMonitoringOverride'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS_OFFICE365_Exchange_Get-OrganizationRelationship'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS_OFFICE365_Exchange_Stop-ManagedFolderAssistant'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <when test="$eventType = 'MS_OFFICE365_SecurityComplianceCenter_SearchReportRemoved'">
+        <setEventAttribute attr="eventSeverity">7</setEventAttribute>
+      </when>
+      <!-- These events dont conform to expected schema of mandatory RecordType and Operation -->
+      <when test="$eventType = 'MS_OFFICE365_IdentityProtection'">
+        <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        <when test="exist riskName">
+          <choose>
+            <when test="exist _activity">
+              <!-- In this event object id is the target user -->
+              <setEventAttribute attr="eventType">combineMsgId($eventType,"_AtRisk_",$_activity)</setEventAttribute>
+            </when>
+            <otherwise>
+              <setEventAttribute attr="eventType">combineMsgId($eventType,"_AtRisk")</setEventAttribute>
+            </otherwise>
+          </choose>
+        </when>
+      </when>
+      <otherwise/>
+    </choose>
+
+    <when test="exist _srcIp">
+      <switch>
+        <case>
+          <collectFieldsByRegex src="$_srcIp">
+            <regex><![CDATA[^<srcIpAddr:gPatIpAddr>(?::<srcIpPort:gPatInt>)?]]></regex>
+          </collectFieldsByRegex>
+        </case>
+        <default/>
+      </switch>
+    </when>
+
+  </parsingInstructions>
+</eventParser>

@@ -1,0 +1,65 @@
+<eventParser name="OracleViaSnareParser">
+  <deviceType>
+    <Vendor>Generic</Vendor>
+    <Model>Generic</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <appType>
+    <Vendor>Oracle</Vendor>
+    <Model>Database Server</Model>
+    <Version>ANY</Version>
+    <Name>Oracle Database Server</Name>
+  </appType>
+
+  <patternDefinitions>
+    <pattern name="patOracleFile"><![CDATA[OracleListenerLog|OracleAlertLog]]></pattern>
+    <pattern name="patOracleLogMod" list="begin"><![CDATA[(AMD|AUD|CLSR|CLSS|DBV|DGM|DRG|EXP|IMG|IMP|KUP|LCD|LFI|LPX|LRM|LSX|NCR|NID|NMP|NNC|NNF|NNL|NNO|NPL|NZE|]]></pattern>
+    <pattern name="patOracleLogMod" list="end"><![CDATA[O2F|O2I|O2U|OCI|ORA|PCB|PCC|PCC|PLS|PLW|PROC|PROT|QSM|RMAN|SQL|SQL\*Loader|TNS|UDE|UDI|VID)\-\d+]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatStr>\s+<:patOracleFile>\s+<:gPatInt>]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<46>Dec 13 06:07:08 WIN03R2E-110929	OracleListenerLog	0	12-OCT-2011 16:17:52 * (CONNECT_DATA=(CID=(PROGRAM=)(HOST=)(USER=Administrator))(COMMAND=status)(ARGUMENTS=64)(SERVICE=LISTENER)(VERSION=185599744)) * status * 0]]></testEvent>
+    <testEvent><![CDATA[<46>Dec 13 06:07:08 WIN03R2E-110929 OracleAlertLog	0	ORA-00312: online log 3 thread 1: 'C:\APP\ADMINISTRATOR\ORADATA\ORCL\REDO03.LOG']]></testEvent>
+    <testEvent><![CDATA[<46>Dec 13 06:07:08 WIN03R2E-110929 OracleAlertLog	0	TNS-12638: Credential retrieval failed]]></testEvent>
+    <testEvent><![CDATA[<46>Dec 13 06:07:08 WIN03R2E-110929 OracleListenerLog	0	  TNS-00515: Connect failed because target host or object does not exist]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+
+    <!-- parsing common fields -->
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<reptDevName:gPatStr>\s+<_eventType:patOracleFile>\s+<_severity:gPatInt>\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+    <setEventAttribute attr="hostName">$reptDevName</setEventAttribute>
+    <setEventAttribute attr="eventType">"ORADB-Log-Generic"</setEventAttribute>
+    <setEventAttribute attr="eventDesc">$_body</setEventAttribute>
+    <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+
+    <choose>
+      <when test="$_eventType = 'OracleListenerLog'">
+        <setEventAttribute attr="fileName">"Listener.log"</setEventAttribute>
+      </when>
+      <when test="$_eventType = 'OracleAlertLog'">
+        <setEventAttribute attr="fileName">"Alert.log"</setEventAttribute>
+      </when>
+    </choose>
+
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_body">
+          <regex><![CDATA[<_errType:patOracleLogMod>:\s*<_errMsg:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+        <when test="exist _errType">
+          <setEventAttribute attr="eventType">combineMsgId("ORADB-", $_errType)</setEventAttribute>
+          <setEventAttribute attr="eventSeverity">5</setEventAttribute>
+        </when>
+      </case>
+      <default/>
+    </switch>
+
+  </parsingInstructions>
+</eventParser>

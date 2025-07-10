@@ -1,0 +1,123 @@
+<eventParser name="OtorioRAM2Parser">
+  <deviceType>
+    <Vendor>Otorio</Vendor>
+    <Model>RAM2</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <testEvents>
+    <testEvent><![CDATA[<133>1 2019-11-13T17:33:24.527279Z 10.200.10.3 - - ID02 - Alert ID: 11111111-1111-1111-1111-111111111111, Comment: "The alert was resolved", User: RAM2_ADMIN]]></testEvent>
+    <testEvent><![CDATA[2019-11-17T14:05:14.261394Z 192.168.10.52 RAM2 Severity: High, Alert ID: 11111111-1111-1111-1111-111111111111, Asset IP: 192.168.1.22, Asset MAC: 00:11:45:00:5e:58, Asset Vendor: Siemens, Asset Type: Network Device, Asset Family: SCALANCE XF-200, Alert type: vulnerabilities discovered, CVE: CVE-2017-2681, CVE severity: 6.5,CVE description: "Remote Denial of service in Siemens products using Profinet"]]></testEvent>
+    <testEvent><![CDATA[2019-11-17T14:09:05.618572Z 192.168.10.12 RAM2 Severity: Medium, Alert ID: 11111111-1111-1111-1111-111111111111, Asset IP: 192.168.1.26, Asset MAC: 00:12:33:31:3e:56, Asset Vendor: ABB, Asset Type: Controller, Asset Family: AC500-eCo, Alert type: network policy violation, Event name: Unauthorized Protcol Detected,Description: "Unauthorized Protocol between 17.0.100.18 to 17.0.98.2 has been detected. An RDP communication between 17.0.100.18 and 17.0.98.2 found which is prohibited according to your network policy."]]></testEvent>
+  </testEvents>
+
+  <eventFormatRecognizer><![CDATA[<:gPatYear>-<:gPatMonNum>-<:gPatDay>T<:gPatTime>\.\d+<:gPatTimeZone>\s+<:gPatHostName>\s+(?:-\s+-\s+ID\d+\s+-|RAM2).*Alert\sID:]]></eventFormatRecognizer>
+
+  <parsingInstructions>
+    <switch>
+      <case>
+        <collectFieldsByRegex src="$_rawmsg">
+          <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>\s+(?:<reptDevIpAddr:gPatIpAddr>|<reptDevName:gPatHostName>)\s+(?:-\s+-\s+ID\d+\s+-|RAM2)<_body:gPatMesgBody>]]></regex>
+        </collectFieldsByRegex>
+      </case>
+      <default/>
+    </switch>
+    <!-- set device time and generic event type -->
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    <setEventAttribute attr="eventType">Otorio-RAM2-Generic</setEventAttribute>
+
+    <collectAndSetAttrByKeyValuePair sep="," src="$_body">
+      <attrKeyMap attr="alertIdStr" key="Alert ID:"/>
+      <attrKeyMap attr="alertCategory" key="Alert type:"/>
+      <attrKeyMap attr="hostModel" key="Asset Family:"/>
+      <attrKeyMap attr="hostIpAddr" key="Asset IP:"/>
+      <attrKeyMap attr="hostMACAddr" key="Asset MAC:"/>
+      <attrKeyMap attr="osType" key="Asset OS:"/>
+      <attrKeyMap attr="productFamily" key="Asset Type:"/>
+      <attrKeyMap attr="hostVendor" key="Asset Vendor:"/>
+      <attrKeyMap attr="comment" key="Comment:"/>
+      <attrKeyMap attr="vulnCVESummary" key="CVE description:"/>
+      <attrKeyMap attr="vulnCvssScore" key="CVE severity:"/>
+      <attrKeyMap attr="vulnCVEId" key="CVE:"/>
+      <attrKeyMap attr="msg" key="Description:"/>
+      <attrKeyMap attr="alertName" key="Event name:"/>
+      <attrKeyMap attr="_firstseen" key="First seen:"/>
+      <attrKeyMap attr="_lastseen" key="Last seen:"/>
+      <attrKeyMap attr="newSettingsValue" key="New value:"/>
+      <attrKeyMap attr="oldSettingsValue" key="Original value:"/>
+      <attrKeyMap attr="appTransportProto" key="protocol:"/>
+      <attrKeyMap attr="_severity" key="Severity:"/>
+      <attrKeyMap attr="userType" key="user type:"/>
+      <attrKeyMap attr="user" key="User:"/>
+    </collectAndSetAttrByKeyValuePair>
+
+    <when test="exist alertCategory">
+      <setEventAttribute attr="alertCategory">replaceStringByRegex($alertCategory, "\s+", "_")</setEventAttribute>
+      <setEventAttribute attr="eventType">combineMsgId("Otorio-RAM2-",$alertCategory)</setEventAttribute>
+    </when>
+
+    <when test="exist _severity">
+      <choose>
+        <when test="$_severity = 'Low'">
+          <setEventAttribute attr="eventSeverity">1</setEventAttribute>
+        </when>
+        <when test="$_severity = 'Medium'">
+          <setEventAttribute attr="eventSeverity">6</setEventAttribute>
+        </when>
+        <when test="$_severity = 'High'">
+          <setEventAttribute attr="eventSeverity">9</setEventAttribute>
+        </when>
+        <when test="$_severity = 'Critical'">
+          <setEventAttribute attr="eventSeverity">10</setEventAttribute>
+        </when>
+        <otherwise/>
+      </choose>
+    </when>
+
+    <!-- parse first and last seen : First seen: 2019-11-17T14:00:38.523200Z -->
+    <when test="exist _firstseen">
+      <collectFieldsByRegex src="$_firstseen">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="firstSeenTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+    <when test="exist _lastseen">
+      <collectFieldsByRegex src="$_lastseen">
+        <regex><![CDATA[<_year:gPatYear>-<_mon:gPatMon>-<_day:gPatDay>T<_time:gPatTime>\.\d+<_tz:gPatTimeZone>]]></regex>
+      </collectFieldsByRegex>
+      <setEventAttribute attr="lastSeenTime">toDateTime($_mon, $_day, $_year, $_time, $_tz)</setEventAttribute>
+    </when>
+
+    <!-- event type parsing -->
+    <choose>
+      <when test="$eventType = 'Otorio-RAM2-network_segmentation'">
+        <when test="$alertName = 'Connection to the Internet detected'">
+          <collectFieldsByRegex src="$msg">
+            <regex><![CDATA[asset\s+<srcIpAddr:gPatIpAddr>.*Firewall:\s+<nepDevIpAddr:gPatIpAddr>]]></regex>
+          </collectFieldsByRegex>
+        </when>
+      </when>
+      <when test="$eventType = 'Otorio-RAM2-host_policy_violation'">
+        <when test="$alertName = 'Unmatch Naming Convention'">
+          <collectFieldsByRegex src="$msg">
+            <regex><![CDATA[Asset\s+<srcIpAddr:gPatIpAddr>\s+has\s+naming\s+\'<srcName:gPatHostName>\']]></regex>
+          </collectFieldsByRegex>
+        </when>
+      </when>
+      <when test="$eventType = 'Otorio-RAM2-network_policy_violation'">
+        <choose>
+          <when test="$alertName = 'Unauthorized Traffic Detected'">
+            <switch>
+              <case>
+                <collectFieldsByRegex src="$msg">
+                  <regex><![CDATA[Unauthorized\straffic\sbetween\s+<srcIpAddr:gPatIpAddr>\s+to\s+<destIpAddr:gPatIpAddr>]]></regex>
+                </collectFieldsByRegex>
+              </case>
+              <default/>
+            </switch>
+          </when>
+        </choose>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>

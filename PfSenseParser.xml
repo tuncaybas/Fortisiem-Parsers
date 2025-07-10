@@ -1,0 +1,167 @@
+<eventParser name="PfSenseParser">
+  <deviceType>
+    <Vendor>pfSense</Vendor>
+    <Model>BSD Firewall</Model>
+    <Version>ANY</Version>
+  </deviceType>
+
+  <patternDefinitions>
+    <pattern name="patPfSenseMod"><![CDATA[pf|filterlog]]></pattern>
+  </patternDefinitions>
+
+  <eventFormatRecognizer><![CDATA[<:gPatSyslogPRI><:gPatMon>\s+<:gPatDay>\s+<:gPatTime>\s+<:patPfSenseMod>:\s]]></eventFormatRecognizer>
+
+  <testEvents>
+    <testEvent><![CDATA[<134>Mar 16 11:30:47 pf:     0.0.0.0 > 224.0.0.1: igmp query v2]]></testEvent>
+    <testEvent><![CDATA[<134>Mar 16 11:31:20 pf:     0.0.0.0.68 > 255.255.255.255.67: BOOTP/DHCP, Request from 00:0c:f6:f1:3a:61, length 300, xid 0x174362fc, Flags [none]]]></testEvent>
+    <testEvent><![CDATA[<134>Mar 16 11:33:21 pf: 00:00:00.000001 rule 1/0(match): block in on em0: (tos 0x0, ttl 128, id 11181, offset 0, flags [none], proto UDP (17), length 229)]]></testEvent>
+    <testEvent><![CDATA[<134>Mar 16 11:32:42 pf:     10.100.1.113.137 > 10.100.255.255.137: NBT UDP PACKET(137): QUERY; REQUEST; BROADCAST]]></testEvent>
+    <testEvent><![CDATA[<134>Mar 16 11:31:28 pf: 	  Your-IP 10.100.100.6]]></testEvent>
+    <testEvent><![CDATA[<134>Aug 22 16:10:43 filterlog: 253,16777216,,1422441928,em0,match,block,in,4,0x0,,128,4132,0,none,17,udp,78,172.16.0.18,172.16.0.19,137,32,23]]></testEvent>
+  </testEvents>
+
+  <parsingInstructions>
+    <collectFieldsByRegex src="$_rawmsg">
+      <regex><![CDATA[<:gPatSyslogPRI><_mon:gPatMon>\s+<_day:gPatDay>\s+<_time:gPatTime>\s+<_mod:patPfSenseMod>:\s+<_body:gPatMesgBody>]]></regex>
+    </collectFieldsByRegex>
+    <setEventAttribute attr="deviceTime">toDateTime($_mon, $_day, $_time)</setEventAttribute>
+    <setEventAttribute attr="eventType">pfSense-Generic</setEventAttribute>
+
+    <choose>
+      <when test="$_mod = 'pf'">
+        <switch>
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^<srcIpAddr:gPatIpAddr>\.<srcIpPort:gPatInt> \> <destIpAddr:gPatIpAddr>\.<destIpPort:gPatInt>:\s+<_body:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+
+            <switch>
+              <case>
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[^BOOTP/DHCP, <_action:gPatWord>]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">combineMsgId("pfSense-DHCP-", $_action)</setEventAttribute>
+              </case>
+
+              <case>
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[^NBT <_ipProto:gPatWord> PACKET]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">pfSense-Traffic-Permitted</setEventAttribute>
+              </case>
+
+              <case>
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[^<_ipProto:gPatWord>, length ]]></regex>
+                </collectFieldsByRegex>
+                <setEventAttribute attr="eventType">pfSense-Traffic-Permitted</setEventAttribute>
+              </case>
+            </switch>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[^<srcIpAddr:gPatIpAddr> \> <destIpAddr:gPatIpAddr>:\s+<_proto:gPatWord>]]></regex>
+            </collectFieldsByRegex>
+
+            <when test="$_proto = 'igmp'">
+              <setEventAttribute attr="eventType">pfSense-IGMP</setEventAttribute>
+              <setEventAttribute attr="_ipProto">igmp</setEventAttribute>
+            </when>
+          </case>
+
+          <case>
+            <collectFieldsByRegex src="$_body">
+              <regex><![CDATA[ rule <:gPatStrEndColon>:\s+<_action:gPatWord>\s+<_body:gPatMesgBody>]]></regex>
+            </collectFieldsByRegex>
+
+            <choose>
+              <when test="$_action = 'block'">
+                <setEventAttribute attr="eventAction">1</setEventAttribute>
+                <setEventAttribute attr="eventType">pfSense-Traffic-Blocked</setEventAttribute>
+              </when>
+              <otherwise>
+                <setEventAttribute attr="eventAction">0</setEventAttribute>
+                <setEventAttribute attr="eventType">pfSense-Traffic-Permitted</setEventAttribute>
+              </otherwise>
+            </choose>
+
+            <switch>
+              <case>
+                <collectFieldsByRegex src="$_body">
+                  <regex><![CDATA[ proto <_ipProto:gPatWord>]]></regex>
+                </collectFieldsByRegex>
+              </case>
+              <default/>
+            </switch>
+          </case>
+
+          <default/>
+        </switch>
+
+        <when test="exist _ipProto">
+          <setEventAttribute attr="ipProto">convertStrToIntIpProto($_ipProto)</setEventAttribute>
+        </when>
+      </when>
+
+      <when test="$_mod = 'filterlog'">
+        <collectAndSetAttrByPos src="$_body" sep=",">
+          <attrPosMap attr="fwRule" pos="1"/>
+          <attrPosMap attr="intfName" pos="5"/>
+          <attrPosMap attr="statusDetailedReason" pos="6"/>
+          <attrPosMap attr="_action" pos="7"/>
+          <attrPosMap attr="direction" pos="8"/>
+          <attrPosMap attr="ipVersion" pos="9"/>
+        </collectAndSetAttrByPos>
+
+        <choose>
+          <when test="$ipVersion = '4'">
+            <collectAndSetAttrByPos src="$_body" sep=",">
+              <attrPosMap attr="tos" pos="10"/>
+              <attrPosMap attr="ipTtl" pos="12"/>
+              <attrPosMap attr="ipFragOffset" pos="13"/>
+              <attrPosMap attr="ipFlags" pos="14"/>
+              <attrPosMap attr="ipProto" pos="15"/>
+              <attrPosMap attr="appProtoId" pos="16"/>
+              <attrPosMap attr="appTransportProto" pos="17"/>
+              <attrPosMap attr="tcpLen" pos="18"/>
+              <attrPosMap attr="srcIpAddr" pos="19"/>
+              <attrPosMap attr="destIpAddr" pos="20"/>
+            </collectAndSetAttrByPos>
+          </when>
+
+          <when test="$ipVersion = '6'">
+            <collectAndSetAttrByPos src="$_body" sep=",">
+              <attrPosMap attr="tos" pos="10"/>
+              <attrPosMap attr="flowConnId" pos="11"/>
+              <attrPosMap attr="hopNum" pos="12"/>
+              <attrPosMap attr="appProtoId" pos="13"/>
+              <attrPosMap attr="appTransportProto" pos="14"/>
+              <attrPosMap attr="tcpLen" pos="15"/>
+              <attrPosMap attr="srcIpAddr" pos="16"/>
+              <attrPosMap attr="destIpAddr" pos="17"/>
+            </collectAndSetAttrByPos>
+          </when>
+        </choose>
+
+        <choose>
+          <when test="$_action = 'block'">
+            <setEventAttribute attr="eventAction">1</setEventAttribute>
+            <setEventAttribute attr="eventType">pfSense-Traffic-Blocked</setEventAttribute>
+          </when>
+          <otherwise>
+            <setEventAttribute attr="eventAction">0</setEventAttribute>
+            <setEventAttribute attr="eventType">pfSense-Traffic-Permitted</setEventAttribute>
+          </otherwise>
+        </choose>
+
+        <when test="$appTransportProto IN 'tcp, udp'">
+          <collectAndSetAttrByPos src="$_body" sep=",">
+            <attrPosMap attr="srcIpPort" pos="21"/>
+            <attrPosMap attr="destIpPort" pos="22"/>
+          </collectAndSetAttrByPos>
+        </when>
+      </when>
+    </choose>
+  </parsingInstructions>
+</eventParser>
